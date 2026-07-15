@@ -1,0 +1,6 @@
+{
+  "name": "ThriftX E-commerce",
+  "description": "Premium Thrift E-commerce with Curated Vintage and Sustainable Luxury",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

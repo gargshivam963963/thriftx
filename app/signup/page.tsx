@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ArrowRight, Loader2 } from 'lucide-react';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { account } from '@/lib/appwrite';
+import { ID } from 'appwrite';
 
 export default function Signup() {
   const router = useRouter();
@@ -20,8 +20,8 @@ export default function Signup() {
     setError('');
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName: name });
+      await account.create(ID.unique(), email, password, name);
+      await account.createEmailPasswordSession(email, password);
       router.push('/');
     } catch (err: any) {
       setError(err.message || 'Failed to create an account');

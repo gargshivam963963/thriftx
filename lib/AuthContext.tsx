@@ -1,10 +1,15 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from './firebase';
+import { account, isAppwriteEndpointConfigured } from './appwrite';
+
+type AppwriteUser = {
+  $id: string;
+  name?: string;
+  email?: string;
+};
 
 interface AuthContextType {
-  user: User | null;
+  user: AppwriteUser | null;
   loading: boolean;
   logout: () => Promise<void>;
 }
@@ -16,19 +21,37 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppwriteUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    if (!isAppwriteEndpointConfigured) {
       setLoading(false);
-    });
-    return () => unsubscribe();
+      return;
+    }
+
+    account
+      .get()
+      .then((currentUser) => {
+        setUser({
+          $id: currentUser.$id,
+          name: currentUser.name,
+          email: currentUser.email,
+        });
+      })
+      .catch(() => {
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const logout = async () => {
-    await signOut(auth);
+    if (isAppwriteEndpointConfigured) {
+      await account.deleteSession('current');
+    }
+    setUser(null);
   };
 
   return (

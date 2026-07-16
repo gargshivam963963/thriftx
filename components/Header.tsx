@@ -35,7 +35,7 @@ export default function Header() {
           </button>
           {user ? (
             <div className="hidden md:flex items-center gap-4">
-              <span className="text-xs font-semibold uppercase tracking-widest">{user.displayName || 'User'}</span>
+              <span className="text-xs font-semibold uppercase tracking-widest">{user.name || 'User'}</span>
               <button onClick={logout} aria-label="Log Out" className="text-black hover:opacity-70 transition-opacity">
                 <LogOut className="w-5 h-5" />
               </button>
@@ -70,7 +70,7 @@ export default function Header() {
           <div className="mt-auto flex flex-col gap-4 border-t border-[#e5e5e5] pt-6">
             {user ? (
               <>
-                <span className="text-sm font-semibold uppercase tracking-widest text-[#616363]">Hi, {user.displayName || 'User'}</span>
+                <span className="text-sm font-semibold uppercase tracking-widest text-[#616363]">Hi, {user.name || 'User'}</span>
                 <button 
                   onClick={() => { logout(); setIsMenuOpen(false); }}
                   className="flex items-center gap-3 text-black font-semibold text-lg"

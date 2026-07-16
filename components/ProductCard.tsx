@@ -25,6 +25,7 @@ export default function ProductCard({ id, brand, title, price, condition, image,
           <span className="bg-[#064E3B] text-white px-3 py-1 rounded-full text-[9px] font-semibold tracking-widest uppercase shadow-sm">Only 1 Left</span>
         </div>
       )}
+
       <div className="aspect-[1/1.25] relative overflow-hidden bg-[#f3f3f3]">
         <Image src={image} alt={title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" />
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">

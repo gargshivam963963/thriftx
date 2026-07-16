@@ -3,8 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ArrowRight, Loader2 } from 'lucide-react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { account } from '@/lib/appwrite';
 
 export default function Login() {
   const router = useRouter();
@@ -19,7 +18,7 @@ export default function Login() {
     setError('');
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await account.createEmailPasswordSession(email, password);
       router.push('/');
     } catch (err: any) {
       setError(err.message || 'Invalid email or password');

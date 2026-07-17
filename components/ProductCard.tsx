@@ -1,48 +1,92 @@
-import Image from 'next/image';
-import Link from 'next/link';
-import { Heart, BadgeCheck } from 'lucide-react';
+import Image from "next/image";
+import Link from "next/link";
+import { Heart } from "lucide-react";
 
 interface ProductCardProps {
   id: string;
   brand: string;
   title: string;
-  price: string;
+  price: number;
   condition: string;
   image: string;
   onlyOneLeft?: boolean;
 }
 
-export default function ProductCard({ id, brand, title, price, condition, image, onlyOneLeft }: ProductCardProps) {
+export default function ProductCard({
+  id,
+  brand,
+  title,
+  price,
+  condition,
+  image,
+  onlyOneLeft,
+}: ProductCardProps) {
   return (
-    <Link href={`/product/${id}`} className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-[#e5e5e5] hover:border-[#cfc4c5] transition-all duration-300 relative h-full hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-      <div className="absolute top-3 right-3 z-10">
-        <button className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-black hover:text-red-500 transition-colors shadow-sm">
-          <Heart className="w-4 h-4" />
-        </button>
-      </div>
-      {onlyOneLeft && (
-        <div className="absolute top-3 left-3 z-10">
-          <span className="bg-[#064E3B] text-white px-3 py-1 rounded-full text-[9px] font-semibold tracking-widest uppercase shadow-sm">Only 1 Left</span>
-        </div>
-      )}
+    <Link
+      href={`/product/${id}`}
+      className="
+        group
+        flex
+        h-full
+        flex-col
+        overflow-hidden
+        rounded-[22px]
+        border
+        border-neutral-200
+        bg-white
+        transition-all
+        duration-300
+        hover:-translate-y-1
+        hover:border-neutral-300
+        hover:shadow-xl
+      "
+    >
+      {/* IMAGE */}
+      <div className="relative aspect-[1/1] overflow-hidden rounded-t-[22px] bg-neutral-100">
+        {onlyOneLeft && (
+          <div className="absolute left-4 top-4 z-20">
+            <span className="rounded-full bg-black px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+              Last Piece
+            </span>
+          </div>
+        )}
 
-      <div className="aspect-[1/1.25] relative overflow-hidden bg-[#f3f3f3]">
-        <Image src={image} alt={title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" />
-        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-          <span className="bg-white/90 backdrop-blur-md px-6 py-2 rounded-full text-xs font-semibold tracking-widest uppercase translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-sm opacity-0 group-hover:opacity-100">Quick View</span>
-        </div>
+        <button className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-lg backdrop-blur transition hover:scale-105 hover:text-red-500">
+          <Heart className="h-4 w-4" />
+        </button>
+
+        <Image
+          src={image}
+          alt={title}
+          fill
+          referrerPolicy="no-referrer"
+          className="object-cover transition duration-500 group-hover:scale-[1.04]"
+        />
+
       </div>
-      <div className="p-5 flex flex-col flex-grow">
-        <div className="flex justify-between items-start mb-1.5">
-          <p className="text-xs font-semibold tracking-widest uppercase text-[#4c4546]">{brand}</p>
-          <span className="text-[10px] font-semibold tracking-widest text-[#7e7576] flex items-center gap-1">
-            <BadgeCheck className="w-3 h-3 text-[#C5A059]" /> {condition}
+
+      {/* CONTENT */}
+      <div className="flex flex-1 flex-col px-5 py-4">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
+          {brand}
+        </span>
+
+        <h3 className="mt-2 line-clamp-2 text-[22px] font-medium leading-[1.35] text-neutral-900">
+          {title}
+        </h3>
+
+        <div className="mt-4">
+          <span className="text-[28px] font-semibold tracking-tight text-neutral-900">
+            ₹{price.toLocaleString("en-IN")}
           </span>
         </div>
-        <h3 className="font-sans text-base text-black line-clamp-2 mb-4 leading-relaxed">{title}</h3>
-        <div className="mt-auto">
-          <p className="font-sans text-xl font-semibold text-black">{price}</p>
+
+        <div className="mt-4 border-t border-neutral-100 pt-4">
+          <span className="text-sm text-neutral-500">
+            {condition.charAt(0).toUpperCase() + condition.slice(1)} Condition
+          </span>
         </div>
+
       </div>
     </Link>
   );

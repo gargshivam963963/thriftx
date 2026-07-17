@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import TryOnModal from './TryOnModal';
 
 export default function ProductTryOnButton({ productImage, productName = '' }: { productImage: string; productName?: string }) {
   const [openAi, setOpenAi] = useState(false);
@@ -14,10 +13,6 @@ export default function ProductTryOnButton({ productImage, productName = '' }: {
           AI Model
         </button>
       </div>
-
-      {(
-        <TryOnModal isOpen={openAi} productImage={productImage} productName={productName} onClose={() => setOpenAi(false)} />
-      )}
 
       {openOriginal && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-6">

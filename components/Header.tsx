@@ -10,25 +10,27 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-white/70 backdrop-blur-xl fixed top-0 w-full z-50 border-b border-[#e5e5e5] flex justify-between items-center px-5 md:px-16 h-20">
-        <button 
-          aria-label="Menu" 
-          className="md:hidden p-2 -ml-2 text-black hover:opacity-70 transition-opacity"
-          onClick={() => setIsMenuOpen(true)}
-        >
-          <Menu className="w-6 h-6" />
-        </button>
-        <div className="hidden md:flex items-center gap-6">
-          <Link href="/shop/men" className="text-[#616363] hover:text-black transition-colors text-xs font-semibold tracking-widest uppercase">MEN</Link>
-          <Link href="/shop/women" className="text-[#616363] hover:text-black transition-colors text-xs font-semibold tracking-widest uppercase">WOMEN</Link>
-          <Link href="/shop/vintage" className="text-[#616363] hover:text-black transition-colors text-xs font-semibold tracking-widest uppercase">VINTAGE</Link>
+      <header className="bg-white/70 backdrop-blur-xl fixed top-0 w-full z-50 border-b border-[#e5e5e5] flex items-center justify-between px-3 sm:px-5 md:px-16 h-16 sm:h-20">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button 
+            aria-label="Menu" 
+            className="md:hidden p-2 -ml-2 text-black hover:opacity-70 transition-opacity"
+            onClick={() => setIsMenuOpen(true)}
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <div className="hidden md:flex items-center gap-6">
+            <Link href="/shop/men" className="text-[#616363] hover:text-black transition-colors text-xs font-semibold tracking-widest uppercase">MEN</Link>
+            <Link href="/shop/women" className="text-[#616363] hover:text-black transition-colors text-xs font-semibold tracking-widest uppercase">WOMEN</Link>
+            <Link href="/shop/vintage" className="text-[#616363] hover:text-black transition-colors text-xs font-semibold tracking-widest uppercase">VINTAGE</Link>
+          </div>
         </div>
-        <Link href="/" className="font-serif text-3xl md:text-4xl font-bold tracking-tighter text-black flex-1 text-center md:flex-none uppercase">
+        <Link href="/" className="absolute left-1/2 -translate-x-1/2 font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tighter text-black uppercase">
           THRIFTX
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 ml-auto">
           <Link href="/cart" aria-label="Cart" className="text-black hover:opacity-70 transition-opacity flex items-center justify-center">
-            <ShoppingBag className="w-6 h-6" />
+            <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
           </Link>
           <button aria-label="Search" className="hidden md:block text-black hover:opacity-70 transition-opacity">
             <Search className="w-6 h-6" />
@@ -46,14 +48,14 @@ export default function Header() {
             </Link>
           )}
           <button aria-label="Search Mobile" className="md:hidden text-black hover:opacity-70 transition-opacity">
-            <Search className="w-6 h-6" />
+            <Search className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
       </header>
 
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-[100] bg-white flex flex-col pt-20 px-5 pb-8 overflow-y-auto">
+        <div className="fixed inset-0 z-[100] bg-white flex flex-col pt-16 px-4 pb-6 overflow-y-auto">
           <button 
             className="absolute top-6 left-5 p-2 -ml-2 text-black hover:opacity-70 transition-opacity"
             onClick={() => setIsMenuOpen(false)}

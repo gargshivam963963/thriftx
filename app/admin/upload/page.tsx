@@ -16,6 +16,7 @@ import {
 
 export default function AdminUploadPage() {
     const [images, setImages] = useState<File[]>([]);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     const initialForm = Object.fromEntries(
         PRODUCT_FIELDS.map((field) => [
@@ -30,7 +31,7 @@ export default function AdminUploadPage() {
         (field) => field.ai
     );
 
-    const DEFAULT_AI_FIELDS = AI_FIELDS.map((field) => field.key);
+    const DEFAULT_AI_FIELDS = AI_FIELDS.map((field) => field.name);
 
     const [selectedAiFields, setSelectedAiFields] = useState<string[]>(() => {
         if (typeof window === "undefined") return DEFAULT_AI_FIELDS;
@@ -68,6 +69,66 @@ export default function AdminUploadPage() {
         if (!e.target.files) return;
 
         setImages(Array.from(e.target.files));
+    }
+
+    async function handleAIFill() {
+        if (!images.length) {
+            alert("Please upload at least one image.");
+            return;
+        }
+
+        try {
+            setIsGenerating(true);
+
+            const base64Images = await Promise.all(
+                images.map(fileToBase64)
+            );
+
+            const response = await fetch("/api/ai/fill", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    images: base64Images,
+                    selectedFields: selectedAiFields,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                alert(result.message);
+                return;
+            }
+
+            setForm((prev) => ({
+                ...prev,
+                ...result.data,
+            }));
+        } catch (error) {
+            console.error(error);
+
+            alert("AI generation failed.");
+        } finally {
+            setIsGenerating(false);
+        }
+    }
+
+    async function fileToBase64(file: File) {
+        return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                const result = reader.result as string;
+
+                resolve(result.split(",")[1]);
+            };
+
+            reader.onerror = reject;
+
+            reader.readAsDataURL(file);
+        });
     }
 
     function handleSubmit(e: React.FormEvent) {
@@ -139,22 +200,22 @@ export default function AdminUploadPage() {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {AI_FIELDS.map((field) => (
                             <label
-                                key={field.key}
+                                key={field.name}
                                 className="flex items-center gap-2"
                             >
                                 <input
                                     type="checkbox"
-                                    checked={selectedAiFields.includes(field.key)}
+                                    checked={selectedAiFields.includes(field.name)}
                                     onChange={(e) => {
                                         if (e.target.checked) {
                                             setSelectedAiFields([
                                                 ...selectedAiFields,
-                                                field.key,
+                                                field.name,
                                             ]);
                                         } else {
                                             setSelectedAiFields(
                                                 selectedAiFields.filter(
-                                                    (x) => x !== field.key
+                                                    (x) => x !== field.name
                                                 )
                                             );
                                         }
@@ -187,12 +248,16 @@ export default function AdminUploadPage() {
 
                     <button
                         type="button"
-                        className="flex h-12 items-center justify-center gap-2 rounded-xl bg-black px-6 text-white transition hover:bg-neutral-800"
+                        onClick={handleAIFill}
+                        disabled={isGenerating}
+                        className="flex h-12 items-center justify-center gap-2 rounded-xl bg-black px-6 text-white transition hover:bg-neutral-800 disabled:opacity-50"
                     >
                         <Sparkles size={18} />
-                        AI Fill Details
-                    </button>
 
+                        {isGenerating
+                            ? "Generating..."
+                            : "AI Fill Details"}
+                    </button>
                 </div>
 
                 <form
@@ -487,7 +552,6 @@ export default function AdminUploadPage() {
                     </div>
 
                     <label className="flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-300 transition hover:border-black hover:bg-neutral-50">
-
                         <Upload
                             size={40}
                             className="mb-4 text-neutral-500"

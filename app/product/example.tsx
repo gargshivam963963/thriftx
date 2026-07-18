@@ -1,7 +1,9 @@
+import { getProductById, Product } from "@/lib/products";
+
+
 import { notFound } from "next/navigation";
 
 import Section from "@/components/ui/Section";
-import Breadcrumb from "@/components/ui/Breadcrumb";
 
 import { getProductById } from "@/lib/appwrite/products";
 import type { Product } from "@/types/product"; // <-- Change this path to your Product type

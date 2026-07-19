@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { ShoppingBag, Heart, BrainCircuit } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import TryOnModal from '@/components/TryOnModal';
-import { Product } from '@/lib/products';
+import { Product } from '@/lib/services/products';
 import { addToCart } from '@/lib/services/cart';
 
 export default function ProductActions({
@@ -57,13 +56,6 @@ export default function ProductActions({
           Wishlist
         </button>
       </div>
-
-      <TryOnModal
-        isOpen={isTryOnOpen}
-        onClose={() => setIsTryOnOpen(false)}
-        productImage={product.image}
-        productName={product.title}
-      />
     </>
   );
 }

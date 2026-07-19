@@ -2,6 +2,8 @@ import {
   databases,
   APPWRITE_DATABASE_ID,
   APPWRITE_PRODUCTS_COLLECTION_ID,
+  APPWRITE_BUCKET_ID,
+  storage,
   AppwriteQuery,
   AppwriteID,
   isAppwriteDataConfigured,
@@ -9,67 +11,117 @@ import {
 
 export interface Product {
   id: string;
-  brand: string;
+
+  // Basic
   title: string;
-  price: string;
-  condition: string;
-  image: string;
+  brand: string;
+  slug: string;
+
+  // Category
   category: string;
-  subCategory: string;
-  onlyOneLeft?: boolean;
+  categorySlug: string;
+
+  gender: "Men" | "Women" | "Unisex" | "Kids";
+
+  // Pricing
+  price: number;
+  retailPrice?: number;
+  condition: string;
+
+  // Measurements
+  size: string;
+  chest?: string;
+  waist?: string;
+  length?: string;
+  inseam?: string;
+
+  // Details
+  color?: string;
+  material?: string;
   description?: string;
-  retailPrice?: string;
-  measurements?: {
-    size?: string;
-    chest?: string;
-    length?: string;
-    shoulders?: string;
-  };
   shippingInfo?: string;
+
+  // Images
+  primaryImage: string;
+  images: string[];
+
+  // Status
+  status: "draft" | "active" | "sold";
+  isActive: boolean;
 }
 
 export interface ProductFilters {
   category?: string;
-  subCategory?: string;
+  gender?: string;
   brand?: string[];
   size?: string[];
-  price?: string; // <-- Add this
+  condition?: string[];
+  price?: string;
   sort?: "newest" | "price-low" | "price-high" | "name";
   limit?: number;
 }
 
 function normalizeProduct(data: any, id?: string): Product {
-  const measurements = data.measurements ?? {
-    size: data.size ?? "",
-    chest: data.chest ?? "",
-    length: data.length ?? "",
-    shoulders: data.shoulders ?? "",
-  };
+  const primaryImage =
+    data.primaryImage && !data.primaryImage.startsWith("http")
+      ? storage.getFileView(APPWRITE_BUCKET_ID, data.primaryImage).toString()
+      : (data.primaryImage ?? "");
+
+  const images =
+    Array.isArray(data.images) && data.images.length > 0
+      ? data.images.map((img: string) =>
+          img.startsWith("http")
+            ? img
+            : storage.getFileView(APPWRITE_BUCKET_ID, img).toString(),
+        )
+      : primaryImage
+        ? [primaryImage]
+        : [];
+  Array.isArray(data.images) && data.images.length > 0
+    ? data.images
+    : primaryImage
+      ? [primaryImage]
+      : [];
 
   return {
     id: id ?? data.id ?? "",
+
+    title: data.title ?? "",
     brand: data.brand ?? "",
-    title: data.productName ?? data.title ?? "",
-    price: String(data.price ?? ""),
+    slug: data.slug ?? "",
+
+    category: data.category ?? "",
+    categorySlug: data.categorySlug ?? "",
+
+    gender: data.gender ?? "Unisex",
+
+    price: Number(data.price ?? 0),
+    retailPrice:
+      data.retailPrice !== undefined &&
+      data.retailPrice !== null &&
+      data.retailPrice !== ""
+        ? Number(data.retailPrice)
+        : undefined,
+
     condition: data.condition ?? "",
-    image:
-      Array.isArray(data.imageIds) && data.imageIds.length
-        ? data.imageIds[0]
-        : (data.image ?? ""),
-    category: data.categorySlug ?? data.category ?? "",
-    subCategory: data.subCategorySlug ?? data.subCategory ?? "",
-    onlyOneLeft:
-      typeof data.stockQuantity === "number" ? data.stockQuantity <= 1 : false,
-    description:
-      data.description ?? data.productDescription ?? data.summary ?? "",
-    retailPrice: String(data.retailPrice ?? data.retail_price ?? ""),
-    measurements: {
-      size: measurements.size ?? "",
-      chest: measurements.chest ?? "",
-      length: measurements.length ?? "",
-      shoulders: measurements.shoulders ?? "",
-    },
-    shippingInfo: data.shippingInfo ?? data.shippingDetails ?? "",
+
+    size: data.size ?? "",
+    chest: data.chest ?? "",
+    waist: data.waist ?? "",
+    length: data.length ?? "",
+    inseam: data.inseam ?? "",
+
+    color: data.color ?? "",
+    material: data.material ?? "",
+
+    description: data.description ?? "",
+    shippingInfo: data.shippingInfo ?? "",
+
+    primaryImage,
+    images,
+
+    status: data.status ?? "active",
+    isActive: data.isActive ?? true,
   };
 }
 
@@ -100,21 +152,40 @@ export async function seedProducts(initialProducts: Omit<Product, "id">[]) {
         APPWRITE_PRODUCTS_COLLECTION_ID,
         AppwriteID.unique(),
         {
-          productName: product.title,
+          title: product.title,
           brand: product.brand,
-          description: product.description ?? "",
+
+          slug: product.slug,
+
+          category: product.category,
+          categorySlug: product.categorySlug,
+          gender: product.gender,
+
           price: Number(product.price),
-          retailPrice: Number(product.retailPrice ?? 0),
+          retailPrice:
+            product.retailPrice !== undefined
+              ? Number(product.retailPrice)
+              : undefined,
+
           condition: product.condition,
-          categorySlug: product.category,
-          subCategorySlug: product.subCategory,
-          stockQuantity: product.onlyOneLeft ? 1 : 5,
-          imageIds: product.image ? [product.image] : [],
-          size: product.measurements?.size ?? "",
-          chest: product.measurements?.chest ?? "",
-          length: product.measurements?.length ?? "",
-          shoulders: product.measurements?.shoulders ?? "",
+
+          size: product.size,
+          chest: product.chest ?? "",
+          waist: product.waist ?? "",
+          length: product.length ?? "",
+          inseam: product.inseam ?? "",
+
+          color: product.color ?? "",
+          material: product.material ?? "",
+
+          description: product.description ?? "",
           shippingInfo: product.shippingInfo ?? "",
+
+          primaryImage: product.primaryImage,
+          images: product.images,
+
+          status: product.status,
+          isActive: product.isActive,
         },
       );
     }
@@ -127,7 +198,6 @@ export async function seedProducts(initialProducts: Omit<Product, "id">[]) {
     throw error;
   }
 }
-
 export async function getProducts(
   filters: ProductFilters = {},
 ): Promise<Product[]> {
@@ -137,13 +207,19 @@ export async function getProducts(
   }
 
   const queries: any[] = [];
+  queries.push(AppwriteQuery.equal("isActive", true));
+  queries.push(AppwriteQuery.equal("status", "active"));
+
+  if (filters.gender) {
+    const gender =
+      filters.gender.charAt(0).toUpperCase() +
+      filters.gender.slice(1).toLowerCase();
+
+    queries.push(AppwriteQuery.equal("gender", gender));
+  }
 
   if (filters.category) {
     queries.push(AppwriteQuery.equal("categorySlug", filters.category));
-  }
-
-  if (filters.subCategory) {
-    queries.push(AppwriteQuery.equal("subCategorySlug", filters.subCategory));
   }
 
   if (filters.brand?.length) {
@@ -194,7 +270,7 @@ export async function getProducts(
       break;
 
     default:
-      queries.push(AppwriteQuery.orderAsc("productName"));
+      queries.push(AppwriteQuery.orderAsc("title"));
   }
 
   queries.push(AppwriteQuery.limit(filters.limit ?? 48));
@@ -205,19 +281,11 @@ export async function getProducts(
     queries,
   );
 
-  let products = response.documents.map((doc: any) => {
-    const { $id, $collection, $database, ...data } = doc;
+  return response.documents.map((doc: any) => {
+    const { $id, ...data } = doc;
 
-    return normalizeProduct(
-      {
-        ...data,
-        id: $id,
-      },
-      $id,
-    );
+    return normalizeProduct(data, $id);
   });
-
-  return products;
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
@@ -232,15 +300,9 @@ export async function getProductById(id: string): Promise<Product | null> {
       id,
     );
 
-    const { $id, $collection, $database, ...data } = doc as any;
+    const { $id, ...data } = doc as any;
 
-    return normalizeProduct(
-      {
-        ...data,
-        id: $id,
-      },
-      $id,
-    );
+    return normalizeProduct(data, $id);
   } catch {
     return null;
   }
@@ -263,15 +325,19 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
   const doc = response.documents[0];
 
-  const { $id, $collection, $database, ...data } = doc;
+  const { $id, ...data } = doc;
 
-  return normalizeProduct(
-    {
-      ...data,
-      id: $id,
-    },
-    $id,
-  );
+  return normalizeProduct(data, $id);
+}
+
+export async function getBrands(): Promise<string[]> {
+  const products = await getProducts({
+    limit: 500,
+  });
+
+  return [...new Set(products.map((p) => p.brand))]
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
 }
 
 const ProductService = {
@@ -281,13 +347,5 @@ const ProductService = {
   seedProducts,
   getBrands,
 };
-
-export async function getBrands(): Promise<string[]> {
-  const products = await getProducts({ limit: 500 });
-
-  return [...new Set(products.map((p) => p.brand))]
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b));
-}
 
 export default ProductService;

@@ -1,10 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
-import { getProducts } from '@/lib/products';
+import { getProducts } from '@/lib/services/products';
 
 export default async function Home() {
-  const hits = await getProducts(undefined, undefined, 8);
+  const hits = await getProducts({
+    limit: 8,
+  });
 
   return (
     <div className="w-full">
@@ -80,7 +82,15 @@ export default async function Home() {
         {hits.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {hits.map((product) => (
-              <ProductCard key={product.id} {...product} />
+              <ProductCard
+                key={product.id}
+                id={product.id}
+                brand={product.brand}
+                title={product.title}
+                price={product.price}
+                condition={product.condition}
+                image={product.primaryImage}
+              />
             ))}
           </div>
         ) : (

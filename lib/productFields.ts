@@ -8,11 +8,8 @@ export type ProductField = {
   section: "product" | "pricing" | "details" | "measurements" | "description";
 
   ai?: boolean;
-
   defaultValue?: string;
-
   placeholder?: string;
-
   options?: string[];
 };
 
@@ -39,6 +36,16 @@ export const PRODUCT_FIELDS: ProductField[] = [
     placeholder: "Nike",
     ai: true,
     defaultValue: "",
+  },
+
+  {
+    name: "gender",
+    label: "Gender",
+    type: "select",
+    section: "product",
+    ai: true,
+    defaultValue: "Unisex",
+    options: ["Men", "Women", "Unisex", "Kids"],
   },
 
   {
@@ -80,7 +87,6 @@ export const PRODUCT_FIELDS: ProductField[] = [
     type: "number",
     section: "pricing",
     defaultValue: "299",
-    ai: false,
   },
 
   {
@@ -89,7 +95,6 @@ export const PRODUCT_FIELDS: ProductField[] = [
     type: "number",
     section: "pricing",
     defaultValue: "",
-    ai: false,
   },
 
   {
@@ -136,7 +141,15 @@ export const PRODUCT_FIELDS: ProductField[] = [
     type: "text",
     section: "measurements",
     placeholder: '22"',
-    ai: false,
+    defaultValue: "",
+  },
+
+  {
+    name: "waist",
+    label: "Waist",
+    type: "text",
+    section: "measurements",
+    placeholder: '32"',
     defaultValue: "",
   },
 
@@ -146,27 +159,15 @@ export const PRODUCT_FIELDS: ProductField[] = [
     type: "text",
     section: "measurements",
     placeholder: '29"',
-    ai: false,
     defaultValue: "",
   },
 
   {
-    name: "shoulder",
-    label: "Shoulder",
+    name: "inseam",
+    label: "Inseam",
     type: "text",
     section: "measurements",
-    placeholder: '19"',
-    ai: false,
-    defaultValue: "",
-  },
-
-  {
-    name: "sleeve",
-    label: "Sleeve",
-    type: "text",
-    section: "measurements",
-    placeholder: '9"',
-    ai: false,
+    placeholder: '30"',
     defaultValue: "",
   },
 
@@ -184,11 +185,10 @@ export const PRODUCT_FIELDS: ProductField[] = [
   },
 
   {
-    name: "shipping",
+    name: "shippingInfo",
     label: "Shipping Information",
     type: "textarea",
     section: "description",
-    ai: false,
     defaultValue:
       "Ships within 24 hours. Pan India delivery in 3–7 business days.",
   },

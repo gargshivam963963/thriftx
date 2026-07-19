@@ -12,20 +12,23 @@ import IconButton from "@/components/ui/IconButton";
 
 interface ProductGalleryProps {
     title: string;
-    image: string;
+    primaryImage: string;
     images?: string[];
 }
 
 export default function ProductGallery({
     title,
-    image,
+    primaryImage,
     images = [],
 }: ProductGalleryProps) {
     const gallery = useMemo(() => {
-        const list = images.length ? images : [image];
+        const list =
+            images.length > 0
+                ? images
+                : [primaryImage];
 
         return list.filter(Boolean);
-    }, [image, images]);
+    }, [primaryImage, images]);
 
     const [selectedIndex, setSelectedIndex] = useState(0);
 

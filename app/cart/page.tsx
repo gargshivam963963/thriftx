@@ -16,7 +16,7 @@ import {
   removeCartItem,
   updateCartQuantity,
 } from '@/lib/services/cart';
-import { getProductById, Product } from '@/lib/products';
+import { getProductById, Product } from '@/lib/services/products';
 import { getAddress, saveAddress } from "@/lib/services/address";
 import { useRouter } from "next/navigation";
 import { loadRazorpay } from "@/lib/loadRazorpay";

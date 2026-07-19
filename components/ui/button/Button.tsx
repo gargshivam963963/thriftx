@@ -1,14 +1,24 @@
 "use client";
 
 import { forwardRef } from "react";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 import { buttonVariants } from "./button.styles";
 import type { ButtonProps } from "./button.types";
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+interface ExtendedButtonProps extends ButtonProps {
+    loading?: boolean;
+    loadingText?: string;
+    success?: boolean;
+    successText?: string;
+}
+
+export const Button = forwardRef<
+    HTMLButtonElement,
+    ExtendedButtonProps
+>(
     (
         {
             children,
@@ -18,6 +28,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             rounded,
             shadow,
             loading = false,
+            loadingText = "Loading...",
+            success = false,
+            successText = "Success",
             fullWidth = false,
             leftIcon,
             rightIcon,
@@ -54,7 +67,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                             className="h-4 w-4 animate-spin"
                             aria-hidden="true"
                         />
-                        <span>Loading...</span>
+                        <span>{loadingText}</span>
+                    </>
+                ) : success ? (
+                    <>
+                        <Check
+                            className="h-4 w-4"
+                            aria-hidden="true"
+                        />
+                        <span>{successText}</span>
                     </>
                 ) : (
                     <>

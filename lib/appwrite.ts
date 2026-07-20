@@ -25,6 +25,9 @@ const ordersCollectionId =
 
 const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID || "";
 
+const wishlistCollectionId =
+  process.env.NEXT_PUBLIC_APPWRITE_WISHLIST_COLLECTION_ID || "";
+
 const client = new Client();
 
 const appwriteEndpointConfigured = Boolean(endpoint && project);
@@ -38,6 +41,7 @@ const appwriteDataConfigured = Boolean(
   cartItemsCollectionId &&
   addressesCollectionId &&
   ordersCollectionId &&
+  wishlistCollectionId &&
   bucketId,
 );
 
@@ -79,3 +83,5 @@ export const isAppwriteDataConfigured = appwriteDataConfigured;
 export function getFileViewUrl(fileId: string) {
   return storage.getFileView(APPWRITE_BUCKET_ID, fileId).toString();
 }
+
+export const APPWRITE_WISHLIST_COLLECTION_ID = wishlistCollectionId;

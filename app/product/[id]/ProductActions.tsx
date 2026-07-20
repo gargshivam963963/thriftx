@@ -5,6 +5,7 @@ import { ShoppingBag, Heart, BrainCircuit } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/services/products';
 import { addToCart } from '@/lib/services/cart';
+import { Button } from '@/components/ui/button';
 
 export default function ProductActions({
   product,
@@ -32,30 +33,27 @@ export default function ProductActions({
   }
 
   return (
-    <>
-      <div className="flex flex-col gap-4">
-        <button
-          onClick={() => setIsTryOnOpen(true)}
-          className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-sans text-base sm:text-lg font-medium py-4 sm:py-5 rounded-2xl hover:opacity-90 transition-opacity flex justify-center items-center gap-3 shadow-lg hover:shadow-xl"
-        >
-          <BrainCircuit className="w-5 h-5" />
-          Virtual Try-On
-        </button>
+    <div className="flex gap-3">
+      <Button
+        variant="primary"
+        size="lg"
+        className="h-14 flex-1"
+        loading={loading}
+        loadingText="Adding..."
+        leftIcon={<ShoppingBag />}
+        onClick={handleAddToCart}
+      >
+        Add to Cart
+      </Button>
 
-        <button
-          onClick={handleAddToCart}
-          disabled={loading}
-          className="w-full bg-black text-white font-sans text-base sm:text-lg font-medium py-4 sm:py-5 rounded-2xl hover:bg-black/90 transition-colors flex justify-center items-center gap-3 disabled:opacity-50"
-        >
-          <ShoppingBag className="w-5 h-5" />
-          {loading ? 'Adding...' : 'Add to Cart'}
-        </button>
-
-        <button className="w-full border-2 border-black text-black font-sans text-base sm:text-lg font-medium py-4 sm:py-5 rounded-2xl hover:bg-[#f3f3f3] transition-colors flex justify-center items-center gap-3">
-          <Heart className="w-5 h-5" />
-          Wishlist
-        </button>
-      </div>
-    </>
+      <Button
+        variant="secondary"
+        size="lg"
+        className="h-14 flex-1"
+        leftIcon={<Heart />}
+      >
+        Buy Now
+      </Button>
+    </div>
   );
 }

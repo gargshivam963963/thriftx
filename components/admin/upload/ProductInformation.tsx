@@ -65,7 +65,7 @@ const CATEGORY_MEASUREMENTS: Record<
 };
 
 const measurements =
-    CATEGORY_MEASUREMENTS[form.categorySlug] ??
+    // CATEGORY_MEASUREMENTS[form.categorySlug] ??
     CATEGORY_MEASUREMENTS.default;
 
 export default function ProductInformation({

@@ -4,7 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { modalAnimation } from "@/lib/motion";
-import IconButton from "./IconButton";
+import { Button } from "@/components/ui/button";
 
 interface ModalProps {
     open: boolean;
@@ -68,9 +68,13 @@ export default function Modal({
                                     </div>
 
                                     <Dialog.Close asChild>
-                                        <IconButton variant="ghost">
-                                            <X className="h-5 w-5" />
-                                        </IconButton>
+                                        <Button
+                                            variant="ghost"
+                                            size="iconMd"
+                                            aria-label="Close modal"
+                                        >
+                                            <X />
+                                        </Button>
                                     </Dialog.Close>
                                 </div>
 

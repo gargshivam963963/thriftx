@@ -34,33 +34,33 @@ export const buttonVariants = cva(
     "disabled:pointer-events-none",
     "disabled:opacity-50",
 
-    // Loading
+    // SVG
     "[&_svg]:pointer-events-none",
     "[&_svg]:shrink-0",
+    "[&_svg]:h-5",
+    "[&_svg]:w-5",
   ],
   {
     variants: {
       /**
-       * Button Style
+       * Button Variants
        */
       variant: {
-        primary:
-          "bg-black text-white hover:bg-neutral-800",
+        primary: "bg-black text-white hover:bg-neutral-800",
 
-        secondary:
-          "bg-neutral-100 text-neutral-900 hover:bg-neutral-200",
+        secondary: "bg-neutral-100 text-neutral-900 hover:bg-neutral-200",
 
         outline:
           "border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50",
 
-        ghost:
-          "bg-transparent text-neutral-900 hover:bg-neutral-100",
+        ghost: "bg-transparent text-neutral-900 hover:bg-neutral-100",
 
-        danger:
-          "bg-red-600 text-white hover:bg-red-700",
+        glass:
+          "border border-white/30 bg-white/70 text-neutral-900 backdrop-blur-xl shadow-lg hover:bg-white/80",
 
-        success:
-          "bg-green-600 text-white hover:bg-green-700",
+        danger: "bg-red-600 text-white hover:bg-red-700",
+
+        success: "bg-green-600 text-white hover:bg-green-700",
       },
 
       /**
@@ -76,6 +76,18 @@ export const buttonVariants = cva(
         lg: "h-12 px-6 text-base",
 
         xl: "h-14 px-8 text-lg",
+
+        // Icon Sizes
+
+        iconXs: "h-8 w-8 p-0",
+
+        iconSm: "h-9 w-9 p-0",
+
+        iconMd: "h-11 w-11 p-0 flex items-center justify-center",
+
+        iconLg: "h-12 w-12 p-0",
+
+        iconXl: "h-14 w-14 p-0",
       },
 
       /**
@@ -94,7 +106,7 @@ export const buttonVariants = cva(
       },
 
       /**
-       * Elevation
+       * Shadows
        */
       shadow: {
         none: "",
@@ -104,6 +116,8 @@ export const buttonVariants = cva(
         md: "shadow-md",
 
         lg: "shadow-lg",
+
+        xl: "shadow-xl",
       },
     },
 
@@ -113,5 +127,5 @@ export const buttonVariants = cva(
       rounded: "lg",
       shadow: "none",
     },
-  }
+  },
 );

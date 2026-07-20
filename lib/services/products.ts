@@ -21,7 +21,7 @@ export interface Product {
   category: string;
   categorySlug: string;
 
-  gender: "Men" | "Women" | "Unisex" | "Kids";
+  gender: ProductGender;
 
   // Pricing
   price: number;
@@ -30,14 +30,31 @@ export interface Product {
 
   // Measurements
   size: string;
+
+  /**
+   * Required for topwear (T-Shirts, Shirts, Hoodies, Jackets...)
+   */
   chest?: string;
+
+  /**
+   * Required for bottomwear (Jeans, Cargo, Shorts...)
+   */
   waist?: string;
+
+  /**
+   * Optional measurements
+   */
   length?: string;
   inseam?: string;
 
   // Details
   color?: string;
-  material?: string;
+
+  /**
+   * Always required
+   */
+  material: string;
+
   description?: string;
   shippingInfo?: string;
 
@@ -46,9 +63,15 @@ export interface Product {
   images: string[];
 
   // Status
-  status: "draft" | "active" | "sold";
+  status: ProductStatus;
   isActive: boolean;
 }
+
+export type ProductGender = "Men" | "Women" | "Unisex" | "Kids";
+
+export type ProductStatus = "draft" | "active" | "sold";
+
+type AppwriteProductDocument = Omit<Product, "id">;
 
 export interface ProductFilters {
   category?: string;
@@ -61,24 +84,23 @@ export interface ProductFilters {
   limit?: number;
 }
 
-function normalizeProduct(data: any, id?: string): Product {
+function normalizeProduct(
+  data: Partial<AppwriteProductDocument>,
+  id?: string,
+): Product {
   const primaryImage =
     data.primaryImage && !data.primaryImage.startsWith("http")
       ? storage.getFileView(APPWRITE_BUCKET_ID, data.primaryImage).toString()
       : (data.primaryImage ?? "");
 
-  const images =
-    Array.isArray(data.images) && data.images.length > 0
-      ? data.images.map((img: string) =>
+  const images = Array.isArray(data.images)
+    ? data.images
+        .filter(Boolean)
+        .map((img) =>
           img.startsWith("http")
             ? img
             : storage.getFileView(APPWRITE_BUCKET_ID, img).toString(),
         )
-      : primaryImage
-        ? [primaryImage]
-        : [];
-  Array.isArray(data.images) && data.images.length > 0
-    ? data.images
     : primaryImage
       ? [primaryImage]
       : [];
@@ -176,7 +198,7 @@ export async function seedProducts(initialProducts: Omit<Product, "id">[]) {
           inseam: product.inseam ?? "",
 
           color: product.color ?? "",
-          material: product.material ?? "",
+          material: product.material,
 
           description: product.description ?? "",
           shippingInfo: product.shippingInfo ?? "",
@@ -206,9 +228,10 @@ export async function getProducts(
     return [];
   }
 
-  const queries: any[] = [];
-  queries.push(AppwriteQuery.equal("isActive", true));
-  queries.push(AppwriteQuery.equal("status", "active"));
+  const queries = [
+    AppwriteQuery.equal("isActive", true),
+    AppwriteQuery.equal("status", "active"),
+  ];
 
   if (filters.gender) {
     const gender =
@@ -281,7 +304,7 @@ export async function getProducts(
     queries,
   );
 
-  return response.documents.map((doc: any) => {
+  return response.documents.map((doc) => {
     const { $id, ...data } = doc;
 
     return normalizeProduct(data, $id);
@@ -300,10 +323,11 @@ export async function getProductById(id: string): Promise<Product | null> {
       id,
     );
 
-    const { $id, ...data } = doc as any;
+    const { $id, ...data } = doc;
 
     return normalizeProduct(data, $id);
-  } catch {
+  } catch (error) {
+    console.error("getProductById:", error);
     return null;
   }
 }
@@ -335,9 +359,9 @@ export async function getBrands(): Promise<string[]> {
     limit: 500,
   });
 
-  return [...new Set(products.map((p) => p.brand))]
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b));
+  return [...new Set(products.map((p) => p.brand.trim()).filter(Boolean))].sort(
+    (a, b) => a.localeCompare(b),
+  );
 }
 
 const ProductService = {

@@ -1,6 +1,7 @@
 "use client";
 
 import { X, Star } from "lucide-react";
+import Image from "next/image";
 
 interface ImageCardProps {
     preview: string;
@@ -22,10 +23,13 @@ export default function ImageCard({
     return (
         <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
 
-            <img
+            <Image
                 src={preview}
-                alt={`Product ${index + 1}`}
-                className="aspect-square w-full object-cover"
+                alt=""
+                width={56}
+                height={56}
+                className="..."
+                unoptimized
             />
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />

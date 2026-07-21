@@ -27,26 +27,22 @@ const CartContext = createContext<CartContextType>({
 
 const STORAGE_KEY = 'thriftx_cart';
 
-function parsePrice(price: string): number {
-    return Number(price.replace(/[^\d.]/g, '')) || 0;
-}
-
 export function CartProvider({ children }: { children: React.ReactNode }) {
-    const [cartItems, setCartItems] = useState<CartItem[]>([]);
-
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
+    const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+        if (typeof window === "undefined") {
+            return [];
+        }
 
         try {
             const stored = window.localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                const parsed = JSON.parse(stored) as CartItem[];
-                setCartItems(parsed);
-            }
+
+            return stored
+                ? (JSON.parse(stored) as CartItem[])
+                : [];
         } catch {
-            setCartItems([]);
+            return [];
         }
-    }, []);
+    });
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -90,7 +86,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
 
     const subtotal = useMemo(
-        () => cartItems.reduce((sum, item) => sum + parsePrice(item.price) * item.quantity, 0),
+        () =>
+            cartItems.reduce(
+                (sum, item) =>
+                    sum + item.price * item.quantity,
+                0
+            ),
         [cartItems]
     );
 

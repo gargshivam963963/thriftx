@@ -6,7 +6,7 @@ export interface UploadProgress {
   total: number;
   current: number;
   percentage: number;
-  currentSku?: string;
+  currentSku: string;
 }
 
 export interface UploadResult {

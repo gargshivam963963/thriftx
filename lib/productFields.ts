@@ -8,6 +8,7 @@ export type ProductField = {
   section: "product" | "pricing" | "details" | "measurements" | "description";
 
   ai?: boolean;
+  required?: boolean;
   defaultValue?: string;
   placeholder?: string;
   options?: string[];

@@ -141,8 +141,10 @@ export default function FolderUploader({
                     hidden
                     type="file"
                     multiple
-                    webkitdirectory=""
-                    directory=""
+                    {...({
+                        webkitdirectory: "",
+                        directory: "",
+                    } as Record<string, string>)}
                     onChange={(e) => {
                         console.log("FOLDER INPUT");
                         console.log(e.target.files);

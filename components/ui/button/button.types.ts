@@ -1,7 +1,5 @@
-import type {
-  ButtonHTMLAttributes,
-  ReactNode,
-} from "react";
+import type { ReactNode } from "react";
+import type { HTMLMotionProps } from "framer-motion";
 import type { VariantProps } from "class-variance-authority";
 
 import { buttonVariants } from "./button.styles";
@@ -13,8 +11,7 @@ import { buttonVariants } from "./button.styles";
  * design-system specific variants and utilities.
  */
 export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends HTMLMotionProps<"button">, VariantProps<typeof buttonVariants> {
   /**
    * Displays a loading spinner and disables interaction.
    */

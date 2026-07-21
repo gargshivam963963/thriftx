@@ -107,7 +107,12 @@ export default function BulkUploadPage() {
                 products,
 
                 onProgress(progressData) {
-                    setProgress(progressData);
+                    setProgress({
+                        current: progressData.current,
+                        total: progressData.total,
+                        percentage: progressData.percentage,
+                        currentSku: progressData.currentSku ?? "",
+                    });
                 },
             });
         } catch (error) {

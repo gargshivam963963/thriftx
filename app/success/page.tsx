@@ -54,7 +54,7 @@ export default function SuccessPage() {
                 <div className="mt-8 space-y-3">
 
                     <Link
-                        // href="/orders"
+                        href="/orders"
                         className="flex h-12 items-center justify-center rounded-xl bg-black text-white font-medium transition active:scale-[0.98] hover:bg-neutral-800"
                     >
                         View Orders

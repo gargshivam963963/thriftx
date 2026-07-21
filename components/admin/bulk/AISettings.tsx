@@ -46,18 +46,19 @@ export default function AISettings({
     const [selected, setSelected] = useState<string[]>([]);
 
     useEffect(() => {
-        const saved =
-            localStorage.getItem(
-                "bulk-ai-fields"
-            );
+        const saved = localStorage.getItem("bulk-ai-fields");
 
-        if (saved) {
-            setSelected(JSON.parse(saved));
-        } else {
-            setSelected(
-                OPTIONS.map((i) => i.id)
-            );
-        }
+        queueMicrotask(() => {
+            if (saved) {
+                try {
+                    setSelected(JSON.parse(saved));
+                } catch {
+                    setSelected(OPTIONS.map((i) => i.id));
+                }
+            } else {
+                setSelected(OPTIONS.map((i) => i.id));
+            }
+        });
     }, []);
 
     useEffect(() => {

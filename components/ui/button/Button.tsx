@@ -117,7 +117,7 @@ export const Button = forwardRef<
                             </span>
                         )}
 
-                        <span>{children}</span>
+                        {children}
 
                         {rightIcon && (
                             <span

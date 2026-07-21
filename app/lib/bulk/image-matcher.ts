@@ -92,8 +92,7 @@ export function matchImages(products: BulkProduct[], files: File[]) {
     if (matched.length === 0) {
       errors.push("No images found.");
     }
-
-    return {
+    const updatedProduct: BulkProduct = {
       ...product,
 
       imageFiles: matched,
@@ -105,5 +104,7 @@ export function matchImages(products: BulkProduct[], files: File[]) {
 
       errors,
     };
+
+    return updatedProduct;
   });
 }

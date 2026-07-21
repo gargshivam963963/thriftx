@@ -1,5 +1,7 @@
 "use client";
 
+import type { HTMLAttributes } from "react";
+
 import { cn } from "@/lib/utils";
 
 interface PageSkeletonProps {
@@ -10,17 +12,20 @@ interface PageSkeletonProps {
     className?: string;
 }
 
+interface SkeletonProps
+    extends HTMLAttributes<HTMLDivElement> { }
+
 function Skeleton({
     className,
-}: {
-    className?: string;
-}) {
+    ...props
+}: SkeletonProps) {
     return (
         <div
             className={cn(
                 "animate-pulse rounded-2xl bg-neutral-200",
                 className
             )}
+            {...props}
         />
     );
 }

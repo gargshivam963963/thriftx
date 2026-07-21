@@ -7,6 +7,7 @@ import {
     useReactTable,
     createColumnHelper,
 } from "@tanstack/react-table";
+import Image from "next/image";
 
 export interface BulkPreviewProduct {
     sku: string;
@@ -82,9 +83,12 @@ export default function PreviewTable({
                 header: "Image",
 
                 cell: (info) => (
-                    <img
+                    <Image
                         src={info.getValue()}
                         alt=""
+                        width={56}
+                        height={56}
+                        unoptimized
                         className="h-14 w-14 rounded-lg object-cover"
                     />
                 ),

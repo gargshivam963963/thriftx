@@ -236,8 +236,6 @@ export default function ProductGallery({
     }, [fullscreen]);
 
     useEffect(() => {
-        setIsLoaded(false);
-
         const preload = (
             src?: string
         ) => {
@@ -285,7 +283,7 @@ export default function ProductGallery({
 
         transition: {
             duration: 0.35,
-            ease: "easeOut",
+            ease: "easeOut" as const,
         },
     };
 
@@ -407,24 +405,38 @@ export default function ProductGallery({
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={currentImage}
-                                {...imageAnimation}
+                                initial={{
+                                    opacity: 0,
+                                    scale: 0.96,
+                                }}
+                                animate={{
+                                    opacity: 1,
+                                    scale: 1,
+                                }}
+                                exit={{
+                                    opacity: 0,
+                                    scale: 1.04,
+                                }}
+                                transition={{
+                                    duration: 0.35,
+                                }}
                                 className="relative"
                             >
                                 <Image
+                                    key={currentImage}
                                     src={currentImage}
                                     alt={title}
                                     width={1600}
                                     height={2000}
                                     priority
                                     draggable={false}
-                                    onLoad={() => setIsLoaded(true)}
+                                    onLoadingComplete={() => setIsLoaded(true)}
+                                    className="aspect-[6/5] w-full select-none object-contain will-change-transform"
                                     style={{
                                         transformOrigin,
                                         transform: `scale(${zoomed ? zoomScale : 1})`,
-                                        transition:
-                                            "transform .28s cubic-bezier(.22,.61,.36,1)",
+                                        transition: "transform .28s cubic-bezier(.22,.61,.36,1)",
                                     }}
-                                    className="aspect-[6/5] w-full select-none object-contain will-change-transform"
                                 />
                             </motion.div>
                         </AnimatePresence>

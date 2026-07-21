@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Button from "./Button";
+import { Button } from "@/components/ui/button";
 
 interface ErrorStateProps {
     title?: string;

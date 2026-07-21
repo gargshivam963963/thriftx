@@ -41,15 +41,17 @@ export default function AdminUploadPage() {
         useState<string[]>(DEFAULT_AI_FIELDS);
 
     useEffect(() => {
-        const saved = localStorage.getItem("ai-fields");
+        const saved = localStorage.getItem("...");
 
-        if (saved) {
+        if (!saved) return;
+
+        queueMicrotask(() => {
             try {
                 setSelectedAiFields(JSON.parse(saved));
             } catch {
-                // Ignore invalid localStorage data
+                // ignore invalid data
             }
-        }
+        });
     }, []);
 
     useEffect(() => {

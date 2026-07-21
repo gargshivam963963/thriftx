@@ -196,9 +196,9 @@ export default function Cart() {
                   cartProducts.map((item) => ({
                     id: item.id,
                     title: item.title,
-                    image: item.image,
+                    image: item.primaryImage,
                     brand: item.brand,
-                    size: item.measurements?.size ?? "",
+                    size: item.size,
                     quantity: item.quantity,
                     price: item.price,
                   }))
@@ -294,7 +294,7 @@ export default function Cart() {
                   className="w-full sm:w-28 aspect-[1/1.25] bg-[#eeeeee] rounded-xl overflow-hidden shrink-0 block"
                 >
                   <Image
-                    src={item.image || "/assets/placeholder.png"}
+                    src={item.primaryImage || "/assets/placeholder.png"}
                     alt={item.title}
                     width={128}
                     height={160}

@@ -106,7 +106,7 @@ function normalizeProduct(
       : [];
 
   return {
-    id: id ?? data.id ?? "",
+    id: id ?? "",
 
     title: data.title ?? "",
     brand: data.brand ?? "",
@@ -119,14 +119,8 @@ function normalizeProduct(
 
     price: Number(data.price ?? 0),
     retailPrice:
-      data.retailPrice !== undefined &&
-      data.retailPrice !== null &&
-      data.retailPrice !== ""
-        ? Number(data.retailPrice)
-        : undefined,
-
+      data.retailPrice != null ? Number(data.retailPrice) : undefined,
     condition: data.condition ?? "",
-
     size: data.size ?? "",
     chest: data.chest ?? "",
     waist: data.waist ?? "",
@@ -307,7 +301,7 @@ export async function getProducts(
   return response.documents.map((doc) => {
     const { $id, ...data } = doc;
 
-    return normalizeProduct(data, $id);
+    return normalizeProduct(data as Partial<AppwriteProductDocument>, $id);
   });
 }
 
@@ -325,7 +319,7 @@ export async function getProductById(id: string): Promise<Product | null> {
 
     const { $id, ...data } = doc;
 
-    return normalizeProduct(data, $id);
+    return normalizeProduct(data as Partial<AppwriteProductDocument>, $id);
   } catch (error) {
     console.error("getProductById:", error);
     return null;
@@ -351,7 +345,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
   const { $id, ...data } = doc;
 
-  return normalizeProduct(data, $id);
+  return normalizeProduct(data as Partial<AppwriteProductDocument>, $id);
 }
 
 export async function getBrands(): Promise<string[]> {

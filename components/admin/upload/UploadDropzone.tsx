@@ -1,6 +1,7 @@
 "use client";
 
 import { Upload, Sparkles, ImagePlus } from "lucide-react";
+import Image from "next/image";
 
 interface UploadDropzoneProps {
     images: File[];
@@ -164,29 +165,18 @@ export default function UploadDropzone({
                                 bg-neutral-100
                             "
                         >
-
-                            <img
+                            <Image
                                 src={preview}
                                 alt={`Preview ${index + 1}`}
-                                className="
-                                    aspect-square
-                                    h-full
-                                    w-full
-                                    object-cover
-                                    transition
-                                    duration-300
-                                    hover:scale-105
-                                "
+                                width={300}
+                                height={300}
+                                unoptimized
+                                className="aspect-square h-full w-full object-cover transition duration-300 hover:scale-105"
                             />
-
                         </div>
-
                     ))}
-
                 </div>
-
             )}
-
         </section>
     );
 }

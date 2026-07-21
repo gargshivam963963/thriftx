@@ -23,6 +23,7 @@ import ProductActions from "@/app/product/[id]/ProductActions";
 import { Button } from "@/components/ui/button";
 import ShareButton from "@/components/product/ShareButton";
 import WishlistButton from "@/components/product/WishlistButton";
+import DetailRow from "@/components/ui/DetailRow";
 
 function getRetailPrice(price?: number): string {
   if (price == null) return "";
@@ -74,26 +75,6 @@ export default async function ProductDetail({
   const savings = retail
     ? retail - product.price
     : null;
-
-  function Row({
-    label,
-    value,
-  }: {
-    label: string;
-    value: string;
-  }) {
-    return (
-      <div className="flex items-center justify-between border-b border-neutral-100 py-[10px] last:border-none">
-        <span className="text-[13px] font-medium text-neutral-500">
-          {label}
-        </span>
-
-        <span className="text-[15px] font-semibold text-neutral-900">
-          {value}
-        </span>
-      </div>
-    );
-  }
 
   return (
     <Section className="pt-8 pb-16">
@@ -326,21 +307,21 @@ export default async function ProductDetail({
 
               <div className="space-y-2">
                 {product.size && (
-                  <Row
+                  <DetailRow
                     label="Fits Like"
                     value={product.size}
                   />
                 )}
 
                 {product.chest && (
-                  <Row
+                  <DetailRow
                     label="Chest"
                     value={`${product.chest}"`}
                   />
                 )}
 
                 {product.color && (
-                  <Row
+                  <DetailRow
                     label="Color"
                     value={product.color}
                   />
@@ -359,35 +340,35 @@ export default async function ProductDetail({
                     <div className="space-y-3 pt-2">
 
                       {product.waist && (
-                        <Row
+                        <DetailRow
                           label="Waist"
                           value={`${product.waist}"`}
                         />
                       )}
 
                       {product.length && (
-                        <Row
+                        <DetailRow
                           label="Length"
                           value={`${product.length}"`}
                         />
                       )}
 
                       {product.inseam && (
-                        <Row
+                        <DetailRow
                           label="Inseam"
                           value={`${product.inseam}"`}
                         />
                       )}
 
                       {product.material && (
-                        <Row
+                        <DetailRow
                           label="Material"
                           value={product.material}
                         />
                       )}
 
                       {product.condition && (
-                        <Row
+                        <DetailRow
                           label="Condition"
                           value={product.condition}
                         />

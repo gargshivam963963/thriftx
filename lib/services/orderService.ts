@@ -6,16 +6,17 @@ import {
   APPWRITE_DATABASE_ID,
   APPWRITE_ORDERS_COLLECTION_ID,
 } from "@/lib/appwrite";
-import type { Order } from "@/lib/types/order";
+import type { Order, PaymentMethod } from "@/lib/types/order";
 
 export interface OrderData {
   subtotal: number;
   shipping: number;
   total: number;
 
-  paymentId: string;
-  orderId: string;
-  signature: string;
+  paymentMethod: PaymentMethod;
+  paymentId?: string;
+  orderId?: string;
+  signature?: string;
 
   firstName: string;
   lastName: string;
@@ -45,11 +46,12 @@ export async function createOrder(data: OrderData) {
       shipping: data.shipping,
       total: data.total,
 
-      paymentId: data.paymentId,
-      orderId: data.orderId,
-      signature: data.signature,
+      paymentMethod: data.paymentMethod,
+      paymentId: data.paymentId ?? "",
+      orderId: data.orderId ?? "",
+      signature: data.signature ?? "",
 
-      status: "Pending",
+      status: data.paymentMethod === "cod" ? "Pending (COD)" : "Pending",
 
       firstName: data.firstName,
       lastName: data.lastName,
@@ -98,6 +100,7 @@ export async function getUserOrders(): Promise<Order[]> {
     postalCode: doc.postalCode,
     country: doc.country,
 
+    paymentMethod: doc.paymentMethod ?? "razorpay",
     paymentId: doc.paymentId,
     signature: doc.signature,
 

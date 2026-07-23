@@ -1,5 +1,3 @@
-// components/checkout/address/AddressList.tsx
-
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -11,13 +9,9 @@ import AddressCard from "@/components/checkout/address/AddressCard";
 interface AddressListProps {
     addresses: Address[];
     selectedId?: string;
-
     onSelect: (address: Address) => void | Promise<void>;
-
     onEdit: (address: Address) => void | Promise<void>;
-
     onDelete: (address: Address) => void | Promise<void>;
-
     onAdd: () => void;
 }
 
@@ -34,24 +28,24 @@ export default function AddressList({
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="rounded-3xl border border-dashed border-zinc-300 bg-zinc-50 p-12 text-center"
+                className="flex flex-col items-center rounded-3xl border border-dashed border-zinc-300 bg-zinc-50 p-10 text-center"
             >
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-black text-white">
-                    <MapPinPlus size={28} />
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 text-white shadow-md">
+                    <MapPinPlus size={26} />
                 </div>
 
-                <h3 className="mt-6 text-xl font-semibold text-zinc-900">
+                <h3 className="mt-5 font-serif text-xl font-semibold text-zinc-900">
                     No Saved Addresses
                 </h3>
 
-                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-zinc-500">
-                    Add your first delivery address to continue your checkout.
+                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
+                    Add your first delivery address to continue with your checkout.
                 </p>
 
                 <button
                     type="button"
                     onClick={onAdd}
-                    className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-black px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
+                    className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zinc-900 px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
                 >
                     <Plus size={18} />
                     Add Address
@@ -61,48 +55,40 @@ export default function AddressList({
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-5">
+            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h3 className="text-lg font-semibold text-zinc-900">
                         Saved Addresses
                     </h3>
-
                     <p className="mt-1 text-sm text-zinc-500">
                         Choose where you want your order delivered.
                     </p>
                 </div>
 
-                <button
+                <motion.button
                     type="button"
                     onClick={onAdd}
-                    className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium transition hover:border-black hover:bg-black hover:text-white"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white"
                 >
                     <Plus size={16} />
-                    Add New
-                </button>
+                    <span className="hidden sm:inline">Add New</span>
+                </motion.button>
             </div>
 
+            {/* Address Cards */}
             <AnimatePresence mode="popLayout">
                 {addresses.map((address) => (
                     <motion.div
                         key={address.$id}
                         layout
-                        initial={{
-                            opacity: 0,
-                            y: 12,
-                        }}
-                        animate={{
-                            opacity: 1,
-                            y: 0,
-                        }}
-                        exit={{
-                            opacity: 0,
-                            y: -12,
-                        }}
-                        transition={{
-                            duration: 0.25,
-                        }}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12, scale: 0.95 }}
+                        transition={{ duration: 0.25 }}
                     >
                         <AddressCard
                             address={address}
@@ -115,14 +101,18 @@ export default function AddressList({
                 ))}
             </AnimatePresence>
 
-            <button
+            {/* Add Another Button */}
+            <motion.button
                 type="button"
                 onClick={onAdd}
-                className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-zinc-300 bg-zinc-50 py-5 text-sm font-medium text-zinc-700 transition hover:border-black hover:bg-black hover:text-white"
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.99 }}
+                className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-zinc-300 bg-zinc-50 py-4 text-sm font-medium text-zinc-600 transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white"
             >
                 <Plus size={18} />
                 Add Another Address
-            </button>
+            </motion.button>
         </div>
     );
 }
+

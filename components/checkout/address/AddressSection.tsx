@@ -2,18 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-    ChevronDown,
-    ChevronRight,
-    MapPin,
-    Plus,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, MapPin, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import type {
-    Address,
-    CreateAddressPayload,
-} from "@/lib/types/address";
+import type { Address, CreateAddressPayload } from "@/lib/types/address";
 
 import AddressEmpty from "./AddressEmpty";
 import AddressForm from "./AddressForm";
@@ -45,28 +37,11 @@ export default function AddressSection({
 }: AddressSectionProps) {
     const [viewOverride, setViewOverride] = useState<ViewState | null>(null);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [addressToDelete, setAddressToDelete] =
-        useState<Address | null>(null);
-
-    const handleDeleteClick = (address: Address) => {
-        setAddressToDelete(address);
-        setShowDeleteDialog(true);
-    };
 
     const view = useMemo<ViewState>(() => {
-        if (viewOverride) {
-            return viewOverride;
-        }
-
-        if (addresses.length === 0) {
-            return "empty";
-        }
-
-        if (selectedAddress) {
-            return "summary";
-        }
-
+        if (viewOverride) return viewOverride;
+        if (addresses.length === 0) return "empty";
+        if (selectedAddress) return "summary";
         return "list";
     }, [addresses.length, selectedAddress, viewOverride]);
 
@@ -79,7 +54,7 @@ export default function AddressSection({
     const handleCancel = () => {
         setEditingAddress(null);
         setViewOverride(
-            selectedAddress ? "summary" : addresses.length > 0 ? "list" : "empty",
+            selectedAddress ? "summary" : addresses.length > 0 ? "list" : "empty"
         );
     };
 
@@ -93,22 +68,29 @@ export default function AddressSection({
         setViewOverride("form");
     };
 
+    const handleDelete = async (address: Address) => {
+        await onDelete(address);
+        if (selectedAddress?.$id === address.$id) {
+            setViewOverride("list");
+        }
+    };
+
     return (
         <motion.section
             layout
-            transition={{ duration: 0.35 }}
-            className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm"
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm"
         >
             <button
                 type="button"
                 onClick={onOpen}
-                className="flex w-full items-center justify-between px-6 py-5"
+                className="flex w-full items-center justify-between px-5 py-4 sm:px-6 sm:py-5"
             >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                     <div
-                        className={`flex h-12 w-12 items-center justify-center rounded-2xl transition ${open
-                            ? "bg-black text-white"
-                            : "bg-neutral-100 text-neutral-600"
+                        className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl transition-all duration-300 ${open
+                                ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/20"
+                                : "bg-zinc-100 text-zinc-600"
                             }`}
                     >
                         <MapPin size={20} />
@@ -116,26 +98,28 @@ export default function AddressSection({
 
                     <div className="text-left">
                         <div className="flex items-center gap-2">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-900 text-xs font-bold text-white">
+                            <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-zinc-900 text-[10px] sm:text-xs font-bold text-white">
                                 1
                             </span>
-                            <h2 className="text-lg font-semibold text-neutral-900">
+                            <h2 className="text-base sm:text-lg font-semibold text-zinc-900">
                                 Delivery Address
                             </h2>
                         </div>
-                        <p className="mt-1 text-sm text-neutral-500">
+                        <p className="mt-0.5 text-xs sm:text-sm text-zinc-500">
                             {selectedAddress
-                                ? "Delivering to this address"
+                                ? `${selectedAddress.fullName}, ${selectedAddress.city}`
                                 : "Choose where your order should arrive"}
                         </p>
                     </div>
                 </div>
 
-                {open ? (
-                    <ChevronDown className="text-neutral-500" size={22} />
-                ) : (
-                    <ChevronRight className="text-neutral-500" size={22} />
-                )}
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 transition group-hover:bg-zinc-200">
+                    {open ? (
+                        <ChevronDown size={18} className="text-zinc-500" />
+                    ) : (
+                        <ChevronRight size={18} className="text-zinc-500" />
+                    )}
+                </div>
             </button>
 
             <AnimatePresence initial={false}>
@@ -146,144 +130,111 @@ export default function AddressSection({
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden border-t border-neutral-100"
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="overflow-hidden border-t border-zinc-100"
                     >
-                        <div className="p-6">
-                            {view === "empty" && (
-                                <AddressEmpty
-                                    onAdd={() => {
-                                        setEditingAddress(null);
-                                        setViewOverride("form");
-                                    }}
-                                />
-                            )}
-
-                            {view === "form" && (
-                                <AddressForm
-                                    initialData={editingAddress}
-                                    onCancel={handleCancel}
-                                    onSave={handleSave}
-                                />
-                            )}
-
-                            {view === "summary" && selectedAddress && (
-                                <div className="space-y-5">
-                                    <AddressSummary
-                                        address={selectedAddress}
-                                        onChange={() => setViewOverride("list")}
+                        <div className="p-5 sm:p-6">
+                            <AnimatePresence mode="wait">
+                                {view === "empty" && (
+                                    <AddressEmpty
+                                        key="empty"
+                                        onAdd={() => {
+                                            setEditingAddress(null);
+                                            setViewOverride("form");
+                                        }}
                                     />
-                                    <Button
-                                        type="button"
-                                        onClick={onContinue}
-                                        fullWidth
-                                        size="lg"
-                                        className="rounded-2xl"
-                                    >
-                                        Continue to Shipping
-                                    </Button>
-                                </div>
-                            )}
+                                )}
 
-                            {view === "list" && (
-                                <AddressList
-                                    addresses={addresses}
-                                    selectedId={selectedAddress?.$id}
-                                    onSelect={handleSelect}
-                                    onAdd={() => {
-                                        setEditingAddress(null);
-                                        setViewOverride("form");
-                                    }}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDeleteClick}
-                                />
-                            )}
+                                {view === "form" && (
+                                    <motion.div
+                                        key="form"
+                                        initial={{ opacity: 0, y: 12 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -12 }}
+                                        transition={{ duration: 0.25 }}
+                                    >
+                                        <AddressForm
+                                            initialData={editingAddress}
+                                            onCancel={handleCancel}
+                                            onSave={handleSave}
+                                        />
+                                    </motion.div>
+                                )}
+
+                                {view === "summary" && selectedAddress && (
+                                    <motion.div
+                                        key="summary"
+                                        initial={{ opacity: 0, y: 12 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -12 }}
+                                        transition={{ duration: 0.25 }}
+                                        className="space-y-5"
+                                    >
+                                        <AddressSummary
+                                            address={selectedAddress}
+                                            onChange={() => setViewOverride("list")}
+                                        />
+                                        <Button
+                                            type="button"
+                                            onClick={onContinue}
+                                            fullWidth
+                                            size="lg"
+                                            className="rounded-2xl"
+                                        >
+                                            Continue to Shipping
+                                        </Button>
+                                    </motion.div>
+                                )}
+
+                                {view === "list" && (
+                                    <motion.div
+                                        key="list"
+                                        initial={{ opacity: 0, y: 12 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -12 }}
+                                        transition={{ duration: 0.25 }}
+                                    >
+                                        <AddressList
+                                            addresses={addresses}
+                                            selectedId={selectedAddress?.$id}
+                                            onSelect={handleSelect}
+                                            onAdd={() => {
+                                                setEditingAddress(null);
+                                                setViewOverride("form");
+                                            }}
+                                            onEdit={handleEdit}
+                                            onDelete={handleDelete}
+                                        />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
             {!open && selectedAddress && (
-                <div className="border-t border-neutral-100 px-6 py-5">
-                    <AddressSummary
-                        compact
-                        address={selectedAddress}
-                        onChange={onOpen}
-                    />
+                <div className="border-t border-zinc-100 px-5 py-4 sm:px-6 sm:py-5">
+                    <AddressSummary compact address={selectedAddress} onChange={onOpen} />
                 </div>
             )}
 
             {!open && !selectedAddress && addresses.length === 0 && (
-                <div className="border-t border-neutral-100 px-6 py-5">
+                <div className="border-t border-zinc-100 px-5 py-4 sm:px-6 sm:py-5">
                     <button
                         type="button"
                         onClick={() => {
                             onOpen();
                             setViewOverride("form");
                         }}
-                        className="inline-flex items-center gap-2 text-sm font-medium text-black transition hover:opacity-70"
+                        className="inline-flex items-center gap-2 text-sm font-medium text-zinc-900 transition hover:opacity-70"
                     >
                         <Plus size={16} />
                         Add Address
                     </button>
-
-                    <AnimatePresence>
-                        {showDeleteDialog && (
-                            <motion.div
-                                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                            >
-                                <motion.div
-                                    initial={{ scale: 0.95, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    exit={{ scale: 0.95, opacity: 0 }}
-                                    className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"
-                                >
-                                    <h2 className="text-xl font-semibold text-zinc-900">
-                                        Delete Address?
-                                    </h2>
-
-                                    <p className="mt-3 text-sm leading-6 text-zinc-500">
-                                        Are you sure you want to delete this address?
-                                        This action cannot be undone.
-                                    </p>
-
-                                    <div className="mt-8 flex justify-end gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setShowDeleteDialog(false);
-                                                setAddressToDelete(null);
-                                            }}
-                                            className="rounded-xl border border-zinc-300 px-5 py-2.5 font-medium hover:bg-zinc-100"
-                                        >
-                                            Cancel
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={async () => {
-                                                if (!addressToDelete) return;
-
-                                                // We'll call the actual delete function here
-                                                // after wiring onDelete from CheckoutAccordion.
-
-                                                setShowDeleteDialog(false);
-                                                setAddressToDelete(null);
-                                            }}
-                                            className="rounded-xl bg-red-600 px-5 py-2.5 font-medium text-white hover:bg-red-700"
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
                 </div>
             )}
         </motion.section>
     );
 }
+

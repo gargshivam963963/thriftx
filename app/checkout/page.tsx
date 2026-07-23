@@ -3,8 +3,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Check, CreditCard, ShoppingBag } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+    Check,
+    CreditCard,
+    IndianRupee,
+    ShoppingBag,
+    ArrowRight,
+    ShieldCheck,
+    Package,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import CheckoutHeader from "@/components/checkout/CheckoutHeader";
@@ -26,6 +34,7 @@ import {
 } from "@/lib/services/cartProducts";
 import { createOrder } from "@/lib/services/orderService";
 import type { Address, CreateAddressPayload } from "@/lib/types/address";
+import type { PaymentMethod } from "@/lib/types/order";
 
 declare global {
     interface Window {
@@ -36,10 +45,26 @@ declare global {
 }
 
 const orderNotes = [
-    "Every thrift piece is individually quality checked.",
-    "Items are professionally steamed and packed.",
-    "Tracking ID will be shared after dispatch.",
-    "Returns follow THRIFTX return policy.",
+    {
+        icon: Check,
+        title: "Quality Checked",
+        description: "Every thrift piece is individually inspected for quality.",
+    },
+    {
+        icon: Package,
+        title: "Professionally Packed",
+        description: "Items are steamed, folded, and packed with care.",
+    },
+    {
+        icon: Check,
+        title: "Tracking Included",
+        description: "Tracking ID will be shared via email/SMS after dispatch.",
+    },
+    {
+        icon: ShieldCheck,
+        title: "Easy Returns",
+        description: "Returns follow THRIFTX return policy within 7 days.",
+    },
 ];
 
 function parsePrice(value: number | string) {
@@ -50,18 +75,71 @@ function splitFullName(fullName: string) {
     const parts = fullName.trim().split(/\s+/);
     const firstName = parts[0] ?? "";
     const lastName = parts.slice(1).join(" ");
-
     return { firstName, lastName };
 }
 
 function formatDeliveryAddress(address: Address) {
-    return [
-        address.addressLine1,
-        address.addressLine2,
-        address.landmark,
-    ]
+    return [address.addressLine1, address.addressLine2, address.landmark]
         .filter(Boolean)
         .join(", ");
+}
+
+// Skeleton component for loading state
+function CheckoutSkeleton() {
+    return (
+        <main className="min-h-screen bg-zinc-50">
+            <Container className="py-5 sm:py-8">
+                <div className="space-y-4 sm:space-y-6">
+                    {/* Header skeleton */}
+                    <div className="h-32 sm:h-48 animate-pulse rounded-2xl sm:rounded-[32px] bg-zinc-200" />
+
+                    {/* Step indicator skeleton */}
+                    <div className="hidden sm:flex gap-3">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="h-8 w-24 animate-pulse rounded-full bg-zinc-200" />
+                        ))}
+                    </div>
+
+                    {/* Content skeleton */}
+                    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+                        <div className="space-y-4">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-28 sm:h-36 animate-pulse rounded-3xl bg-zinc-200" />
+                            ))}
+                        </div>
+                        <div className="hidden xl:block h-[520px] animate-pulse rounded-[28px] bg-zinc-200" />
+                    </div>
+                </div>
+            </Container>
+        </main>
+    );
+}
+
+// Empty cart UI
+function EmptyCheckout() {
+    return (
+        <main className="min-h-screen bg-zinc-50">
+            <Container className="flex min-h-[70vh] flex-col items-center justify-center py-16 text-center">
+                <div className="rounded-full bg-zinc-100 p-5 sm:p-6">
+                    <ShoppingBag className="h-8 w-8 sm:h-10 sm:w-10 text-zinc-400" />
+                </div>
+                <h1 className="mt-5 sm:mt-6 font-serif text-2xl sm:text-3xl font-semibold text-zinc-900">
+                    Nothing to checkout
+                </h1>
+                <p className="mt-3 max-w-md text-sm leading-6 text-zinc-500">
+                    Your cart is empty. Add some curated thrift pieces before completing
+                    your order.
+                </p>
+                <Link
+                    href="/shop"
+                    className="mt-8 inline-flex h-12 items-center justify-center rounded-2xl bg-zinc-900 px-8 text-sm font-medium text-white transition hover:opacity-90 shadow-lg shadow-zinc-900/20"
+                >
+                    Browse Shop
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Container>
+        </main>
+    );
 }
 
 export default function CheckoutPage() {
@@ -83,39 +161,31 @@ export default function CheckoutPage() {
 
     const [activeStep, setActiveStep] = useState<CheckoutStep>("address");
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
-        null,
+        null
     );
-    const [shippingMethod, setShippingMethod] =
-        useState<ShippingMethod | null>(null);
+    const [shippingMethod, setShippingMethod] = useState<ShippingMethod | null>(
+        null
+    );
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
+        null
+    );
 
     const selectedAddress = useMemo<Address | null>(() => {
-        if (!addresses.length) {
-            return null;
-        }
-
+        if (!addresses.length) return null;
         if (selectedAddressId) {
-            return (
-                addresses.find((address) => address.$id === selectedAddressId) ??
-                null
-            );
+            return addresses.find((address) => address.$id === selectedAddressId) ?? null;
         }
-
         return addresses.find((address) => address.isDefault) ?? addresses[0];
     }, [addresses, selectedAddressId]);
 
     const loadCart = useCallback(async () => {
         try {
             setCartLoading(true);
-
-            if (authLoading) {
-                return;
-            }
-
+            if (authLoading) return;
             if (!user) {
                 setCartItems([]);
                 return;
             }
-
             const products = await getCartProducts();
             setCartItems(products);
         } catch (error) {
@@ -131,10 +201,7 @@ export default function CheckoutPage() {
     }, [loadCart]);
 
     useEffect(() => {
-        if (authLoading) {
-            return;
-        }
-
+        if (authLoading) return;
         if (!user) {
             router.replace("/login?redirect=/checkout");
         }
@@ -148,12 +215,12 @@ export default function CheckoutPage() {
 
     const shippingCost = shippingMethod?.price ?? 0;
     const total = subtotal + shippingCost;
+    const canPay = Boolean(cartItems.length > 0 && selectedAddress && shippingMethod);
 
-    const canPay = Boolean(
-        cartItems.length > 0 && selectedAddress && shippingMethod,
-    );
-
-    const handleAddressSave = async (data: CreateAddressPayload, addressId?: string) => {
+    const handleAddressSave = async (
+        data: CreateAddressPayload,
+        addressId?: string
+    ) => {
         if (addressId) {
             await updateExistingAddress(addressId, data);
             setSelectedAddressId(addressId);
@@ -167,42 +234,64 @@ export default function CheckoutPage() {
 
     const handleAddressDelete = async (address: Address) => {
         await deleteExistingAddress(address.$id);
-
         if (selectedAddressId === address.$id) {
             setSelectedAddressId(null);
         }
     };
 
-    const handlePay = async () => {
-        if (!user) {
-            toast.error("Please login to continue.");
-            router.push("/login?redirect=/checkout");
-            return;
-        }
+    async function handleCODOrder() {
+        if (!user || !selectedAddress || !shippingMethod) return;
 
-        if (!cartItems.length) {
-            toast.error("Your cart is empty.");
-            router.push("/cart");
-            return;
-        }
+        try {
+            setPaymentLoading(true);
 
-        if (!selectedAddress) {
-            toast.error("Please select a delivery address.");
-            setActiveStep("address");
-            return;
-        }
+            const products = JSON.stringify(
+                cartItems.map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    price: item.price,
+                    quantity: item.quantity,
+                    image: item.primaryImage,
+                    size: item.size,
+                }))
+            );
 
-        if (!shippingMethod) {
-            toast.error("Please select a shipping method.");
-            setActiveStep("shipping");
-            return;
+            const { firstName, lastName } = splitFullName(selectedAddress.fullName);
+
+            await createOrder({
+                subtotal,
+                shipping: shippingCost,
+                total,
+                paymentMethod: "cod",
+                firstName,
+                lastName,
+                phone: selectedAddress.phone,
+                address: formatDeliveryAddress(selectedAddress),
+                city: selectedAddress.city,
+                postalCode: selectedAddress.pincode,
+                country: "India",
+                deliveryMethod: shippingMethod.name,
+                products,
+            });
+
+            await clearCart();
+            toast.success("Order placed successfully! Pay on delivery.");
+            router.push("/success");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to place COD order.");
+        } finally {
+            setPaymentLoading(false);
         }
+    }
+
+    async function handleRazorpayPayment() {
+        if (!user || !selectedAddress || !shippingMethod) return;
 
         try {
             setPaymentLoading(true);
 
             const sdkLoaded = await loadRazorpay();
-
             if (!sdkLoaded) {
                 toast.error("Unable to load payment gateway.");
                 return;
@@ -210,12 +299,8 @@ export default function CheckoutPage() {
 
             const response = await fetch("/api/payment/create-order", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    amount: total,
-                }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: total }),
             });
 
             if (!response.ok) {
@@ -223,9 +308,7 @@ export default function CheckoutPage() {
             }
 
             const razorpayOrder = await response.json();
-            const { firstName, lastName } = splitFullName(
-                selectedAddress.fullName,
-            );
+            const { firstName, lastName } = splitFullName(selectedAddress.fullName);
 
             const options = {
                 key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -236,19 +319,13 @@ export default function CheckoutPage() {
                 order_id: razorpayOrder.id,
                 handler: async (paymentResponse: Record<string, string>) => {
                     try {
-                        const verifyResponse = await fetch(
-                            "/api/payment/verify",
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify(paymentResponse),
-                            },
-                        );
+                        const verifyResponse = await fetch("/api/payment/verify", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(paymentResponse),
+                        });
 
                         const verification = await verifyResponse.json();
-
                         if (!verification.success) {
                             throw new Error("Payment verification failed.");
                         }
@@ -261,15 +338,15 @@ export default function CheckoutPage() {
                                 quantity: item.quantity,
                                 image: item.primaryImage,
                                 size: item.size,
-                            })),
+                            }))
                         );
 
                         await createOrder({
                             subtotal,
                             shipping: shippingCost,
                             total,
-                            paymentId:
-                                paymentResponse.razorpay_payment_id,
+                            paymentMethod: "razorpay",
+                            paymentId: paymentResponse.razorpay_payment_id,
                             orderId: paymentResponse.razorpay_order_id,
                             signature: paymentResponse.razorpay_signature,
                             firstName,
@@ -296,9 +373,7 @@ export default function CheckoutPage() {
                     email: user.email ?? "",
                     contact: selectedAddress.phone,
                 },
-                theme: {
-                    color: "#000000",
-                },
+                theme: { color: "#000000" },
             };
 
             const razorpay = new window.Razorpay(options);
@@ -309,60 +384,58 @@ export default function CheckoutPage() {
         } finally {
             setPaymentLoading(false);
         }
+    }
+
+    const handlePay = async (method: PaymentMethod) => {
+        if (!user) {
+            toast.error("Please login to continue.");
+            router.push("/login?redirect=/checkout");
+            return;
+        }
+
+        if (!cartItems.length) {
+            toast.error("Your cart is empty.");
+            router.push("/cart");
+            return;
+        }
+
+        if (!selectedAddress) {
+            toast.error("Please select a delivery address.");
+            setActiveStep("address");
+            return;
+        }
+
+        if (!shippingMethod) {
+            toast.error("Please select a shipping method.");
+            setActiveStep("shipping");
+            return;
+        }
+
+        setPaymentMethod(method);
+
+        if (method === "cod") {
+            await handleCODOrder();
+        } else {
+            await handleRazorpayPayment();
+        }
     };
 
     if (authLoading || cartLoading) {
-        return (
-            <main className="min-h-screen bg-neutral-50">
-                <Container className="py-8">
-                    <div className="space-y-4">
-                        <div className="h-40 animate-pulse rounded-[32px] bg-neutral-200" />
-                        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
-                            <div className="space-y-4">
-                                <div className="h-36 animate-pulse rounded-3xl bg-neutral-200" />
-                                <div className="h-36 animate-pulse rounded-3xl bg-neutral-200" />
-                                <div className="h-36 animate-pulse rounded-3xl bg-neutral-200" />
-                            </div>
-                            <div className="h-[480px] animate-pulse rounded-[28px] bg-neutral-200" />
-                        </div>
-                    </div>
-                </Container>
-            </main>
-        );
+        return <CheckoutSkeleton />;
     }
 
     if (!cartItems.length) {
-        return (
-            <main className="min-h-screen bg-neutral-50">
-                <Container className="flex min-h-[70vh] flex-col items-center justify-center py-16 text-center">
-                    <div className="rounded-full bg-neutral-100 p-6">
-                        <ShoppingBag className="h-10 w-10 text-neutral-400" />
-                    </div>
-                    <h1 className="mt-6 font-serif text-3xl font-semibold">
-                        Nothing to checkout
-                    </h1>
-                    <p className="mt-3 max-w-md text-neutral-500">
-                        Your cart is empty. Add some curated thrift pieces
-                        before completing your order.
-                    </p>
-                    <Link
-                        href="/shop"
-                        className="mt-8 inline-flex h-12 items-center justify-center rounded-2xl bg-black px-8 text-sm font-medium text-white transition hover:opacity-90"
-                    >
-                        Browse Shop
-                    </Link>
-                </Container>
-            </main>
-        );
+        return <EmptyCheckout />;
     }
 
     return (
-        <main className="min-h-screen bg-neutral-50 pb-28 xl:pb-10">
-            <Container className="py-5 lg:py-8">
+        <main className="min-h-screen bg-zinc-50 pb-28 xl:pb-10">
+            <Container className="py-4 sm:py-5 lg:py-8">
                 <CheckoutHeader />
 
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start">
-                    <div className="space-y-5">
+                <div className="grid gap-5 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start">
+                    {/* Left Column - Checkout Flow */}
+                    <div className="space-y-4 sm:space-y-5">
                         <CheckoutAccordion
                             activeStep={activeStep}
                             onStepChange={setActiveStep}
@@ -377,73 +450,106 @@ export default function CheckoutPage() {
                             paymentLoading={paymentLoading}
                             canPay={canPay}
                             onPay={handlePay}
+                            paymentMethod={paymentMethod}
+                            onPaymentMethodChange={setPaymentMethod}
                         />
 
+                        {/* What to Expect Section */}
                         <motion.section
                             layout
-                            className="overflow-hidden rounded-[28px] border border-neutral-200 bg-white shadow-sm"
+                            className="overflow-hidden rounded-2xl sm:rounded-[28px] border border-zinc-200 bg-white shadow-sm"
                         >
-                            <div className="border-b border-neutral-100 px-6 py-5">
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            <div className="border-b border-zinc-100 px-5 py-4 sm:px-6 sm:py-5">
+                                <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                                     Before You Place Order
                                 </p>
-                                <h2 className="mt-2 text-xl font-bold">
+                                <h2 className="mt-1.5 sm:mt-2 font-serif text-lg sm:text-xl font-bold text-zinc-900">
                                     What to expect
                                 </h2>
                             </div>
 
-                            <div className="space-y-4 p-6">
-                                {orderNotes.map((note) => (
-                                    <div
-                                        key={note}
-                                        className="flex items-start gap-3"
-                                    >
-                                        <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-                                        <p className="text-sm leading-7 text-neutral-600">
-                                            {note}
-                                        </p>
-                                    </div>
-                                ))}
+                            <div className="space-y-3 sm:space-y-4 p-5 sm:p-6">
+                                {orderNotes.map((note) => {
+                                    const Icon = note.icon;
+                                    return (
+                                        <div
+                                            key={note.title}
+                                            className="flex items-start gap-3 sm:gap-4"
+                                        >
+                                            <div className="mt-0.5 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-emerald-100">
+                                                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm sm:text-base font-semibold text-zinc-900">
+                                                    {note.title}
+                                                </h4>
+                                                <p className="mt-0.5 text-xs sm:text-sm leading-6 text-zinc-500">
+                                                    {note.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </motion.section>
                     </div>
 
-                    <CheckoutOrderSummary
-                        items={cartItems}
-                        subtotal={subtotal}
-                        shippingCost={shippingCost}
-                        total={total}
-                        paymentLoading={paymentLoading}
-                        canPay={canPay}
-                        onPay={handlePay}
-                    />
+                    {/* Right Column - Order Summary (Desktop) */}
+                    <div className="hidden xl:block">
+                        <CheckoutOrderSummary
+                            items={cartItems}
+                            subtotal={subtotal}
+                            shippingCost={shippingCost}
+                            total={total}
+                            paymentLoading={paymentLoading}
+                            canPay={canPay}
+                            onPay={() => handlePay("razorpay")}
+                        />
+                    </div>
                 </div>
 
-                <div className="fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-white/95 p-4 backdrop-blur-xl xl:hidden">
+                {/* Mobile Bottom Bar */}
+                <motion.div
+                    initial={{ y: 100 }}
+                    animate={{ y: 0 }}
+                    className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-200 bg-white/95 p-4 backdrop-blur-xl xl:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
+                >
                     <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
                         <div>
-                            <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
                                 Total
                             </p>
-                            <h3 className="text-2xl font-bold">
+                            <h3 className="font-serif text-xl sm:text-2xl font-bold text-zinc-900">
                                 ₹{total.toLocaleString("en-IN")}
                             </h3>
+                            {shippingCost > 0 && (
+                                <p className="text-[10px] text-zinc-400">
+                                    +₹{shippingCost.toLocaleString("en-IN")} shipping
+                                </p>
+                            )}
                         </div>
 
                         <Button
                             type="button"
-                            onClick={handlePay}
+                            onClick={() => handlePay("razorpay")}
                             loading={paymentLoading}
                             disabled={!canPay}
                             size="lg"
                             leftIcon={<CreditCard className="h-5 w-5" />}
-                            className="rounded-2xl px-7"
+                            className="rounded-2xl px-6 sm:px-7 shadow-lg shadow-zinc-900/20"
                         >
-                            Pay Now
+                            {paymentLoading ? "Processing..." : "Pay Now"}
                         </Button>
                     </div>
-                </div>
+
+                    {!canPay && (
+                        <p className="mt-2 text-center text-[11px] text-amber-600">
+                            Please complete address and shipping details to proceed
+                        </p>
+                    )}
+                </motion.div>
             </Container>
         </main>
     );
 }
+

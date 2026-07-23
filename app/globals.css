@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @keyframes skeleton {
   0% {
@@ -40,4 +43,10 @@
 
 .animate-accordion-up {
   animation: accordion-up 0.2s ease-out;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(200%);
+  }
 }

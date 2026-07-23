@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const { amount } = await request.json();
 
     const order = await razorpay.orders.create({
-      amount,
+      amount: Math.round(Number(amount) * 100),
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
     });

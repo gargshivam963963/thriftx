@@ -1,88 +1,42 @@
-// "use client";
+import { ReactNode } from "react";
+import clsx from "clsx";
 
-// import { ChevronDown } from "lucide-react";
-// import { motion } from "framer-motion";
-// import { useState } from "react";
-// import GlassCard from "./ui/GlassCard";
+interface GlassCardProps {
+    children: ReactNode;
+    className?: string;
+    blur?: "sm" | "md" | "lg" | "xl";
+}
 
-// interface Props {
-//     title: string;
-//     description: string;
-//     icon: React.ReactNode;
-//     children: React.ReactNode;
-//     defaultOpen?: boolean;
-// }
+const blurClasses = {
+    sm: "backdrop-blur-sm",
+    md: "backdrop-blur-md",
+    lg: "backdrop-blur-lg",
+    xl: "backdrop-blur-xl",
+};
 
-// export default function SectionCard({
-//     title,
-//     description,
-//     icon,
-//     children,
-//     defaultOpen = true,
-// }: Props) {
-//     const [open, setOpen] =
-//         useState(defaultOpen);
+export default function GlassCard({
+    children,
+    className,
+    blur = "lg",
+}: GlassCardProps) {
+    return (
+        <div
+            className={clsx(
+                "relative overflow-hidden rounded-3xl",
+                "border border-white/20",
+                "bg-white/10",
+                "shadow-[0_8px_32px_rgba(0,0,0,0.12)]",
+                blurClasses[blur],
+                className
+            )}
+        >
+            {/* Light gradient overlay */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/20 via-white/5 to-transparent" />
 
-//     return (
-//         <GlassCard className="overflow-hidden">
-
-//             <button
-//                 onClick={() => setOpen(!open)}
-//                 type="button"
-//                 className="flex w-full items-center justify-between p-6"
-//             >
-//                 <div className="flex items-center gap-4">
-
-//                     <div className="rounded-2xl bg-neutral-100 p-3">
-
-//                         {icon}
-
-//                     </div>
-
-//                     <div className="text-left">
-
-//                         <h2 className="font-semibold text-xl">
-
-//                             {title}
-
-//                         </h2>
-
-//                         <p className="text-sm text-neutral-500">
-
-//                             {description}
-
-//                         </p>
-
-//                     </div>
-
-//                 </div>
-
-//                 <motion.div
-//                     animate={{
-//                         rotate: open ? 180 : 0,
-//                     }}
-//                 >
-//                     <ChevronDown />
-//                 </motion.div>
-
-//             </button>
-
-//             <motion.div
-//                 initial={false}
-//                 animate={{
-//                     height: open ? "auto" : 0,
-//                     opacity: open ? 1 : 0,
-//                 }}
-//                 className="overflow-hidden"
-//             >
-//                 <div className="border-t border-neutral-200 p-6">
-
-//                     {children}
-
-//                 </div>
-
-//             </motion.div>
-
-//         </GlassCard>
-//     );
-// }
+            {/* Content */}
+            <div className="relative z-10">
+                {children}
+            </div>
+        </div>
+    );
+}

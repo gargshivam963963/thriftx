@@ -7,7 +7,7 @@ interface GlassCardProps extends HTMLMotionProps<"div"> {
     children: React.ReactNode;
 }
 
-export default function GlassCard({
+export function GlassCard({
     children,
     className,
     ...props

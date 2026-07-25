@@ -11,6 +11,7 @@ import {
     Phone,
     MapPinned,
     Trash2,
+    BadgeCheck,
 } from "lucide-react";
 
 import type { Address } from "@/lib/types/address";
@@ -27,17 +28,20 @@ interface AddressCardProps {
 const typeConfig = {
     Home: {
         icon: Home,
-        color: "bg-amber-100 text-amber-700",
+        color: "bg-amber-100 text-amber-700 border-amber-200",
+        selectedColor: "bg-amber-500/20 text-amber-300",
         label: "Home",
     },
     Work: {
         icon: BriefcaseBusiness,
-        color: "bg-blue-100 text-blue-700",
+        color: "bg-blue-100 text-blue-700 border-blue-200",
+        selectedColor: "bg-blue-500/20 text-blue-300",
         label: "Work",
     },
     Other: {
         icon: Building2,
-        color: "bg-purple-100 text-purple-700",
+        color: "bg-purple-100 text-purple-700 border-purple-200",
+        selectedColor: "bg-purple-500/20 text-purple-300",
         label: "Other",
     },
 } as const;
@@ -88,105 +92,129 @@ export default function AddressCard({
                         onSelect();
                     }
                 }}
-                whileHover={{ y: -2 }}
+                whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.995 }}
-                className={`w-full overflow-hidden rounded-3xl border bg-white text-left transition-all duration-200 ${selected
-                        ? "border-zinc-900 ring-1 ring-zinc-900/20 shadow-lg shadow-zinc-900/10"
+                className={`w-full overflow-hidden rounded-2xl border bg-white text-left transition-all duration-200 sm:rounded-3xl ${selected
+                        ? "border-zinc-900 bg-zinc-50/30 ring-1 ring-zinc-900/20 shadow-lg"
                         : "border-zinc-200 hover:border-zinc-400 hover:shadow-md"
                     }`}
             >
-                {/* HEADER */}
-                <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4 sm:px-6 sm:py-5">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3.5 sm:px-6 sm:py-4">
                     <div className="flex items-center gap-3">
                         <div
-                            className={`rounded-full p-2 ${selected
+                            className={`rounded-full p-2 transition-colors ${selected
                                     ? "bg-zinc-900 text-white"
                                     : typeInfo.color
                                 }`}
                         >
-                            <TypeIcon size={18} />
+                            <TypeIcon size={16} className="sm:h-[18px] sm:w-[18px]" />
                         </div>
-
                         <div>
-                            <h3 className="font-semibold text-zinc-900">
+                            <h3 className="text-sm font-semibold text-zinc-900 sm:text-base">
                                 {address.fullName}
                             </h3>
-                            <p className="mt-0.5 text-sm text-zinc-500">{address.type}</p>
+                            <div className="mt-0.5 flex items-center gap-1.5">
+                                <span
+                                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${selected ? typeInfo.selectedColor : typeInfo.color
+                                        }`}
+                                >
+                                    <TypeIcon size={10} />
+                                    {address.type}
+                                </span>
+                                {address.isDefault && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white">
+                                        <BadgeCheck size={10} />
+                                        Default
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        {address.isDefault && (
-                            <span className="hidden sm:inline-flex rounded-full bg-zinc-900 px-3 py-1 text-[10px] font-semibold tracking-wider text-white">
-                                Default
-                            </span>
-                        )}
-
+                    <div className="flex items-center gap-1.5">
                         {selected && (
-                            <CheckCircle2 size={22} className="shrink-0 text-emerald-600" />
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{
+                                    type: "spring",
+                                    stiffness: 300,
+                                    damping: 15,
+                                }}
+                            >
+                                <CheckCircle2
+                                    size={22}
+                                    className="shrink-0 text-emerald-600"
+                                />
+                            </motion.div>
                         )}
 
-                        <div className="flex items-center gap-1.5">
-                            <button
-                                type="button"
-                                onClick={handleEditClick}
-                                className="rounded-xl border border-zinc-200 p-2 text-zinc-600 transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white"
-                                aria-label="Edit address"
-                            >
-                                <Pencil size={15} />
-                            </button>
+                        <button
+                            type="button"
+                            onClick={handleEditClick}
+                            className="rounded-xl border border-zinc-200 p-2 text-zinc-600 transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white"
+                            aria-label="Edit address"
+                        >
+                            <Pencil size={14} className="sm:h-[15px] sm:w-[15px]" />
+                        </button>
 
-                            <button
-                                type="button"
-                                onClick={handleDeleteClick}
-                                className="rounded-xl border border-red-200 p-2 text-red-500 transition hover:bg-red-600 hover:text-white"
-                                aria-label="Delete address"
-                            >
-                                <Trash2 size={15} />
-                            </button>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={handleDeleteClick}
+                            className="rounded-xl border border-red-200 p-2 text-red-500 transition hover:bg-red-600 hover:text-white"
+                            aria-label="Delete address"
+                        >
+                            <Trash2 size={14} className="sm:h-[15px] sm:w-[15px]" />
+                        </button>
                     </div>
                 </div>
 
-                {/* BODY */}
-                <div className="space-y-4 p-5 sm:p-6">
+                {/* Body */}
+                <div className="space-y-3 p-4 sm:space-y-4 sm:p-6">
                     {/* Address */}
                     <div className="flex items-start gap-3">
-                        <MapPinned size={18} className="mt-1 shrink-0 text-zinc-400" />
-                        <div className="text-sm leading-7 text-zinc-700">
-                            <p>{address.addressLine1}</p>
+                        <MapPinned
+                            size={16}
+                            className="mt-0.5 shrink-0 text-zinc-400 sm:mt-1 sm:h-[18px] sm:w-[18px]"
+                        />
+                        <div className="text-sm leading-6 text-zinc-700 sm:leading-7">
+                            <p className="font-medium text-zinc-900">
+                                {address.addressLine1}
+                            </p>
                             {address.addressLine2 && <p>{address.addressLine2}</p>}
-                            {address.landmark && <p className="text-zinc-500">{address.landmark}</p>}
-                            <p>
-                                {address.city}, {address.state} - {address.pincode}
+                            {address.landmark && (
+                                <p className="text-zinc-500">📍 {address.landmark}</p>
+                            )}
+                            <p className="text-zinc-600">
+                                {address.city}, {address.state}{" "}
+                                <span className="font-semibold text-zinc-800">
+                                    — {address.pincode}
+                                </span>
                             </p>
                         </div>
                     </div>
 
                     {/* Phone */}
                     <div className="flex items-start gap-3">
-                        <Phone size={18} className="mt-1 shrink-0 text-zinc-400" />
+                        <Phone
+                            size={16}
+                            className="mt-0.5 shrink-0 text-zinc-400 sm:mt-1 sm:h-[18px] sm:w-[18px]"
+                        />
                         <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400">
-                                Phone
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-400 sm:text-[11px]">
+                                Contact
                             </p>
-                            <p className="mt-1.5 font-medium text-zinc-800">{address.phone}</p>
+                            <p className="mt-0.5 text-sm font-medium text-zinc-800 sm:text-base">
+                                {address.phone}
+                            </p>
                             {address.alternatePhone && (
-                                <p className="mt-1 text-sm text-zinc-500">
+                                <p className="mt-0.5 text-xs text-zinc-500 sm:text-sm">
                                     Alt: {address.alternatePhone}
                                 </p>
                             )}
                         </div>
                     </div>
-
-                    {/* Default badge on mobile */}
-                    {address.isDefault && (
-                        <div className="sm:hidden">
-                            <span className="inline-flex rounded-full bg-zinc-100 px-3 py-1 text-[10px] font-semibold tracking-wider text-zinc-600">
-                                Default Address
-                            </span>
-                        </div>
-                    )}
 
                     {/* Selected indicator */}
                     {selected && (
@@ -195,9 +223,12 @@ export default function AddressCard({
                             animate={{ opacity: 1, height: "auto" }}
                             className="overflow-hidden"
                         >
-                            <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3">
-                                <CheckCircle2 size={18} className="shrink-0 text-emerald-600" />
-                                <span className="text-sm font-medium text-emerald-700">
+                            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5">
+                                <CheckCircle2
+                                    size={16}
+                                    className="shrink-0 text-emerald-600"
+                                />
+                                <span className="text-xs font-medium text-emerald-700 sm:text-sm">
                                     Selected for this order
                                 </span>
                             </div>

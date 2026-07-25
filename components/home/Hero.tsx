@@ -8,6 +8,7 @@ import {
     ShieldCheck,
     Sparkles,
     Truck,
+    Zap,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -180,6 +181,26 @@ shadow-lg
                                     </div>
                                 ))}
                             </div>
+
+                            {/* ⚡ Panipat Local Delivery */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.35, duration: 0.4 }}
+                                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-50/80 px-5 py-3 backdrop-blur-sm"
+                            >
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
+                                    <Zap size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-emerald-900">
+                                        Free Same-Day Delivery in Panipat
+                                    </p>
+                                    <p className="text-[10px] text-emerald-600">
+                                        Order before 2 PM — delivered today! 🚀
+                                    </p>
+                                </div>
+                            </motion.div>
                         </div>
                     </FadeUp>
 

@@ -1,10 +1,4 @@
-import {
-    Package,
-    CircleCheck,
-    TriangleAlert,
-    Images,
-    LoaderCircle,
-} from "lucide-react";
+import { Package, CircleCheck, TriangleAlert, Images } from "lucide-react";
 
 interface StatsCardsProps {
     totalProducts: number;
@@ -14,124 +8,46 @@ interface StatsCardsProps {
     uploading?: boolean;
 }
 
+const items = [
+    { key: "products", label: "Products", icon: Package, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-900/30" },
+    { key: "ready", label: "Ready", icon: CircleCheck, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
+    { key: "issues", label: "Issues", icon: TriangleAlert, color: "text-red-600 dark:text-red-400", bg: "bg-red-100 dark:bg-red-900/30" },
+    { key: "images", label: "Images", icon: Images, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-900/30" },
+];
+
 export default function StatsCards({
     totalProducts,
     readyProducts,
     issues,
     totalImages,
-    uploading = false,
 }: StatsCardsProps) {
-    const stats = [
-        {
-            title: "Products",
-            value: totalProducts,
-            icon: Package,
-            bg: "bg-blue-100",
-            color: "text-blue-700",
-        },
-        {
-            title: "Ready",
-            value: readyProducts,
-            icon: CircleCheck,
-            bg: "bg-green-100",
-            color: "text-green-700",
-        },
-        {
-            title: "Issues",
-            value: issues,
-            icon: TriangleAlert,
-            bg: "bg-red-100",
-            color: "text-red-700",
-        },
-        {
-            title: "Images",
-            value: totalImages,
-            icon: Images,
-            bg: "bg-purple-100",
-            color: "text-purple-700",
-        },
-    ];
+    const values: Record<string, number> = {
+        products: totalProducts,
+        ready: readyProducts,
+        issues,
+        images: totalImages,
+    };
 
     return (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-
-            {stats.map((item) => {
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {items.map((item) => {
                 const Icon = item.icon;
-
                 return (
                     <div
-                        key={item.title}
-                        className="rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md"
+                        key={item.key}
+                        className="flex items-center gap-3 rounded-xl border border-neutral-200/70 bg-white px-4 py-3 dark:border-neutral-700/50 dark:bg-neutral-900"
                     >
-                        <div className="flex items-start justify-between">
-
-                            <div>
-
-                                <p className="text-sm text-neutral-500">
-                                    {item.title}
-                                </p>
-
-                                <h2 className="mt-2 text-4xl font-bold">
-                                    {item.value}
-                                </h2>
-
-                            </div>
-
-                            <div
-                                className={`rounded-xl p-3 ${item.bg}`}
-                            >
-                                <Icon
-                                    size={24}
-                                    className={item.color}
-                                />
-                            </div>
-
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${item.bg}`}>
+                            <Icon size={18} className={item.color} />
                         </div>
-
-                        <div className="mt-6">
-
-                            {uploading ? (
-                                <div className="flex items-center gap-2 text-sm text-blue-600">
-
-                                    <LoaderCircle
-                                        size={16}
-                                        className="animate-spin"
-                                    />
-
-                                    Uploading...
-
-                                </div>
-                            ) : item.title === "Issues" ? (
-                                <p
-                                    className={`text-sm ${issues
-                                        ? "text-red-600"
-                                        : "text-green-600"
-                                        }`}
-                                >
-                                    {issues
-                                        ? "Needs Attention"
-                                        : "No Issues Found"}
-                                </p>
-                            ) : item.title === "Ready" ? (
-                                <p className="text-sm text-green-600">
-                                    Ready For Upload
-                                </p>
-                            ) : item.title === "Products" ? (
-                                <p className="text-sm text-neutral-500">
-                                    Excel Records
-                                </p>
-                            ) : (
-                                <p className="text-sm text-neutral-500">
-                                    Total Images Found
-                                </p>
-                            )}
-
+                        <div className="min-w-0">
+                            <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{item.label}</p>
+                            <p className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">{values[item.key]}</p>
                         </div>
-
                     </div>
                 );
             })}
-
         </div>
     );
 }
+

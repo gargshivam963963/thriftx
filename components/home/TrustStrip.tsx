@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
     ShieldCheck,
     Sparkles,
-    Truck,
+    Zap,
     BadgeCheck,
 } from "lucide-react";
 
@@ -23,9 +23,10 @@ const features = [
         description: "Curated fashion from trusted global brands.",
     },
     {
-        icon: Truck,
-        title: "Fast Delivery",
-        description: "Quick dispatch with secure packaging.",
+        icon: Zap,
+        title: "⚡ Panipat Same-Day",
+        description: "Free same-day delivery in Panipat. Order before 2 PM!",
+        highlight: true,
     },
     {
         icon: BadgeCheck,
@@ -62,7 +63,7 @@ export default function TrustStrip() {
 
                 <StaggerContainer className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
 
-                    {features.map(({ icon: Icon, title, description }) => (
+                    {features.map(({ icon: Icon, title, description, highlight }) => (
 
                         <StaggerItem key={title}>
 
@@ -73,22 +74,32 @@ export default function TrustStrip() {
                                 transition={{
                                     duration: 0.25,
                                 }}
-                                className="group h-full rounded-3xl border border-neutral-200 bg-white p-7 transition-all duration-300 hover:border-neutral-300 hover:shadow-xl"
+                                className={`group h-full rounded-3xl border p-7 transition-all duration-300 hover:shadow-xl ${highlight
+                                    ? "border-emerald-200 bg-gradient-to-br from-emerald-50 to-white hover:border-emerald-300 hover:shadow-emerald-200/50"
+                                    : "border-neutral-200 bg-white hover:border-neutral-300"
+                                    }`}
                             >
 
-                                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-900 text-white transition-transform duration-300 group-hover:scale-110">
+                                <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-2xl text-white transition-transform duration-300 group-hover:scale-110 ${highlight ? "bg-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-neutral-900"
+                                    }`}>
 
                                     <Icon className="h-6 w-6" />
 
                                 </div>
 
-                                <h3 className="text-lg font-semibold text-neutral-900">
+                                <h3 className={`text-lg font-semibold ${highlight ? "text-emerald-900" : "text-neutral-900"}`}>
                                     {title}
                                 </h3>
 
-                                <p className="mt-3 text-sm leading-7 text-neutral-600">
+                                <p className={`mt-3 text-sm leading-7 ${highlight ? "text-emerald-700" : "text-neutral-600"}`}>
                                     {description}
                                 </p>
+
+                                {highlight && (
+                                    <span className="mt-4 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+                                        Local Hero 🏆
+                                    </span>
+                                )}
 
                             </motion.div>
 

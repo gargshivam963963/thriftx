@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import { z } from "zod";
@@ -16,6 +16,7 @@ import {
     MapPin,
     Hash,
     Building,
+    MapPinned,
     Smartphone,
 } from "lucide-react";
 
@@ -28,15 +29,15 @@ const addressSchema = z.object({
     phone: z
         .string()
         .trim()
-        .min(10, "Phone number must be 10 digits")
-        .max(10, "Phone number must be 10 digits"),
+        .min(10, "Phone must be 10 digits")
+        .max(10, "Phone must be 10 digits"),
     alternatePhone: z.string().optional(),
     addressLine1: z.string().trim().min(5, "Address is required"),
     addressLine2: z.string().optional(),
     landmark: z.string().optional(),
     city: z.string().trim().min(2, "City is required"),
     state: z.string().trim().min(2, "State is required"),
-    pincode: z.string().trim().length(6, "PIN code must be 6 digits"),
+    pincode: z.string().trim().length(6, "PIN Code must be 6 digits"),
     type: z.enum(["Home", "Work", "Other"]),
 });
 
@@ -49,12 +50,105 @@ interface AddressFormProps {
 }
 
 const typeOptions = [
-    { value: "Home" as const, icon: Home, color: "bg-amber-100 text-amber-700 border-amber-200" },
-    { value: "Work" as const, icon: BriefcaseBusiness, color: "bg-blue-100 text-blue-700 border-blue-200" },
-    { value: "Other" as const, icon: Building2, color: "bg-purple-100 text-purple-700 border-purple-200" },
+    {
+        value: "Home" as const,
+        icon: Home,
+        color: "bg-amber-100 text-amber-700 border-amber-200",
+        selectedColor: "bg-amber-500/20 text-amber-300",
+        desc: "Deliver to my home address",
+    },
+    {
+        value: "Work" as const,
+        icon: BriefcaseBusiness,
+        color: "bg-blue-100 text-blue-700 border-blue-200",
+        selectedColor: "bg-blue-500/20 text-blue-300",
+        desc: "Deliver to my workplace",
+    },
+    {
+        value: "Other" as const,
+        icon: Building2,
+        color: "bg-purple-100 text-purple-700 border-purple-200",
+        selectedColor: "bg-purple-500/20 text-purple-300",
+        desc: "Deliver to another location",
+    },
 ];
 
-export default function AddressForm({ initialData, onCancel, onSave }: AddressFormProps) {
+const stagger = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.05, delayChildren: 0.05 },
+    },
+};
+
+const fadeUpItem = {
+    hidden: { opacity: 0, y: 16 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.3, ease: "easeOut" as const },
+    },
+};
+
+function SectionCard({
+    icon,
+    label,
+    children,
+}: {
+    icon: React.ReactNode;
+    label: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <motion.div
+            variants={fadeUpItem}
+            className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm"
+        >
+            <div className="flex items-center gap-2 border-b border-zinc-100 bg-zinc-50/80 px-4 py-3 sm:px-5">
+                <div className="rounded-lg bg-zinc-900 p-1.5 text-white shadow-sm">
+                    {icon}
+                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 sm:text-[11px]">
+                    {label}
+                </span>
+            </div>
+            <div className="p-4 sm:p-5">{children}</div>
+        </motion.div>
+    );
+}
+
+function FieldError({ message }: { message?: string }) {
+    if (!message) return null;
+    return (
+        <motion.p
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="mt-1.5 flex items-center gap-1 px-1 text-xs text-red-500"
+        >
+            <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {message}
+        </motion.p>
+    );
+}
+
+export default function AddressForm({
+    initialData,
+    onCancel,
+    onSave,
+}: AddressFormProps) {
     const {
         register,
         handleSubmit,
@@ -98,7 +192,6 @@ export default function AddressForm({ initialData, onCancel, onSave }: AddressFo
             });
             return;
         }
-
         reset({
             fullName: initialData.fullName,
             phone: initialData.phone,
@@ -115,26 +208,29 @@ export default function AddressForm({ initialData, onCancel, onSave }: AddressFo
 
     const selectedType = watch("type");
 
-    const submit = async (values: FormValues) => {
-        await onSave(
-            {
-                fullName: values.fullName.trim(),
-                phone: values.phone.trim(),
-                alternatePhone: values.alternatePhone?.trim() || "",
-                addressLine1: values.addressLine1.trim(),
-                addressLine2: values.addressLine2?.trim() || "",
-                landmark: values.landmark?.trim() || "",
-                city: values.city.trim(),
-                state: values.state.trim(),
-                pincode: values.pincode.trim(),
-                type: values.type,
-            },
-            initialData?.$id
-        );
-        reset();
-    };
+    const submit = useCallback(
+        async (values: FormValues) => {
+            await onSave(
+                {
+                    fullName: values.fullName.trim(),
+                    phone: values.phone.trim(),
+                    alternatePhone: values.alternatePhone?.trim() || "",
+                    addressLine1: values.addressLine1.trim(),
+                    addressLine2: values.addressLine2?.trim() || "",
+                    landmark: values.landmark?.trim() || "",
+                    city: values.city.trim(),
+                    state: values.state.trim(),
+                    pincode: values.pincode.trim(),
+                    type: values.type,
+                },
+                initialData?.$id,
+            );
+            reset();
+        },
+        [initialData?.$id, onSave, reset],
+    );
 
-    const selectedIcon = typeOptions.find((t) => t.value === selectedType);
+    const selectedOption = typeOptions.find((t) => t.value === selectedType);
 
     return (
         <motion.form
@@ -144,11 +240,15 @@ export default function AddressForm({ initialData, onCancel, onSave }: AddressFo
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onSubmit={handleSubmit(submit)}
-            className="space-y-6"
+            className="space-y-5"
         >
-            {/* HEADER */}
-            <div>
-                <h3 className="font-serif text-2xl font-semibold tracking-tight text-zinc-900">
+            {/* Header */}
+            <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.05 }}
+            >
+                <h3 className="font-serif text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
                     {initialData ? "Edit Address" : "New Delivery Address"}
                 </h3>
                 <p className="mt-1.5 text-sm leading-6 text-zinc-500">
@@ -156,166 +256,206 @@ export default function AddressForm({ initialData, onCancel, onSave }: AddressFo
                         ? "Update your delivery address details below."
                         : "Fill in the details below to add a new shipping address."}
                 </p>
-            </div>
+            </motion.div>
 
-            {/* SECTION: PERSONAL INFO */}
-            <div className="space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50/60 p-4 sm:p-5">
-                <div className="flex items-center gap-2 border-b border-zinc-200/60 pb-3">
-                    <div className="rounded-lg bg-zinc-900 p-1.5 text-white">
-                        <User size={14} />
-                    </div>
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                        Personal Information
-                    </span>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <FloatingInput
-                        label="Full Name"
-                        error={errors.fullName?.message}
-                        {...register("fullName")}
-                    />
-                    <FloatingInput
-                        label="Phone Number"
-                        type="tel"
-                        maxLength={10}
-                        error={errors.phone?.message}
-                        {...register("phone")}
-                    />
-                    <div className="sm:col-span-2">
-                        <FloatingInput
-                            label="Alternate Phone (Optional)"
-                            type="tel"
-                            error={errors.alternatePhone?.message}
-                            {...register("alternatePhone")}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* SECTION: ADDRESS */}
-            <div className="space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50/60 p-4 sm:p-5">
-                <div className="flex items-center gap-2 border-b border-zinc-200/60 pb-3">
-                    <div className="rounded-lg bg-zinc-900 p-1.5 text-white">
-                        <MapPin size={14} />
-                    </div>
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                        Address Details
-                    </span>
-                </div>
-
-                <div className="space-y-3">
-                    <FloatingInput
-                        label="Flat / House / Building"
-                        error={errors.addressLine1?.message}
-                        {...register("addressLine1")}
-                    />
-
+            <motion.div
+                variants={stagger}
+                initial="hidden"
+                animate="visible"
+                className="space-y-5"
+            >
+                {/* ── Personal Information ─────────────────────────────── */}
+                <SectionCard
+                    icon={<User size={14} />}
+                    label="Personal Information"
+                >
                     <div className="grid gap-3 sm:grid-cols-2">
-                        <FloatingInput
-                            label="Area / Street / Locality"
-                            error={errors.addressLine2?.message}
-                            {...register("addressLine2")}
-                        />
-                        <FloatingInput
-                            label="Landmark (Optional)"
-                            error={errors.landmark?.message}
-                            {...register("landmark")}
-                        />
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-3">
-                        <FloatingInput
-                            label="PIN Code"
-                            maxLength={6}
-                            inputMode="numeric"
-                            error={errors.pincode?.message}
-                            {...register("pincode")}
-                        />
-                        <FloatingInput
-                            label="City"
-                            error={errors.city?.message}
-                            {...register("city")}
-                        />
-                        <FloatingInput
-                            label="State"
-                            error={errors.state?.message}
-                            {...register("state")}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* SECTION: ADDRESS TYPE */}
-            <div className="space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50/60 p-4 sm:p-5">
-                <div className="flex items-center gap-2 border-b border-zinc-200/60 pb-3">
-                    <div className="rounded-lg bg-zinc-900 p-1.5 text-white">
-                        <Building size={14} />
-                    </div>
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                        Address Type
-                    </span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-                    {typeOptions.map(({ value, icon: Icon, color }) => (
-                        <motion.button
-                            key={value}
-                            type="button"
-                            onClick={() =>
-                                setValue("type", value, {
-                                    shouldDirty: true,
-                                    shouldTouch: true,
-                                    shouldValidate: true,
-                                })
-                            }
-                            whileHover={{ y: -2, scale: 1.02 }}
-                            whileTap={{ scale: 0.97 }}
-                            className={`relative overflow-hidden rounded-2xl border-2 p-3 sm:p-4 text-center transition-all duration-200 ${selectedType === value
-                                    ? "border-zinc-900 bg-zinc-900 text-white shadow-lg"
-                                    : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400 hover:shadow-md"
-                                }`}
-                        >
-                            {selectedType === value && (
-                                <motion.div
-                                    layoutId="typeBg"
-                                    className="absolute inset-0 bg-zinc-900"
-                                    initial={false}
-                                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                />
-                            )}
-                            <div className="relative z-10 flex flex-col items-center gap-1.5 sm:gap-2">
-                                <div
-                                    className={`rounded-xl p-1.5 sm:p-2 transition-colors ${selectedType === value ? "bg-white/15" : "bg-zinc-100"
-                                        }`}
-                                >
-                                    <Icon size={16} className="sm:h-[18px] sm:w-[18px]" />
-                                </div>
-                                <span className="text-xs sm:text-sm font-semibold">{value}</span>
-                            </div>
-                        </motion.button>
-                    ))}
-                </div>
-
-                {selectedIcon && (
-                    <div className="flex items-center gap-2 rounded-xl bg-zinc-100 px-4 py-2.5">
-                        <div className={`rounded-lg p-1 ${selectedIcon.color}`}>
-                            <selectedIcon.icon size={14} />
+                        <div>
+                            <FloatingInput
+                                label="Full Name"
+                                error={errors.fullName?.message}
+                                {...register("fullName")}
+                            />
+                            <FieldError message={errors.fullName?.message} />
                         </div>
-                        <span className="text-xs sm:text-sm text-zinc-600">
-                            {selectedType === "Home"
-                                ? "Deliver to my home address"
-                                : selectedType === "Work"
-                                    ? "Deliver to my workplace"
-                                    : "Deliver to another location"}
-                        </span>
+                        <div>
+                            <FloatingInput
+                                label="Phone Number"
+                                type="tel"
+                                maxLength={10}
+                                error={errors.phone?.message}
+                                {...register("phone")}
+                            />
+                            <FieldError message={errors.phone?.message} />
+                        </div>
+                        <div className="sm:col-span-2">
+                            <FloatingInput
+                                label="Alternate Phone (Optional)"
+                                type="tel"
+                                error={errors.alternatePhone?.message}
+                                {...register("alternatePhone")}
+                            />
+                            <FieldError message={errors.alternatePhone?.message} />
+                        </div>
                     </div>
-                )}
-            </div>
+                </SectionCard>
 
-            {/* ACTIONS */}
-            <div className="flex items-center justify-between gap-3 border-t border-zinc-200 pt-6">
-                <Button type="button" variant="ghost" onClick={onCancel} className="rounded-xl">
+                {/* ── Address Details ──────────────────────────────────── */}
+                <SectionCard
+                    icon={<MapPin size={14} />}
+                    label="Address Details"
+                >
+                    <div className="space-y-3">
+                        <div>
+                            <FloatingInput
+                                label="Flat / House / Building / Apartment"
+                                error={errors.addressLine1?.message}
+                                {...register("addressLine1")}
+                            />
+                            <FieldError message={errors.addressLine1?.message} />
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <FloatingInput
+                                    label="Area / Street / Locality"
+                                    error={errors.addressLine2?.message}
+                                    {...register("addressLine2")}
+                                />
+                                <FieldError message={errors.addressLine2?.message} />
+                            </div>
+                            <div>
+                                <FloatingInput
+                                    label="Landmark (Optional)"
+                                    error={errors.landmark?.message}
+                                    {...register("landmark")}
+                                />
+                                <FieldError message={errors.landmark?.message} />
+                            </div>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-3">
+                            <div>
+                                <FloatingInput
+                                    label="PIN Code"
+                                    maxLength={6}
+                                    inputMode="numeric"
+                                    error={errors.pincode?.message}
+                                    {...register("pincode")}
+                                />
+                                <FieldError message={errors.pincode?.message} />
+                            </div>
+                            <div>
+                                <FloatingInput
+                                    label="City"
+                                    error={errors.city?.message}
+                                    {...register("city")}
+                                />
+                                <FieldError message={errors.city?.message} />
+                            </div>
+                            <div>
+                                <FloatingInput
+                                    label="State"
+                                    error={errors.state?.message}
+                                    {...register("state")}
+                                />
+                                <FieldError message={errors.state?.message} />
+                            </div>
+                        </div>
+                    </div>
+                </SectionCard>
+
+                {/* ── Address Type ─────────────────────────────────────── */}
+                <SectionCard
+                    icon={<Building size={14} />}
+                    label="Address Type"
+                >
+                    <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                        {typeOptions.map(
+                            ({ value, icon: Icon, color, selectedColor }) => {
+                                const isSelected = selectedType === value;
+                                return (
+                                    <motion.button
+                                        key={value}
+                                        type="button"
+                                        onClick={() =>
+                                            setValue("type", value, {
+                                                shouldDirty: true,
+                                                shouldTouch: true,
+                                                shouldValidate: true,
+                                            })
+                                        }
+                                        whileHover={{ y: -2, scale: 1.02 }}
+                                        whileTap={{ scale: 0.97 }}
+                                        className={`relative overflow-hidden rounded-2xl border-2 p-3 text-center transition-all duration-200 sm:p-4 ${isSelected
+                                            ? "border-zinc-900 bg-zinc-900 text-white shadow-lg"
+                                            : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400 hover:shadow-md"
+                                            }`}
+                                    >
+                                        {isSelected && (
+                                            <motion.div
+                                                layoutId="typeBg"
+                                                className="absolute inset-0 bg-zinc-900"
+                                                initial={false}
+                                                transition={{
+                                                    type: "spring",
+                                                    stiffness: 400,
+                                                    damping: 30,
+                                                }}
+                                            />
+                                        )}
+                                        <div className="relative z-10 flex flex-col items-center gap-1.5 sm:gap-2">
+                                            <div
+                                                className={`rounded-xl p-1.5 transition-colors sm:p-2 ${isSelected
+                                                    ? "bg-white/15"
+                                                    : "bg-zinc-100"
+                                                    }`}
+                                            >
+                                                <Icon
+                                                    size={16}
+                                                    className="sm:h-[18px] sm:w-[18px]"
+                                                />
+                                            </div>
+                                            <span className="text-xs font-semibold sm:text-sm">
+                                                {value}
+                                            </span>
+                                        </div>
+                                    </motion.button>
+                                );
+                            },
+                        )}
+                    </div>
+
+                    {selectedOption && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            className="mt-3 flex items-center gap-2 rounded-xl bg-zinc-100 px-4 py-2.5"
+                        >
+                            <div
+                                className={`rounded-lg p-1 ${selectedOption.color}`}
+                            >
+                                <selectedOption.icon size={14} />
+                            </div>
+                            <span className="text-xs text-zinc-600 sm:text-sm">
+                                {selectedOption.desc}
+                            </span>
+                        </motion.div>
+                    )}
+                </SectionCard>
+            </motion.div>
+
+            {/* ── Actions ──────────────────────────────────────────────── */}
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center justify-between gap-3 border-t border-zinc-200 pt-6"
+            >
+                <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={onCancel}
+                    className="rounded-xl"
+                >
                     <ArrowLeft className="mr-1.5 h-4 w-4" />
                     Cancel
                 </Button>
@@ -328,7 +468,7 @@ export default function AddressForm({ initialData, onCancel, onSave }: AddressFo
                     {isSubmitting ? "Saving..." : "Save & Continue"}
                     <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Button>
-            </div>
+            </motion.div>
         </motion.form>
     );
 }

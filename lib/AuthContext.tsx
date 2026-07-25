@@ -6,6 +6,7 @@ type AppwriteUser = {
   $id: string;
   name?: string;
   email?: string;
+  phone?: string;
 };
 
 interface AuthContextType {
@@ -18,8 +19,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  logout: async () => {},
-  refreshUser: async () => {},
+  logout: async () => { },
+  refreshUser: async () => { },
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -34,10 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const currentUser = await account.get();
+      const phone = currentUser.phone || "";
       setUser({
         $id: currentUser.$id,
         name: currentUser.name,
         email: currentUser.email,
+        phone,
       });
     } catch {
       setUser(null);
@@ -53,10 +56,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         const currentUser = await account.get();
+        const phone = currentUser.phone || "";
         setUser({
           $id: currentUser.$id,
           name: currentUser.name,
           email: currentUser.email,
+          phone,
         });
       } catch {
         setUser(null);

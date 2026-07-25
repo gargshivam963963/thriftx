@@ -5,11 +5,29 @@ import {
     ShieldCheck,
     Sparkles,
     Truck,
+    Zap,
 } from 'lucide-react';
 
 export default function TrustCard() {
     return (
         <div className="rounded-[32px] border border-neutral-200 bg-white p-8 shadow-sm">
+
+            {/* ⚡ Panipat Local Delivery Banner */}
+            <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/60 p-5">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/20">
+                        <Zap className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold text-emerald-900">
+                            🎉 Free Same-Day Delivery in Panipat!
+                        </h3>
+                        <p className="mt-0.5 text-xs leading-5 text-emerald-700">
+                            Order before 2 PM and get it delivered today — absolutely FREE. 🚀
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             <h2 className="font-serif text-2xl font-semibold">
                 Why Shop With THRIFTX

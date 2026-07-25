@@ -1,0 +1,487 @@
+"use client";
+
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+    Search,
+    X,
+    TrendingUp,
+    Clock,
+    ArrowRight,
+    Package,
+    Zap,
+    Sparkles,
+} from "lucide-react";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import {
+    searchProducts,
+    getTrendingSearches,
+    getRecentSearches,
+    saveRecentSearch,
+    clearRecentSearches,
+    type SearchResult,
+} from "@/lib/services/searchService";
+
+interface GlobalSearchProps {
+    open: boolean;
+    onClose: () => void;
+}
+
+/**
+ * Debounce hook — delays value updates by `delay` ms
+ */
+function useDebounce<T>(value: T, delay: number): T {
+    const [debounced, setDebounced] = useState(value);
+    useEffect(() => {
+        const timer = setTimeout(() => setDebounced(value), delay);
+        return () => clearTimeout(timer);
+    }, [value, delay]);
+    return debounced;
+}
+
+export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
+    const router = useRouter();
+    const inputRef = useRef<HTMLInputElement>(null);
+    const panelRef = useRef<HTMLDivElement>(null);
+    const [query, setQuery] = useState("");
+    const [results, setResults] = useState<SearchResult[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [recentSearches, setRecentSearches] = useState<string[]>([]);
+    const [showRecent, setShowRecent] = useState(true);
+
+    const debouncedQuery = useDebounce(query, 400); // 400ms debounce
+
+    // Load recent searches on open
+    useEffect(() => {
+        if (open) {
+            setRecentSearches(getRecentSearches());
+            setShowRecent(true);
+            setTimeout(() => inputRef.current?.focus(), 150);
+        } else {
+            setQuery("");
+            setResults([]);
+            setHasSearched(false);
+            setSelectedIndex(-1);
+        }
+    }, [open]);
+
+    // Perform search when debounced query changes
+    useEffect(() => {
+        if (!debouncedQuery.trim()) {
+            setResults([]);
+            setHasSearched(false);
+            setLoading(false);
+            return;
+        }
+
+        let cancelled = false;
+        setLoading(true);
+        setHasSearched(true);
+        setShowRecent(false);
+
+        searchProducts(debouncedQuery, 12).then((data) => {
+            if (!cancelled) {
+                setResults(data);
+                setLoading(false);
+                setSelectedIndex(-1);
+            }
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [debouncedQuery]);
+
+    const handleSubmit = useCallback(
+        (e?: React.FormEvent) => {
+            e?.preventDefault();
+            if (!query.trim()) return;
+
+            // If there's a selected item, navigate to it
+            if (selectedIndex >= 0 && selectedIndex < results.length) {
+                const item = results[selectedIndex];
+                saveRecentSearch(item.title);
+                onClose();
+                router.push(`/product/${item.id}`);
+                return;
+            }
+
+            saveRecentSearch(query.trim());
+            onClose();
+            router.push(`/shop?search=${encodeURIComponent(query.trim())}`);
+        },
+        [query, results, selectedIndex, router, onClose],
+    );
+
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent) => {
+            switch (e.key) {
+                case "ArrowDown":
+                    e.preventDefault();
+                    setSelectedIndex((prev) =>
+                        prev < results.length - 1 ? prev + 1 : 0,
+                    );
+                    break;
+                case "ArrowUp":
+                    e.preventDefault();
+                    setSelectedIndex((prev) =>
+                        prev > 0 ? prev - 1 : results.length - 1,
+                    );
+                    break;
+                case "Enter":
+                    e.preventDefault();
+                    handleSubmit();
+                    break;
+                case "Escape":
+                    onClose();
+                    break;
+            }
+        },
+        [results.length, handleSubmit, onClose],
+    );
+
+    const handleSuggestionClick = useCallback(
+        (suggestion: string) => {
+            saveRecentSearch(suggestion);
+            onClose();
+            router.push(`/shop?search=${encodeURIComponent(suggestion)}`);
+        },
+        [router, onClose],
+    );
+
+    const handleResultClick = useCallback(
+        (item: SearchResult) => {
+            saveRecentSearch(item.title);
+            onClose();
+            router.push(`/product/${item.id}`);
+        },
+        [router, onClose],
+    );
+
+    const handleViewAllResults = useCallback(() => {
+        if (query.trim()) {
+            saveRecentSearch(query.trim());
+            onClose();
+            router.push(`/shop?search=${encodeURIComponent(query.trim())}`);
+        }
+    }, [query, router, onClose]);
+
+    const trendingSearches = getTrendingSearches();
+
+    const containerVariants = {
+        hidden: { opacity: 0, y: -20, scale: 0.98 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: { type: "spring" as const, damping: 30, stiffness: 300 },
+        },
+        exit: { opacity: 0, y: -20, scale: 0.98, transition: { duration: 0.15 } },
+    };
+
+    return (
+        <AnimatePresence>
+            {open && (
+                <>
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-md"
+                        onClick={onClose}
+                    />
+
+                    {/* Search Panel */}
+                    <motion.div
+                        ref={panelRef}
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className="fixed inset-x-4 top-4 z-[70] mx-auto max-w-3xl overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-2xl shadow-black/10 dark:border-neutral-700/60 dark:bg-neutral-900"
+                    >
+                        {/* Search Input */}
+                        <form onSubmit={handleSubmit} className="relative">
+                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-neutral-400">
+                                <Search size={22} />
+                            </div>
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={query}
+                                onChange={(e) => {
+                                    setQuery(e.target.value);
+                                    setShowRecent(false);
+                                }}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Search products, brands, categories..."
+                                className="h-16 w-full border-0 bg-transparent pl-14 pr-14 text-base font-medium text-neutral-900 outline-none placeholder:text-neutral-400 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+                                autoComplete="off"
+                            />
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-xl text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+                            >
+                                <X size={18} />
+                            </button>
+                        </form>
+
+                        {/* Divider */}
+                        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
+
+                        {/* Results Panel */}
+                        <div className="max-h-[60vh] overflow-y-auto">
+                            {/* Loading State */}
+                            {loading && (
+                                <div className="flex items-center justify-center py-12">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="relative h-8 w-8">
+                                            <div className="absolute inset-0 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900 dark:border-neutral-700 dark:border-t-neutral-100" />
+                                        </div>
+                                        <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                                            Searching products...
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Results Grid */}
+                            {!loading && results.length > 0 && (
+                                <div className="p-4">
+                                    <div className="mb-3 flex items-center justify-between">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                            Products ({results.length})
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={handleViewAllResults}
+                                            className="flex items-center gap-1 text-xs font-semibold text-neutral-900 transition hover:opacity-70 dark:text-neutral-100"
+                                        >
+                                            View All <ArrowRight size={12} />
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                                        {results.map((item, index) => (
+                                            <motion.button
+                                                key={item.id}
+                                                type="button"
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.03 }}
+                                                onClick={() => handleResultClick(item)}
+                                                className={cn(
+                                                    "group relative flex flex-col overflow-hidden rounded-2xl border text-left transition-all",
+                                                    selectedIndex === index
+                                                        ? "border-neutral-900 shadow-md ring-2 ring-neutral-900/10 dark:border-neutral-100"
+                                                        : "border-neutral-200/80 hover:border-neutral-400 hover:shadow-md dark:border-neutral-700/60 dark:hover:border-neutral-500",
+                                                )}
+                                            >
+                                                <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                                                    {item.primaryImage ? (
+                                                        <Image
+                                                            src={item.primaryImage}
+                                                            alt={item.title}
+                                                            fill
+                                                            className="object-cover transition duration-300 group-hover:scale-105"
+                                                            unoptimized
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-full items-center justify-center">
+                                                            <Package size={24} className="text-neutral-300 dark:text-neutral-600" />
+                                                        </div>
+                                                    )}
+                                                    {/* Price badge */}
+                                                    <div className="absolute bottom-2 left-2">
+                                                        <span className="rounded-lg bg-white/90 px-2 py-1 text-[11px] font-bold text-neutral-900 shadow-sm backdrop-blur-sm dark:bg-neutral-900/90 dark:text-neutral-100">
+                                                            ₹{item.price}
+                                                        </span>
+                                                    </div>
+                                                    {item.retailPrice && item.retailPrice > item.price && (
+                                                        <div className="absolute bottom-2 right-2">
+                                                            <span className="rounded-lg bg-red-500/90 px-2 py-1 text-[10px] font-bold text-white">
+                                                                {Math.round(
+                                                                    ((item.retailPrice - item.price) / item.retailPrice) * 100,
+                                                                )}
+                                                                % OFF
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="p-2.5">
+                                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                                                        {item.brand}
+                                                    </p>
+                                                    <p className="mt-0.5 truncate text-sm font-bold text-neutral-900 dark:text-neutral-100">
+                                                        {item.title}
+                                                    </p>
+                                                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-neutral-400 dark:text-neutral-500">
+                                                        <span>{item.category}</span>
+                                                        <span>&middot;</span>
+                                                        <span>{item.size}</span>
+                                                    </div>
+                                                </div>
+                                            </motion.button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* No Results */}
+                            {!loading && hasSearched && results.length === 0 && (
+                                <div className="flex flex-col items-center py-12 text-center">
+                                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-100 dark:bg-neutral-800">
+                                        <Search size={24} className="text-neutral-400" />
+                                    </div>
+                                    <h3 className="text-base font-bold text-neutral-900 dark:text-neutral-100">
+                                        No results for &ldquo;{debouncedQuery}&rdquo;
+                                    </h3>
+                                    <p className="mt-1.5 max-w-sm text-sm text-neutral-500 dark:text-neutral-400">
+                                        Try checking your spelling or use a different term.
+                                    </p>
+                                    <div className="mt-4 flex flex-wrap justify-center gap-2">
+                                        {trendingSearches.slice(0, 4).map((s) => (
+                                            <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => handleSuggestionClick(s)}
+                                                className="rounded-full border border-neutral-200 px-3.5 py-1.5 text-xs font-semibold text-neutral-600 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white dark:border-neutral-600 dark:text-neutral-400 dark:hover:border-neutral-100 dark:hover:bg-neutral-100 dark:hover:text-neutral-900"
+                                            >
+                                                {s}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Initial State: Trending + Recent */}
+                            {!hasSearched && !loading && (
+                                <div className="p-4 space-y-5">
+                                    {/* Recent Searches */}
+                                    {recentSearches.length > 0 && (
+                                        <div>
+                                            <div className="mb-2.5 flex items-center justify-between">
+                                                <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                                    <Clock size={13} /> Recent
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        clearRecentSearches();
+                                                        setRecentSearches([]);
+                                                    }}
+                                                    className="text-[10px] font-semibold text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                                                >
+                                                    Clear
+                                                </button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {recentSearches.map((s) => (
+                                                    <button
+                                                        key={s}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setQuery(s);
+                                                            inputRef.current?.focus();
+                                                        }}
+                                                        className="flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3.5 py-2 text-xs font-medium text-neutral-700 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-neutral-100 dark:hover:bg-neutral-100 dark:hover:text-neutral-900"
+                                                    >
+                                                        <Clock size={11} />
+                                                        {s}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Trending */}
+                                    <div>
+                                        <div className="mb-2.5 flex items-center gap-2">
+                                            <TrendingUp size={13} className="text-neutral-500 dark:text-neutral-400" />
+                                            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                                Trending
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {trendingSearches.map((s) => (
+                                                <button
+                                                    key={s}
+                                                    type="button"
+                                                    onClick={() => handleSuggestionClick(s)}
+                                                    className="flex items-center gap-1.5 rounded-full border border-neutral-200 px-3.5 py-2 text-xs font-medium text-neutral-600 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white dark:border-neutral-600 dark:text-neutral-400 dark:hover:border-neutral-100 dark:hover:bg-neutral-100 dark:hover:text-neutral-900"
+                                                >
+                                                    <Zap size={11} className="text-amber-500" />
+                                                    {s}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Quick categories */}
+                                    <div>
+                                        <div className="mb-2.5 flex items-center gap-2">
+                                            <Sparkles size={13} className="text-neutral-500 dark:text-neutral-400" />
+                                            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                                Quick Browse
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                            {[
+                                                { label: "Men", href: "/shop/men", emoji: "👔" },
+                                                { label: "Women", href: "/shop/women", emoji: "👗" },
+                                                { label: "New In", href: "/shop?sort=newest", emoji: "🔥" },
+                                                { label: "Under ₹500", href: "/shop?price=0-499", emoji: "💸" },
+                                            ].map((cat) => (
+                                                <button
+                                                    key={cat.label}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        saveRecentSearch(cat.label);
+                                                        onClose();
+                                                        router.push(cat.href);
+                                                    }}
+                                                    className="flex items-center gap-2.5 rounded-xl border border-neutral-200 bg-neutral-50 px-3.5 py-3 text-sm font-semibold text-neutral-700 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-neutral-100 dark:hover:bg-neutral-100 dark:hover:text-neutral-900"
+                                                >
+                                                    <span className="text-lg">{cat.emoji}</span>
+                                                    {cat.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Keyboard hints */}
+                            <div className="hidden border-t border-neutral-100 px-4 py-2.5 dark:border-neutral-800 sm:flex items-center gap-4 text-[10px] text-neutral-400">
+                                <span className="flex items-center gap-1">
+                                    <kbd className="rounded-md border border-neutral-200 bg-neutral-50 px-1.5 py-0.5 text-[9px] font-bold dark:border-neutral-600 dark:bg-neutral-800">
+                                        ↑↓
+                                    </kbd>
+                                    Navigate
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <kbd className="rounded-md border border-neutral-200 bg-neutral-50 px-1.5 py-0.5 text-[9px] font-bold dark:border-neutral-600 dark:bg-neutral-800">
+                                        Enter
+                                    </kbd>
+                                    Open
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <kbd className="rounded-md border border-neutral-200 bg-neutral-50 px-1.5 py-0.5 text-[9px] font-bold dark:border-neutral-600 dark:bg-neutral-800">
+                                        Esc
+                                    </kbd>
+                                    Close
+                                </span>
+                            </div>
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
+    );
+}

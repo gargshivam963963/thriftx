@@ -6,9 +6,28 @@ import {
   APPWRITE_WISHLIST_COLLECTION_ID,
 } from "@/lib/appwrite";
 
-async function getUserId() {
-  const user = await account.get();
-  return user.$id;
+// Cache current user ID to avoid repeated account.get() calls
+let cachedUserId: string | null = null;
+let userIdPromise: Promise<string> | null = null;
+
+async function getUserId(): Promise<string> {
+  if (cachedUserId) return cachedUserId;
+  if (userIdPromise) return userIdPromise;
+
+  userIdPromise = (async () => {
+    try {
+      const user = await account.get();
+      cachedUserId = user.$id;
+      return cachedUserId;
+    } catch {
+      cachedUserId = null;
+      throw new Error("Not authenticated");
+    } finally {
+      userIdPromise = null;
+    }
+  })();
+
+  return userIdPromise;
 }
 
 export async function isWishlisted(productId: string) {
@@ -61,4 +80,9 @@ export async function toggleWishlist(productId: string) {
   );
 
   return true;
+}
+
+// Clear cached user ID (call on logout)
+export function clearWishlistCache() {
+  cachedUserId = null;
 }

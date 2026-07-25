@@ -348,14 +348,47 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   return normalizeProduct(data as Partial<AppwriteProductDocument>, $id);
 }
 
-export async function getBrands(): Promise<string[]> {
-  const products = await getProducts({
-    limit: 500,
-  });
+let brandsCache: { data: string[]; timestamp: number } | null = null;
+const BRANDS_CACHE_TTL = 60_000; // 1 minute
 
-  return [...new Set(products.map((p) => p.brand.trim()).filter(Boolean))].sort(
-    (a, b) => a.localeCompare(b),
-  );
+export async function getBrands(): Promise<string[]> {
+  if (brandsCache && Date.now() - brandsCache.timestamp < BRANDS_CACHE_TTL) {
+    return brandsCache.data;
+  }
+
+  if (!isAppwriteDataConfigured) {
+    return [];
+  }
+
+  try {
+    // Use a more efficient query: just fetch brand field + limit to reduce payload
+    const response = await databases.listDocuments(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_PRODUCTS_COLLECTION_ID,
+      [
+        AppwriteQuery.equal("isActive", true),
+        AppwriteQuery.equal("status", "active"),
+        AppwriteQuery.limit(500),
+        AppwriteQuery.select(["brand"]),
+      ],
+    );
+
+    const brands = [
+      ...new Set(
+        response.documents
+          .map((doc) => (doc.brand as string)?.trim())
+          .filter(Boolean),
+      ),
+    ].sort((a, b) => a.localeCompare(b));
+
+    brandsCache = { data: brands, timestamp: Date.now() };
+
+    return brands;
+  } catch (error) {
+    console.error("getBrands:", error);
+
+    return brandsCache?.data ?? [];
+  }
 }
 
 const ProductService = {

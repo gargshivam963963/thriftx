@@ -1,22 +1,31 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Plus_Jakarta_Sans, Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/lib/AuthContext";
 import { CartProvider } from "@/lib/CartContext";
+import { ThemeProvider } from "@/lib/ThemeContext";
 import BottomNav from "@/components/BottomNav";
 import { Toaster } from "sonner";
 
-const inter = Inter({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-serif",
+  weight: ["400", "500", "600", "700"],
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -32,10 +41,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${playfair.variable}`}
+      className={`${jakarta.variable} ${playfair.variable} ${dmSans.variable}`}
+      suppressHydrationWarning
     >
       <body
-        className="min-h-screen overflow-x-hidden bg-[#f9f9f9] pt-16 pb-20 font-sans text-[#1b1b1b] antialiased sm:pt-20 md:pb-0 flex flex-col"
+        className="min-h-screen overflow-x-hidden antialiased flex flex-col"
+        style={{ fontFamily: "var(--font-sans), system-ui, -apple-system, sans-serif" }}
         suppressHydrationWarning
       >
         <NextTopLoader
@@ -50,34 +61,36 @@ export default function RootLayout({
           initialPosition={0.08}
         />
 
-        <AuthProvider>
-          <CartProvider>
-            <div className="pointer-events-none fixed left-4 top-4 z-[60] hidden">
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-xl backdrop-blur-md">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
-                CONNECTED
+        <ThemeProvider>
+          <AuthProvider>
+            <CartProvider>
+              <div className="pointer-events-none fixed left-4 top-4 z-[60] hidden">
+                <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-xl backdrop-blur-md">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+                  CONNECTED
+                </div>
               </div>
-            </div>
 
-            <Header />
+              <Header />
 
-            <main className="flex flex-1 flex-col">
-              {children}
-            </main>
+              <main className="flex flex-1 flex-col">
+                {children}
+              </main>
 
-            <Footer />
-            <BottomNav />
+              <Footer />
+              <BottomNav />
 
-            <Toaster
-              position="top-right"
-              richColors
-              closeButton
-              duration={3000}
-              theme="light"
-            />
-          </CartProvider>
-        </AuthProvider>
+              <Toaster
+                position="top-right"
+                richColors
+                closeButton
+                duration={3000}
+              />
+            </CartProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
+

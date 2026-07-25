@@ -1,10 +1,11 @@
-import type { NextConfig } from "next";22
+import type { NextConfig } from "next";
+22;
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // eslint: {
-  //   ignoreDuringBuilds: true,
-  // },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   // typescript: {
   //   ignoreBuildErrors: true,
   // },

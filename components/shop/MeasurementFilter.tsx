@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Ruler } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const measurementOptions = [
     { label: "Chest 20–22″", value: "chest-20-22" },
@@ -31,23 +32,20 @@ export default function MeasurementFilter() {
         <div className="space-y-1.5">
             {measurementOptions.map((opt) => {
                 const active = selected === opt.value;
-                const isChest = opt.label.startsWith("Chest");
                 return (
-                    <button
+                    <Button
                         key={opt.value}
+                        type="button"
                         onClick={() => toggle(opt.value)}
-                        className={`flex w-full items-center gap-3 rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all ${active
-                                ? "border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900"
-                                : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-400 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400 dark:hover:border-neutral-500 dark:hover:bg-neutral-700/50"
-                            }`}
+                        variant={active ? "primary" : "ghost"}
+                        size="sm"
+                        rounded="lg"
+                        className="flex w-full items-center gap-3 px-3.5 py-2.5 text-sm font-medium justify-start"
                     >
-                        <Ruler
-                            size={14}
-                            className={`shrink-0 ${active ? "text-white/80 dark:text-neutral-900/80" : isChest ? "text-blue-500" : "text-emerald-500"}`}
-                        />
+                        <Ruler size={14} className={`shrink-0 ${active ? "text-white/80 dark:text-neutral-900/80" : opt.label.startsWith("Chest") ? "text-blue-500" : "text-emerald-500"}`} />
                         <span>{opt.label}</span>
                         {active && <span className="ml-auto text-[10px] font-bold">✓</span>}
-                    </button>
+                    </Button>
                 );
             })}
         </div>

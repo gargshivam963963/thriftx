@@ -1,4 +1,4 @@
-import { getCartItems } from "./cart";
+import { getCartItems, removeCartItem as removeFromCart } from "./cart";
 import { getProductById, Product } from "./products";
 
 export interface CartProduct extends Product {
@@ -13,21 +13,43 @@ export async function getCartProducts(): Promise<CartProduct[]> {
     return [];
   }
 
-  const products = await Promise.all(
+  const results = await Promise.allSettled(
     cartItems.map(async (item) => {
-      const product = await getProductById(item.productId);
+      try {
+        const product = await getProductById(item.productId);
 
-      if (!product) {
+        if (!product) {
+          // Product no longer exists in DB — clean up the orphaned cart item silently
+          try {
+            await removeFromCart(item.id);
+          } catch {
+            // Ignore cleanup errors
+          }
+          return null;
+        }
+
+        return {
+          ...product,
+          cartId: item.id,
+          quantity: item.quantity,
+        } satisfies CartProduct;
+      } catch {
+        // Product fetch failed — clean up orphaned cart item
+        try {
+          await removeFromCart(item.id);
+        } catch {
+          // Ignore cleanup errors
+        }
         return null;
       }
-
-      return {
-        ...product,
-        cartId: item.id,
-        quantity: item.quantity,
-      } satisfies CartProduct;
     }),
   );
 
-  return products.filter((product): product is CartProduct => product !== null);
+  return results
+    .filter(
+      (result): result is PromiseFulfilledResult<CartProduct | null> =>
+        result.status === "fulfilled",
+    )
+    .map((result) => result.value)
+    .filter((product): product is CartProduct => product !== null);
 }

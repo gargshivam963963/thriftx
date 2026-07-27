@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 const priceRanges = [
     { label: "Under ₹499", value: "0-499" },
@@ -30,19 +31,20 @@ export default function PriceFilter() {
             {priceRanges.map((range) => {
                 const active = selectedPrice === range.value;
                 return (
-                    <button
+                    <Button
                         key={range.value}
+                        type="button"
                         onClick={() => togglePrice(range.value)}
-                        className={`rounded-xl px-4 py-3 text-left text-sm font-medium transition-all duration-150 ${active
-                                ? "bg-neutral-900 text-white shadow-sm dark:bg-neutral-100 dark:text-neutral-900"
-                                : "bg-neutral-50 text-neutral-600 hover:bg-neutral-100 dark:bg-neutral-800/50 dark:text-neutral-400 dark:hover:bg-neutral-800"
-                            }`}
+                        variant={active ? "primary" : "ghost"}
+                        size="sm"
+                        rounded="lg"
+                        className="px-4 py-2.5 text-left text-sm font-medium w-full justify-start"
                     >
                         {range.label}
-                    </button>
+                        {active && <span className="ml-auto text-[10px] font-bold">✓</span>}
+                    </Button>
                 );
             })}
         </div>
     );
 }
-

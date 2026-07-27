@@ -123,7 +123,7 @@ export default function AddressSection({
         <motion.section
             layout
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm sm:rounded-3xl"
+            className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm sm:rounded-3xl"
         >
             <button
                 type="button"
@@ -133,22 +133,22 @@ export default function AddressSection({
                 <div className="flex items-center gap-3 sm:gap-4">
                     <div
                         className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 sm:h-12 sm:w-12 sm:rounded-2xl ${open
-                            ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/20"
-                            : "bg-zinc-100 text-zinc-600"
+                            ? "bg-neutral-900 text-white shadow-lg shadow-neutral-900/20"
+                            : "bg-neutral-100 text-neutral-600"
                             }`}
                     >
                         <MapPin size={18} className="sm:h-[20px] sm:w-[20px]" />
                     </div>
                     <div className="text-left">
                         <div className="flex items-center gap-2">
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white sm:h-6 sm:w-6 sm:text-xs">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 text-[10px] font-bold text-white sm:h-6 sm:w-6 sm:text-xs">
                                 1
                             </span>
-                            <h2 className="text-sm font-semibold text-zinc-900 sm:text-base sm:text-lg">
+                            <h2 className="text-sm font-semibold text-neutral-900 sm:text-base sm:text-lg">
                                 Delivery Address
                             </h2>
                         </div>
-                        <p className="mt-0.5 text-xs text-zinc-500 sm:text-sm">
+                        <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">
                             {selectedAddress
                                 ? `${selectedAddress.fullName}, ${selectedAddress.city}`
                                 : "Choose where your order should arrive"}
@@ -156,11 +156,11 @@ export default function AddressSection({
                     </div>
                 </div>
 
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 transition">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 transition">
                     {open ? (
-                        <ChevronDown size={18} className="text-zinc-500" />
+                        <ChevronDown size={18} className="text-neutral-500" />
                     ) : (
-                        <ChevronRight size={18} className="text-zinc-500" />
+                        <ChevronRight size={18} className="text-neutral-500" />
                     )}
                 </div>
             </button>
@@ -174,7 +174,7 @@ export default function AddressSection({
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden border-t border-zinc-100"
+                        className="overflow-hidden border-t border-neutral-100"
                     >
                         <div className="p-4 sm:p-6">
                             <AnimatePresence mode="wait">
@@ -257,7 +257,7 @@ export default function AddressSection({
             </AnimatePresence>
 
             {!open && selectedAddress && (
-                <div className="border-t border-zinc-100 px-4 py-4 sm:px-6 sm:py-5">
+                <div className="border-t border-neutral-100 px-4 py-4 sm:px-6 sm:py-5">
                     <AddressSummary
                         compact
                         address={selectedAddress}
@@ -267,14 +267,14 @@ export default function AddressSection({
             )}
 
             {!open && !selectedAddress && addresses.length === 0 && (
-                <div className="border-t border-zinc-100 px-4 py-4 sm:px-6 sm:py-5">
+                <div className="border-t border-neutral-100 px-4 py-4 sm:px-6 sm:py-5">
                     <button
                         type="button"
                         onClick={() => {
                             onOpen();
                             setViewOverride("form");
                         }}
-                        className="inline-flex items-center gap-2 text-sm font-medium text-zinc-900 transition hover:opacity-70"
+                        className="inline-flex items-center gap-2 text-sm font-medium text-neutral-900 transition hover:opacity-70"
                     >
                         <Plus size={16} />
                         Add Address

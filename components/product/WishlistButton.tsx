@@ -57,7 +57,8 @@ export default function WishlistButton({
             variant="outline"
             size="iconMd"
             loading={loading}
-            aria-label="Wishlist"
+            aria-label="Toggle wishlist"
+            title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
             onClick={handleClick}
         >
             <Heart

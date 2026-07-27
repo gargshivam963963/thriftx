@@ -51,7 +51,7 @@ export const SHIPPING_ESTIMATES = {
 export const SHIPPING_DEFAULTS = {
   currency: "INR",
 
-  freeShippingAmount: 0,
+  freeShippingAmount: 999, // Free shipping on orders above ₹999
 
   defaultWeight: 0.5, // kg
 
@@ -82,4 +82,37 @@ export const SHIPPING_FEATURES = {
   allowLabelGeneration: true,
 
   allowMultipleCouriers: true,
+};
+
+/**
+ * Pickup address — used for Shiprocket label generation & courier rate calculation.
+ * Update this to match your actual warehouse/office location.
+ */
+export const PICKUP_ADDRESS = {
+  name: "ThriftX Warehouse",
+  address: "123, Main Bazaar",
+  city: "Panipat",
+  state: "Haryana",
+  country: "India",
+  pincode: "132103",
+  phone: "9999999999", // ← Update this!
+  email: "orders@thriftx.in",
+};
+
+/**
+ * Shipping rate presets (used when Shiprocket API is not configured).
+ * These are realistic placeholder rates for India.
+ */
+export const FALLBACK_SHIPPING_RATES = {
+  local: {
+    standard: {
+      price: 0,
+      eta: "30–60 Minutes",
+      name: "Same-Day Local Delivery",
+    },
+  },
+  courier: {
+    standard: { price: 49, eta: "4–6 Days", name: "Standard Delivery" },
+    express: { price: 99, eta: "2–3 Days", name: "Express Delivery" },
+  },
 };

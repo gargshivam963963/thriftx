@@ -11,6 +11,8 @@ import {
     Clock,
     PackageCheck,
     Sparkles,
+    Loader2,
+    PackageOpen,
 } from "lucide-react";
 
 import type { ShippingMethod } from "../CheckoutAccordion";
@@ -22,7 +24,64 @@ interface ShippingSectionProps {
     onSelect: (method: ShippingMethod) => void;
     onOpen: () => void;
     disabled?: boolean;
+    loading?: boolean;
     isLocalDelivery?: boolean;
+}
+
+function MethodIcon({ id }: { id: string }) {
+    if (id === "express") {
+        return (
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 sm:h-12 sm:w-12 sm:rounded-2xl">
+                <Zap size={18} className="sm:h-[20px] sm:w-[20px]" />
+            </div>
+        );
+    }
+    return (
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-600 sm:h-12 sm:w-12 sm:rounded-2xl">
+            <Truck size={18} className="sm:h-[20px] sm:w-[20px]" />
+        </div>
+    );
+}
+
+function ShippingSkeleton() {
+    return (
+        <div className="space-y-3 p-4 sm:p-6">
+            {[1, 2].map((i) => (
+                <div
+                    key={i}
+                    className="flex animate-pulse items-center gap-4 rounded-2xl border border-neutral-100 p-4 sm:rounded-3xl sm:p-5"
+                >
+                    <div className="h-10 w-10 rounded-xl bg-neutral-200 sm:h-12 sm:w-12 sm:rounded-2xl" />
+                    <div className="flex-1 space-y-2">
+                        <div className="h-4 w-36 rounded bg-neutral-200 sm:w-48" />
+                        <div className="h-3 w-24 rounded bg-neutral-100" />
+                    </div>
+                    <div className="h-6 w-16 rounded-lg bg-neutral-200" />
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function EmptyShipping() {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center gap-3 px-4 py-10 text-center sm:px-6"
+        >
+            <div className="rounded-full bg-neutral-100 p-4">
+                <PackageOpen size={28} className="text-neutral-400" />
+            </div>
+            <p className="text-sm font-medium text-neutral-600">
+                No shipping options available
+            </p>
+            <p className="max-w-xs text-xs text-neutral-400">
+                We couldn&apos;t find courier services for this pincode. Please check your
+                delivery address.
+            </p>
+        </motion.div>
+    );
 }
 
 export default function ShippingSection({
@@ -32,15 +91,17 @@ export default function ShippingSection({
     onSelect,
     onOpen,
     disabled = false,
+    loading = false,
     isLocalDelivery = false,
 }: ShippingSectionProps) {
     return (
         <motion.section
             layout
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className={`overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-3xl ${disabled ? "border-zinc-100 opacity-60" : "border-zinc-200"
+            className={`overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-3xl ${disabled ? "border-neutral-100 opacity-60" : "border-neutral-200"
                 }`}
         >
+            {/* ── Header ──────────────────────────────────────────────────────── */}
             <button
                 type="button"
                 onClick={disabled ? undefined : onOpen}
@@ -50,40 +111,45 @@ export default function ShippingSection({
                 <div className="flex items-center gap-3 sm:gap-4">
                     <div
                         className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 sm:h-12 sm:w-12 sm:rounded-2xl ${open
-                            ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/20"
-                            : "bg-zinc-100 text-zinc-600"
+                                ? "bg-neutral-900 text-white shadow-lg shadow-neutral-900/20"
+                                : "bg-neutral-100 text-neutral-600"
                             }`}
                     >
                         <Truck size={18} className="sm:h-[20px] sm:w-[20px]" />
                     </div>
                     <div className="text-left">
                         <div className="flex items-center gap-2">
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white sm:h-6 sm:w-6 sm:text-xs">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 text-[10px] font-bold text-white sm:h-6 sm:w-6 sm:text-xs">
                                 2
                             </span>
-                            <h2 className="text-sm font-semibold text-zinc-900 sm:text-base sm:text-lg">
-                                Shipping Method
+                            <h2 className="text-sm font-semibold text-neutral-900 sm:text-base sm:text-lg">
+                                Shipping
                             </h2>
                         </div>
-                        <p className="mt-0.5 text-xs text-zinc-500 sm:text-sm">
+                        <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">
                             {disabled
-                                ? "Add an address first"
-                                : selectedMethod
-                                    ? `${selectedMethod.name} — ${selectedMethod.eta}`
-                                    : "Select delivery speed"}
+                                ? "Select an address first"
+                                : isLocalDelivery
+                                    ? "Same-day local delivery"
+                                    : loading
+                                        ? "Fetching courier rates..."
+                                        : selectedMethod
+                                            ? `${selectedMethod.name} — ₹${selectedMethod.price}`
+                                            : "Choose a delivery method"}
                         </p>
                     </div>
                 </div>
 
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100">
                     {open ? (
-                        <ChevronDown size={18} className="text-zinc-500" />
+                        <ChevronDown size={18} className="text-neutral-500" />
                     ) : (
-                        <ChevronRight size={18} className="text-zinc-500" />
+                        <ChevronRight size={18} className="text-neutral-500" />
                     )}
                 </div>
             </button>
 
+            {/* ── Body ────────────────────────────────────────────────────────── */}
             <AnimatePresence initial={false}>
                 {open && !disabled && (
                     <motion.div
@@ -92,158 +158,85 @@ export default function ShippingSection({
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden border-t border-zinc-100"
+                        className="overflow-hidden border-t border-neutral-100"
                     >
-                        <div className="space-y-3 p-4 sm:space-y-4 sm:p-6">
-                            {/* Delivery info banner */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.05 }}
-                                className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-xs sm:rounded-2xl sm:text-sm ${isLocalDelivery
-                                    ? "bg-gradient-to-r from-emerald-50 to-emerald-50/60 text-emerald-800"
-                                    : "bg-gradient-to-r from-amber-50 to-amber-50/60 text-amber-800"
-                                    }`}
-                            >
-                                <Sparkles
-                                    size={16}
-                                    className={`shrink-0 ${isLocalDelivery ? "text-emerald-600" : "text-amber-600"
-                                        }`}
-                                />
-                                <span>
-                                    {isLocalDelivery
-                                        ? "🎉 CONGRATULATIONS! You're in Panipat — enjoy FREE same-day delivery in 30–60 mins + exclusive perks! 🚀"
-                                        : "Free delivery on standard shipping. All orders include tracking &amp; insurance."}
-                                </span>
-                            </motion.div>
+                        {loading ? (
+                            <ShippingSkeleton />
+                        ) : methods.length === 0 ? (
+                            <EmptyShipping />
+                        ) : (
+                            <div className="space-y-3 p-4 sm:space-y-4 sm:p-6">
+                                {methods.map((method) => {
+                                    const selected = selectedMethod?.id === method.id;
+                                    return (
+                                        <motion.button
+                                            key={method.id}
+                                            layout
+                                            whileHover={
+                                                selected ? undefined : { y: -2, scale: 1.005 }
+                                            }
+                                            whileTap={{ scale: 0.99 }}
+                                            type="button"
+                                            onClick={() => onSelect(method)}
+                                            className={`w-full overflow-hidden rounded-2xl border text-left transition-all sm:rounded-3xl ${selected
+                                                    ? "border-neutral-900 bg-neutral-900 text-white shadow-xl"
+                                                    : "border-neutral-200 bg-white hover:border-neutral-400 hover:shadow-md"
+                                                }`}
+                                        >
+                                            <div className="flex items-start justify-between p-4 sm:p-6">
+                                                <div className="flex gap-3 sm:gap-4">
+                                                    <MethodIcon id={method.id} />
 
-                            {methods.map((method, index) => {
-                                const selected = selectedMethod?.id === method.id;
-                                const isFree = method.price === 0;
+                                                    <div>
+                                                        <div className="flex items-center gap-2.5 flex-wrap">
+                                                            <h3 className="text-sm font-semibold sm:text-base">
+                                                                {method.name}
+                                                            </h3>
+                                                            {method.id === "express" && (
+                                                                <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700">
+                                                                    Faster
+                                                                </span>
+                                                            )}
+                                                            {method.price === 0 && (
+                                                                <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+                                                                    Free
+                                                                </span>
+                                                            )}
+                                                        </div>
 
-                                return (
-                                    <motion.button
-                                        layout
-                                        initial={{ opacity: 0, y: 12 }}
-                                        animate={{
-                                            opacity: 1,
-                                            y: 0,
-                                            transition: { delay: 0.08 * (index + 1) },
-                                        }}
-                                        whileHover={
-                                            selected
-                                                ? undefined
-                                                : { y: -2, scale: 1.005 }
-                                        }
-                                        whileTap={{ scale: 0.99 }}
-                                        key={method.id}
-                                        type="button"
-                                        onClick={() => onSelect(method)}
-                                        className={`w-full overflow-hidden rounded-2xl border text-left transition-all sm:rounded-3xl ${selected
-                                            ? "border-zinc-900 bg-zinc-900 text-white shadow-xl"
-                                            : "border-zinc-200 bg-white hover:border-zinc-400 hover:shadow-md"
-                                            }`}
-                                    >
-                                        <div className="flex items-start justify-between p-4 sm:p-6">
-                                            <div className="flex gap-3 sm:gap-4">
-                                                <div
-                                                    className={`rounded-xl p-2.5 transition-colors sm:rounded-2xl sm:p-3 ${selected
-                                                        ? "bg-white/10"
-                                                        : "bg-zinc-100"
-                                                        }`}
-                                                >
-                                                    {method.id === "express" ? (
-                                                        <Zap
-                                                            size={18}
-                                                            className={
-                                                                selected
-                                                                    ? "text-white"
-                                                                    : "text-zinc-700"
-                                                            }
-                                                        />
-                                                    ) : (
-                                                        <Truck
-                                                            size={18}
-                                                            className={
-                                                                selected
-                                                                    ? "text-white"
-                                                                    : "text-zinc-700"
-                                                            }
-                                                        />
-                                                    )}
-                                                </div>
+                                                        <p
+                                                            className={`mt-1 text-xs leading-5 sm:mt-1.5 sm:text-sm sm:leading-6 ${selected ? "text-neutral-300" : "text-neutral-500"
+                                                                }`}
+                                                        >
+                                                            {method.subtitle}
+                                                        </p>
 
-                                                <div>
-                                                    <div className="flex items-center gap-2.5 flex-wrap">
-                                                        <h3 className="text-sm font-semibold sm:text-lg">
-                                                            {method.name}
-                                                        </h3>
-                                                        {isFree && (
+                                                        {/* Delivery ETA Badge */}
+                                                        <div className="mt-2 flex items-center gap-3">
                                                             <span
-                                                                className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${selected
-                                                                    ? "bg-emerald-400/20 text-emerald-300"
-                                                                    : "bg-emerald-100 text-emerald-700"
+                                                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${selected
+                                                                        ? "bg-white/10 text-neutral-200"
+                                                                        : "bg-neutral-100 text-neutral-600"
                                                                     }`}
                                                             >
-                                                                {isLocalDelivery
-                                                                    ? (method.id === "express" ? "🏆 INSANE SPEED" : "⚡ BLISTERING FAST")
-                                                                    : "Best Value"}
+                                                                <Clock size={11} />
+                                                                {method.eta}
                                                             </span>
-                                                        )}
-                                                        {method.id === "express" && (
-                                                            <span
-                                                                className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${selected
-                                                                    ? "bg-amber-400/20 text-amber-300"
-                                                                    : "bg-amber-100 text-amber-700"
-                                                                    }`}
-                                                            >
-                                                                {isLocalDelivery
-                                                                    ? "🚀 BREAKTHROUGH"
-                                                                    : "Most Popular"}
-                                                            </span>
-                                                        )}
-                                                    </div>
 
-                                                    <div
-                                                        className={`mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:mt-2 sm:text-sm ${selected
-                                                            ? "text-zinc-300"
-                                                            : "text-zinc-500"
-                                                            }`}
-                                                    >
-                                                        <span className="inline-flex items-center gap-1">
-                                                            <Clock size={13} />
-                                                            {method.eta}
-                                                        </span>
-                                                        <span className="inline-flex items-center gap-1">
-                                                            <ShieldCheck size={13} />
-                                                            Insured
-                                                        </span>
+                                                            {method.price > 0 && (
+                                                                <span
+                                                                    className={`text-[11px] font-semibold ${selected
+                                                                            ? "text-neutral-300"
+                                                                            : "text-neutral-500"
+                                                                        }`}
+                                                                >
+                                                                    ₹{method.price}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            {/* Price */}
-                                            <div className="ml-4 shrink-0 text-right">
-                                                <h4
-                                                    className={`text-lg font-bold sm:text-2xl ${isFree
-                                                        ? "text-emerald-500"
-                                                        : selected
-                                                            ? "text-white"
-                                                            : "text-zinc-900"
-                                                        }`}
-                                                >
-                                                    {isFree ? (
-                                                        <span className="inline-flex items-center gap-1">
-                                                            <PackageCheck
-                                                                size={16}
-                                                                className="sm:h-[20px] sm:w-[20px]"
-                                                            />
-                                                            FREE
-                                                        </span>
-                                                    ) : (
-                                                        `₹${method.price}`
-                                                    )}
-                                                </h4>
                                                 {selected && (
                                                     <motion.div
                                                         initial={{ scale: 0 }}
@@ -255,43 +248,83 @@ export default function ShippingSection({
                                                         }}
                                                     >
                                                         <CheckCircle2
-                                                            size={18}
-                                                            className="ml-auto mt-1 text-emerald-400 sm:mt-2"
+                                                            className="shrink-0 text-emerald-400"
+                                                            size={22}
                                                         />
                                                     </motion.div>
                                                 )}
                                             </div>
+                                        </motion.button>
+                                    );
+                                })}
+
+                                {/* Trust badges */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.15 }}
+                                    className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3"
+                                >
+                                    <div className="rounded-xl border border-neutral-200 bg-white p-3 transition hover:border-neutral-300 hover:shadow-sm sm:rounded-2xl sm:p-4">
+                                        <div className="mb-2 inline-flex rounded-lg bg-neutral-100 p-2 sm:rounded-xl sm:p-2.5">
+                                            <ShieldCheck size={15} className="text-neutral-600" />
                                         </div>
-                                    </motion.button>
-                                );
-                            })}
-                        </div>
+                                        <h4 className="text-xs font-semibold text-neutral-900 sm:text-sm">
+                                            Tracked Shipment
+                                        </h4>
+                                        <p className="mt-0.5 text-[11px] text-neutral-500 sm:text-xs">
+                                            Real-time tracking
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl border border-neutral-200 bg-white p-3 transition hover:border-neutral-300 hover:shadow-sm sm:rounded-2xl sm:p-4">
+                                        <div className="mb-2 inline-flex rounded-lg bg-neutral-100 p-2 sm:rounded-xl sm:p-2.5">
+                                            <PackageCheck size={15} className="text-neutral-600" />
+                                        </div>
+                                        <h4 className="text-xs font-semibold text-neutral-900 sm:text-sm">
+                                            Secure Packing
+                                        </h4>
+                                        <p className="mt-0.5 text-[11px] text-neutral-500 sm:text-xs">
+                                            Bubble-wrapped
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl border border-neutral-200 bg-white p-3 transition hover:border-neutral-300 hover:shadow-sm sm:rounded-2xl sm:p-4">
+                                        <div className="mb-2 inline-flex rounded-lg bg-neutral-100 p-2 sm:rounded-xl sm:p-2.5">
+                                            <Sparkles size={15} className="text-neutral-600" />
+                                        </div>
+                                        <h4 className="text-xs font-semibold text-neutral-900 sm:text-sm">
+                                            Quality Check
+                                        </h4>
+                                        <p className="mt-0.5 text-[11px] text-neutral-500 sm:text-xs">
+                                            Inspected before ship
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {!open && selectedMethod && (
-                <div className="border-t border-zinc-100 px-4 py-4 sm:px-6 sm:py-5">
+            {/* ── Collapsed State Summary ──────────────────────────────────────── */}
+            {!open && !disabled && selectedMethod && (
+                <div className="border-t border-neutral-100 px-4 py-4 sm:px-6 sm:py-5">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-start gap-3">
                             <div className="mt-0.5 rounded-full bg-emerald-100 p-1.5 text-emerald-600 sm:p-2">
-                                <CheckCircle2
-                                    size={16}
-                                    className="sm:h-[18px] sm:w-[18px]"
-                                />
+                                <CheckCircle2 size={16} className="sm:h-[18px] sm:w-[18px]" />
                             </div>
                             <div>
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 sm:text-[11px]">
-                                    Shipping Selected
+                                    Shipping Method
                                 </p>
-                                <h4 className="mt-0.5 text-sm font-semibold text-zinc-900 sm:text-base">
+                                <h4 className="mt-0.5 text-sm font-semibold text-neutral-900 sm:text-base">
                                     {selectedMethod.name}
                                 </h4>
-                                <p className="text-xs text-zinc-500 sm:text-sm">
-                                    {selectedMethod.eta}{" "}
+                                <p className="text-xs text-neutral-500 sm:text-sm">
+                                    {selectedMethod.eta}
                                     {selectedMethod.price === 0
-                                        ? "• Free"
-                                        : `• ₹${selectedMethod.price}`}
+                                        ? " • Free"
+                                        : ` • ₹${selectedMethod.price}`}
                                 </p>
                             </div>
                         </div>
@@ -301,7 +334,7 @@ export default function ShippingSection({
                             onClick={onOpen}
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
-                            className="shrink-0 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white sm:px-4 sm:py-2 sm:text-sm"
+                            className="shrink-0 rounded-xl border border-neutral-200 px-3 py-1.5 text-xs font-medium transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white sm:px-4 sm:py-2 sm:text-sm"
                         >
                             Change
                         </motion.button>

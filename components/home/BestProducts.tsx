@@ -68,8 +68,11 @@ export default function BestProducts({
                                 brand={product.brand}
                                 title={product.title}
                                 price={product.price}
-                                condition={product.condition}
+                                retailPrice={product.retailPrice}
                                 image={product.primaryImage ?? product.images?.[0] ?? "/placeholder.webp"}
+                                category={product.category}
+                                chest={product.chest}
+                                waist={product.waist}
                             />
 
                         </StaggerItem>

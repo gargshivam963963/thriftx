@@ -1,4 +1,6 @@
-import type { ShippingRate, Shipment } from "../types";
+import type { ShippingRate } from "../types";
+import { PICKUP_ADDRESS, FALLBACK_SHIPPING_RATES } from "../constants";
+import { detectDeliveryZone } from "@/lib/delivery";
 
 import type {
   CreateShipmentPayload,
@@ -8,6 +10,7 @@ import type {
   TrackingResult,
 } from "./base";
 import { shiprocketFetch } from "./client";
+import { getAvailableCouriers } from "./couriers";
 
 export class ShiprocketProvider implements ShippingProvider {
   readonly provider = "shiprocket";
@@ -22,7 +25,7 @@ export class ShiprocketProvider implements ShippingProvider {
           order_id: payload.orderId,
           order_date: new Date().toISOString(),
 
-          pickup_location: "Primary",
+          pickup_location: PICKUP_ADDRESS.name,
 
           billing_customer_name: payload.customerName,
           billing_last_name: "",
@@ -124,55 +127,149 @@ export class ShiprocketProvider implements ShippingProvider {
   }
 
   async cancelShipment(shipmentId: string): Promise<boolean> {
-    console.log("[Shiprocket] Cancel Shipment", shipmentId);
-
-    // TODO
-
-    return false;
+    try {
+      await shiprocketFetch(`/orders/cancel`, {
+        method: "POST",
+        body: JSON.stringify({ ids: [parseInt(shipmentId, 10)] }),
+      });
+      return true;
+    } catch (error) {
+      console.error("[Shiprocket] Cancel failed:", error);
+      return false;
+    }
   }
 
   async schedulePickup(shipmentId: string): Promise<PickupResult> {
-    console.log("[Shiprocket] Schedule Pickup", shipmentId);
+    try {
+      const response = await shiprocketFetch<any>(`/courier/generate/pickup`, {
+        method: "POST",
+        body: JSON.stringify({
+          shipment_id: [parseInt(shipmentId, 10)],
+        }),
+      });
 
-    // TODO
-
-    return {
-      success: false,
-      message: "Pickup scheduling not implemented.",
-    };
+      return {
+        success: true,
+        pickup: {
+          pickupId: response.pickup_id ?? String(Date.now()),
+          scheduledAt: new Date().toISOString(),
+          status: "scheduled",
+        },
+      };
+    } catch (error) {
+      console.error("[Shiprocket] Pickup scheduling failed:", error);
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Pickup scheduling failed.",
+      };
+    }
   }
 
   async getTracking(trackingNumber: string): Promise<TrackingResult> {
-    console.log("[Shiprocket] Tracking", trackingNumber);
+    try {
+      const response = await shiprocketFetch<any>(
+        `/tracking?shipment_id=${trackingNumber}`,
+      );
 
-    // TODO
+      const trackingData = response?.tracking_data ?? response;
 
-    return {
-      success: false,
-      message: "Tracking not implemented.",
-    };
+      const events = Array.isArray(trackingData)
+        ? trackingData.map((event: any) => ({
+            status:
+              event.current_status?.toLowerCase().replace(/\s+/g, "_") ??
+              "in_transit",
+            description: event.activity ?? "In transit",
+            location: event.location ?? "",
+            timestamp: event.date ?? new Date().toISOString(),
+          }))
+        : [];
+
+      return {
+        success: true,
+        status: "in_transit",
+        tracking: events,
+      };
+    } catch (error) {
+      console.error("[Shiprocket] Tracking failed:", error);
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Tracking fetch failed.",
+      };
+    }
   }
 
   async generateLabel(shipmentId: string): Promise<string | null> {
-    console.log("[Shiprocket] Generate Label", shipmentId);
+    try {
+      const response = await shiprocketFetch<any>(`/courier/generate/label`, {
+        method: "POST",
+        body: JSON.stringify({
+          shipment_id: [parseInt(shipmentId, 10)],
+        }),
+      });
 
-    // TODO
-
-    return null;
+      return response.label_url ?? null;
+    } catch (error) {
+      console.error("[Shiprocket] Label generation failed:", error);
+      return null;
+    }
   }
 
   async getShippingRates(
     pincode: string,
     weight: number,
   ): Promise<ShippingRate[]> {
-    console.log("[Shiprocket] Shipping Rates", {
-      pincode,
-      weight,
-    });
+    try {
+      // Try Shiprocket API first
+      const couriers = await getAvailableCouriers(
+        PICKUP_ADDRESS.pincode,
+        pincode,
+        true, // COD
+        weight,
+      );
 
-    // TODO
+      if (couriers.length > 0) {
+        return couriers.map((c) => ({
+          courierId: String(c.courierCompanyId),
+          courierName: c.courierName,
+          method: c.freightCharge > 70 ? "express" : "standard",
+          amount: c.freightCharge,
+          estimatedDays: parseInt(c.estimatedDays, 10) || 5,
+          codAvailable: true,
+          trackingAvailable: true,
+        }));
+      }
 
-    return [];
+      // Fallback to preset rates if API returns nothing
+      return this.getFallbackRates(pincode);
+    } catch {
+      // If Shiprocket is not configured, return fallback rates
+      console.warn(
+        "[Shiprocket] API call failed, using fallback rates. Set SHIPROCKET_EMAIL & SHIPROCKET_PASSWORD env vars to enable live rates.",
+      );
+      return this.getFallbackRates(pincode);
+    }
+  }
+
+  /**
+   * Return preset rates when Shiprocket is not configured.
+   * This makes the shipping integration work without credentials.
+   */
+  private getFallbackRates(pincode: string): ShippingRate[] {
+    const zone = detectDeliveryZone("", pincode);
+    const rates =
+      FALLBACK_SHIPPING_RATES[zone === "local" ? "local" : "courier"];
+
+    return Object.entries(rates).map(([method, config]) => ({
+      courierId: `fallback_${method}`,
+      courierName: config.name,
+      method: method as "standard" | "express",
+      amount: config.price,
+      estimatedDays: method === "express" ? 3 : 6,
+      codAvailable: true,
+      trackingAvailable: method !== "local",
+    }));
   }
 }
 

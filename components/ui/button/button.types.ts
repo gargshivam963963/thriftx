@@ -7,18 +7,38 @@ import { buttonVariants } from "./button.styles";
 /**
  * Button Component Props
  *
- * Extends the native HTML button attributes while adding
+ * Extends framer-motion button props while adding
  * design-system specific variants and utilities.
  */
 export interface ButtonProps
   extends HTMLMotionProps<"button">, VariantProps<typeof buttonVariants> {
   /**
    * Displays a loading spinner and disables interaction.
+   * @default false
    */
   loading?: boolean;
 
   /**
+   * Custom text shown while loading.
+   * @default "Loading..."
+   */
+  loadingText?: string;
+
+  /**
+   * Shows a success checkmark icon.
+   * @default false
+   */
+  success?: boolean;
+
+  /**
+   * Custom text shown on success.
+   * @default "Success"
+   */
+  successText?: string;
+
+  /**
    * Makes the button take the full width of its parent.
+   * @default false
    */
   fullWidth?: boolean;
 

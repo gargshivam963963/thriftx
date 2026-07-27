@@ -64,6 +64,25 @@ body {
     color 0.3s ease;
 }
 
+/* ─── Global Cursor Rules ──────────────────────────────────────────────────── */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+a[href],
+input[type="submit"],
+input[type="reset"],
+input[type="button"],
+label[for],
+select,
+summary {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"]:disabled,
+a[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 /* ─── Premium Font Utilities ──────────────────────────────────────────────── */
 
 .font-sans {

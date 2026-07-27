@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Truck, CreditCard, Check } from "lucide-react";
 
 import type { Address, CreateAddressPayload } from "@/lib/types/address";
 import type { PaymentMethod } from "@/lib/types/order";
 import { detectDeliveryZone } from "@/lib/delivery";
+import { SHIPPING_DEFAULTS } from "@/lib/shipping/constants";
+import { getShippingRates } from "@/lib/shipping/api";
 
 import AddressSection from "./address/AddressSection";
 import ShippingSection from "./shipping/ShippingSection";
@@ -22,41 +24,91 @@ export interface ShippingMethod {
     eta: string;
 }
 
-export function getShippingOptionsForCity(
+/**
+ * Fetch REAL shipping rates from Shiprocket API.
+ * Returns cheapest courier options sorted by price (lowest first).
+ * Falls back to preset rates if API is unavailable or returns no results.
+ */
+export async function getShippingOptionsForCity(
     city?: string,
     pincode?: string,
-): ShippingMethod[] {
-    const isLocal =
-        city ? detectDeliveryZone(city, pincode) === "local" : false;
-
-    if (isLocal) {
+    orderSubtotal?: number,
+): Promise<ShippingMethod[]> {
+    // Local delivery (Panipat) — always free same-day, no courier needed
+    if (city && pincode && detectDeliveryZone(city, pincode) === "local") {
         return [
             {
                 id: "standard",
-                name: "🎉 Congratulations! You're in Panipat!",
-                subtitle: "FREE Same-Day Delivery • Blazing Fast",
+                name: "Panipat Same-Day Delivery",
+                subtitle: "FREE delivery in 30–60 mins",
                 price: 0,
-                eta: "⚡ 30–60 Minutes",
+                eta: "30–60 min",
             },
         ];
     }
 
-    return [
-        {
-            id: "standard",
-            name: "Standard Delivery",
-            subtitle: "Best Value",
-            price: 0,
-            eta: "4–6 Days",
-        },
-        {
-            id: "express",
-            name: "Express Delivery",
-            subtitle: "Most Popular",
-            price: 99,
-            eta: "2–3 Days",
-        },
-    ];
+    const freeShipping = (orderSubtotal ?? 0) >= SHIPPING_DEFAULTS.freeShippingAmount;
+
+    try {
+        // Call Shiprocket API via our backend route to get real courier rates
+        const response = await getShippingRates(pincode ?? "");
+        const rates = response.rates;
+
+        if (rates && rates.length > 0) {
+            // Sort by amount (cheapest first)
+            const sorted = [...rates].sort((a, b) => a.amount - b.amount);
+
+            // Cheapest courier = standard
+            const cheapest = sorted[0];
+            const standardPrice = freeShipping ? 0 : cheapest.amount;
+
+            const methods: ShippingMethod[] = [
+                {
+                    id: "standard",
+                    name: `${cheapest.courierName} — Standard`,
+                    subtitle: freeShipping ? "FREE on this order" : `Cheapest courier — ₹${cheapest.amount}`,
+                    price: standardPrice,
+                    eta: `${cheapest.estimatedDays} Day${cheapest.estimatedDays !== 1 ? "s" : ""}`,
+                },
+            ];
+
+            // If there's a second cheapest, offer it as express
+            if (sorted.length > 1) {
+                const faster = sorted[1];
+                methods.push({
+                    id: "express",
+                    name: `${faster.courierName} — Express`,
+                    subtitle: `Faster — ₹${faster.amount}`,
+                    price: faster.amount,
+                    eta: `${faster.estimatedDays} Day${faster.estimatedDays !== 1 ? "s" : ""}`,
+                });
+            }
+
+            return methods;
+        }
+
+        throw new Error("No courier rates returned from Shiprocket");
+    } catch {
+        // Fallback to preset rates if Shiprocket API fails
+        const standardPrice = freeShipping ? 0 : 49;
+
+        return [
+            {
+                id: "standard",
+                name: "Standard Delivery",
+                subtitle: freeShipping ? "FREE on this order" : "Best Value",
+                price: standardPrice,
+                eta: "4–6 Days",
+            },
+            {
+                id: "express",
+                name: "Express Delivery",
+                subtitle: "Faster Shipping",
+                price: 99,
+                eta: "2–3 Days",
+            },
+        ];
+    }
 }
 
 interface CheckoutAccordionProps {
@@ -75,6 +127,7 @@ interface CheckoutAccordionProps {
     onPay: (method: PaymentMethod) => void;
     paymentMethod: PaymentMethod | null;
     onPaymentMethodChange: (method: PaymentMethod) => void;
+    subtotal: number;
 }
 
 const steps = [
@@ -131,8 +184,8 @@ function StepIndicator({
                                     className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${status === "complete"
                                         ? "bg-emerald-500 text-white"
                                         : isActive
-                                            ? "bg-zinc-900 text-white ring-4 ring-zinc-900/10"
-                                            : "bg-zinc-200 text-zinc-500"
+                                            ? "bg-neutral-900 text-white ring-4 ring-neutral-900/10"
+                                            : "bg-neutral-200 text-neutral-500"
                                         }`}
                                 >
                                     {status === "complete" ? (
@@ -152,7 +205,7 @@ function StepIndicator({
                                     )}
                                 </motion.div>
                                 <span
-                                    className={`text-sm font-medium ${isActive ? "text-zinc-900" : "text-zinc-500"
+                                    className={`text-sm font-medium ${isActive ? "text-neutral-900" : "text-neutral-500"
                                         }`}
                                 >
                                     {step.label}
@@ -200,8 +253,8 @@ function StepIndicator({
                                 className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold transition-all ${status === "complete"
                                     ? "bg-emerald-500 text-white"
                                     : isActive
-                                        ? "bg-zinc-900 text-white ring-4 ring-zinc-900/10"
-                                        : "bg-zinc-200 text-zinc-400"
+                                        ? "bg-neutral-900 text-white ring-4 ring-neutral-900/10"
+                                        : "bg-neutral-200 text-neutral-400"
                                     }`}
                             >
                                 {status === "complete" ? (
@@ -211,7 +264,7 @@ function StepIndicator({
                                 )}
                             </motion.div>
                             <span
-                                className={`text-[10px] font-medium ${isActive ? "text-zinc-900" : "text-zinc-400"
+                                className={`text-[10px] font-medium ${isActive ? "text-neutral-900" : "text-neutral-400"
                                     }`}
                             >
                                 {step.label}
@@ -243,7 +296,7 @@ function AccordionSkeleton() {
             {[1, 2, 3].map((i) => (
                 <div
                     key={i}
-                    className="h-24 animate-pulse rounded-2xl bg-zinc-100 sm:rounded-3xl"
+                    className="h-24 animate-pulse rounded-2xl bg-neutral-100 sm:rounded-3xl"
                 />
             ))}
         </div>
@@ -268,8 +321,11 @@ export default function CheckoutAccordion({
     onPay,
     paymentMethod,
     onPaymentMethodChange,
+    subtotal,
 }: CheckoutAccordionProps) {
     const sectionRef = useRef<HTMLDivElement>(null);
+    const [shippingOptions, setShippingOptions] = useState<ShippingMethod[]>([]);
+    const [shippingLoading, setShippingLoading] = useState(false);
 
     const selectedAddress = useMemo<Address | null>(() => {
         if (!addresses.length) return null;
@@ -291,6 +347,44 @@ export default function CheckoutAccordion({
         }
     }, [activeStep]);
 
+    // Fetch dynamic shipping options from Shiprocket API when address changes
+    useEffect(() => {
+        let cancelled = false;
+
+        async function fetchRates() {
+            setShippingLoading(true);
+            try {
+                const options = await getShippingOptionsForCity(
+                    selectedAddress?.city,
+                    selectedAddress?.pincode,
+                    subtotal,
+                );
+                if (!cancelled) {
+                    setShippingOptions(options);
+
+                    // Auto-select the cheapest (first) option if nothing is selected
+                    if (options.length > 0 && !shippingMethod) {
+                        onShippingSelect(options[0]);
+                    }
+                }
+            } catch {
+                if (!cancelled) {
+                    setShippingOptions([]);
+                }
+            } finally {
+                if (!cancelled) {
+                    setShippingLoading(false);
+                }
+            }
+        }
+
+        fetchRates();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedAddress?.city, selectedAddress?.pincode, subtotal]);
+
     const stepStatus = useMemo((): Record<string, "complete" | "current" | "pending"> => {
         return {
             address:
@@ -309,14 +403,6 @@ export default function CheckoutAccordion({
                 activeStep === "payment" ? "current" as const : "pending" as const,
         };
     }, [activeStep, selectedAddress, shippingMethod]);
-
-    // Compute dynamic shipping options based on selected address city
-    const shippingOptions = useMemo(() => {
-        return getShippingOptionsForCity(
-            selectedAddress?.city,
-            selectedAddress?.pincode,
-        );
-    }, [selectedAddress?.city, selectedAddress?.pincode]);
 
     const handleAddressSave = async (
         data: CreateAddressPayload,
@@ -367,6 +453,7 @@ export default function CheckoutAccordion({
                     onSelect={handleShippingSelect}
                     onOpen={() => onStepChange("shipping")}
                     disabled={!selectedAddress}
+                    loading={shippingLoading}
                     isLocalDelivery={selectedAddress ? detectDeliveryZone(selectedAddress.city, selectedAddress.pincode) === "local" : false}
                 />
 
@@ -383,4 +470,3 @@ export default function CheckoutAccordion({
         </div>
     );
 }
-

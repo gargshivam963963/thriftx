@@ -89,7 +89,7 @@ function DeliveryTimeline({
                         <div
                             className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${step.completed
                                 ? "bg-emerald-500 text-white"
-                                : "bg-zinc-100 text-zinc-400"
+                                : "bg-neutral-100 text-neutral-400"
                                 }`}
                         >
                             {step.completed ? (
@@ -102,7 +102,7 @@ function DeliveryTimeline({
                             <div
                                 className={`mt-1 h-8 w-px ${step.completed
                                     ? "bg-emerald-200"
-                                    : "bg-zinc-200"
+                                    : "bg-neutral-200"
                                     }`}
                             />
                         )}
@@ -111,12 +111,12 @@ function DeliveryTimeline({
                         <h4
                             className={`text-sm font-semibold ${step.completed
                                 ? "text-emerald-700"
-                                : "text-zinc-900"
+                                : "text-neutral-900"
                                 }`}
                         >
                             {step.title}
                         </h4>
-                        <p className="mt-0.5 text-xs text-zinc-500">
+                        <p className="mt-0.5 text-xs text-neutral-500">
                             {step.subtitle}
                         </p>
                     </div>
@@ -131,10 +131,10 @@ function DeliveryTimeline({
 export default function SuccessPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+            <div className="min-h-screen flex items-center justify-center bg-neutral-50">
                 <div className="animate-pulse text-center">
-                    <div className="h-8 w-48 rounded bg-zinc-200 mx-auto mb-4" />
-                    <div className="h-4 w-64 rounded bg-zinc-200 mx-auto" />
+                    <div className="h-8 w-48 rounded bg-neutral-200 mx-auto mb-4" />
+                    <div className="h-4 w-64 rounded bg-neutral-200 mx-auto" />
                 </div>
             </div>
         }>
@@ -227,13 +227,13 @@ function SuccessContent() {
     };
 
     return (
-        <main className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50">
+        <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-neutral-50">
             <div className="mx-auto max-w-lg px-4 py-10 sm:px-6 sm:py-16">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
-                    className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm"
+                    className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm"
                 >
                     {/* ─── Hero Section ──────────────────────────────── */}
                     <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-500 to-emerald-400 px-6 pb-8 pt-10 text-center sm:px-8 sm:pt-14">
@@ -266,19 +266,19 @@ function SuccessContent() {
                     </div>
 
                     {/* ─── Order ID ───────────────────────────────────── */}
-                    <div className="border-b border-zinc-100 px-6 py-5 sm:px-8">
+                    <div className="border-b border-neutral-100 px-6 py-5 sm:px-8">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
                                     Order ID
                                 </p>
-                                <p className="mt-1 font-mono text-sm font-semibold text-zinc-900">
+                                <p className="mt-1 font-mono text-sm font-semibold text-neutral-900">
                                     #{orderId}
                                 </p>
                             </div>
-                            <div className="flex items-center gap-2 rounded-xl bg-zinc-100 px-3 py-2">
-                                <Package size={14} className="text-zinc-500" />
-                                <span className="text-xs font-semibold text-zinc-600">
+                            <div className="flex items-center gap-2 rounded-xl bg-neutral-100 px-3 py-2">
+                                <Package size={14} className="text-neutral-500" />
+                                <span className="text-xs font-semibold text-neutral-600">
                                     {items} {Number(items) === 1 ? "Item" : "Items"}
                                 </span>
                             </div>
@@ -309,8 +309,8 @@ function SuccessContent() {
 
                     {/* ─── Delivery Timeline ──────────────────────────── */}
                     {timeline.length > 0 && (
-                        <div className="border-t border-zinc-100 px-6 py-5 sm:px-8">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+                        <div className="border-t border-neutral-100 px-6 py-5 sm:px-8">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
                                 Order Progress
                             </p>
                             <div className="mt-4">
@@ -320,7 +320,7 @@ function SuccessContent() {
                     )}
 
                     {/* ─── Actions ────────────────────────────────────── */}
-                    <div className="border-t border-zinc-100 px-6 py-6 sm:px-8">
+                    <div className="border-t border-neutral-100 px-6 py-6 sm:px-8">
                         <div className="space-y-3">
                             <Link href="/orders">
                                 <Button
@@ -329,7 +329,7 @@ function SuccessContent() {
                                     variant="primary"
                                     leftIcon={<Package size={18} />}
                                     rightIcon={<ArrowRight size={18} />}
-                                    className="h-13 rounded-xl text-base shadow-lg shadow-zinc-900/20"
+                                    className="h-13 rounded-xl text-base shadow-lg shadow-neutral-900/20"
                                 >
                                     View My Orders
                                 </Button>
@@ -360,7 +360,7 @@ function SuccessContent() {
                                 </Button>
                             </div>
 
-                            <div className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-zinc-400">
+                            <div className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-neutral-400">
                                 <Gem size={12} />
                                 <span>
                                     Premium Thrift Fashion &mdash; THRIFTX
@@ -375,15 +375,15 @@ function SuccessContent() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5, duration: 0.35 }}
-                    className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5 text-center shadow-sm"
+                    className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5 text-center shadow-sm"
                 >
                     <div className="flex items-center justify-center gap-2">
                         <Heart size={16} className="text-red-400" />
-                        <p className="text-sm text-zinc-600">
+                        <p className="text-sm text-neutral-600">
                             Love THRIFTX?{" "}
                             <Link
                                 href="/refer"
-                                className="font-semibold text-zinc-900 underline underline-offset-2 transition hover:text-zinc-700"
+                                className="font-semibold text-neutral-900 underline underline-offset-2 transition hover:text-neutral-700"
                             >
                                 Refer a friend & get ₹100 off
                             </Link>

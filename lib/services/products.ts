@@ -321,7 +321,7 @@ export async function getProductById(id: string): Promise<Product | null> {
 
     return normalizeProduct(data as Partial<AppwriteProductDocument>, $id);
   } catch (error) {
-    console.error("getProductById:", error);
+    // Silently return null for not-found — this is a normal case (orphaned cart items, deleted products)
     return null;
   }
 }

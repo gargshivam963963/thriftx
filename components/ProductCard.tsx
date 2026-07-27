@@ -1,18 +1,37 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Heart, ArrowUpRight } from "lucide-react";
+import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 import PremiumImage from "@/components/ui/PremiumImage";
+import { isWishlisted, toggleWishlist } from "@/lib/services/wishlist";
+
+const TOPWEAR_KEYWORDS = [
+  "t-shirt", "shirt", "hoodie", "jacket", "blazer",
+  "sweater", "top", "blouse", "cardigan", "vest", "jersey",
+];
+
+function getMeasurement(category: string, chest?: string, waist?: string): string | null {
+  const cat = category.toLowerCase();
+  const isTopwear = TOPWEAR_KEYWORDS.some(k => cat.includes(k));
+  if (isTopwear && chest) return `Chest ${chest}`;
+  if (!isTopwear && waist) return `Waist ${waist}`;
+  return null;
+}
 
 interface ProductCardProps {
   id: string;
   brand: string;
   title: string;
   price: number;
-  condition: string;
+  retailPrice?: number;
   image: string;
+  category?: string;
+  chest?: string;
+  waist?: string;
   onlyOneLeft?: boolean;
 }
 
@@ -21,193 +40,125 @@ export default function ProductCard({
   brand,
   title,
   price,
-  condition,
+  retailPrice,
   image,
+  category = "",
+  chest,
+  waist,
   onlyOneLeft = false,
 }: ProductCardProps) {
+  const [wishlisted, setWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  useEffect(() => {
+    isWishlisted(id).then(setWishlisted).catch(() => { });
+  }, [id]);
+
+  const handleWishlist = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setWishlistLoading(true);
+    try {
+      const state = await toggleWishlist(id);
+      setWishlisted(state);
+      toast.success(state ? "Added to wishlist ❤️" : "Removed from wishlist");
+    } catch {
+      toast.error("Please sign in to wishlist");
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
+
+  const measurement = getMeasurement(category, chest, waist);
+  const discount =
+    retailPrice && retailPrice > price
+      ? Math.round(((retailPrice - price) / retailPrice) * 100)
+      : null;
+
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        y: 40,
-      }}
-      whileInView={{
-        opacity: 1,
-        y: 0,
-      }}
-      viewport={{
-        once: true,
-        amount: 0.2,
-      }}
-      whileHover={{
-        y: -10,
-        scale: 1.01,
-      }}
-      transition={{
-        duration: 0.45,
-        ease: [0.22, 1, 0.36, 1],
-      }}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.1 }}
+      transition={{ duration: 0.3 }}
       className="h-full"
     >
       <Link
         href={`/product/${id}`}
-        className="
-          group
-          flex
-          h-full
-          flex-col
-          overflow-hidden
-          rounded-[24px]
-          border
-          border-neutral-200
-          bg-white
-          shadow-[0_6px_20px_rgba(0,0,0,.04)]
-hover:shadow-[0_30px_60px_rgba(0,0,0,.12)]
-          transition-all
-          duration-300
-          hover:border-neutral-300
-        "
+        className="group relative flex h-full flex-col"
       >
-        {/* IMAGE */}
-        <div
-          className="
-    relative
-    aspect-[4/5]
-    overflow-hidden
-    rounded-t-[24px]
-    bg-neutral-100
-  "
-        >
+        {/* ── Image — Uniform Fixed Height ──────────────────────── */}
+        <div className="relative h-[200px] xs:h-[220px] sm:h-[260px] md:h-[280px] xl:h-[320px] w-full overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800">
           <PremiumImage
             src={image || "/images/placeholder.jpg"}
-            rounded
             alt={title}
             fill
-            sizes="(max-width:768px)50vw,(max-width:1200px)33vw,25vw"
-            className="
-object-cover
-transition-all
-duration-1000
-ease-[cubic-bezier(.22,1,.36,1)]
-group-hover:scale-[1.1]
-"
+            sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 25vw"
+            className="object-cover transition-all duration-700 ease-out group-hover:scale-[1.08]"
           />
 
-          {onlyOneLeft && (
-            <div className="absolute left-3 top-3 z-20">
-              <span className="rounded-full bg-black px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white shadow-lg">
-                Last Piece
+          {/* Wishlist */}
+          <button
+            type="button"
+            onClick={handleWishlist}
+            disabled={wishlistLoading}
+            className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-md shadow-lg transition-all duration-200 hover:scale-110 active:scale-90 hover:bg-white"
+          >
+            <Heart
+              size={14}
+              className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-neutral-700"
+                }`}
+            />
+          </button>
+
+          {/* Discount */}
+          {discount && discount > 0 && (
+            <div className="absolute left-2 top-2 z-20">
+              <span className="rounded-lg bg-white/90 backdrop-blur-md px-2 py-1 text-[10px] font-bold text-red-600 shadow-sm">
+                -{discount}%
               </span>
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={(e) => e.preventDefault()}
-            className="
-              absolute
-              right-3
-              top-3
-              z-20
-              flex
-              h-10
-              w-10
-              items-center
-              justify-center
-              rounded-full
-              bg-white/90
-              backdrop-blur-xl
-              shadow-lg
-             hover:scale-110
-active:scale-95
-hover:bg-white
-hover:text-red-500
-transition-all
-duration-300
-            "
-            aria-label="Add to wishlist"
-          >
-            <Heart className="h-4 w-4" />
-          </button>
-
-          <div
-            className="
-              absolute
-              inset-x-3
-              bottom-3
-              translate-y-5
-              opacity-0
-              transition-all
-              duration-300
-              group-hover:translate-y-0
-              group-hover:opacity-100
-            "
-          >
-            <div className="rounded-xl bg-black/85 px-4 py-3 text-center text-sm font-medium text-white backdrop-blur-xl">
-              View Details →
+          {/* Only 1 left */}
+          {onlyOneLeft && (
+            <div className="absolute left-2 top-2 z-20">
+              <span className="rounded-lg bg-amber-500/90 backdrop-blur-md px-2 py-1 text-[10px] font-bold text-white shadow-sm">
+                Only 1
+              </span>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* CONTENT */}
-        <div className="flex flex-1 flex-col p-5">
-          <span className="text-[11px] font-semibold uppercase text-neutral-400
-tracking-[0.3em]">
+        {/* ── Info — Minimal ────────────────────────────────────── */}
+        <div className="mt-2.5 space-y-0.5 px-0.5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-400 dark:text-neutral-500">
             {brand}
-          </span>
+          </p>
 
-          <h3 className="mt-2 line-clamp-2 min-h-[56px] text-lg font-semibold leading-7 text-neutral-900">
+          <h3 className="text-sm font-semibold leading-tight text-neutral-900 dark:text-neutral-100 line-clamp-1">
             {title}
           </h3>
 
-          <div className="mt-3 flex items-center gap-2">
-            <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600">
-              {condition.charAt(0).toUpperCase() + condition.slice(1)}
-            </span>
+          {measurement && (
+            <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+              {measurement} ds ds fsdf sd f
+            </p>
+          )}
 
-            {onlyOneLeft && (
-              <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600">
-                Only 1 Left
+          <div className="flex items-baseline gap-1.5 pt-1">
+            <span className="text-sm font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+              ₹{Number(price || 0).toLocaleString("en-IN")}
+            </span>
+            {retailPrice && retailPrice > price && (
+              <span className="text-[11px] text-neutral-400 line-through">
+                ₹{retailPrice.toLocaleString("en-IN")}
               </span>
             )}
-          </div>
-
-          <div className="mt-auto pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">
-                  Price
-                </p>
-
-                <p className="mt-1 font-bold tracking-tight text-neutral-900">
-                  ₹{Number(price || 0).toLocaleString("en-IN")}
-                </p>
-              </div>
-
-              <div
-                className="
-                  flex
-                  h-11
-                  w-11
-                  items-center
-                  justify-center
-                  rounded-full
-                  border
-                border-neutral-100
-hover:border-neutral-300
-                  transition-all
-                 group-hover:bg-black
-group-hover:text-white
-group-hover:rotate-45
-duration-300
-                "
-              >
-                <ArrowUpRight className="h-5 w-5" />
-              </div>
-            </div>
           </div>
         </div>
       </Link>
     </motion.div>
   );
 }
+

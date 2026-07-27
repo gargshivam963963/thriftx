@@ -2,17 +2,18 @@ import { cva } from "class-variance-authority";
 
 /**
  * THRIFTX Design System
- * Button Variants
+ * Button Variants — Premium, Modern, Production-Grade
  */
 
 export const buttonVariants = cva(
   [
     // Layout
-    "inline-flex items-center justify-center gap-2",
+    "group inline-flex items-center justify-center gap-2",
 
     // Typography
-    "font-medium",
+    "font-medium leading-none",
     "whitespace-nowrap",
+    "select-none",
 
     // Shape
     "rounded-xl",
@@ -21,102 +22,138 @@ export const buttonVariants = cva(
     "transition-all duration-200 ease-out",
 
     // Interaction
-    "select-none",
-    "active:scale-[0.98]",
+    "active:scale-[0.97]",
 
     // Accessibility
     "focus-visible:outline-none",
     "focus-visible:ring-2",
     "focus-visible:ring-black/20",
     "focus-visible:ring-offset-2",
+    "dark:focus-visible:ring-white/20",
 
     // Disabled
     "disabled:pointer-events-none",
     "disabled:opacity-50",
 
-    // SVG
+    // SVG children
     "[&_svg]:pointer-events-none",
     "[&_svg]:shrink-0",
-    "[&_svg]:h-5",
-    "[&_svg]:w-5",
+    "[&_svg]:h-[1.125em]",
+    "[&_svg]:w-[1.125em]",
+
+    // Cursor
+    "cursor-pointer",
   ],
   {
     variants: {
       /**
-       * Button Variants
+       * Visual variants
        */
       variant: {
-        primary: "bg-black text-white hover:bg-neutral-800",
+        // ── Solid Primary ───────────────────────────
+        primary: [
+          "bg-black text-white",
+          "hover:bg-neutral-800",
+          "shadow-sm hover:shadow-md",
+          "dark:bg-white dark:text-black",
+          "dark:hover:bg-neutral-200",
+        ],
 
-        secondary: "bg-neutral-100 text-neutral-900 hover:bg-neutral-200",
+        // ── Subtle Secondary ────────────────────────
+        secondary: [
+          "bg-neutral-100 text-neutral-900",
+          "hover:bg-neutral-200",
+          "dark:bg-neutral-800 dark:text-neutral-100",
+          "dark:hover:bg-neutral-700",
+        ],
 
-        outline:
-          "border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50",
+        // ── Bordered Outline ────────────────────────
+        outline: [
+          "border border-neutral-300 bg-transparent text-neutral-900",
+          "hover:bg-neutral-100",
+          "dark:border-neutral-600 dark:text-neutral-100",
+          "dark:hover:bg-neutral-800",
+        ],
 
-        ghost: "bg-transparent text-neutral-900 hover:bg-neutral-100",
+        // ── Ghost (no background) ───────────────────
+        ghost: [
+          "bg-transparent text-neutral-900",
+          "hover:bg-neutral-100",
+          "dark:text-neutral-100",
+          "dark:hover:bg-neutral-800",
+        ],
 
-        glass:
-          "border border-white/30 bg-white/70 text-neutral-900 backdrop-blur-xl shadow-lg hover:bg-white/80",
+        // ── Glass morphism ──────────────────────────
+        glass: [
+          "border border-white/30 bg-white/70 text-neutral-900",
+          "backdrop-blur-xl shadow-lg",
+          "hover:bg-white/80 hover:shadow-xl",
+          "dark:border-neutral-700/50 dark:bg-neutral-900/70 dark:text-neutral-100",
+          "dark:hover:bg-neutral-800/80",
+        ],
 
-        danger: "bg-red-600 text-white hover:bg-red-700",
+        // ── Danger / Destructive ────────────────────
+        danger: [
+          "bg-red-600 text-white",
+          "hover:bg-red-700",
+          "shadow-sm hover:shadow-md",
+          "dark:bg-red-700 dark:hover:bg-red-600",
+        ],
 
-        success: "bg-green-600 text-white hover:bg-green-700",
+        // ── Success / Confirm ───────────────────────
+        success: [
+          "bg-emerald-600 text-white",
+          "hover:bg-emerald-700",
+          "shadow-sm hover:shadow-md",
+          "dark:bg-emerald-700 dark:hover:bg-emerald-600",
+        ],
+
+        // ── Link (looks like an anchor) ─────────────
+        link: [
+          "bg-transparent text-neutral-900 underline-offset-4",
+          "hover:underline",
+          "dark:text-neutral-100",
+        ],
       },
 
       /**
-       * Sizes
+       * Size presets
        */
       size: {
-        xs: "h-8 px-3 text-xs",
-
-        sm: "h-9 px-4 text-sm",
-
-        md: "h-11 px-5 text-sm",
-
+        xs: "h-7 px-2.5 text-[0.6875rem] gap-1.5",
+        sm: "h-9 px-3.5 text-[0.8125rem] gap-1.5",
+        md: "h-11 px-5 text-[0.9375rem]",
         lg: "h-12 px-6 text-base",
+        xl: "h-14 px-8 text-[1.0625rem]",
 
-        xl: "h-14 px-8 text-lg",
-
-        // Icon Sizes
-
-        iconXs: "h-8 w-8 p-0",
-
+        // Icon-only sizes
+        iconXs: "h-7 w-7 p-0",
         iconSm: "h-9 w-9 p-0",
-
-        iconMd: "h-11 w-11 p-0 flex items-center justify-center",
-
+        iconMd: "h-11 w-11 p-0",
         iconLg: "h-12 w-12 p-0",
-
         iconXl: "h-14 w-14 p-0",
       },
 
       /**
-       * Border Radius
+       * Border radius
        */
       rounded: {
         none: "rounded-none",
-
         sm: "rounded-md",
-
         md: "rounded-lg",
-
         lg: "rounded-xl",
-
+        xl: "rounded-2xl",
         full: "rounded-full",
       },
 
       /**
-       * Shadows
+       * Shadow presets
        */
       shadow: {
         none: "",
-
         sm: "shadow-sm",
-
         md: "shadow-md",
-
         lg: "shadow-lg",
-
         xl: "shadow-xl",
       },
     },

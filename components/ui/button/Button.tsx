@@ -9,17 +9,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "./button.styles";
 import type { ButtonProps } from "./button.types";
 
-interface ExtendedButtonProps extends ButtonProps {
-    loading?: boolean;
-    loadingText?: string;
-    success?: boolean;
-    successText?: string;
-}
-
-export const Button = forwardRef<
-    HTMLButtonElement,
-    ExtendedButtonProps
->(
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     (
         {
             children,
@@ -43,15 +33,17 @@ export const Button = forwardRef<
             disabled,
             type = "button",
 
+            whileHover,
+            whileTap,
+            transition,
+
             ...props
         },
         ref
     ) => {
         const isDisabled = disabled || loading;
-
         const isIconOnly =
-            typeof size === "string" &&
-            size.startsWith("icon");
+            typeof size === "string" && size.startsWith("icon");
 
         return (
             <motion.button
@@ -60,16 +52,23 @@ export const Button = forwardRef<
                 disabled={isDisabled}
                 aria-disabled={isDisabled}
                 aria-busy={loading}
-                whileHover={{
-                    scale: 1.03,
-                    y: -1,
-                }}
-                whileTap={{
-                    scale: 0.97,
-                }}
-                transition={{
-                    duration: 0.18,
-                }}
+                whileHover={
+                    whileHover ?? {
+                        scale: 1.02,
+                        y: -1,
+                    }
+                }
+                whileTap={
+                    whileTap ?? {
+                        scale: 0.97,
+                    }
+                }
+                transition={
+                    transition ?? {
+                        duration: 0.18,
+                        ease: "easeOut",
+                    }
+                }
                 className={cn(
                     buttonVariants({
                         variant,
@@ -78,50 +77,65 @@ export const Button = forwardRef<
                         shadow,
                     }),
                     fullWidth && "w-full",
+                    !isIconOnly && "relative overflow-hidden",
                     className
                 )}
                 {...props}
             >
+                {/* Shine effect on hover */}
+                {!isIconOnly && (
+                    <span
+                        className="absolute inset-0 -translate-x-full rounded-[inherit] bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-[400ms] group-hover:translate-x-full"
+                        aria-hidden="true"
+                    />
+                )}
+
                 {loading ? (
                     <>
                         <Loader2
-                            className="h-4 w-4 animate-spin"
+                            className="h-[1.125em] w-[1.125em] animate-spin shrink-0"
                             aria-hidden="true"
                         />
 
                         {!isIconOnly && (
-                            <span>{loadingText}</span>
+                            <span className="truncate">
+                                {loadingText}
+                            </span>
                         )}
                     </>
                 ) : success ? (
                     <>
                         <Check
-                            className="h-4 w-4"
+                            className="h-[1.125em] w-[1.125em] shrink-0"
                             aria-hidden="true"
                         />
 
                         {!isIconOnly && (
-                            <span>{successText}</span>
+                            <span className="truncate">
+                                {successText}
+                            </span>
                         )}
                     </>
                 ) : isIconOnly ? (
-                    children
+                    <span className="flex items-center justify-center">
+                        {children as React.ReactNode}
+                    </span>
                 ) : (
                     <>
                         {leftIcon && (
                             <span
-                                className="flex items-center justify-center"
+                                className="flex shrink-0 items-center justify-center"
                                 aria-hidden="true"
                             >
                                 {leftIcon}
                             </span>
                         )}
 
-                        {children}
+                        <span className="truncate">{children as React.ReactNode}</span>
 
                         {rightIcon && (
                             <span
-                                className="flex items-center justify-center"
+                                className="flex shrink-0 items-center justify-center"
                                 aria-hidden="true"
                             >
                                 {rightIcon}
@@ -135,3 +149,4 @@ export const Button = forwardRef<
 );
 
 Button.displayName = "Button";
+

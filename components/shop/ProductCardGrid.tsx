@@ -1,21 +1,38 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Heart, ShoppingBag } from "lucide-react";
+import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import PremiumImage from "@/components/ui/PremiumImage";
+import { isWishlisted, toggleWishlist } from "@/lib/services/wishlist";
+
+const TOPWEAR_KEYWORDS = [
+    "t-shirt", "shirt", "hoodie", "jacket", "blazer",
+    "sweater", "top", "blouse", "cardigan", "vest", "jersey",
+];
+
+function getMeasurement(category: string, chest?: string, waist?: string): string | null {
+    const cat = category.toLowerCase();
+    const isTopwear = TOPWEAR_KEYWORDS.some(k => cat.includes(k));
+    if (isTopwear && chest) return `Chest ${chest}`;
+    if (!isTopwear && waist) return `Waist ${waist}`;
+    return null;
+}
 
 interface ProductCardGridProps {
     id: string;
     brand: string;
     title: string;
     price: number;
-    condition: string;
+    retailPrice?: number;
     image: string;
+    category?: string;
+    chest?: string;
+    waist?: string;
     onlyOneLeft?: boolean;
-    size?: string;
 }
 
 export default function ProductCardGrid({
@@ -23,22 +40,40 @@ export default function ProductCardGrid({
     brand,
     title,
     price,
-    condition,
+    retailPrice,
     image,
+    category = "",
+    chest,
+    waist,
     onlyOneLeft = false,
-    size,
 }: ProductCardGridProps) {
-    const handleWishlist = (e: React.MouseEvent) => {
+    const [wishlisted, setWishlisted] = useState(false);
+    const [wishlistLoading, setWishlistLoading] = useState(false);
+
+    useEffect(() => {
+        isWishlisted(id).then(setWishlisted).catch(() => { });
+    }, [id]);
+
+    const handleWishlist = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        toast.success("Added to wishlist");
+        setWishlistLoading(true);
+        try {
+            const state = await toggleWishlist(id);
+            setWishlisted(state);
+            toast.success(state ? "Added to wishlist ❤️" : "Removed from wishlist");
+        } catch {
+            toast.error("Please sign in to wishlist");
+        } finally {
+            setWishlistLoading(false);
+        }
     };
 
-    const handleAdd = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toast.success("Added to bag");
-    };
+    const measurement = getMeasurement(category, chest, waist);
+    const discount =
+        retailPrice && retailPrice > price
+            ? Math.round(((retailPrice - price) / retailPrice) * 100)
+            : null;
 
     return (
         <motion.div
@@ -47,73 +82,76 @@ export default function ProductCardGrid({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="group"
         >
             <Link
                 href={`/product/${id}`}
-                className="flex flex-col overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-neutral-500"
+                className="group flex flex-col"
             >
-                {/* Image */}
-                <div className="relative aspect-[3/4] overflow-hidden bg-neutral-50 dark:bg-neutral-800">
+                {/* ── Image — Uniform Fixed Height ──────────────────────── */}
+                <div className="relative h-[200px] xs:h-[220px] sm:h-[260px] md:h-[280px] xl:h-[320px] w-full overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800">
                     <PremiumImage
                         src={image || "/images/placeholder.jpg"}
                         alt={title}
                         fill
                         sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                        className="object-cover transition-all duration-700 group-hover:scale-[1.05]"
+                        className="object-cover transition-all duration-500 group-hover:scale-105"
                     />
 
                     {onlyOneLeft && (
-                        <span className="absolute left-2 top-2 z-10 rounded-full bg-amber-500 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow">
-                            Last
+                        <span className="absolute left-2 top-2 z-10 rounded-lg bg-amber-500/90 backdrop-blur-md px-2 py-1 text-[10px] font-bold text-white shadow">
+                            Only 1
                         </span>
                     )}
 
-                    {condition && (
-                        <span className="absolute left-2 bottom-2 z-10 rounded-full bg-white/90 px-2.5 py-0.5 text-[9px] font-semibold text-neutral-700 shadow-sm backdrop-blur-sm dark:bg-neutral-800/90 dark:text-neutral-300">
-                            {condition}
+                    {/* Discount */}
+                    {discount && discount > 0 && (
+                        <span className="absolute left-2 top-2 z-10 rounded-lg bg-white/90 backdrop-blur-md px-2 py-1 text-[10px] font-bold text-red-600 shadow-sm">
+                            -{discount}%
                         </span>
                     )}
 
                     <button
                         type="button"
                         onClick={handleWishlist}
-                        className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm transition-all hover:bg-white hover:text-red-500 dark:bg-neutral-800/80 dark:hover:bg-neutral-700"
+                        disabled={wishlistLoading}
+                        className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm transition-all hover:bg-white hover:scale-110 active:scale-90"
                     >
-                        <Heart size={14} />
+                        <Heart
+                            size={13}
+                            className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-neutral-700"
+                                }`}
+                        />
                     </button>
                 </div>
 
-                {/* Content - compact */}
-                <div className="flex flex-col gap-1.5 p-3.5">
-                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">
+                {/* ── Info — Minimal ────────────────────────────────────── */}
+                <div className="mt-2.5 space-y-0.5 px-0.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-400 dark:text-neutral-500 truncate">
                         {brand}
-                    </span>
-                    <h3 className="line-clamp-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                    </p>
+
+                    <h3 className="text-sm font-semibold leading-tight text-neutral-900 dark:text-neutral-200 line-clamp-1">
                         {title}
                     </h3>
 
-                    <div className="flex items-center justify-between mt-1">
-                        <span className="text-base font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                    {measurement && (
+                        <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+                            {measurement}
+                        </p>
+                    )}
+
+                    <div className="flex items-baseline gap-1.5 pt-0.5">
+                        <span className="text-sm font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                             ₹{Number(price || 0).toLocaleString("en-IN")}
                         </span>
-                        <button
-                            type="button"
-                            onClick={handleAdd}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 transition-all hover:bg-neutral-900 hover:text-white dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-100 dark:hover:text-neutral-900"
-                        >
-                            <ShoppingBag size={13} />
-                        </button>
+                        {retailPrice && retailPrice > price && (
+                            <span className="text-[11px] text-neutral-400 line-through">
+                                ₹{retailPrice.toLocaleString("en-IN")}
+                            </span>
+                        )}
                     </div>
-
-                    {size && (
-                        <span className="text-[9px] font-medium text-neutral-400 dark:text-neutral-500">
-                            Size {size}
-                        </span>
-                    )}
                 </div>
             </Link>
         </motion.div>
     );
 }
-

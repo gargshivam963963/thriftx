@@ -71,105 +71,107 @@ export default function PreviewTable({ products }: PreviewTableProps) {
             </div>
 
             {/* Desktop Table */}
-            <div className="hidden overflow-x-auto md:block">
-                <table className="w-full">
-                    <thead>
-                        <tr className="border-b border-neutral-100 bg-neutral-50/50 text-left text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-400">
-                            <th className="py-3 pl-4 pr-2">SKU</th>
-                            <th className="px-2 py-3">Image</th>
-                            <th className="px-2 py-3">Brand</th>
-                            <th className="px-2 py-3">Title</th>
-                            <th className="px-2 py-3">Category</th>
-                            <th className="px-2 py-3">Price</th>
-                            <th className="px-2 py-3">Images</th>
-                            <th className="pr-4 pl-2 py-3">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtered.length === 0 ? (
-                            <tr>
-                                <td colSpan={8} className="py-12 text-center text-sm text-neutral-400">
-                                    {products.length === 0
-                                        ? "Upload an Excel file to preview products"
-                                        : "No products match your search"}
-                                </td>
+            <div className="hidden md:block">
+                <div className="max-h-[calc(100vh-12rem)] overflow-auto">
+                    <table className="min-w-max w-full table-auto">
+                        <thead>
+                            <tr className="border-b border-neutral-100 bg-neutral-50/50 text-left text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-400">
+                                <th className="py-3 pl-4 pr-2">SKU</th>
+                                <th className="px-2 py-3">Image</th>
+                                <th className="px-2 py-3">Brand</th>
+                                <th className="px-2 py-3">Title</th>
+                                <th className="px-2 py-3">Category</th>
+                                <th className="px-2 py-3">Price</th>
+                                <th className="px-2 py-3">Images</th>
+                                <th className="pr-4 pl-2 py-3">Status</th>
                             </tr>
-                        ) : (
-                            filtered.map((product) => {
-                                const hasErrors = product.errors.length > 0;
-                                return (
-                                    <tr
-                                        key={product.sku}
-                                        className={`border-b border-neutral-100 text-sm transition last:border-0 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800/50 ${hasErrors ? "bg-red-50/30 dark:bg-red-950/10" : ""
-                                            }`}
-                                    >
-                                        <td className="py-3 pl-4 pr-2">
-                                            <span className="font-mono text-xs font-bold text-neutral-900 dark:text-neutral-100">
-                                                {product.sku}
-                                            </span>
-                                        </td>
-                                        <td className="px-2 py-3">
-                                            <div className="h-10 w-10 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800">
-                                                {product.primaryImage ? (
-                                                    <Image
-                                                        src={product.primaryImage}
-                                                        alt=""
-                                                        width={40}
-                                                        height={40}
-                                                        className="h-full w-full object-cover"
-                                                        unoptimized
-                                                    />
+                        </thead>
+                        <tbody>
+                            {filtered.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="py-12 text-center text-sm text-neutral-400">
+                                        {products.length === 0
+                                            ? "Upload an Excel file to preview products"
+                                            : "No products match your search"}
+                                    </td>
+                                </tr>
+                            ) : (
+                                filtered.map((product) => {
+                                    const hasErrors = product.errors.length > 0;
+                                    return (
+                                        <tr
+                                            key={product.sku}
+                                            className={`border-b border-neutral-100 text-sm transition last:border-0 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800/50 ${hasErrors ? "bg-red-50/30 dark:bg-red-950/10" : ""
+                                                }`}
+                                        >
+                                            <td className="py-3 pl-4 pr-2">
+                                                <span className="font-mono text-xs font-bold text-neutral-900 dark:text-neutral-100">
+                                                    {product.sku}
+                                                </span>
+                                            </td>
+                                            <td className="px-2 py-3">
+                                                <div className="h-10 w-10 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800">
+                                                    {product.primaryImage ? (
+                                                        <Image
+                                                            src={product.primaryImage}
+                                                            alt=""
+                                                            width={40}
+                                                            height={40}
+                                                            className="h-full w-full object-cover"
+                                                            unoptimized
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-full w-full items-center justify-center text-[10px] text-neutral-400">
+                                                            —
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="max-w-[100px] truncate px-2 py-3 font-medium text-neutral-700 dark:text-neutral-300">
+                                                {product.brand || <span className="text-neutral-400">—</span>}
+                                            </td>
+                                            <td className="max-w-[160px] truncate px-2 py-3 text-neutral-600 dark:text-neutral-400">
+                                                {product.title || <span className="text-neutral-400">—</span>}
+                                            </td>
+                                            <td className="px-2 py-3 text-xs text-neutral-500 dark:text-neutral-400">
+                                                {product.category}
+                                            </td>
+                                            <td className="px-2 py-3 font-mono text-sm font-bold text-neutral-900 dark:text-neutral-100">
+                                                ₹{product.price}
+                                            </td>
+                                            <td className="px-2 py-3 text-xs text-neutral-500 dark:text-neutral-400">
+                                                {product.imageFiles.length}
+                                            </td>
+                                            <td className="pr-4 pl-2 py-3">
+                                                {hasErrors ? (
+                                                    <span className="group relative inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                                        <AlertCircle size={10} />
+                                                        {product.errors.length} error{product.errors.length !== 1 ? "s" : ""}
+                                                        <div className="absolute bottom-full left-1/2 z-10 mb-2 hidden w-56 -translate-x-1/2 rounded-xl border border-red-200 bg-white p-3 shadow-lg group-hover:block dark:border-red-800 dark:bg-neutral-900">
+                                                            <p className="text-[10px] font-semibold text-red-600 dark:text-red-400">Issues</p>
+                                                            <ul className="mt-1 space-y-0.5">
+                                                                {product.errors.map((err, i) => (
+                                                                    <li key={i} className="text-[10px] text-neutral-600 dark:text-neutral-400">
+                                                                        &bull; {err}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    </span>
                                                 ) : (
-                                                    <div className="flex h-full w-full items-center justify-center text-[10px] text-neutral-400">
-                                                        —
-                                                    </div>
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                                        <CheckCircle2 size={10} />
+                                                        Ready
+                                                    </span>
                                                 )}
-                                            </div>
-                                        </td>
-                                        <td className="max-w-[100px] truncate px-2 py-3 font-medium text-neutral-700 dark:text-neutral-300">
-                                            {product.brand || <span className="text-neutral-400">—</span>}
-                                        </td>
-                                        <td className="max-w-[160px] truncate px-2 py-3 text-neutral-600 dark:text-neutral-400">
-                                            {product.title || <span className="text-neutral-400">—</span>}
-                                        </td>
-                                        <td className="px-2 py-3 text-xs text-neutral-500 dark:text-neutral-400">
-                                            {product.category}
-                                        </td>
-                                        <td className="px-2 py-3 font-mono text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                                            ₹{product.price}
-                                        </td>
-                                        <td className="px-2 py-3 text-xs text-neutral-500 dark:text-neutral-400">
-                                            {product.imageFiles.length}
-                                        </td>
-                                        <td className="pr-4 pl-2 py-3">
-                                            {hasErrors ? (
-                                                <span className="group relative inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                                    <AlertCircle size={10} />
-                                                    {product.errors.length} error{product.errors.length !== 1 ? "s" : ""}
-                                                    <div className="absolute bottom-full left-1/2 z-10 mb-2 hidden w-56 -translate-x-1/2 rounded-xl border border-red-200 bg-white p-3 shadow-lg group-hover:block dark:border-red-800 dark:bg-neutral-900">
-                                                        <p className="text-[10px] font-semibold text-red-600 dark:text-red-400">Issues</p>
-                                                        <ul className="mt-1 space-y-0.5">
-                                                            {product.errors.map((err, i) => (
-                                                                <li key={i} className="text-[10px] text-neutral-600 dark:text-neutral-400">
-                                                                    &bull; {err}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                                    <CheckCircle2 size={10} />
-                                                    Ready
-                                                </span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                </table>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Mobile Cards */}

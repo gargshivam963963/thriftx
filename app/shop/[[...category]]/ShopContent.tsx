@@ -7,13 +7,15 @@ import {
     LayoutGrid,
     List,
     ChevronDown,
+    ChevronRight,
     RotateCcw,
     AlertCircle,
-    RefreshCw,
+    Home,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import type { Product } from "@/lib/services/products";
+import { Button } from "@/components/ui/button";
 import ProductCardGrid from "@/components/shop/ProductCardGrid";
 import ProductCardList from "@/components/shop/ProductCardList";
 import ProductCardSkeleton from "@/components/shop/ProductCardSkeleton";
@@ -118,8 +120,44 @@ export default function ShopContent({
         </h3>
     );
 
+    // Build breadcrumb trail
+    const breadcrumbs: { label: string; href: string }[] = [
+        { label: "Home", href: "/" },
+        { label: "Shop", href: "/shop" },
+    ];
+    if (gender) {
+        const genderName = genders.find((g) => g.slug === gender)?.name || gender.charAt(0).toUpperCase() + gender.slice(1);
+        breadcrumbs.push({ label: genderName, href: `/shop/${gender}` });
+    }
+    if (clothingCategory) {
+        breadcrumbs.push({ label: categoryTitle, href: `/shop/${gender}/${clothingCategory}` });
+    }
+
     return (
         <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+
+            {/* ── Breadcrumbs ──────────────────────────────── */}
+            <nav aria-label="Breadcrumb" className="mb-6">
+                <ol className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                    {breadcrumbs.map((crumb, i) => (
+                        <li key={crumb.href} className="flex items-center gap-1.5">
+                            {i > 0 && <ChevronRight size={10} className="text-neutral-300 dark:text-neutral-600" />}
+                            {i === breadcrumbs.length - 1 ? (
+                                <span className="text-neutral-900 dark:text-neutral-100 font-semibold">{crumb.label}</span>
+                            ) : (
+                                <Link
+                                    href={crumb.href}
+                                    className="transition-colors hover:text-neutral-900 dark:hover:text-neutral-100 flex items-center gap-1"
+                                >
+                                    {i === 0 && <Home size={10} />}
+                                    {crumb.label}
+                                </Link>
+                            )}
+                        </li>
+                    ))}
+                </ol>
+            </nav>
+
             <div className="flex flex-col gap-8 lg:flex-row">
                 {/* ── SIDEBAR (Desktop) ─────────────────────────────── */}
                 <aside className="hidden lg:sticky lg:top-24 lg:flex lg:w-[240px] lg:shrink-0 lg:self-start lg:flex-col lg:gap-5">
@@ -201,26 +239,24 @@ export default function ShopContent({
 
                             {/* View Toggle */}
                             <div className="hidden items-center rounded-xl border border-neutral-200 bg-white p-0.5 dark:border-neutral-700 dark:bg-neutral-800 sm:flex">
-                                <button
+                                <Button
                                     type="button"
                                     onClick={() => setViewMode("grid")}
-                                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-all ${viewMode === "grid"
-                                        ? "bg-neutral-900 text-white shadow-sm dark:bg-neutral-100 dark:text-neutral-900"
-                                        : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
-                                        }`}
+                                    variant={viewMode === "grid" ? "primary" : "ghost"}
+                                    size="iconSm"
+                                    rounded="md"
                                 >
                                     <LayoutGrid size={14} />
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     type="button"
                                     onClick={() => setViewMode("list")}
-                                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-all ${viewMode === "list"
-                                        ? "bg-neutral-900 text-white shadow-sm dark:bg-neutral-100 dark:text-neutral-900"
-                                        : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
-                                        }`}
+                                    variant={viewMode === "list" ? "primary" : "ghost"}
+                                    size="iconSm"
+                                    rounded="md"
                                 >
                                     <List size={14} />
-                                </button>
+                                </Button>
                             </div>
 
                             {/* Active filter chips */}
@@ -348,10 +384,12 @@ export default function ShopContent({
                                                     brand={product.brand}
                                                     title={product.title}
                                                     price={product.price}
-                                                    condition={product.condition}
+                                                    retailPrice={product.retailPrice}
                                                     image={product.primaryImage || product.images?.[0] || ""}
+                                                    category={product.category}
+                                                    chest={product.chest}
+                                                    waist={product.waist}
                                                     onlyOneLeft={false}
-                                                    size={product.size}
                                                 />
                                             ))}
                                         </motion.div>
@@ -370,14 +408,14 @@ export default function ShopContent({
                                                     brand={product.brand}
                                                     title={product.title}
                                                     price={product.price}
-                                                    condition={product.condition}
+                                                    retailPrice={product.retailPrice}
                                                     image={product.primaryImage || product.images?.[0] || ""}
-                                                    onlyOneLeft={false}
-                                                    size={product.size}
+                                                    category={product.category}
                                                     chest={product.chest}
                                                     waist={product.waist}
                                                     material={product.material}
                                                     description={product.description}
+                                                    onlyOneLeft={false}
                                                 />
                                             ))}
                                         </motion.div>
@@ -404,38 +442,32 @@ export default function ShopContent({
                                     </div>
 
                                     {currentPage < totalPages ? (
-                                        <button
+                                        <Button
                                             type="button"
                                             onClick={handleLoadMore}
-                                            disabled={loading}
-                                            className="flex h-12 w-full max-w-xs items-center justify-center gap-2.5 rounded-2xl border border-neutral-200 bg-white px-8 text-sm font-bold text-neutral-700 shadow-sm transition-all hover:border-neutral-400 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-neutral-500"
+                                            loading={loading}
+                                            loadingText="Loading..."
+                                            variant="outline"
+                                            size="lg"
+                                            fullWidth
+                                            className="max-w-xs rounded-2xl shadow-sm"
                                         >
-                                            {loading ? (
-                                                <>
-                                                    <RefreshCw size={15} className="animate-spin" />
-                                                    Loading...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <ChevronDown size={16} />
-                                                    Load More ({filteredProducts.length - itemsLoaded} remaining)
-                                                </>
-                                            )}
-                                        </button>
+                                            <ChevronDown size={16} />
+                                            Load More ({filteredProducts.length - itemsLoaded} remaining)
+                                        </Button>
                                     ) : (
                                         <div className="flex flex-col items-center gap-1">
                                             <span className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
                                                 Showing all {filteredProducts.length} items
                                             </span>
-                                            <button
+                                            <Button
                                                 type="button"
-                                                onClick={() => {
-                                                    window.scrollTo({ top: 0, behavior: "smooth" });
-                                                }}
-                                                className="text-[11px] font-semibold text-neutral-400 underline-offset-2 hover:underline dark:text-neutral-500"
+                                                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                                                variant="ghost"
+                                                size="sm"
                                             >
                                                 Back to top ↑
-                                            </button>
+                                            </Button>
                                         </div>
                                     )}
                                 </div>

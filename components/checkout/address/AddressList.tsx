@@ -28,7 +28,7 @@ export default function AddressList({
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center rounded-3xl border border-dashed border-zinc-200 bg-zinc-50 p-10 text-center"
+                className="flex flex-col items-center rounded-3xl border border-dashed border-neutral-200 bg-neutral-50 p-10 text-center"
             >
                 <motion.div
                     initial={{ scale: 0 }}
@@ -38,15 +38,15 @@ export default function AddressList({
                         stiffness: 260,
                         damping: 18,
                     }}
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 text-white shadow-md"
+                    className="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-900 text-white shadow-md"
                 >
                     <MapPinPlus size={26} />
                 </motion.div>
 
-                <h3 className="mt-5 font-serif text-xl font-semibold text-zinc-900">
+                <h3 className="mt-5 font-bold text-xl font-semibold text-neutral-900">
                     No Saved Addresses
                 </h3>
-                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
+                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-neutral-500">
                     Add your first delivery address to continue with your checkout.
                 </p>
 
@@ -55,7 +55,7 @@ export default function AddressList({
                     onClick={onAdd}
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.97 }}
-                    className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zinc-900 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-zinc-900/20 transition hover:opacity-90"
+                    className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-neutral-900 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-neutral-900/20 transition hover:opacity-90"
                 >
                     <Plus size={18} />
                     Add Address
@@ -69,10 +69,10 @@ export default function AddressList({
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-base font-semibold text-zinc-900 sm:text-lg">
+                    <h3 className="text-base font-semibold text-neutral-900 sm:text-lg">
                         Saved Addresses
                     </h3>
-                    <p className="mt-1 text-xs text-zinc-500 sm:text-sm">
+                    <p className="mt-1 text-xs text-neutral-500 sm:text-sm">
                         Choose where you want your order delivered.
                     </p>
                 </div>
@@ -82,7 +82,7 @@ export default function AddressList({
                     onClick={onAdd}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white sm:px-4 sm:py-2.5"
+                    className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 text-sm font-medium transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white sm:px-4 sm:py-2.5"
                 >
                     <Plus size={16} />
                     <span className="hidden sm:inline">Add New</span>
@@ -117,7 +117,7 @@ export default function AddressList({
                 onClick={onAdd}
                 whileHover={{ y: -1 }}
                 whileTap={{ scale: 0.99 }}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 py-3.5 text-sm font-medium text-zinc-600 transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white sm:rounded-3xl sm:py-4"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 py-3.5 text-sm font-medium text-neutral-600 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white sm:rounded-3xl sm:py-4"
             >
                 <Plus size={18} />
                 Add Another Address

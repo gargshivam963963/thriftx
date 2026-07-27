@@ -227,6 +227,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                             <button
                                 type="button"
                                 onClick={onClose}
+                                title="Close search (Esc)"
                                 className="absolute right-4 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-xl text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
                             >
                                 <X size={18} />
@@ -262,6 +263,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                         <button
                                             type="button"
                                             onClick={handleViewAllResults}
+                                            title="View all search results"
                                             className="flex items-center gap-1 text-xs font-semibold text-neutral-900 transition hover:opacity-70 dark:text-neutral-100"
                                         >
                                             View All <ArrowRight size={12} />
@@ -376,6 +378,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                                         clearRecentSearches();
                                                         setRecentSearches([]);
                                                     }}
+                                                    title="Clear recent search history"
                                                     className="text-[10px] font-semibold text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
                                                 >
                                                     Clear

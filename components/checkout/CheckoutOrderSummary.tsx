@@ -36,12 +36,12 @@ function Row({
 }) {
     return (
         <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-500">{label}</span>
+            <span className="text-neutral-500">{label}</span>
             <span
                 className={
                     highlight
                         ? "font-semibold text-emerald-600"
-                        : "font-medium text-zinc-900"
+                        : "font-medium text-neutral-900"
                 }
             >
                 {value}
@@ -68,24 +68,24 @@ export default function CheckoutOrderSummary({
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35 }}
-                className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm sm:rounded-[28px]"
+                className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm sm:rounded-[28px]"
             >
                 {/* Header */}
-                <div className="border-b border-zinc-100 p-4 sm:p-6">
+                <div className="border-b border-neutral-100 p-4 sm:p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-400">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-neutral-400">
                                 Order Summary
                             </p>
-                            <h2 className="mt-1 font-serif text-lg font-semibold tracking-tight sm:mt-1.5 sm:text-xl sm:text-2xl">
+                            <h2 className="mt-1 font-bold text-lg font-semibold tracking-tight sm:mt-1.5 sm:text-xl sm:text-2xl">
                                 {items.length}{" "}
                                 {items.length === 1 ? "Item" : "Items"}
                             </h2>
                         </div>
-                        <div className="rounded-full bg-zinc-100 p-2.5 sm:p-3">
+                        <div className="rounded-full bg-neutral-100 p-2.5 sm:p-3">
                             <ShoppingBag
                                 size={18}
-                                className="text-zinc-500 sm:h-[22px] sm:w-[22px]"
+                                className="text-neutral-500 sm:h-[22px] sm:w-[22px]"
                             />
                         </div>
                     </div>
@@ -99,9 +99,9 @@ export default function CheckoutOrderSummary({
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.05 * index }}
-                            className="flex items-center gap-3 rounded-xl bg-zinc-50 p-2.5 transition hover:bg-zinc-100 sm:rounded-2xl sm:p-3"
+                            className="flex items-center gap-3 rounded-xl bg-neutral-50 p-2.5 transition hover:bg-neutral-100 sm:rounded-2xl sm:p-3"
                         >
-                            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-zinc-200 sm:h-16 sm:w-16 sm:rounded-xl">
+                            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-neutral-200 sm:h-16 sm:w-16 sm:rounded-xl">
                                 <PremiumImage
                                     src={item.primaryImage}
                                     alt={item.title}
@@ -113,19 +113,19 @@ export default function CheckoutOrderSummary({
                             </div>
 
                             <div className="flex min-w-0 flex-1 flex-col">
-                                <h3 className="line-clamp-1 text-xs font-semibold text-zinc-900 sm:text-sm">
+                                <h3 className="line-clamp-1 text-xs font-semibold text-neutral-900 sm:text-sm">
                                     {item.title}
                                 </h3>
-                                <div className="mt-0.5 flex items-center gap-2 text-[11px] text-zinc-500 sm:text-xs">
+                                <div className="mt-0.5 flex items-center gap-2 text-[11px] text-neutral-500 sm:text-xs">
                                     <span>Size {item.size}</span>
                                     <span>•</span>
                                     <span>Qty {item.quantity}</span>
                                 </div>
                                 <div className="mt-1.5 flex items-center justify-between">
-                                    <span className="text-[11px] text-zinc-400 sm:text-xs">
+                                    <span className="text-[11px] text-neutral-400 sm:text-xs">
                                         Price
                                     </span>
-                                    <span className="text-xs font-bold text-zinc-900 sm:text-sm sm:text-base">
+                                    <span className="text-xs font-bold text-neutral-900 sm:text-sm sm:text-base">
                                         ₹
                                         {(
                                             item.price * item.quantity
@@ -138,7 +138,7 @@ export default function CheckoutOrderSummary({
                 </div>
 
                 {/* Price Breakdown */}
-                <div className="border-t border-zinc-100 px-4 py-4 sm:px-6 sm:py-5">
+                <div className="border-t border-neutral-100 px-4 py-4 sm:px-6 sm:py-5">
                     <div className="space-y-2.5 sm:space-y-3">
                         <Row
                             label="Subtotal"
@@ -157,24 +157,24 @@ export default function CheckoutOrderSummary({
                         {/* Coupon hint */}
                         <motion.div
                             whileHover={{ y: -1 }}
-                            className="flex items-center gap-2 rounded-xl bg-zinc-50 px-3 py-2.5"
+                            className="flex items-center gap-2 rounded-xl bg-neutral-50 px-3 py-2.5"
                         >
-                            <Tag size={14} className="text-zinc-400" />
-                            <span className="text-xs text-zinc-500">
+                            <Tag size={14} className="text-neutral-400" />
+                            <span className="text-xs text-neutral-500">
                                 Have a coupon? Apply at cart
                             </span>
                         </motion.div>
 
-                        <div className="h-px bg-zinc-200" />
+                        <div className="h-px bg-neutral-200" />
 
                         <div className="flex items-end justify-between">
                             <div>
-                                <span className="text-sm text-zinc-500">You Pay</span>
-                                <p className="text-[10px] text-zinc-400">
+                                <span className="text-sm text-neutral-500">You Pay</span>
+                                <p className="text-[10px] text-neutral-400">
                                     Inclusive of all taxes
                                 </p>
                             </div>
-                            <span className="font-serif text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+                            <span className="font-bold text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
                                 ₹{total.toLocaleString("en-IN")}
                             </span>
                         </div>
@@ -191,7 +191,7 @@ export default function CheckoutOrderSummary({
                             size="lg"
                             leftIcon={<Lock className="h-5 w-5" />}
                             rightIcon={<ChevronRight className="h-5 w-5" />}
-                            className="mt-5 h-14 rounded-2xl text-base shadow-lg shadow-zinc-900/20 sm:mt-6"
+                            className="mt-5 h-14 rounded-2xl text-base shadow-lg shadow-neutral-900/20 sm:mt-6"
                         >
                             Pay Securely
                         </Button>
@@ -211,10 +211,10 @@ export default function CheckoutOrderSummary({
                         <div className="flex gap-3">
                             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                             <div>
-                                <h4 className="text-sm font-semibold text-zinc-900">
+                                <h4 className="text-sm font-semibold text-neutral-900">
                                     Purchase Protection
                                 </h4>
-                                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                                <p className="mt-1 text-xs leading-5 text-neutral-500">
                                     Every order is quality checked and securely packed before
                                     dispatch.
                                 </p>

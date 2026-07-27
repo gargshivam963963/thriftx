@@ -63,7 +63,7 @@ export default function AddressSummary({
                             Delivering To
                         </p>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
-                            <h4 className="text-sm font-semibold text-zinc-900 sm:text-base">
+                            <h4 className="text-sm font-semibold text-neutral-900 sm:text-base">
                                 {address.fullName}
                             </h4>
                             <span
@@ -73,7 +73,7 @@ export default function AddressSummary({
                                 {address.type}
                             </span>
                         </div>
-                        <p className="mt-1 line-clamp-2 text-xs leading-6 text-zinc-500 sm:text-sm">
+                        <p className="mt-1 line-clamp-2 text-xs leading-6 text-neutral-500 sm:text-sm">
                             {fullAddress}
                         </p>
                     </div>
@@ -84,7 +84,7 @@ export default function AddressSummary({
                     onClick={onChange}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className="shrink-0 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white sm:px-4 sm:py-2 sm:text-sm"
+                    className="shrink-0 rounded-xl border border-neutral-200 px-3 py-1.5 text-xs font-medium transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white sm:px-4 sm:py-2 sm:text-sm"
                 >
                     Change
                 </motion.button>
@@ -99,10 +99,10 @@ export default function AddressSummary({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25 }}
-            className="overflow-hidden rounded-2xl border border-zinc-200 bg-white sm:rounded-3xl"
+            className="overflow-hidden rounded-2xl border border-neutral-200 bg-white sm:rounded-3xl"
         >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-zinc-100 bg-gradient-to-r from-zinc-50/80 to-white px-5 py-4 sm:px-6 sm:py-5">
+            <div className="flex items-center justify-between border-b border-neutral-100 bg-gradient-to-r from-neutral-50/80 to-white px-5 py-4 sm:px-6 sm:py-5">
                 <div className="flex items-center gap-3">
                     <div className="rounded-full bg-emerald-100 p-1.5 text-emerald-600 sm:p-2">
                         <CheckCircle2 size={18} className="sm:h-[20px] sm:w-[20px]" />
@@ -111,7 +111,7 @@ export default function AddressSummary({
                         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 sm:text-[11px]">
                             Delivery Address
                         </p>
-                        <h3 className="mt-0.5 text-base font-semibold text-zinc-900 sm:text-lg">
+                        <h3 className="mt-0.5 text-base font-semibold text-neutral-900 sm:text-lg">
                             Address Selected
                         </h3>
                     </div>
@@ -122,7 +122,7 @@ export default function AddressSummary({
                     onClick={onChange}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white sm:px-4 sm:py-2 sm:text-sm"
+                    className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-1.5 text-xs font-medium transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white sm:px-4 sm:py-2 sm:text-sm"
                 >
                     <Pencil size={14} />
                     Change
@@ -134,11 +134,11 @@ export default function AddressSummary({
                 {/* Name & Type */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h4 className="text-lg font-semibold text-zinc-900 sm:text-xl">
+                        <h4 className="text-lg font-semibold text-neutral-900 sm:text-xl">
                             {address.fullName}
                         </h4>
                         {address.isDefault && (
-                            <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-zinc-900 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+                            <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-neutral-900 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
                                 Default
                             </span>
                         )}
@@ -157,24 +157,24 @@ export default function AddressSummary({
                     <div className="flex gap-3">
                         <MapPinned
                             size={18}
-                            className="mt-0.5 shrink-0 text-zinc-400 sm:mt-1"
+                            className="mt-0.5 shrink-0 text-neutral-400 sm:mt-1"
                         />
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-400 sm:text-[11px]">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-400 sm:text-[11px]">
                                 Delivery Address
                             </p>
-                            <div className="mt-1.5 text-sm leading-6 text-zinc-700 sm:leading-7">
-                                <p className="font-medium text-zinc-900">
+                            <div className="mt-1.5 text-sm leading-6 text-neutral-700 sm:leading-7">
+                                <p className="font-medium text-neutral-900">
                                     {address.addressLine1}
                                 </p>
                                 {address.addressLine2 && <p>{address.addressLine2}</p>}
                                 {address.landmark && (
-                                    <p className="text-zinc-500">📍 {address.landmark}</p>
+                                    <p className="text-neutral-500">📍 {address.landmark}</p>
                                 )}
-                                <p className="text-zinc-600">
+                                <p className="text-neutral-600">
                                     {address.city}, {address.state}
                                 </p>
-                                <p className="font-semibold text-zinc-800">
+                                <p className="font-semibold text-neutral-800">
                                     {address.pincode}
                                 </p>
                             </div>
@@ -184,17 +184,17 @@ export default function AddressSummary({
                     <div className="flex gap-3">
                         <Phone
                             size={18}
-                            className="mt-0.5 shrink-0 text-zinc-400 sm:mt-1"
+                            className="mt-0.5 shrink-0 text-neutral-400 sm:mt-1"
                         />
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-400 sm:text-[11px]">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-400 sm:text-[11px]">
                                 Contact
                             </p>
-                            <p className="mt-1.5 font-medium text-zinc-800">
+                            <p className="mt-1.5 font-medium text-neutral-800">
                                 {address.phone}
                             </p>
                             {address.alternatePhone && (
-                                <p className="mt-1 text-xs text-zinc-500 sm:text-sm">
+                                <p className="mt-1 text-xs text-neutral-500 sm:text-sm">
                                     Alt: {address.alternatePhone}
                                 </p>
                             )}

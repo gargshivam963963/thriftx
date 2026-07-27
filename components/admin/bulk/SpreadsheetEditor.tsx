@@ -476,28 +476,109 @@ function TextareaCell({
     onChange: (val: string) => void;
 }) {
     const [editing, setEditing] = useState(false);
+    const [localValue, setLocalValue] = useState(value);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    if (!editing && !value) {
+    useEffect(() => {
+        setLocalValue(value);
+    }, [value]);
+
+    useEffect(() => {
+        if (editing) {
+            requestAnimationFrame(() => {
+                textareaRef.current?.focus();
+                textareaRef.current?.select();
+            });
+        }
+    }, [editing]);
+
+    function save() {
+        setEditing(false);
+
+        if (localValue.trim() !== value) {
+            onChange(localValue.trim());
+        }
+    }
+
+    function cancel() {
+        setLocalValue(value);
+        setEditing(false);
+    }
+
+    if (!editing) {
         return (
             <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="w-full rounded border border-dashed border-neutral-300 px-1.5 py-1 text-left text-[10px] text-neutral-400 transition hover:border-neutral-400 hover:bg-neutral-50 dark:border-neutral-600 dark:hover:border-neutral-500 dark:hover:bg-neutral-800"
+                className="
+                    group
+                    flex
+                    min-h-[72px]
+                    w-full
+                    rounded-xl
+                    border
+                    border-transparent
+                    bg-transparent
+                    p-3
+                    text-left
+                    transition
+                    hover:border-neutral-300
+                    hover:bg-neutral-50
+                    dark:hover:border-neutral-700
+                    dark:hover:bg-neutral-800
+                "
             >
-                + Add
+                {value ? (
+                    <p className="line-clamp-3 whitespace-pre-wrap text-sm leading-5 text-neutral-700 dark:text-neutral-200">
+                        {value}
+                    </p>
+                ) : (
+                    <span className="text-sm italic text-neutral-400">
+                        {placeholder}
+                    </span>
+                )}
             </button>
         );
     }
 
     return (
         <textarea
-            autoFocus={!value}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onBlur={() => { if (!value.trim()) setEditing(false); }}
+            ref={textareaRef}
+            rows={4}
+            value={localValue}
+            onChange={(e) => setLocalValue(e.target.value)}
+            onBlur={save}
+            onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                    e.preventDefault();
+                    cancel();
+                }
+
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    save();
+                }
+            }}
             placeholder={placeholder}
-            rows={2}
-            className="w-full rounded border border-neutral-200 bg-white px-1.5 py-1 text-[10px] font-medium outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 placeholder-neutral-400 resize-none"
+            className="
+                min-h-[90px]
+                w-full
+                resize-y
+                rounded-xl
+                border
+                border-blue-500
+                bg-white
+                p-3
+                text-sm
+                leading-6
+                outline-none
+                transition
+                focus:ring-2
+                focus:ring-blue-200
+                dark:border-blue-500
+                dark:bg-neutral-900
+                dark:text-white
+            "
         />
     );
 }
@@ -616,26 +697,177 @@ export default function SpreadsheetEditor({
     return (
         <div className="space-y-4">
             {/* Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={onAddRow}
-                        className="flex items-center gap-1.5 rounded-xl bg-neutral-900 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-neutral-800 active:scale-[0.97] dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
-                    >
-                        <Plus size={14} />
-                        Add Row
-                    </button>
-                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {products.length} product{products.length !== 1 ? "s" : ""}
-                        {readyCount > 0 && (
-                            <span className="ml-1.5 text-emerald-600 dark:text-emerald-400">&middot; {readyCount} ready</span>
-                        )}
-                        {products.length - readyCount > 0 && (
-                            <span className="ml-1.5 text-red-500 dark:text-red-400">&middot; {products.length - readyCount} needs attention</span>
-                        )}
-                    </span>
+            {/* Toolbar */}
+
+            <div className="sticky top-0 z-50 rounded-2xl border border-neutral-200 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-neutral-700 dark:bg-neutral-900/90">
+
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+
+                    {/* Left */}
+
+                    <div className="flex flex-wrap items-center gap-3">
+
+                        <button
+                            type="button"
+                            onClick={onAddRow}
+                            className="
+                    flex
+                    h-11
+                    items-center
+                    gap-2
+                    rounded-xl
+                    bg-black
+                    px-5
+                    text-sm
+                    font-semibold
+                    text-white
+                    transition
+                    hover:scale-[1.02]
+                    hover:bg-neutral-800
+                    active:scale-95
+                    dark:bg-white
+                    dark:text-black
+                "
+                        >
+                            <Plus size={18} />
+                            Add Product
+                        </button>
+
+                        <div className="flex items-center gap-2 rounded-xl bg-neutral-100 px-4 py-2 dark:bg-neutral-800">
+
+                            <div className="text-lg font-bold">
+                                {products.length}
+                            </div>
+
+                            <div className="text-xs text-neutral-500">
+                                Products
+                            </div>
+
+                        </div>
+
+                        <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2 dark:bg-emerald-950/30">
+
+                            <CheckCircle2
+                                size={18}
+                                className="text-emerald-500"
+                            />
+
+                            <div>
+
+                                <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                                    {readyCount}
+                                </div>
+
+                                <div className="text-[11px] text-neutral-500">
+                                    Ready
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2 dark:bg-red-950/30">
+
+                            <AlertCircle
+                                size={18}
+                                className="text-red-500"
+                            />
+
+                            <div>
+
+                                <div className="text-sm font-semibold text-red-600 dark:text-red-400">
+                                    {products.length - readyCount}
+                                </div>
+
+                                <div className="text-[11px] text-neutral-500">
+                                    Errors
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {/* Right */}
+
+                    <div className="flex flex-wrap items-center gap-3">
+
+                        <div className="relative w-full md:w-72">
+
+                            <svg
+                                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path
+                                    d="M21 21L15.8 15.8M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+
+                            <input
+                                placeholder="Search products..."
+                                className="
+                        h-11
+                        w-full
+                        rounded-xl
+                        border
+                        border-neutral-300
+                        bg-white
+                        pl-10
+                        pr-4
+                        text-sm
+                        outline-none
+                        transition
+                        focus:border-blue-500
+                        dark:border-neutral-700
+                        dark:bg-neutral-900
+                    "
+                            />
+
+                        </div>
+
+                        <button
+                            className="
+                    h-11
+                    rounded-xl
+                    border
+                    border-neutral-300
+                    px-5
+                    text-sm
+                    font-semibold
+                    transition
+                    hover:bg-neutral-100
+                    dark:border-neutral-700
+                    dark:hover:bg-neutral-800
+                "
+                        >
+                            Export
+                        </button>
+
+                        <button
+                            className="
+                    h-11
+                    rounded-xl
+                    bg-blue-600
+                    px-5
+                    text-sm
+                    font-semibold
+                    text-white
+                    transition
+                    hover:bg-blue-700
+                "
+                        >
+                            Validate
+                        </button>
+
+                    </div>
+
                 </div>
+
             </div>
 
             {/* Empty state */}
@@ -823,73 +1055,140 @@ min-w-[90px]
                                                 </td>
 
                                                 {/* Images */}
-                                                <td className="px-1.5 py-2 align-top">
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {imageCount > 0 ? (
-                                                            <>
-                                                                <div className="flex flex-wrap gap-0.5">
-                                                                    {product.imageFiles.slice(0, 6).map((file, i) => (
-                                                                        <div key={i} className="group/img relative">
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => openPreview(product.sku, i)}
-                                                                                className="relative h-8 w-8 overflow-hidden rounded-md border border-neutral-200 bg-neutral-100 transition hover:scale-110 hover:z-10 dark:border-neutral-700 dark:bg-neutral-800"
-                                                                            >
-                                                                                <Image
-                                                                                    src={URL.createObjectURL(file)}
-                                                                                    alt={labels[i] || `Img ${i + 1}`}
-                                                                                    fill
-                                                                                    className="object-cover"
-                                                                                    sizes="32px"
-                                                                                    unoptimized
-                                                                                    placeholder="blur"
-                                                                                    blurDataURL={BLUR_DATA_URL}
-                                                                                />
-                                                                            </button>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => removeImage(product.sku, i)}
-                                                                                className="absolute -top-1 -right-1 hidden h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-white shadow-sm group-hover/img:flex hover:bg-red-600"
-                                                                            >
-                                                                                <X size={7} />
-                                                                            </button>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                                {imageCount > 6 && (
+                                                <td className="px-3 py-3 align-top min-w-[260px]">
+                                                    <div className="space-y-3">
+
+                                                        <div className="grid grid-cols-3 gap-2">
+
+                                                            {product.imageFiles.slice(0, 6).map((file, i) => (
+                                                                <div
+                                                                    key={i}
+                                                                    className="group relative aspect-square overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800"
+                                                                >
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => openPreview(product.sku, 6)}
-                                                                        className="flex h-8 w-8 items-center justify-center rounded-md bg-neutral-100 text-[9px] font-bold text-neutral-500 transition hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                                                                        onClick={() => openPreview(product.sku, i)}
+                                                                        className="relative h-full w-full"
                                                                     >
-                                                                        +{imageCount - 6}
+                                                                        <Image
+                                                                            src={URL.createObjectURL(file)}
+                                                                            alt={labels[i]}
+                                                                            fill
+                                                                            unoptimized
+                                                                            placeholder="blur"
+                                                                            blurDataURL={BLUR_DATA_URL}
+                                                                            className="
+                                object-cover
+                                transition
+                                duration-300
+                                group-hover:scale-110
+                            "
+                                                                        />
                                                                     </button>
-                                                                )}
+
+                                                                    <div
+                                                                        className="
+                            absolute
+                            inset-x-0
+                            bottom-0
+                            bg-black/70
+                            px-2
+                            py-1
+                            text-center
+                            text-[10px]
+                            font-semibold
+                            text-white
+                        "
+                                                                    >
+                                                                        {labels[i]}
+                                                                    </div>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => removeImage(product.sku, i)}
+                                                                        className="
+                            absolute
+                            right-2
+                            top-2
+                            flex
+                            h-6
+                            w-6
+                            items-center
+                            justify-center
+                            rounded-full
+                            bg-red-500
+                            text-white
+                            opacity-0
+                            shadow-lg
+                            transition
+                            group-hover:opacity-100
+                        "
+                                                                    >
+                                                                        <X size={12} />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+
+                                                            {product.imageFiles.length < 6 && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => triggerFileInput(product.sku)}
-                                                                    className="flex h-8 w-8 items-center justify-center rounded-md border border-dashed border-neutral-300 text-neutral-400 transition hover:border-neutral-400 hover:bg-neutral-50 dark:border-neutral-600 dark:hover:border-neutral-500 dark:hover:bg-neutral-800"
+                                                                    className="
+                        flex
+                        aspect-square
+                        items-center
+                        justify-center
+                        rounded-xl
+                        border-2
+                        border-dashed
+                        border-neutral-300
+                        transition
+                        hover:border-blue-500
+                        hover:bg-blue-50
+                        dark:border-neutral-700
+                        dark:hover:bg-neutral-800
+                    "
                                                                 >
-                                                                    <Upload size={10} />
+                                                                    <Upload
+                                                                        size={22}
+                                                                        className="text-neutral-400"
+                                                                    />
                                                                 </button>
-                                                            </>
-                                                        ) : (
+                                                            )}
+
+                                                        </div>
+
+                                                        {product.imageFiles.length > 6 && (
                                                             <button
                                                                 type="button"
-                                                                onClick={() => triggerFileInput(product.sku)}
-                                                                className="flex items-center gap-1 rounded-md border border-dashed border-neutral-300 px-2 py-1 text-[10px] font-medium text-neutral-500 transition hover:border-neutral-400 hover:bg-neutral-50 dark:border-neutral-600 dark:text-neutral-400 dark:hover:border-neutral-500 dark:hover:bg-neutral-800"
+                                                                onClick={() => openPreview(product.sku, 6)}
+                                                                className="
+                    rounded-lg
+                    bg-neutral-100
+                    px-3
+                    py-2
+                    text-sm
+                    font-semibold
+                    hover:bg-neutral-200
+                    dark:bg-neutral-800
+                    dark:hover:bg-neutral-700
+                "
                                                             >
-                                                                <Upload size={10} />
-                                                                Add
+                                                                +{product.imageFiles.length - 6} More Images
                                                             </button>
                                                         )}
+
                                                         <input
-                                                            ref={(el) => { fileInputRefs.current[product.sku] = el; }}
+                                                            ref={(el) => {
+                                                                fileInputRefs.current[product.sku] = el;
+                                                            }}
                                                             type="file"
-                                                            accept="image/*"
                                                             multiple
+                                                            accept="image/*"
                                                             className="hidden"
-                                                            onChange={(e) => handleFilesSelected(product.sku, e)}
+                                                            onChange={(e) =>
+                                                                handleFilesSelected(product.sku, e)
+                                                            }
                                                         />
                                                     </div>
                                                 </td>
@@ -932,18 +1231,124 @@ min-w-[90px]
                 </>
             )}
 
-            {/* Bottom bar */}
+            {/* Bottom Status Bar */}
             {products.length > 0 && (
-                <div className="flex items-center justify-between rounded-2xl border border-neutral-200/70 bg-white px-4 py-3 text-xs text-neutral-400 dark:border-neutral-700/50 dark:bg-neutral-900 dark:text-neutral-500">
-                    <span>
-                        {products.length} product{products.length !== 1 ? "s" : ""}
-                        {readyCount > 0 && <span className="ml-1.5 text-emerald-600 dark:text-emerald-400">&middot; {readyCount} ready</span>}
-                        {products.length - readyCount > 0 && <span className="ml-1.5 text-red-500 dark:text-red-400">&middot; {products.length - readyCount} need attention</span>}
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <Clock size={11} />
-                        Auto-saved
-                    </span>
+                <div className="sticky bottom-0 z-40 rounded-2xl border border-neutral-200 bg-white/95 px-5 py-4 shadow-lg backdrop-blur dark:border-neutral-700 dark:bg-neutral-900/95">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+                        <div className="flex flex-wrap items-center gap-4">
+
+                            <div className="flex items-center gap-2 rounded-xl bg-neutral-100 px-4 py-2 dark:bg-neutral-800">
+
+                                <div className="text-lg font-bold">
+                                    {products.length}
+                                </div>
+
+                                <div className="text-xs text-neutral-500">
+                                    Products
+                                </div>
+
+                            </div>
+
+                            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2 dark:bg-emerald-950/30">
+
+                                <CheckCircle2
+                                    size={18}
+                                    className="text-emerald-500"
+                                />
+
+                                <div>
+
+                                    <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                                        {readyCount}
+                                    </div>
+
+                                    <div className="text-[11px] text-neutral-500">
+                                        Ready
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2 dark:bg-red-950/30">
+
+                                <AlertCircle
+                                    size={18}
+                                    className="text-red-500"
+                                />
+
+                                <div>
+
+                                    <div className="text-sm font-semibold text-red-600 dark:text-red-400">
+                                        {products.length - readyCount}
+                                    </div>
+
+                                    <div className="text-[11px] text-neutral-500">
+                                        Need Fix
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+
+                            <div className="flex items-center gap-2 rounded-xl border border-neutral-200 px-4 py-2 dark:border-neutral-700">
+
+                                <Clock
+                                    size={16}
+                                    className="text-blue-500"
+                                />
+
+                                <span className="text-sm font-medium">
+                                    Auto Saved
+                                </span>
+
+                            </div>
+
+                            <button
+                                type="button"
+                                className="
+                        h-11
+                        rounded-xl
+                        border
+                        border-neutral-300
+                        px-5
+                        text-sm
+                        font-semibold
+                        transition
+                        hover:bg-neutral-100
+                        dark:border-neutral-700
+                        dark:hover:bg-neutral-800
+                    "
+                            >
+                                Preview
+                            </button>
+
+                            <button
+                                type="button"
+                                className="
+                        h-11
+                        rounded-xl
+                        bg-emerald-600
+                        px-6
+                        text-sm
+                        font-semibold
+                        text-white
+                        transition
+                        hover:bg-emerald-700
+                    "
+                            >
+                                Publish
+                            </button>
+
+                        </div>
+
+                    </div>
+
                 </div>
             )}
 

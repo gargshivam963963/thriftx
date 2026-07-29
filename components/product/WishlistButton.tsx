@@ -9,6 +9,7 @@ import {
     isWishlisted,
     toggleWishlist,
 } from "@/lib/services/wishlist";
+import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
 
 interface Props {
     productId: string;
@@ -19,6 +20,7 @@ export default function WishlistButton({
 }: Props) {
     const [wishlisted, setWishlisted] = useState(false);
     const [loading, setLoading] = useState(true);
+    const { trackWishlistAdd, trackWishlistRemove } = useAnalytics();
 
     useEffect(() => {
         async function load() {
@@ -39,6 +41,13 @@ export default function WishlistButton({
             const state = await toggleWishlist(productId);
 
             setWishlisted(state);
+
+            // Track wishlist event
+            if (state) {
+                trackWishlistAdd(productId, { productId });
+            } else {
+                trackWishlistRemove(productId);
+            }
 
             toast.success(
                 state

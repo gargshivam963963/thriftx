@@ -23,6 +23,7 @@ import {
     clearRecentSearches,
     type SearchResult,
 } from "@/lib/services/searchService";
+import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
 
 interface GlobalSearchProps {
     open: boolean;
@@ -45,6 +46,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
+    const { trackSearch } = useAnalytics();
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(false);
@@ -88,6 +90,8 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                 setResults(data);
                 setLoading(false);
                 setSelectedIndex(-1);
+                // Track the search event for analytics
+                trackSearch(debouncedQuery, data.length);
             }
         });
 
@@ -106,7 +110,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                 const item = results[selectedIndex];
                 saveRecentSearch(item.title);
                 onClose();
-                router.push(`/product/${item.id}`);
+                router.push(`/product/${item.slug}`);
                 return;
             }
 
@@ -157,7 +161,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
         (item: SearchResult) => {
             saveRecentSearch(item.title);
             onClose();
-            router.push(`/product/${item.id}`);
+            router.push(`/product/${item.slug}`);
         },
         [router, onClose],
     );

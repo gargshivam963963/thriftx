@@ -10,7 +10,7 @@ import PremiumImage from "@/components/ui/PremiumImage";
 import { isWishlisted, toggleWishlist } from "@/lib/services/wishlist";
 
 const TOPWEAR_KEYWORDS = [
-  "t-shirt", "shirt", "hoodie", "jacket", "blazer",
+  "t-shirts", "shirt", "hoodie", "jacket", "blazer",
   "sweater", "top", "blouse", "cardigan", "vest", "jersey",
 ];
 
@@ -24,6 +24,7 @@ function getMeasurement(category: string, chest?: string, waist?: string): strin
 
 interface ProductCardProps {
   id: string;
+  slug: string;
   brand: string;
   title: string;
   price: number;
@@ -37,6 +38,7 @@ interface ProductCardProps {
 
 export default function ProductCard({
   id,
+  slug,
   brand,
   title,
   price,
@@ -84,7 +86,7 @@ export default function ProductCard({
       className="h-full"
     >
       <Link
-        href={`/product/${id}`}
+        href={`/product/${slug}`}
         className="group relative flex h-full flex-col"
       >
         {/* ── Image — Uniform Fixed Height ──────────────────────── */}
@@ -142,7 +144,7 @@ export default function ProductCard({
 
           {measurement && (
             <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-              {measurement} ds ds fsdf sd f
+              {measurement}
             </p>
           )}
 

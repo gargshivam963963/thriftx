@@ -3,18 +3,25 @@
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import { Search, AlertCircle, CheckCircle2 } from "lucide-react";
-import type { BulkProduct } from "@/app/lib/bulk/types";
 
-export interface BulkPreviewProduct {
-    sku: string;
-    image: string;
-    brand: string;
-    title: string;
-    category: string;
-    price: number;
-    errors: string[];
-    status: string;
-}
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import type { BulkProduct } from "@/app/lib/bulk/types";
 
 interface PreviewTableProps {
     products: BulkProduct[];
@@ -30,22 +37,21 @@ export default function PreviewTable({ products }: PreviewTableProps) {
             (p) =>
                 p.sku.toLowerCase().includes(q) ||
                 p.brand.toLowerCase().includes(q) ||
-                p.title.toLowerCase().includes(q)
+                p.title.toLowerCase().includes(q),
         );
     }, [products, search]);
 
     const ready = filtered.filter((p) => p.errors.length === 0).length;
     const issues = filtered.filter((p) => p.errors.length > 0).length;
 
+    if (products.length === 0) return null;
+
     return (
-        <div className="rounded-2xl border border-neutral-200/70 bg-white dark:border-neutral-700/50 dark:bg-neutral-900">
-            {/* Header */}
-            <div className="flex flex-col gap-3 border-b border-neutral-100 p-4 dark:border-neutral-800 sm:flex-row sm:items-center sm:justify-between">
+        <Card className="shadow-sm">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                        Product Preview
-                    </h2>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    <CardTitle className="text-sm">Product Preview</CardTitle>
+                    <CardDescription className="text-xs">
                         {filtered.length} product{filtered.length !== 1 ? "s" : ""}
                         {ready > 0 && (
                             <span className="ml-2 text-emerald-600 dark:text-emerald-400">
@@ -57,207 +63,185 @@ export default function PreviewTable({ products }: PreviewTableProps) {
                                 &middot; {issues} issue{issues !== 1 ? "s" : ""}
                             </span>
                         )}
-                    </p>
+                    </CardDescription>
                 </div>
                 <div className="relative w-full sm:max-w-xs">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                    <input
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search SKU, brand, title..."
-                        className="w-full rounded-xl border border-neutral-200 bg-neutral-50 py-2 pl-9 pr-3 text-xs font-medium outline-none transition focus:border-neutral-400 focus:bg-white focus:ring-1 focus:ring-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:placeholder-neutral-500 dark:focus:border-neutral-500 dark:focus:bg-neutral-800"
+                        className="h-9 pl-9 text-xs"
                     />
                 </div>
-            </div>
+            </CardHeader>
 
-            {/* Desktop Table */}
-            <div className="hidden md:block">
-                <div className="max-h-[calc(100vh-12rem)] overflow-auto">
-                    <table className="min-w-max w-full table-auto">
-                        <thead>
-                            <tr className="border-b border-neutral-100 bg-neutral-50/50 text-left text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-400">
-                                <th className="py-3 pl-4 pr-2">SKU</th>
-                                <th className="px-2 py-3">Image</th>
-                                <th className="px-2 py-3">Brand</th>
-                                <th className="px-2 py-3">Title</th>
-                                <th className="px-2 py-3">Category</th>
-                                <th className="px-2 py-3">Price</th>
-                                <th className="px-2 py-3">Images</th>
-                                <th className="pr-4 pl-2 py-3">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.length === 0 ? (
-                                <tr>
-                                    <td colSpan={8} className="py-12 text-center text-sm text-neutral-400">
-                                        {products.length === 0
-                                            ? "Upload an Excel file to preview products"
-                                            : "No products match your search"}
-                                    </td>
-                                </tr>
-                            ) : (
-                                filtered.map((product) => {
-                                    const hasErrors = product.errors.length > 0;
-                                    return (
-                                        <tr
-                                            key={product.sku}
-                                            className={`border-b border-neutral-100 text-sm transition last:border-0 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800/50 ${hasErrors ? "bg-red-50/30 dark:bg-red-950/10" : ""
-                                                }`}
-                                        >
-                                            <td className="py-3 pl-4 pr-2">
-                                                <span className="font-mono text-xs font-bold text-neutral-900 dark:text-neutral-100">
+            <CardContent className="p-0">
+                {/* Desktop Table */}
+                <div className="hidden md:block">
+                    <div className="max-h-[calc(100vh-16rem)] overflow-auto">
+                        <Table>
+                            <TableHeader className="sticky top-0 z-10 bg-muted/50 backdrop-blur">
+                                <TableRow>
+                                    <TableHead className="sticky left-0 z-20 bg-muted/50 backdrop-blur min-w-[80px]">SKU</TableHead>
+                                    <TableHead className="min-w-[60px]">Image</TableHead>
+                                    <TableHead className="min-w-[100px]">Brand</TableHead>
+                                    <TableHead className="min-w-[140px]">Title</TableHead>
+                                    <TableHead className="min-w-[100px]">Category</TableHead>
+                                    <TableHead className="min-w-[80px]">Price</TableHead>
+                                    <TableHead className="min-w-[60px]">Images</TableHead>
+                                    <TableHead className="min-w-[90px]">Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filtered.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                                            {products.length === 0
+                                                ? "Upload an Excel file to preview products"
+                                                : "No products match your search"}
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    filtered.map((product) => {
+                                        const hasErrors = product.errors.length > 0;
+                                        return (
+                                            <TableRow
+                                                key={product.sku}
+                                                className={hasErrors ? "bg-destructive/5" : ""}
+                                            >
+                                                <TableCell className="sticky left-0 z-10 bg-background font-mono text-xs font-bold">
                                                     {product.sku}
-                                                </span>
-                                            </td>
-                                            <td className="px-2 py-3">
-                                                <div className="h-10 w-10 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800">
-                                                    {product.primaryImage ? (
-                                                        <Image
-                                                            src={product.primaryImage}
-                                                            alt=""
-                                                            width={40}
-                                                            height={40}
-                                                            className="h-full w-full object-cover"
-                                                            unoptimized
-                                                        />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="h-10 w-10 overflow-hidden rounded-lg bg-muted">
+                                                        {product.primaryImage ? (
+                                                            <Image
+                                                                src={product.primaryImage}
+                                                                alt=""
+                                                                width={40}
+                                                                height={40}
+                                                                className="h-full w-full object-cover"
+                                                                unoptimized
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                                                                —
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="max-w-[100px] truncate font-medium">
+                                                    {product.brand || <span className="text-muted-foreground">—</span>}
+                                                </TableCell>
+                                                <TableCell className="max-w-[160px] truncate">
+                                                    {product.title || <span className="text-muted-foreground">—</span>}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">
+                                                    {product.category}
+                                                </TableCell>
+                                                <TableCell className="font-mono text-sm font-bold">
+                                                    ₹{product.price}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">
+                                                    {product.imageFiles.length}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {hasErrors ? (
+                                                        <Badge variant="error" className="gap-1 text-[10px]">
+                                                            <AlertCircle size={10} />
+                                                            {product.errors.length}
+                                                        </Badge>
                                                     ) : (
-                                                        <div className="flex h-full w-full items-center justify-center text-[10px] text-neutral-400">
-                                                            —
-                                                        </div>
+                                                        <Badge variant="success" className="gap-1 text-[10px]">
+                                                            <CheckCircle2 size={10} />
+                                                            Ready
+                                                        </Badge>
                                                     )}
-                                                </div>
-                                            </td>
-                                            <td className="max-w-[100px] truncate px-2 py-3 font-medium text-neutral-700 dark:text-neutral-300">
-                                                {product.brand || <span className="text-neutral-400">—</span>}
-                                            </td>
-                                            <td className="max-w-[160px] truncate px-2 py-3 text-neutral-600 dark:text-neutral-400">
-                                                {product.title || <span className="text-neutral-400">—</span>}
-                                            </td>
-                                            <td className="px-2 py-3 text-xs text-neutral-500 dark:text-neutral-400">
-                                                {product.category}
-                                            </td>
-                                            <td className="px-2 py-3 font-mono text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                                                ₹{product.price}
-                                            </td>
-                                            <td className="px-2 py-3 text-xs text-neutral-500 dark:text-neutral-400">
-                                                {product.imageFiles.length}
-                                            </td>
-                                            <td className="pr-4 pl-2 py-3">
-                                                {hasErrors ? (
-                                                    <span className="group relative inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                                        <AlertCircle size={10} />
-                                                        {product.errors.length} error{product.errors.length !== 1 ? "s" : ""}
-                                                        <div className="absolute bottom-full left-1/2 z-10 mb-2 hidden w-56 -translate-x-1/2 rounded-xl border border-red-200 bg-white p-3 shadow-lg group-hover:block dark:border-red-800 dark:bg-neutral-900">
-                                                            <p className="text-[10px] font-semibold text-red-600 dark:text-red-400">Issues</p>
-                                                            <ul className="mt-1 space-y-0.5">
-                                                                {product.errors.map((err, i) => (
-                                                                    <li key={i} className="text-[10px] text-neutral-600 dark:text-neutral-400">
-                                                                        &bull; {err}
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                                        <CheckCircle2 size={10} />
-                                                        Ready
-                                                    </span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* Mobile Cards */}
-            <div className="divide-y divide-neutral-100 md:hidden dark:divide-neutral-800">
-                {filtered.length === 0 ? (
-                    <div className="py-12 text-center text-sm text-neutral-400">
-                        {products.length === 0
-                            ? "Upload an Excel file to preview products"
-                            : "No products match your search"}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
-                ) : (
-                    filtered.map((product) => {
-                        const hasErrors = product.errors.length > 0;
-                        return (
-                            <div
-                                key={product.sku}
-                                className={`flex items-start gap-3 p-4 ${hasErrors ? "bg-red-50/30 dark:bg-red-950/10" : ""}`}
-                            >
-                                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800">
-                                    {product.primaryImage ? (
-                                        <Image
-                                            src={product.primaryImage}
-                                            alt=""
-                                            width={48}
-                                            height={48}
-                                            className="h-full w-full object-cover"
-                                            unoptimized
-                                        />
-                                    ) : (
-                                        <div className="flex h-full w-full items-center justify-center text-[10px] text-neutral-400">
-                                            —
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div className="min-w-0">
-                                            <p className="font-mono text-xs font-bold text-neutral-900 dark:text-neutral-100">
-                                                {product.sku}
-                                            </p>
-                                            <p className="truncate text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                                {product.title || product.brand || <span className="text-neutral-400">Untitled</span>}
-                                            </p>
-                                        </div>
-                                        <span className="shrink-0 font-mono text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                                            ₹{product.price}
-                                        </span>
-                                    </div>
-                                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                        {product.brand && (
-                                            <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
-                                                {product.brand}
-                                            </span>
-                                        )}
-                                        <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-                                            {product.category}
-                                        </span>
-                                        <span className="text-[10px] text-neutral-400">{product.imageFiles.length} img</span>
-                                        {hasErrors ? (
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                                <AlertCircle size={10} />
-                                                {product.errors.length}
-                                            </span>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="divide-y md:hidden">
+                    {filtered.length === 0 ? (
+                        <div className="py-12 text-center text-sm text-muted-foreground">
+                            {products.length === 0
+                                ? "Upload an Excel file to preview products"
+                                : "No products match your search"}
+                        </div>
+                    ) : (
+                        filtered.map((product) => {
+                            const hasErrors = product.errors.length > 0;
+                            return (
+                                <div
+                                    key={product.sku}
+                                    className={`flex items-start gap-3 p-4 ${hasErrors ? "bg-destructive/5" : ""}`}
+                                >
+                                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-muted">
+                                        {product.primaryImage ? (
+                                            <Image
+                                                src={product.primaryImage}
+                                                alt=""
+                                                width={48}
+                                                height={48}
+                                                className="h-full w-full object-cover"
+                                                unoptimized
+                                            />
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                                <CheckCircle2 size={10} />
-                                                Ready
-                                            </span>
+                                            <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                                                —
+                                            </div>
                                         )}
                                     </div>
-                                    {hasErrors && (
-                                        <div className="mt-2 rounded-lg bg-red-100/70 px-2.5 py-1.5 dark:bg-red-900/20">
-                                            {product.errors.map((err, i) => (
-                                                <p key={i} className="text-[10px] leading-relaxed text-red-700 dark:text-red-400">
-                                                    &bull; {err}
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <p className="font-mono text-xs font-bold text-foreground">{product.sku}</p>
+                                                <p className="truncate text-sm font-medium">
+                                                    {product.title || product.brand || <span className="text-muted-foreground">Untitled</span>}
                                                 </p>
-                                            ))}
+                                            </div>
+                                            <span className="shrink-0 font-mono text-sm font-bold">₹{product.price}</span>
                                         </div>
-                                    )}
+                                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                            {product.brand && <Badge variant="secondary" className="text-[10px]">{product.brand}</Badge>}
+                                            <Badge variant="outline" className="text-[10px]">{product.category}</Badge>
+                                            <span className="text-[10px] text-muted-foreground">{product.imageFiles.length} img</span>
+                                            {hasErrors ? (
+                                                <Badge variant="error" className="gap-1 text-[10px]">
+                                                    <AlertCircle size={10} />
+                                                    {product.errors.length}
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="success" className="gap-1 text-[10px]">
+                                                    <CheckCircle2 size={10} />
+                                                    Ready
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        {hasErrors && (
+                                            <div className="mt-2 rounded-lg bg-destructive/10 px-2.5 py-1.5">
+                                                {product.errors.map((err, i) => (
+                                                    <p key={i} className="text-[10px] leading-relaxed text-destructive">
+                                                        &bull; {err}
+                                                    </p>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })
-                )}
-            </div>
-        </div>
+                            );
+                        })
+                    )}
+                </div>
+            </CardContent>
+        </Card>
     );
 }
-

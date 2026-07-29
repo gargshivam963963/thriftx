@@ -91,8 +91,8 @@ export default function SmartPreviewCard({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.03 }}
             className={`overflow-hidden rounded-2xl border transition-all ${hasErrors
-                    ? "border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950/10"
-                    : "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900"
+                ? "border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950/10"
+                : "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900"
                 }`}
         >
             {/* Header */}

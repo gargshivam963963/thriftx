@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-22;
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,

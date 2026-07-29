@@ -92,16 +92,7 @@ export default function Hero() {
                             </motion.span>
 
                             <div className="space-y-5">
-                                <h1 className="
-font-serif
-text-6xl
-font-semibold
-leading-[0.95]
-tracking-[-0.04em]
-text-neutral-900
-md:text-7xl
-xl:text-[96px]
-">
+                                <h1 className="text-display font-serif font-bold text-neutral-900">
                                     Discover
                                     <br />
 
@@ -116,7 +107,7 @@ xl:text-[96px]
 
                                 <p className="
 max-w-[620px]
-text-xl
+text-body
 leading-9
 text-neutral-600
 ">

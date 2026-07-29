@@ -62,6 +62,9 @@ export interface Product {
   primaryImage: string;
   images: string[];
 
+  $createdAt?: string;
+  $updatedAt?: string;
+
   // Status
   status: ProductStatus;
   isActive: boolean;
@@ -138,6 +141,9 @@ function normalizeProduct(
 
     status: data.status ?? "active",
     isActive: data.isActive ?? true,
+
+    $createdAt: data.$createdAt,
+    $updatedAt: data.$updatedAt,
   };
 }
 
@@ -301,7 +307,14 @@ export async function getProducts(
   return response.documents.map((doc) => {
     const { $id, ...data } = doc;
 
-    return normalizeProduct(data as Partial<AppwriteProductDocument>, $id);
+    return normalizeProduct(
+      {
+        ...(data as Partial<AppwriteProductDocument>),
+        $createdAt: doc.$createdAt,
+        $updatedAt: doc.$updatedAt,
+      },
+      $id,
+    );
   });
 }
 
@@ -319,7 +332,14 @@ export async function getProductById(id: string): Promise<Product | null> {
 
     const { $id, ...data } = doc;
 
-    return normalizeProduct(data as Partial<AppwriteProductDocument>, $id);
+    return normalizeProduct(
+      {
+        ...(data as Partial<AppwriteProductDocument>),
+        $createdAt: doc.$createdAt,
+        $updatedAt: doc.$updatedAt,
+      },
+      $id,
+    );
   } catch (error) {
     // Silently return null for not-found — this is a normal case (orphaned cart items, deleted products)
     return null;
@@ -345,7 +365,14 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
   const { $id, ...data } = doc;
 
-  return normalizeProduct(data as Partial<AppwriteProductDocument>, $id);
+  return normalizeProduct(
+    {
+      ...(data as Partial<AppwriteProductDocument>),
+      $createdAt: doc.$createdAt,
+      $updatedAt: doc.$updatedAt,
+    },
+    $id,
+  );
 }
 
 let brandsCache: { data: string[]; timestamp: number } | null = null;
@@ -391,10 +418,33 @@ export async function getBrands(): Promise<string[]> {
   }
 }
 
+export async function getProductsForSitemap() {
+  if (!isAppwriteDataConfigured) {
+    return [];
+  }
+
+  const response = await databases.listDocuments(
+    APPWRITE_DATABASE_ID,
+    APPWRITE_PRODUCTS_COLLECTION_ID,
+    [
+      AppwriteQuery.equal("isActive", true),
+      AppwriteQuery.equal("status", "active"),
+      AppwriteQuery.select(["slug", "$updatedAt"]),
+      AppwriteQuery.limit(500),
+    ],
+  );
+
+  return response.documents.map((doc) => ({
+    slug: doc.slug as string,
+    updatedAt: doc.$updatedAt,
+  }));
+}
+
 const ProductService = {
   getProducts,
   getProductById,
   getProductBySlug,
+  getProductsForSitemap,
   seedProducts,
   getBrands,
 };

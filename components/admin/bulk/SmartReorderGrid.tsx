@@ -150,8 +150,8 @@ export default function SmartReorderGrid({
                                                         type="button"
                                                         onClick={() => handleLabelChange(image.id, option)}
                                                         className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition-all ${image.label === option
-                                                                ? `${LABEL_COLORS[option] || "bg-neutral-900 text-white"} ring-2 ring-offset-1 ring-neutral-900/20 dark:ring-offset-neutral-800`
-                                                                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600"
+                                                            ? `${LABEL_COLORS[option] || "bg-neutral-900 text-white"} ring-2 ring-offset-1 ring-neutral-900/20 dark:ring-offset-neutral-800`
+                                                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600"
                                                             }`}
                                                     >
                                                         {option}

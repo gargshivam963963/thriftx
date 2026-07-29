@@ -1,6 +1,7 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { getProducts, getBrands } from "@/lib/services/products";
 import { getCategories, getGenders } from "@/lib/categories";
+import { siteConfig } from "@/lib/seo";
 import ShopContent from "./ShopContent";
 
 type PageProps = {
@@ -18,8 +19,50 @@ type PageProps = {
   }>;
 };
 
+export async function generateMetadata({
+  params,
+  searchParams,
+}: PageProps): Promise<Metadata> {
+  const { category = [] } = await params;
+  const { search } = await searchParams;
+
+  const categoryTitle = category[category.length - 1] ?? "";
+
+  const title = categoryTitle
+    ? `${categoryTitle} | Shop THRIFTX`
+    : search
+      ? `Search: ${search} | THRIFTX`
+      : "Shop Premium Thrift Clothing | THRIFTX";
+
+  const description = categoryTitle
+    ? `Browse premium branded ${categoryTitle.toLowerCase()} at THRIFTX. Authentic thrift fashion, quality checked, affordable prices.`
+    : search
+      ? `Search results for "${search}" at THRIFTX. Find premium branded thrift clothing.`
+      : "Shop premium branded thrift clothing online. Authentic Nike, Adidas, Puma, Polo Ralph Lauren and more at affordable prices.";
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: category.length
+        ? `/shop/${category.join("/")}`
+        : "/shop",
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${siteConfig.url}/shop${category.length ? `/${category.join("/")}` : ""}`,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+}
+
 export default async function Shop({ params, searchParams }: PageProps) {
   const { category = [] } = await params;
+
   const {
     sort = "newest",
     brand,
@@ -66,4 +109,3 @@ export default async function Shop({ params, searchParams }: PageProps) {
     />
   );
 }
-

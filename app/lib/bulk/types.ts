@@ -32,10 +32,9 @@ export interface BulkProduct {
   waist?: string;
 
   /**
-   * Optional measurements
+   * Length measurement (topwear: shoulder to hem, bottomwear: waistband to hem)
    */
   length?: string;
-  inseam?: string;
 
   // Details
   color?: string;
@@ -55,6 +54,12 @@ export interface BulkProduct {
 
   // AI
   aiGenerated: boolean;
+
+  /** Stores AI confidence scores per field for display */
+  aiConfidence?: Record<string, number>;
+
+  /** Fields that need human review after AI extraction */
+  aiNeedsReview?: string[];
 
   // Upload
   status: "Ready" | "Missing Images" | "Invalid" | "Uploading" | "Uploaded";

@@ -111,7 +111,6 @@ export function createBlankProduct(skuNumber: number): BulkProduct {
     chest: "",
     waist: "",
     length: "",
-    inseam: "",
     color: "",
     material: "",
     description: "",

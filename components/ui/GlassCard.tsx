@@ -19,7 +19,7 @@ export function GlassCard({
             transition={{ duration: .35 }}
             whileHover={{ y: -2 }}
             className={cn(
-                "rounded-3xl",
+                "rounded-xl",
                 "border border-neutral-200/70",
                 "bg-white/80",
                 "backdrop-blur-xl",

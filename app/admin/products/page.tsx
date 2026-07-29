@@ -35,21 +35,35 @@ import ProductSkeleton from "@/components/admin/products/ProductSkeleton";
 interface AdminProduct {
     $id: string;
     $createdAt: string;
+
     title: string;
     brand: string;
     category: string;
     gender: string;
+
     price: number;
     retailPrice?: number;
+
     condition: string;
+
     size: string;
+
+    chest?: string;
+    waist?: string;
+    length?: string;
+    inseam?: string;
+
     color: string;
     material: string;
+
+    description: string;
+    shippingInfo?: string;
+
     primaryImage: string;
     images: string[];
+
     status: string;
     isActive: boolean;
-    description: string;
 }
 
 export default function AdminProductsPage() {
@@ -183,31 +197,46 @@ export default function AdminProductsPage() {
             condition: product.condition || "Excellent",
             color: product.color || "",
             material: product.material || "",
-            chest: "",
-            waist: "",
-            length: "",
-            inseam: "",
+
+            chest: product.chest || "",
+            waist: product.waist || "",
+            length: product.length || "",
+            inseam: product.inseam || "",
+
             description: product.description || "",
-            shippingInfo: "",
+            shippingInfo: product.shippingInfo || "",
         };
+
         setEditProduct({
             id: product.$id,
             data: formData,
             images: product.images || (product.primaryImage ? [product.primaryImage] : []),
         });
+
         setFormOpen(true);
     };
 
-    const handleSave = async (data: ProductFormData, images: File[], primaryIndex: number) => {
+    const handleSave = async (data: ProductFormData, orderedImageUrls: string[], filesToUpload: File[]) => {
         setSaving(true);
         try {
-            let imageUrls: string[] = editProduct?.images || [];
-
-            // Upload new images
-            if (images.length > 0) {
-                const uploaded = await uploadImages(images);
-                imageUrls = [...imageUrls, ...uploaded.map((u) => u.url)];
+            // Upload any new files
+            const uploadedUrls: string[] = [];
+            if (filesToUpload.length > 0) {
+                const uploaded = await uploadImages(filesToUpload);
+                uploadedUrls.push(...uploaded.map((u) => u.url));
             }
+
+            // Build final ordered image URLs
+            // Replace new blob URLs with actual uploaded URLs
+            let uploadIndex = 0;
+            const finalImageUrls = orderedImageUrls.map((url) => {
+                if (url.startsWith("blob:")) {
+                    return uploadedUrls[uploadIndex++] || url;
+                }
+                return url;
+            });
+
+            const primaryImage = finalImageUrls[0] || "";
 
             const payload: Record<string, unknown> = {
                 title: data.title,
@@ -226,8 +255,8 @@ export default function AdminProductsPage() {
                 inseam: data.inseam,
                 description: data.description,
                 shippingInfo: data.shippingInfo,
-                primaryImage: imageUrls[primaryIndex] || imageUrls[0] || "",
-                images: imageUrls,
+                primaryImage,
+                images: finalImageUrls,
             };
 
             if (editProduct) {
@@ -257,7 +286,7 @@ export default function AdminProductsPage() {
         } finally {
             setSaving(false);
         }
-    };
+    }
 
     // ── Render ──
 
@@ -270,7 +299,7 @@ export default function AdminProductsPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Products</h1>
                     <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                        {products.length} total &middot; {activeCount} active &middot; {draftCount} drafts
+                        {products.length} total &middot; {activeCount} active &middot; {draftCount}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">

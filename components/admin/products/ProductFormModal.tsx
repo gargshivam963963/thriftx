@@ -1,11 +1,33 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Upload, ImagePlus, Trash2, Star } from "lucide-react";
+import {
+    X,
+    ImagePlus,
+    Star,
+    ChevronLeft,
+    ChevronRight,
+} from "lucide-react";
 import Image from "next/image";
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+    SortableContext,
+    rectSortingStrategy,
+    arrayMove,
+} from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PRODUCT_FIELDS } from "@/lib/productFields";
+import { deleteImageFromStorage } from "@/lib/services/storage";
+import SortableImage from "@/components/SortableImage";
 
 export interface ProductFormData {
     title: string;
@@ -27,10 +49,17 @@ export interface ProductFormData {
     [key: string]: string;
 }
 
+export interface ImageItem {
+    id: string;
+    url: string;
+    file?: File;
+    isExisting: boolean;
+}
+
 interface ProductFormModalProps {
     open: boolean;
     onClose: () => void;
-    onSave: (data: ProductFormData, images: File[], primaryIndex: number) => void;
+    onSave: (data: ProductFormData, orderedImageUrls: string[], filesToUpload: File[]) => void;
     saving: boolean;
     editProduct?: {
         id: string;
@@ -58,6 +87,12 @@ const defaultForm: ProductFormData = {
     shippingInfo: "Ships within 24 hours. Pan India delivery in 3–7 business days.",
 };
 
+let _imageIdCounter = 0;
+function generateImageId(): string {
+    _imageIdCounter += 1;
+    return `img_${Date.now()}_${_imageIdCounter}`;
+}
+
 export default function ProductFormModal({
     open,
     onClose,
@@ -66,31 +101,49 @@ export default function ProductFormModal({
     editProduct,
 }: ProductFormModalProps) {
     const [form, setForm] = useState<ProductFormData>(defaultForm);
-    const [newImages, setNewImages] = useState<File[]>([]);
-    const [previews, setPreviews] = useState<string[]>([]);
-    const [primaryIndex, setPrimaryIndex] = useState(0);
+    const [images, setImages] = useState<ImageItem[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+    const [isDeletingImage, setIsDeletingImage] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const isEditing = !!editProduct;
 
+    const pointerSensor = useSensor(PointerSensor, {
+        activationConstraint: { distance: 5 },
+    });
+    const sensors = useSensors(pointerSensor);
+
+    // Reset state on open/close
     useEffect(() => {
         if (open) {
             if (editProduct) {
                 setForm(editProduct.data);
-                setPreviews(editProduct.images);
-                setNewImages([]);
-                setPrimaryIndex(0);
+                setImages(
+                    editProduct.images.map((url) => ({
+                        id: generateImageId(),
+                        url,
+                        isExisting: true,
+                    }))
+                );
             } else {
                 setForm(defaultForm);
-                setNewImages([]);
-                setPreviews([]);
-                setPrimaryIndex(0);
+                setImages([]);
             }
             setErrors({});
-            // Scroll to top
+            setPreviewIndex(null);
             if (scrollRef.current) scrollRef.current.scrollTop = 0;
+        } else {
+            // Cleanup blob URLs when closing
+            setImages((prev) => {
+                prev.forEach((img) => {
+                    if (!img.isExisting && img.url.startsWith("blob:")) {
+                        URL.revokeObjectURL(img.url);
+                    }
+                });
+                return [];
+            });
         }
     }, [open, editProduct]);
 
@@ -108,20 +161,94 @@ export default function ProductFormModal({
         }
     }
 
+    // ── Image Management ──
+
     function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
-        const newPreviews = files.map((f) => URL.createObjectURL(f));
-        setNewImages((prev) => [...prev, ...files]);
-        setPreviews((prev) => [...prev, ...newPreviews]);
+
+        const newItems: ImageItem[] = files.map((f) => ({
+            id: generateImageId(),
+            url: URL.createObjectURL(f),
+            file: f,
+            isExisting: false,
+        }));
+
+        setImages((prev) => [...prev, ...newItems]);
+        // Reset file input so re-selecting the same file works
+        if (fileRef.current) fileRef.current.value = "";
     }
 
-    function removeImage(index: number) {
-        setPreviews((prev) => prev.filter((_, i) => i !== index));
-        setNewImages((prev) => prev.filter((_, i) => i !== index));
-        if (primaryIndex === index) setPrimaryIndex(0);
-        else if (primaryIndex > index) setPrimaryIndex((p) => p - 1);
+    async function removeImage(index: number) {
+        const target = images[index];
+        if (!target) return;
+
+        // If it's an existing image on the server, delete from storage
+        if (target.isExisting) {
+            setIsDeletingImage(true);
+            try {
+                await deleteImageFromStorage(target.url);
+            } catch (err) {
+                console.error("Failed to delete image from storage:", err);
+            } finally {
+                setIsDeletingImage(false);
+            }
+        } else {
+            // Revoke the blob URL
+            if (target.url.startsWith("blob:")) {
+                URL.revokeObjectURL(target.url);
+            }
+        }
+
+        setImages((prev) => prev.filter((_, i) => i !== index));
     }
+
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        setImages((prev) => {
+            const oldIndex = prev.findIndex((img) => img.id === active.id);
+            const newIndex = prev.findIndex((img) => img.id === over.id);
+            if (oldIndex === -1 || newIndex === -1) return prev;
+            return arrayMove(prev, oldIndex, newIndex);
+        });
+    }, []);
+
+    // ── Preview Modal ──
+
+    function openPreview(index: number) {
+        setPreviewIndex(index);
+    }
+
+    function closePreview() {
+        setPreviewIndex(null);
+    }
+
+    function prevPreview() {
+        setPreviewIndex((prev) =>
+            prev !== null ? (prev - 1 + images.length) % images.length : null
+        );
+    }
+
+    function nextPreview() {
+        setPreviewIndex((prev) =>
+            prev !== null ? (prev + 1) % images.length : null
+        );
+    }
+
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if (previewIndex === null) return;
+            if (e.key === "Escape") closePreview();
+            if (e.key === "ArrowLeft") prevPreview();
+            if (e.key === "ArrowRight") nextPreview();
+        }
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [previewIndex, images.length]);
+
+    // ── Validation & Submit ──
 
     function validate(): boolean {
         const errs: Record<string, string> = {};
@@ -132,7 +259,7 @@ export default function ProductFormModal({
         if (!form.price.trim() || isNaN(Number(form.price)) || Number(form.price) <= 0)
             errs.price = "Valid price is required";
         if (!form.material.trim()) errs.material = "Material is required";
-        if (!isEditing && newImages.length === 0 && previews.length === 0)
+        if (!isEditing && images.length === 0)
             errs.images = "At least one image is required";
         setErrors(errs);
         return Object.keys(errs).length === 0;
@@ -140,13 +267,23 @@ export default function ProductFormModal({
 
     function handleSubmit() {
         if (!validate()) return;
-        onSave(form, newImages, primaryIndex);
+
+        // Build ordered URLs and extract files for upload
+        const orderedImageUrls = images.map((img) => img.url);
+        const filesToUpload = images
+            .filter((img) => img.file)
+            .map((img) => img.file!);
+
+        onSave(form, orderedImageUrls, filesToUpload);
     }
+
+    // ── Render ──
 
     return (
         <AnimatePresence>
             {open && (
                 <>
+                    {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -154,6 +291,8 @@ export default function ProductFormModal({
                         onClick={onClose}
                         className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
                     />
+
+                    {/* Modal */}
                     <motion.div
                         initial={{ opacity: 0, y: 40, scale: 0.97 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -194,8 +333,8 @@ export default function ProductFormModal({
                                                     value={form[field.name]}
                                                     onChange={handleChange}
                                                     className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
-                                                            ? "border-red-400 focus:border-red-500"
-                                                            : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                        ? "border-red-400 focus:border-red-500"
+                                                        : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
                                                         }`}
                                                 >
                                                     <option value="">Select</option>
@@ -213,8 +352,8 @@ export default function ProductFormModal({
                                                     onChange={handleChange}
                                                     placeholder={field.placeholder}
                                                     className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
-                                                            ? "border-red-400 focus:border-red-500"
-                                                            : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                        ? "border-red-400 focus:border-red-500"
+                                                        : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
                                                         }`}
                                                 />
                                             )}
@@ -241,8 +380,8 @@ export default function ProductFormModal({
                                                     value={form[field.name]}
                                                     onChange={handleChange}
                                                     className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
-                                                            ? "border-red-400"
-                                                            : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                        ? "border-red-400"
+                                                        : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
                                                         }`}
                                                 >
                                                     {(field.options || []).map((opt) => (
@@ -259,8 +398,8 @@ export default function ProductFormModal({
                                                     onChange={handleChange}
                                                     placeholder={field.placeholder}
                                                     className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
-                                                            ? "border-red-400"
-                                                            : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                        ? "border-red-400"
+                                                        : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
                                                         }`}
                                                 />
                                             )}
@@ -288,8 +427,8 @@ export default function ProductFormModal({
                                                 onChange={handleChange}
                                                 placeholder={field.placeholder}
                                                 className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
-                                                        ? "border-red-400"
-                                                        : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                    ? "border-red-400"
+                                                    : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
                                                     }`}
                                             />
                                             {errors[field.name] && (
@@ -347,74 +486,85 @@ export default function ProductFormModal({
 
                                 <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
 
-                                {/* Images */}
+                                {/* ── Images Section ── */}
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <div>
-                                            <h3 className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">Images</h3>
-                                            <p className="text-[10px] text-neutral-400">First image is the cover</p>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                                Images
+                                            </h3>
+                                            {images.length > 0 && (
+                                                <Badge variant="secondary" size="xs" rounded="md">
+                                                    {images.length} {images.length === 1 ? "image" : "images"}
+                                                </Badge>
+                                            )}
                                         </div>
-                                        {errors.images && (
-                                            <p className="text-[10px] font-medium text-red-500">{errors.images}</p>
+                                        {images.length > 0 && (
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[10px] text-neutral-400">
+                                                    Drag to reorder &middot; First = Cover
+                                                </span>
+                                                <Star size={12} className="text-amber-500" />
+                                            </div>
                                         )}
                                     </div>
 
-                                    {/* Dropzone */}
-                                    <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-300 py-4 transition hover:border-neutral-500 hover:bg-neutral-50 dark:border-neutral-600 dark:hover:border-neutral-400 dark:hover:bg-neutral-800/50">
-                                        <Upload size={16} className="text-neutral-400" />
-                                        <span className="text-xs font-medium text-neutral-500">Add images</span>
-                                        <input
-                                            ref={fileRef}
-                                            hidden
-                                            multiple
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleImageUpload}
-                                        />
-                                    </label>
-
-                                    {/* Previews */}
-                                    {previews.length > 0 && (
-                                        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-                                            {previews.map((src, i) => (
-                                                <div
-                                                    key={i}
-                                                    className="group relative aspect-square overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-700"
-                                                >
-                                                    <Image
-                                                        src={src}
-                                                        alt=""
-                                                        fill
-                                                        className="object-cover"
-                                                        unoptimized
-                                                    />
-                                                    <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/20" />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setPrimaryIndex(i)}
-                                                        className={`absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-md text-[9px] font-bold transition ${primaryIndex === i
-                                                                ? "bg-amber-400 text-amber-900"
-                                                                : "bg-white/80 text-neutral-500 opacity-0 group-hover:opacity-100"
-                                                            }`}
-                                                    >
-                                                        <Star size={10} />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeImage(i)}
-                                                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-md bg-white/80 text-red-500 opacity-0 transition hover:bg-red-500 hover:text-white group-hover:opacity-100"
-                                                    >
-                                                        <Trash2 size={10} />
-                                                    </button>
-                                                    {primaryIndex === i && (
-                                                        <span className="absolute bottom-1 left-1 rounded-md bg-amber-400/90 px-1.5 py-0.5 text-[8px] font-bold text-amber-900">
-                                                            Cover
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
+                                    {errors.images && (
+                                        <p className="text-[10px] font-medium text-red-500">{errors.images}</p>
                                     )}
+
+                                    <DndContext
+                                        sensors={sensors}
+                                        collisionDetection={closestCenter}
+                                        onDragEnd={handleDragEnd}
+                                    >
+                                        <SortableContext
+                                            items={images.map((img) => img.id)}
+                                            strategy={rectSortingStrategy}
+                                        >
+                                            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+                                                {images.map((img, index) => (
+                                                    <SortableImage
+                                                        key={img.id}
+                                                        id={img.id}
+                                                        src={img.url}
+                                                        index={index}
+                                                        isCover={index === 0}
+                                                        onDelete={() => removeImage(index)}
+                                                        onPreview={() => openPreview(index)}
+                                                    />
+                                                ))}
+
+                                                {/* Upload button */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => fileRef.current?.click()}
+                                                    className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 transition hover:border-neutral-400 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800/50 dark:hover:border-neutral-500 dark:hover:bg-neutral-800"
+                                                >
+                                                    <ImagePlus size={22} className="text-neutral-400" />
+                                                    <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400">
+                                                        {images.length === 0 ? "Add Images" : "Add More"}
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        </SortableContext>
+                                    </DndContext>
+
+                                    {/* Hidden file input */}
+                                    <input
+                                        ref={fileRef}
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleImageUpload}
+                                        className="hidden"
+                                    />
+
+                                    {/* Helper text */}
+                                    <p className="text-[10px] text-neutral-400 leading-relaxed">
+                                        Supported formats: JPEG, PNG, WebP. First image is automatically set as the
+                                        product cover. Drag to reorder.
+                                    </p>
                                 </div>
                             </div>
 
@@ -434,6 +584,95 @@ export default function ProductFormModal({
                             </div>
                         </div>
                     </motion.div>
+
+                    {/* ── Full-Screen Image Preview Modal ── */}
+                    <AnimatePresence>
+                        {previewIndex !== null && images[previewIndex] && (
+                            <>
+                                <motion.div
+                                    key="preview-backdrop"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    onClick={closePreview}
+                                    className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm"
+                                />
+                                <motion.div
+                                    key="preview-content"
+                                    initial={{ opacity: 0, scale: 0.92 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.92 }}
+                                    transition={{ duration: 0.25, ease: "easeOut" }}
+                                    className="fixed inset-0 z-[60] flex items-center justify-center"
+                                >
+                                    {/* Close button */}
+                                    <button
+                                        onClick={closePreview}
+                                        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+                                    >
+                                        <X size={20} />
+                                    </button>
+
+                                    {/* Image counter */}
+                                    <div className="absolute left-1/2 top-4 z-10 -translate-x-1/2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+                                        {previewIndex + 1} / {images.length}
+                                    </div>
+
+                                    {/* Prev button */}
+                                    {images.length > 1 && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                prevPreview();
+                                            }}
+                                            className="absolute left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+                                        >
+                                            <ChevronLeft size={22} />
+                                        </button>
+                                    )}
+
+                                    {/* Image */}
+                                    <div
+                                        className="relative flex h-full w-full items-center justify-center p-4 sm:p-8"
+                                        onClick={closePreview}
+                                    >
+                                        <motion.div
+                                            key={previewIndex}
+                                            initial={{ opacity: 0, x: 40 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -40 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="relative h-full w-full max-h-[85vh] max-w-[90vw]"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <Image
+                                                src={images[previewIndex].url}
+                                                alt={`Product image ${previewIndex + 1}`}
+                                                fill
+                                                unoptimized
+                                                className="object-contain"
+                                                sizes="90vw"
+                                            />
+                                        </motion.div>
+                                    </div>
+
+                                    {/* Next button */}
+                                    {images.length > 1 && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                nextPreview();
+                                            }}
+                                            className="absolute right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+                                        >
+                                            <ChevronRight size={22} />
+                                        </button>
+                                    )}
+                                </motion.div>
+                            </>
+                        )}
+                    </AnimatePresence>
                 </>
             )}
         </AnimatePresence>

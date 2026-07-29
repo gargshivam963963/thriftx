@@ -68,7 +68,6 @@ export async function uploadProducts({
           chest: product.chest ?? "",
           waist: product.waist ?? "",
           length: product.length ?? "",
-          inseam: product.inseam ?? "",
 
           color: product.color ?? "",
           material: product.material ?? "",

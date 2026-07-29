@@ -1,20 +1,60 @@
-import * as React from "react"
-import { Input as InputPrimitive } from "@base-ui/react/input"
+import { forwardRef } from "react";
+import { cn } from "@/lib/utils";
 
-import { cn } from "@/lib/utils"
-
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
-  return (
-    <InputPrimitive
-      type={type}
-      data-slot="input"
-      className={cn(
-        "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
-        className
-      )}
-      {...props}
-    />
-  )
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+    /** Show error state styling */
+    error?: boolean;
+    /** Left icon/element */
+    leftIcon?: React.ReactNode;
+    /** Right icon/element */
+    rightIcon?: React.ReactNode;
 }
 
-export { Input }
+const Input = forwardRef<HTMLInputElement, InputProps>(
+    ({ className, type, error, leftIcon, rightIcon, ...props }, ref) => {
+        return (
+            <div className="relative">
+                {leftIcon && (
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-neutral-400">
+                        {leftIcon}
+                    </div>
+                )}
+                <input
+                    type={type}
+                    className={cn(
+                        // Base
+                        "flex h-11 w-full rounded-xl border bg-white px-4 py-2.5",
+                        "text-sm font-medium text-neutral-900",
+                        "placeholder:text-neutral-400 placeholder:font-normal",
+                        // Border
+                        "border-neutral-300",
+                        error && "border-red-400",
+                        // Focus
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/20 focus-visible:border-neutral-600",
+                        // Disabled
+                        "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-neutral-50",
+                        // Dark mode
+                        "dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-600",
+                        "dark:placeholder:text-neutral-500",
+                        "dark:focus-visible:ring-white/20 dark:focus-visible:border-neutral-400",
+                        "dark:disabled:bg-neutral-950",
+                        // Icons padding
+                        leftIcon && "pl-10",
+                        rightIcon && "pr-10",
+                        className,
+                    )}
+                    ref={ref}
+                    {...props}
+                />
+                {rightIcon && (
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-neutral-400">
+                        {rightIcon}
+                    </div>
+                )}
+            </div>
+        );
+    },
+);
+Input.displayName = "Input";
+
+export { Input };

@@ -1,7 +1,8 @@
 /**
  * Category → Measurement field mapping for thrift clothes.
- * Instead of using S/M/L/XL (which varies by country/brand),
- * we use actual body measurements in inches.
+ * Topwear → Chest + Length only
+ * Bottomwear → Waist + Length only
+ * Dresses → Chest + Waist + Length
  */
 
 export interface MeasurementConfig {
@@ -10,6 +11,7 @@ export interface MeasurementConfig {
   unit: string;
   placeholder: string;
   description: string;
+  required?: boolean;
 }
 
 export interface CategoryMeasurementRule {
@@ -21,300 +23,158 @@ export interface CategoryMeasurementRule {
   hint: string;
 }
 
+/** Topwear (upper body): Chest + Length */
+const topwearMeasurements: MeasurementConfig[] = [
+  {
+    label: "Chest",
+    field: "chest",
+    required: true,
+    unit: "inches",
+    placeholder: '22"',
+    description: "Measure across chest from armpit to armpit, then double",
+  },
+  {
+    label: "Length",
+    field: "length",
+    required: true,
+    unit: "inches",
+    placeholder: '28"',
+    description: "From shoulder seam to bottom hem",
+  },
+];
+
+/** Bottomwear (lower body): Waist + Length */
+const bottomwearMeasurements: MeasurementConfig[] = [
+  {
+    label: "Waist",
+    field: "waist",
+    required: true,
+    unit: "inches",
+    placeholder: '32"',
+    description: "Measure across waistband from end to end, then double",
+  },
+  {
+    label: "Length",
+    field: "length",
+    required: true,
+    unit: "inches",
+    placeholder: '10"',
+    description: "From waistband to bottom hem (inseam for trousers)",
+  },
+];
+
+/** Dresses: Chest + Waist + Length */
+const dressMeasurements: MeasurementConfig[] = [
+  {
+    label: "Chest",
+    field: "chest",
+    required: true,
+    unit: "inches",
+    placeholder: '20"',
+    description: "Measure across chest from armpit to armpit, then double",
+  },
+  {
+    label: "Waist",
+    field: "waist",
+    required: true,
+    unit: "inches",
+    placeholder: '28"',
+    description: "Measure across waist at narrowest point, then double",
+  },
+  {
+    label: "Length",
+    field: "length",
+    required: true,
+    unit: "inches",
+    placeholder: '36"',
+    description: "From shoulder seam to bottom hem",
+  },
+];
+
+/** Default fallback: chest only */
+const fallbackMeasurements: MeasurementConfig[] = [
+  {
+    label: "Chest",
+    field: "chest",
+    required: true,
+    unit: "inches",
+    placeholder: '22"',
+    description: "Measure across chest from armpit to armpit, then double",
+  },
+];
+
 /**
  * Dynamic measurement rules per category.
- * For thrift clothes, actual chest/waist/length measurements
- * are far more useful than letter sizes (which vary by country).
+ * Simplified: only Chest, Waist, Length — no shoulder, sleeve, rise, inseam, etc.
  */
 const categoryRules: Record<string, CategoryMeasurementRule> = {
-  // ── Topwear ────────────────────────────────────────────
+  // ── Topwear (upper body) ──────────────────────────────
   "T-Shirts": {
-    measurements: [
-      {
-        label: "Chest",
-        field: "chest",
-        unit: "inches",
-        placeholder: '22"',
-        description: "Measure across chest from armpit to armpit, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '28"',
-        description: "From shoulder seam to bottom hem",
-      },
-    ],
+    measurements: topwearMeasurements,
     showSizeTag: true,
     hint: "Chest is the key fit dimension for t-shirts",
   },
   Shirts: {
-    measurements: [
-      {
-        label: "Chest",
-        field: "chest",
-        unit: "inches",
-        placeholder: '22"',
-        description: "Measure across chest from armpit to armpit, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '30"',
-        description: "From collar seam to bottom hem",
-      },
-    ],
+    measurements: topwearMeasurements,
     showSizeTag: true,
-    hint: "Collar and sleeve length also matter for formal shirts",
+    hint: "Measure chest flat across the armpits, length from collar seam",
   },
   Hoodies: {
-    measurements: [
-      {
-        label: "Chest",
-        field: "chest",
-        unit: "inches",
-        placeholder: '24"',
-        description: "Measure across chest from armpit to armpit, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '27"',
-        description: "From shoulder seam to bottom hem",
-      },
-    ],
+    measurements: topwearMeasurements,
     showSizeTag: true,
     hint: "Hoodies are typically worn loose — size up for oversized fit",
   },
   Sweatshirts: {
-    measurements: [
-      {
-        label: "Chest",
-        field: "chest",
-        unit: "inches",
-        placeholder: '23"',
-        description: "Measure across chest from armpit to armpit, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '27"',
-        description: "From shoulder seam to bottom hem",
-      },
-    ],
+    measurements: topwearMeasurements,
     showSizeTag: true,
     hint: "Sweatshirts fit similarly to hoodies",
   },
   Jackets: {
-    measurements: [
-      {
-        label: "Chest",
-        field: "chest",
-        unit: "inches",
-        placeholder: '24"',
-        description: "Measure across chest from armpit to armpit, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '28"',
-        description: "From shoulder seam to bottom hem",
-      },
-    ],
+    measurements: topwearMeasurements,
     showSizeTag: true,
     hint: "Jackets should allow room for layering underneath",
   },
   Blazers: {
-    measurements: [
-      {
-        label: "Chest",
-        field: "chest",
-        unit: "inches",
-        placeholder: '22"',
-        description: "Measure across chest from armpit to armpit, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '30"',
-        description: "From shoulder seam to bottom hem",
-      },
-    ],
+    measurements: topwearMeasurements,
     showSizeTag: true,
     hint: "Blazers should fit snugly — not too loose",
   },
   Tops: {
-    measurements: [
-      {
-        label: "Chest",
-        field: "chest",
-        unit: "inches",
-        placeholder: '20"',
-        description: "Measure across chest from armpit to armpit, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '26"',
-        description: "From shoulder seam to bottom hem",
-      },
-    ],
+    measurements: topwearMeasurements,
     showSizeTag: true,
     hint: "Tops vary widely — provide accurate chest for best fit",
   },
 
-  // ── Bottomwear ─────────────────────────────────────────
+  // ── Bottomwear (lower body) ───────────────────────────
   Jeans: {
-    measurements: [
-      {
-        label: "Waist",
-        field: "waist",
-        unit: "inches",
-        placeholder: '32"',
-        description: "Measure across waistband from end to end, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '42"',
-        description: "From crotch seam to bottom hem (outseam)",
-      },
-      {
-        label: "Inseam",
-        field: "inseam",
-        unit: "inches",
-        placeholder: '30"',
-        description: "From inner crotch to bottom hem",
-      },
-    ],
+    measurements: bottomwearMeasurements,
     showSizeTag: true,
-    hint: "Waist & inseam are critical for jeans — include both if possible",
+    hint: "Waist is measured flat across the waistband, then doubled",
   },
   Cargo: {
-    measurements: [
-      {
-        label: "Waist",
-        field: "waist",
-        unit: "inches",
-        placeholder: '32"',
-        description: "Measure across waistband from end to end, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '42"',
-        description: "From waistband to bottom hem",
-      },
-      {
-        label: "Inseam",
-        field: "inseam",
-        unit: "inches",
-        placeholder: '30"',
-        description: "From inner crotch to bottom hem",
-      },
-    ],
+    measurements: bottomwearMeasurements,
     showSizeTag: true,
     hint: "Cargo pants are often worn slightly loose",
   },
   Trousers: {
-    measurements: [
-      {
-        label: "Waist",
-        field: "waist",
-        unit: "inches",
-        placeholder: '32"',
-        description: "Measure across waistband from end to end, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '42"',
-        description: "From waistband to bottom hem",
-      },
-      {
-        label: "Inseam",
-        field: "inseam",
-        unit: "inches",
-        placeholder: '30"',
-        description: "From inner crotch to bottom hem",
-      },
-    ],
+    measurements: bottomwearMeasurements,
     showSizeTag: true,
-    hint: "Trousers — waist and inseam matter most",
+    hint: "Waist and length (inseam) are most important for trousers",
   },
   Shorts: {
-    measurements: [
-      {
-        label: "Waist",
-        field: "waist",
-        unit: "inches",
-        placeholder: '32"',
-        description: "Measure across waistband from end to end, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '10"',
-        description: "From waistband to bottom hem",
-      },
-    ],
+    measurements: bottomwearMeasurements,
     showSizeTag: true,
     hint: "Shorts length varies by style (above knee, at knee, below)",
   },
   Skirts: {
-    measurements: [
-      {
-        label: "Waist",
-        field: "waist",
-        unit: "inches",
-        placeholder: '28"',
-        description: "Measure across waistband from end to end, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '24"',
-        description: "From waistband to bottom hem",
-      },
-    ],
+    measurements: bottomwearMeasurements,
     showSizeTag: false,
     hint: "Skirt length is a key preference — be precise",
   },
+
+  // ── Dresses ───────────────────────────────────────────
   Dresses: {
-    measurements: [
-      {
-        label: "Chest",
-        field: "chest",
-        unit: "inches",
-        placeholder: '20"',
-        description: "Measure across chest from armpit to armpit, then double",
-      },
-      {
-        label: "Waist",
-        field: "waist",
-        unit: "inches",
-        placeholder: '28"',
-        description: "Measure across waist at narrowest point, then double",
-      },
-      {
-        label: "Length",
-        field: "length",
-        unit: "inches",
-        placeholder: '36"',
-        description: "From shoulder seam to bottom hem",
-      },
-    ],
+    measurements: dressMeasurements,
     showSizeTag: true,
     hint: "Dresses need chest, waist AND length for proper fit",
   },
@@ -330,16 +190,7 @@ export function getCategoryMeasurements(
   const normalized = category.trim();
   return (
     categoryRules[normalized] ?? {
-      measurements: [
-        {
-          label: "Chest",
-          field: "chest",
-          unit: "inches",
-          placeholder: '22"',
-          description:
-            "Measure across chest from armpit to armpit, then double",
-        },
-      ],
+      measurements: fallbackMeasurements,
       showSizeTag: true,
       hint: "Enter measurements in inches for best fit",
     }

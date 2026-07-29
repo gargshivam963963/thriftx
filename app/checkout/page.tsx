@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 
 import { useAddresses } from "@/hooks/useAddresses";
 import { useAuth } from "@/lib/AuthContext";
+import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
 import { loadRazorpay } from "@/lib/loadRazorpay";
 import { clearCart } from "@/lib/services/cart";
 import {
@@ -177,6 +178,7 @@ function EmptyCheckout() {
 export default function CheckoutPage() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
+    const analytics = useAnalytics();
 
     const {
         addresses,
@@ -323,6 +325,21 @@ export default function CheckoutPage() {
 
             await clearCart();
             toast.success("Order placed! Pay on delivery.");
+
+            // Track purchase event for analytics
+            analytics.trackPurchase({
+                orderTotal: total,
+                subtotal,
+                shipping: shippingCost,
+                paymentMethod: "cod",
+                itemCount: cartItems.length,
+                city: selectedAddress.city,
+            });
+            analytics.trackCheckoutComplete({
+                orderTotal: total,
+                paymentMethod: "cod",
+            });
+
             router.push(
                 `/success?city=${encodeURIComponent(selectedAddress.city)}&pincode=${selectedAddress.pincode}&items=${cartItems.length}`,
             );
@@ -418,6 +435,22 @@ export default function CheckoutPage() {
 
                         await clearCart();
                         toast.success("Order placed successfully!");
+
+                        // Track purchase & checkout events for analytics
+                        analytics.trackPurchase({
+                            orderTotal: total,
+                            subtotal,
+                            shipping: shippingCost,
+                            paymentMethod: "razorpay",
+                            paymentId: paymentResponse.razorpay_payment_id,
+                            itemCount: cartItems.length,
+                            city: selectedAddress.city,
+                        });
+                        analytics.trackCheckoutComplete({
+                            orderTotal: total,
+                            paymentMethod: "razorpay",
+                        });
+
                         router.push(
                             `/success?city=${encodeURIComponent(selectedAddress.city)}&pincode=${selectedAddress.pincode}&items=${cartItems.length}`,
                         );
@@ -443,6 +476,19 @@ export default function CheckoutPage() {
             setPaymentLoading(false);
         }
     }
+
+    // Track checkout start when user arrives on checkout page
+    const checkoutTrackedRef = useRef(false);
+    useEffect(() => {
+        if (cartItems.length > 0 && !checkoutTrackedRef.current) {
+            checkoutTrackedRef.current = true;
+            analytics.trackCheckoutStart({
+                itemCount: cartItems.length,
+                subtotal,
+                total,
+            });
+        }
+    }, [cartItems.length, subtotal, total, analytics]);
 
     const handlePay = async (method: PaymentMethod) => {
         if (!user) {

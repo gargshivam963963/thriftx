@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
 import {
     LayoutGrid,
     List,
@@ -63,13 +64,10 @@ export default function ShopContent({
 }: ShopContentProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const { trackSearch } = useAnalytics();
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [searchParams]);
 
     const baseUrl = gender
         ? `/shop/${gender}${clothingCategory ? `/${clothingCategory}` : ""}`
@@ -96,6 +94,20 @@ export default function ShopContent({
                 p.description?.toLowerCase().includes(q)
         );
     }, [products, initialSearch]);
+
+    // Track search event when viewing search results (after filteredProducts is defined)
+    const searchTrackedRef = useRef(false);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (initialSearch && !searchTrackedRef.current) {
+            searchTrackedRef.current = true;
+            trackSearch(initialSearch, filteredProducts.length);
+        }
+    }, [initialSearch, filteredProducts.length, trackSearch]);
 
     const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -381,6 +393,7 @@ export default function ShopContent({
                                                 <ProductCardGrid
                                                     key={product.id}
                                                     id={product.id}
+                                                    slug={product.slug}
                                                     brand={product.brand}
                                                     title={product.title}
                                                     price={product.price}
@@ -405,6 +418,7 @@ export default function ShopContent({
                                                 <ProductCardList
                                                     key={product.id}
                                                     id={product.id}
+                                                    slug={product.slug}
                                                     brand={product.brand}
                                                     title={product.title}
                                                     price={product.price}

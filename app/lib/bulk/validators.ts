@@ -2,7 +2,43 @@ import { BulkProduct } from "./types";
 
 const VALID_GENDERS = ["Men", "Women", "Kids", "Unisex"];
 
-const VALID_CONDITIONS = ["New", "Like New", "Excellent", "Good", "Fair"];
+const VALID_CONDITIONS = [
+  "Brand New with Tags",
+  "Brand New without Tags",
+  "Like New",
+  "Excellent",
+  "Very Good",
+  "Good",
+  "Fair",
+];
+
+const VALID_CATEGORIES = [
+  "T-Shirts",
+  "Shirts",
+  "Hoodies",
+  "Sweatshirts",
+  "Jackets",
+  "Blazers",
+  "Tops",
+  "Jeans",
+  "Cargo",
+  "Trousers",
+  "Shorts",
+  "Skirts",
+  "Dresses",
+];
+
+const UPPER_CATEGORIES = [
+  "T-Shirts",
+  "Shirts",
+  "Hoodies",
+  "Sweatshirts",
+  "Jackets",
+  "Blazers",
+  "Tops",
+];
+
+const LOWER_CATEGORIES = ["Jeans", "Cargo", "Trousers", "Shorts", "Skirts"];
 
 export interface ValidationOptions {
   categories?: string[];
@@ -10,81 +46,104 @@ export interface ValidationOptions {
   maxImages?: number;
 }
 
+/**
+ * Validates a single product and returns error messages.
+ * Runs automatically whenever product fields change.
+ */
+export function validateProduct(
+  product: BulkProduct,
+  options: ValidationOptions = {},
+): string[] {
+  const errors: string[] = [];
+  const { maxImages = 10 } = options;
+
+  // ── Required fields ───────────────────────────────────
+  if (!product.sku?.trim()) errors.push("SKU is required.");
+  if (!product.title?.trim()) errors.push("Title is required.");
+  if (!product.brand?.trim()) errors.push("Brand is required.");
+
+  if (product.gender && !VALID_GENDERS.includes(product.gender)) {
+    errors.push("Invalid gender.");
+  }
+
+  if (product.condition && !VALID_CONDITIONS.includes(product.condition)) {
+    errors.push("Invalid condition.");
+  }
+
+  if (!product.category) {
+    errors.push("Category is required.");
+  } else if (!VALID_CATEGORIES.includes(product.category)) {
+    errors.push("Invalid category.");
+  }
+
+  if (product.price <= 0) errors.push("Price must be greater than 0.");
+
+  if (product.retailPrice && product.retailPrice < product.price) {
+    errors.push("Retail price must be greater than selling price.");
+  }
+
+  if (!product.size?.trim()) errors.push("Size is required.");
+
+  // ── Measurements by category ─────────────────────────
+  if (product.category) {
+    if (UPPER_CATEGORIES.includes(product.category)) {
+      if (!product.chest?.trim())
+        errors.push("Chest measurement is required for this category.");
+    }
+    if (LOWER_CATEGORIES.includes(product.category)) {
+      if (!product.waist?.trim())
+        errors.push("Waist measurement is required for this category.");
+    }
+  }
+
+  // ── Images ───────────────────────────────────────────
+  if (product.imageFiles.length === 0) {
+    errors.push("No images attached.");
+  } else if (product.imageFiles.length > maxImages) {
+    errors.push(`Maximum ${maxImages} images allowed.`);
+  }
+
+  return errors;
+}
+
+/**
+ * Validates all products and returns them with updated errors.
+ * Runs automatically — no manual Validate button needed.
+ */
 export function validateProducts(
   products: BulkProduct[],
   options: ValidationOptions = {},
 ): BulkProduct[] {
-  const { categories = [], brands = [], maxImages = 10 } = options;
-
   const skuMap = new Map<string, number>();
   const slugMap = new Map<string, number>();
 
-  return products
-    .map((product) => {
-      const errors = [...product.errors];
+  // First pass: count duplicates
+  for (const product of products) {
+    const sku = product.sku?.trim().toLowerCase() || "";
+    const slug = product.slug?.trim().toLowerCase() || "";
+    skuMap.set(sku, (skuMap.get(sku) ?? 0) + 1);
+    slugMap.set(slug, (slugMap.get(slug) ?? 0) + 1);
+  }
 
-      const sku = product.sku.trim().toLowerCase();
-      const slug = product.slug.trim().toLowerCase();
+  return products.map((product) => {
+    const errors = validateProduct(product, options);
 
-      skuMap.set(sku, (skuMap.get(sku) ?? 0) + 1);
-      slugMap.set(slug, (slugMap.get(slug) ?? 0) + 1);
+    // ── Duplicate checks ───────────────────────────────
+    const sku = product.sku?.trim().toLowerCase() || "";
+    const slug = product.slug?.trim().toLowerCase() || "";
 
-      if (!product.sku) errors.push("SKU is required.");
+    if (skuMap.get(sku)! > 1) {
+      errors.push("Duplicate SKU.");
+    }
 
-      if (!product.title) errors.push("Title is required.");
+    if (slug && slugMap.get(slug)! > 1) {
+      errors.push("Duplicate slug.");
+    }
 
-      if (!product.brand) errors.push("Brand is required.");
-
-      if (!VALID_GENDERS.includes(product.gender))
-        errors.push("Invalid gender.");
-
-      if (!VALID_CONDITIONS.includes(product.condition))
-        errors.push("Invalid condition.");
-
-      if (!product.category) errors.push("Category is required.");
-
-      if (categories.length && !categories.includes(product.category)) {
-        errors.push("Category not found.");
-      }
-
-      if (brands.length && !brands.includes(product.brand)) {
-        errors.push("Unknown brand.");
-      }
-
-      if (product.price <= 0) errors.push("Invalid selling price.");
-
-      if (product.retailPrice && product.retailPrice < product.price) {
-        errors.push("Retail price must be greater than selling price.");
-      }
-
-      if (!product.size) errors.push("Size is required.");
-
-      if (product.imageFiles.length === 0) errors.push("No images attached.");
-
-      if (product.imageFiles.length > maxImages) {
-        errors.push(`Maximum ${maxImages} images allowed.`);
-      }
-
-      return {
-        ...product,
-        errors,
-      };
-    })
-    .map((product) => {
-      const errors = [...product.errors];
-
-      if (skuMap.get(product.sku.toLowerCase())! > 1) {
-        errors.push("Duplicate SKU.");
-      }
-
-      if (slugMap.get(product.slug.toLowerCase())! > 1) {
-        errors.push("Duplicate slug.");
-      }
-
-      return {
-        ...product,
-        errors: [...new Set(errors)],
-        status: errors.length === 0 ? "Ready" : "Invalid",
-      };
-    });
+    return {
+      ...product,
+      errors: [...new Set(errors)],
+      status: errors.length === 0 ? "Ready" : "Invalid",
+    };
+  });
 }

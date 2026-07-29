@@ -484,7 +484,7 @@ export default function Header() {
                 THRIFTX
               </span>
               <span className="block text-[clamp(7px,0.6vw,9px)] font-bold uppercase tracking-[0.25em] text-neutral-400 leading-none">
-                Premium Thrift
+                Premium Branded Thrift Clothing
               </span>
             </div>
           </Link>

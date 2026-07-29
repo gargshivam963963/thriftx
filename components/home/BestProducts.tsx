@@ -65,6 +65,7 @@ export default function BestProducts({
 
                             <ProductCard
                                 id={product.id}
+                                slug={product.slug}
                                 brand={product.brand}
                                 title={product.title}
                                 price={product.price}

@@ -200,7 +200,6 @@ function processProductFolder(
     chest: "",
     waist: "",
     length: "",
-    inseam: "",
     color: "",
     material: "",
     description: "",

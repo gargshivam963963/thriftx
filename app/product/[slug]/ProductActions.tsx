@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/services/products';
 import { addToCart } from '@/lib/services/cart';
 import { Button } from '@/components/ui/button';
+import { useAnalytics } from '@/lib/analytics/AnalyticsContext';
 
 export default function ProductActions({
   product,
@@ -14,6 +15,7 @@ export default function ProductActions({
 }) {
   const [isTryOnOpen, setIsTryOnOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { trackAddToCart } = useAnalytics();
 
   const router = useRouter();
 
@@ -22,6 +24,15 @@ export default function ProductActions({
       setLoading(true);
 
       await addToCart(product.id, 1);
+
+      // Track add-to-cart event
+      trackAddToCart(product.id, {
+        title: product.title,
+        brand: product.brand || '',
+        category: product.category || '',
+        price: product.price,
+        slug: product.slug,
+      });
 
       router.push('/cart');
     } catch (error) {

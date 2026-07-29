@@ -390,22 +390,38 @@ export async function getAllProducts(): Promise<any[]> {
     return response.documents.map((doc: any) => ({
       $id: doc.$id,
       $createdAt: doc.$createdAt,
+
       title: doc.title || "",
       brand: doc.brand || "",
       slug: doc.slug || "",
+
       category: doc.category || "",
       gender: doc.gender || "Unisex",
+
       price: Number(doc.price) || 0,
       retailPrice: doc.retailPrice ? Number(doc.retailPrice) : undefined,
+
       condition: doc.condition || "",
+
       size: doc.size || "",
+
+      // ✅ ADD THESE
+      chest: doc.chest ?? "",
+      waist: doc.waist ?? "",
+      length: doc.length ?? "",
+      inseam: doc.inseam ?? "",
+
       color: doc.color || "",
       material: doc.material || "",
+
+      description: doc.description || "",
+      shippingInfo: doc.shippingInfo ?? "",
+
       primaryImage: doc.primaryImage || "",
       images: doc.images || [],
+
       status: doc.status || "active",
       isActive: doc.isActive !== false,
-      description: doc.description || "",
     }));
   } catch (error) {
     console.error("getAllProducts error:", error);

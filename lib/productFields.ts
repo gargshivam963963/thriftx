@@ -61,10 +61,15 @@ export const PRODUCT_FIELDS: ProductField[] = [
       "Shirts",
       "Hoodies",
       "Sweatshirts",
+      "Jackets",
+      "Blazers",
+      "Tops",
       "Jeans",
       "Cargo",
-      "Jackets",
+      "Trousers",
       "Shorts",
+      "Skirts",
+      "Dresses",
     ],
   },
 
@@ -105,7 +110,15 @@ export const PRODUCT_FIELDS: ProductField[] = [
     section: "pricing",
     ai: true,
     defaultValue: "Excellent",
-    options: ["Like New", "Excellent", "Very Good", "Good"],
+    options: [
+      "Brand New with Tags",
+      "Brand New without Tags",
+      "Like New",
+      "Excellent",
+      "Very Good",
+      "Good",
+      "Fair",
+    ],
   },
 
   // ----------------------------
@@ -160,15 +173,6 @@ export const PRODUCT_FIELDS: ProductField[] = [
     type: "text",
     section: "measurements",
     placeholder: '29"',
-    defaultValue: "",
-  },
-
-  {
-    name: "inseam",
-    label: "Inseam",
-    type: "text",
-    section: "measurements",
-    placeholder: '30"',
     defaultValue: "",
   },
 

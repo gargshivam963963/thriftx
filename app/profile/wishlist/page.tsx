@@ -118,7 +118,7 @@ function WishlistCard({
             className="group overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-lg"
         >
             {/* Image */}
-            <Link href={`/product/${item.productId}`}>
+            <Link href={`/product/${item.slug}`}>
                 <div className="relative aspect-[4/5] overflow-hidden bg-zinc-100 sm:aspect-square">
                     <img
                         src={item.primaryImage}
@@ -134,7 +134,7 @@ function WishlistCard({
 
                     {/* Quick actions overlay */}
                     <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/0 opacity-0 transition-all group-hover:bg-black/20 group-hover:opacity-100">
-                        <Link href={`/product/${item.productId}`}>
+                        <Link href={`/product/${item.slug}`}>
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg transition hover:scale-110">
                                 <Eye size={18} className="text-zinc-900" />
                             </div>
@@ -159,7 +159,7 @@ function WishlistCard({
                     {item.brand || item.category}
                 </p>
 
-                <Link href={`/product/${item.productId}`}>
+                <Link href={`/product/${item.slug}`}>
                     <h3 className="mt-1 line-clamp-1 font-serif text-base font-bold text-zinc-900 transition hover:text-zinc-600 sm:text-lg">
                         {item.title}
                     </h3>

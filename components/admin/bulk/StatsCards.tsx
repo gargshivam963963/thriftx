@@ -1,4 +1,9 @@
-import { Package, CircleCheck, TriangleAlert, Images } from "lucide-react";
+import { Package, CheckCircle2, AlertTriangle, ImageIcon } from "lucide-react";
+
+import {
+    Card,
+    CardContent,
+} from "@/components/ui/card";
 
 interface StatsCardsProps {
     totalProducts: number;
@@ -9,45 +14,56 @@ interface StatsCardsProps {
 }
 
 const items = [
-    { key: "products", label: "Products", icon: Package, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-900/30" },
-    { key: "ready", label: "Ready", icon: CircleCheck, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
-    { key: "issues", label: "Issues", icon: TriangleAlert, color: "text-red-600 dark:text-red-400", bg: "bg-red-100 dark:bg-red-900/30" },
-    { key: "images", label: "Images", icon: Images, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-900/30" },
+    {
+        key: "products",
+        label: "Products",
+        icon: Package,
+        value: (s: StatsCardsProps) => s.totalProducts,
+        accent: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    },
+    {
+        key: "ready",
+        label: "Ready",
+        icon: CheckCircle2,
+        value: (s: StatsCardsProps) => s.readyProducts,
+        accent: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    },
+    {
+        key: "issues",
+        label: "Issues",
+        icon: AlertTriangle,
+        value: (s: StatsCardsProps) => s.issues,
+        accent: "bg-red-500/10 text-red-600 dark:text-red-400",
+    },
+    {
+        key: "images",
+        label: "Images",
+        icon: ImageIcon,
+        value: (s: StatsCardsProps) => s.totalImages,
+        accent: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+    },
 ];
 
-export default function StatsCards({
-    totalProducts,
-    readyProducts,
-    issues,
-    totalImages,
-}: StatsCardsProps) {
-    const values: Record<string, number> = {
-        products: totalProducts,
-        ready: readyProducts,
-        issues,
-        images: totalImages,
-    };
-
+export default function StatsCards(props: StatsCardsProps) {
     return (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {items.map((item) => {
                 const Icon = item.icon;
+                const val = item.value(props);
                 return (
-                    <div
-                        key={item.key}
-                        className="flex items-center gap-3 rounded-xl border border-neutral-200/70 bg-white px-4 py-3 dark:border-neutral-700/50 dark:bg-neutral-900"
-                    >
-                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${item.bg}`}>
-                            <Icon size={18} className={item.color} />
-                        </div>
-                        <div className="min-w-0">
-                            <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{item.label}</p>
-                            <p className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">{values[item.key]}</p>
-                        </div>
-                    </div>
+                    <Card key={item.key} className="shadow-sm">
+                        <CardContent className="flex items-center gap-3 p-4">
+                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${item.accent}`}>
+                                <Icon size={18} />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
+                                <p className="text-xl font-bold tracking-tight text-foreground">{val}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
                 );
             })}
         </div>
     );
 }
-

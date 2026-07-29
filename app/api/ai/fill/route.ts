@@ -4,7 +4,6 @@ import { buildPrompt } from "@/lib/ai/prompt";
 import { parseAIResponse } from "@/lib/ai/parser";
 
 // Models to try in order of preference (v1beta-compatible)
-// gemini-1.5-flash and gemini-1.5-pro are NOT available on v1beta — only use v1-compatible models
 const MODELS = [
   "gemini-2.0-flash",
   "gemini-2.5-flash-lite",
@@ -18,9 +17,7 @@ const MODELS = [
  */
 async function generateWithFallback(
   prompt: string,
-  parts:
-    | { text: string }
-    | { inlineData: { mimeType: string; data: string } }[],
+  parts: { inlineData: { mimeType: string; data: string } }[],
 ): Promise<string> {
   let lastError: Error | null = null;
 
@@ -33,31 +30,145 @@ async function generateWithFallback(
           responseSchema: {
             type: "object",
             properties: {
-              title: { type: "string" },
-              brand: { type: "string" },
-              category: { type: "string" },
-              size: { type: "string" },
-              condition: { type: "string" },
-              color: { type: "string" },
-              material: { type: "string" },
-              description: { type: "string" },
+              brand: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              productType: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              gender: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              category: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              color: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              material: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              condition: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              size: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              seoTitle: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              seoDescription: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              chest: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              waist: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
+              length: {
+                type: "object",
+                properties: {
+                  value: { type: "string", nullable: true },
+                  confidence: { type: "number" },
+                  needsReview: { type: "boolean" },
+                },
+                required: ["value", "confidence", "needsReview"],
+              },
             },
             required: [
-              "title",
               "brand",
+              "productType",
+              "gender",
               "category",
-              "size",
-              "condition",
               "color",
               "material",
-              "description",
+              "condition",
+              "size",
+              "seoTitle",
+              "seoDescription",
+              "chest",
+              "waist",
+              "length",
             ],
           },
         },
         contents: [
           {
             role: "user",
-            parts: [{ text: prompt }, ...(Array.isArray(parts) ? parts : [])],
+            parts: [{ text: prompt }, ...parts],
           },
         ],
       });
@@ -83,12 +194,10 @@ async function generateWithFallback(
         console.warn(
           `Model ${model} unavailable (${msg.split(".")[0]}), trying next...`,
         );
-        // Wait briefly before trying next model
         await new Promise((r) => setTimeout(r, 1000));
         continue;
       }
 
-      // For other errors (auth, invalid request, etc.), throw immediately
       throw lastError;
     }
   }
@@ -100,28 +209,18 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const {
-      images,
-      selectedFields,
-    }: {
-      images: string[];
-      selectedFields: string[];
-    } = body;
+    const { images }: { images: string[] } = body;
 
     if (!images?.length) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "No images provided.",
-        },
-        {
-          status: 400,
-        },
+        { success: false, message: "No images provided." },
+        { status: 400 },
       );
     }
 
-    const prompt = buildPrompt(selectedFields);
+    const prompt = buildPrompt();
 
+    // Send ALL images together as ONE product
     const imageParts = images.map((image) => ({
       inlineData: {
         mimeType: "image/jpeg",
@@ -129,13 +228,13 @@ export async function POST(req: NextRequest) {
       },
     }));
 
-    const text = await generateWithFallback(prompt, imageParts as never);
+    const text = await generateWithFallback(prompt, imageParts);
 
-    const json = parseAIResponse(text);
+    const parsed = parseAIResponse(text);
 
     return NextResponse.json({
       success: true,
-      data: json,
+      data: parsed,
     });
   } catch (error) {
     console.error("AI ERROR:", error);
@@ -143,7 +242,6 @@ export async function POST(req: NextRequest) {
     const msg =
       error instanceof Error ? error.message : "AI generation failed.";
 
-    // Check if it's a quota error
     const isQuotaError =
       msg.toLowerCase().includes("quota") ||
       msg.toLowerCase().includes("resource_exhausted") ||
@@ -158,9 +256,7 @@ export async function POST(req: NextRequest) {
           : msg,
         isQuotaError,
       },
-      {
-        status: isQuotaError ? 429 : 500,
-      },
+      { status: isQuotaError ? 429 : 500 },
     );
   }
 }

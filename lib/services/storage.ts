@@ -29,3 +29,31 @@ export async function uploadImages(images: File[]): Promise<UploadedImage[]> {
 
   return uploaded;
 }
+
+/**
+ * Parses a fileId from an Appwrite image URL.
+ * Appwrite view URLs contain the file ID after the bucket ID.
+ * e.g. https://cloud.appwrite.io/v1/storage/buckets/{bucketId}/files/{fileId}/view
+ */
+export function extractFileIdFromUrl(url: string): string | null {
+  try {
+    const match = url.match(/\/files\/([^/]+)\/view/);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteImageFromStorage(
+  imageUrl: string,
+): Promise<boolean> {
+  try {
+    const fileId = extractFileIdFromUrl(imageUrl);
+    if (!fileId) return false;
+    await storage.deleteFile(bucketId, fileId);
+    return true;
+  } catch (error) {
+    console.error("deleteImageFromStorage error:", error);
+    return false;
+  }
+}

@@ -112,11 +112,20 @@ const FALLBACK_CATEGORIES: Category[] = [
     active: true,
   },
   {
+    id: "cat-men-lower",
+    slug: "lower",
+    name: "Lower",
+    gender: "Men",
+    order: 9,
+    active: true,
+  },
+
+  {
     id: "cat-women-dresses",
     slug: "dresses",
     name: "Dresses",
     gender: "Women",
-    order: 9,
+    order: 10,
     active: true,
   },
   {
@@ -124,7 +133,7 @@ const FALLBACK_CATEGORIES: Category[] = [
     slug: "tops",
     name: "Tops",
     gender: "Women",
-    order: 10,
+    order: 11,
     active: true,
   },
   {
@@ -132,7 +141,7 @@ const FALLBACK_CATEGORIES: Category[] = [
     slug: "jeans",
     name: "Jeans",
     gender: "Women",
-    order: 11,
+    order: 12,
     active: true,
   },
   {
@@ -140,7 +149,7 @@ const FALLBACK_CATEGORIES: Category[] = [
     slug: "skirts",
     name: "Skirts",
     gender: "Women",
-    order: 12,
+    order: 13,
     active: true,
   },
   {
@@ -148,7 +157,7 @@ const FALLBACK_CATEGORIES: Category[] = [
     slug: "hoodies",
     name: "Hoodies",
     gender: "Women",
-    order: 13,
+    order: 14,
     active: true,
   },
   {
@@ -156,15 +165,24 @@ const FALLBACK_CATEGORIES: Category[] = [
     slug: "jackets",
     name: "Jackets",
     gender: "Women",
-    order: 14,
+    order: 15,
     active: true,
   },
+  {
+    id: "cat-women-lower",
+    slug: "lower",
+    name: "Lower",
+    gender: "Women",
+    order: 16,
+    active: true,
+  },
+
   {
     id: "cat-kids-tshirts",
     slug: "t-shirts",
     name: "T-Shirts",
     gender: "Kids",
-    order: 15,
+    order: 17,
     active: true,
   },
   {
@@ -172,7 +190,7 @@ const FALLBACK_CATEGORIES: Category[] = [
     slug: "shorts",
     name: "Shorts",
     gender: "Kids",
-    order: 16,
+    order: 18,
     active: true,
   },
   {
@@ -180,7 +198,7 @@ const FALLBACK_CATEGORIES: Category[] = [
     slug: "jeans",
     name: "Jeans",
     gender: "Kids",
-    order: 17,
+    order: 19,
     active: true,
   },
   {
@@ -188,15 +206,24 @@ const FALLBACK_CATEGORIES: Category[] = [
     slug: "hoodies",
     name: "Hoodies",
     gender: "Kids",
-    order: 18,
+    order: 20,
     active: true,
   },
+  {
+    id: "cat-kids-lower",
+    slug: "lower",
+    name: "Lower",
+    gender: "Kids",
+    order: 21,
+    active: true,
+  },
+
   {
     id: "cat-unisex-hoodies",
     slug: "hoodies",
     name: "Hoodies",
     gender: "Unisex",
-    order: 19,
+    order: 22,
     active: true,
   },
   {
@@ -204,7 +231,7 @@ const FALLBACK_CATEGORIES: Category[] = [
     slug: "jackets",
     name: "Jackets",
     gender: "Unisex",
-    order: 20,
+    order: 23,
     active: true,
   },
   {
@@ -212,7 +239,15 @@ const FALLBACK_CATEGORIES: Category[] = [
     slug: "sweatshirts",
     name: "Sweatshirts",
     gender: "Unisex",
-    order: 21,
+    order: 24,
+    active: true,
+  },
+  {
+    id: "cat-unisex-lower",
+    slug: "lower",
+    name: "Lower",
+    gender: "Unisex",
+    order: 25,
     active: true,
   },
 ];
@@ -246,13 +281,25 @@ export async function getCategories(): Promise<Category[]> {
     [AppwriteQuery.equal("active", true), AppwriteQuery.orderAsc("order")],
   );
 
-  return response.documents.map((doc: any) => ({
+  const dbCategories: Category[] = response.documents.map((doc: any) => ({
     id: doc.$id,
     slug: doc.slug,
     name: doc.name,
-    gender: doc.gender,
+    gender: doc.gender as Category["gender"],
     order: doc.order,
     active: doc.active,
     image: doc.image ?? "",
   }));
+
+  // Merge in any missing fallback categories (e.g. "Lower" for Men if not in DB yet)
+  const dbKeys = new Set(dbCategories.map((c) => `${c.gender}-${c.slug}`));
+  const merged: Category[] = [...dbCategories];
+  for (const fb of FALLBACK_CATEGORIES) {
+    const key = `${fb.gender}-${fb.slug}`;
+    if (!dbKeys.has(key)) {
+      merged.push(fb);
+    }
+  }
+
+  return merged.sort((a, b) => a.order - b.order);
 }

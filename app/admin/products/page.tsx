@@ -30,6 +30,13 @@ import { showToast } from "@/components/admin/bulk/Toast";
 import ToastContainer from "@/components/admin/bulk/Toast";
 import ProductFormModal, { type ProductFormData } from "@/components/admin/products/ProductFormModal";
 import ConfirmDialog from "@/components/admin/products/ConfirmDialog";
+
+const slugify = (value: string) =>
+    value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
 import ProductSkeleton from "@/components/admin/products/ProductSkeleton";
 
 interface AdminProduct {
@@ -243,6 +250,8 @@ export default function AdminProductsPage() {
                 brand: data.brand,
                 gender: data.gender,
                 category: data.category,
+                slug: slugify(data.title),
+                categorySlug: slugify(data.category),
                 size: data.size,
                 price: Number(data.price),
                 retailPrice: data.retailPrice ? Number(data.retailPrice) : undefined,

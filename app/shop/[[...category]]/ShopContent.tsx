@@ -8,15 +8,28 @@ import {
     LayoutGrid,
     List,
     ChevronDown,
-    ChevronRight,
     RotateCcw,
     AlertCircle,
     Home,
+    Tags,
+    Building2,
+    Ruler,
+    Banknote,
+    Star,
+    SlidersHorizontal,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import type { Product } from "@/lib/services/products";
 import { Button } from "@/components/ui/button";
+import {
+    Breadcrumb,
+    BreadcrumbList,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbSeparator,
+    BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 import ProductCardGrid from "@/components/shop/ProductCardGrid";
 import ProductCardList from "@/components/shop/ProductCardList";
 import ProductCardSkeleton from "@/components/shop/ProductCardSkeleton";
@@ -45,6 +58,63 @@ interface ShopContentProps {
 }
 
 const ITEMS_PER_PAGE = 12;
+
+// ─── Accordion Section ──────────────────────────────────────────────────────────
+
+function SidebarAccordion({
+    icon,
+    title,
+    defaultOpen = false,
+    children,
+}: {
+    icon: React.ReactNode;
+    title: string;
+    defaultOpen?: boolean;
+    children: React.ReactNode;
+}) {
+    const [open, setOpen] = useState(defaultOpen);
+
+    return (
+        <div className="border-b border-neutral-200 pb-5 last:border-none">
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
+            >
+                <span className="flex items-center gap-2">
+                    <span className="text-neutral-500">
+                        {icon}
+                    </span>
+                    {title}
+                </span>
+                <motion.span
+                    animate={{ rotate: open ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <ChevronDown size={14} className="text-neutral-400" />
+                </motion.span>
+            </button>
+            <AnimatePresence initial={false}>
+                {open && (
+                    <motion.div
+                        key="content"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                    >
+                        <div className="px-4 pb-4 pt-1">
+                            {children}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
 
 export default function ShopContent({
     products,
@@ -84,18 +154,51 @@ export default function ShopContent({
         initialSearch,
     ].filter((v) => v !== null && v !== undefined).length;
 
-    const filteredProducts = useMemo(() => {
-        if (!initialSearch) return products;
-        const q = initialSearch.toLowerCase().trim();
-        return products.filter(
-            (p) =>
-                p.title?.toLowerCase().includes(q) ||
-                p.brand?.toLowerCase().includes(q) ||
-                p.description?.toLowerCase().includes(q)
-        );
-    }, [products, initialSearch]);
+    /**
+     * Parse measurement query param: "chest-24", "waist-30", "length-28", "inseam-28"
+     * Returns { type, value } or null
+     */
+    const parsedMeasurement = useMemo(() => {
+        if (!initialMeasurement) return null;
+        const match = initialMeasurement.match(/^(chest|waist|length|inseam)-(\d+)(?:-plus)?$/);
+        if (!match) return null;
+        return { type: match[1] as "chest" | "waist" | "length" | "inseam", value: parseInt(match[2], 10) };
+    }, [initialMeasurement]);
 
-    // Track search event when viewing search results (after filteredProducts is defined)
+    const filteredProducts = useMemo(() => {
+        let results = products;
+
+        // Search filter
+        if (initialSearch) {
+            const q = initialSearch.toLowerCase().trim();
+            results = results.filter(
+                (p) =>
+                    p.title?.toLowerCase().includes(q) ||
+                    p.brand?.toLowerCase().includes(q) ||
+                    p.description?.toLowerCase().includes(q)
+            );
+        }
+
+        // Measurement filter
+        if (parsedMeasurement) {
+            const { type, value } = parsedMeasurement;
+            results = results.filter((p) => {
+                const fieldValue = p[type];
+                if (!fieldValue) return false;
+                const numVal = parseInt(fieldValue.toString().replace(/[^\d]/g, ""), 10);
+                if (isNaN(numVal)) return false;
+                // "plus" means >= value, otherwise exact match within range
+                if (initialMeasurement?.endsWith("-plus")) {
+                    return numVal >= value;
+                }
+                // Range match: within ±2 inches of the selected value
+                return Math.abs(numVal - value) <= 2;
+            });
+        }
+
+        return results;
+    }, [products, initialSearch, parsedMeasurement, initialMeasurement]);
+
     const searchTrackedRef = useRef(false);
 
     useEffect(() => {
@@ -126,119 +229,151 @@ export default function ShopContent({
 
     const itemsLoaded = currentPage * ITEMS_PER_PAGE;
 
-    const SectionTitle = ({ label }: { label: string }) => (
-        <h3 className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-neutral-400 dark:text-neutral-500">
-            {label}
-        </h3>
-    );
-
     // Build breadcrumb trail
-    const breadcrumbs: { label: string; href: string }[] = [
-        { label: "Home", href: "/" },
-        { label: "Shop", href: "/shop" },
+    const breadcrumbs: { label: string; href: string; isLast: boolean }[] = [
+        { label: "Home", href: "/", isLast: false },
+        { label: "Shop", href: "/shop", isLast: false },
     ];
     if (gender) {
         const genderName = genders.find((g) => g.slug === gender)?.name || gender.charAt(0).toUpperCase() + gender.slice(1);
-        breadcrumbs.push({ label: genderName, href: `/shop/${gender}` });
+        breadcrumbs.push({ label: genderName, href: `/shop/${gender}`, isLast: !clothingCategory });
     }
     if (clothingCategory) {
-        breadcrumbs.push({ label: categoryTitle, href: `/shop/${gender}/${clothingCategory}` });
+        breadcrumbs.push({ label: categoryTitle, href: `/shop/${gender}/${clothingCategory}`, isLast: true });
     }
 
     return (
-        <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-
+        <div className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8 2xl:px-10">
             {/* ── Breadcrumbs ──────────────────────────────── */}
-            <nav aria-label="Breadcrumb" className="mb-6">
-                <ol className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    {breadcrumbs.map((crumb, i) => (
-                        <li key={crumb.href} className="flex items-center gap-1.5">
-                            {i > 0 && <ChevronRight size={10} className="text-neutral-300 dark:text-neutral-600" />}
-                            {i === breadcrumbs.length - 1 ? (
-                                <span className="text-neutral-900 dark:text-neutral-100 font-semibold">{crumb.label}</span>
-                            ) : (
-                                <Link
-                                    href={crumb.href}
-                                    className="transition-colors hover:text-neutral-900 dark:hover:text-neutral-100 flex items-center gap-1"
-                                >
-                                    {i === 0 && <Home size={10} />}
-                                    {crumb.label}
-                                </Link>
-                            )}
-                        </li>
-                    ))}
-                </ol>
-            </nav>
+            {/* <div className="px-4 sm:px-6 lg:px-8 mb-6">
+                <Breadcrumb>
+                    <BreadcrumbList>
+                        {breadcrumbs.map((crumb, i) => (
+                            <BreadcrumbItem key={crumb.href}>
+                                {i > 0 && <BreadcrumbSeparator />}
+                                {crumb.isLast ? (
+                                    <BreadcrumbPage className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                                        {crumb.label}
+                                    </BreadcrumbPage>
+                                ) : (
+                                    <BreadcrumbLink
+                                        href={crumb.href}
+                                        className="text-xs text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 flex items-center gap-1"
+                                    >
+                                        {i === 0 && <Home size={10} />}
+                                        {crumb.label}
+                                    </BreadcrumbLink>
+                                )}
+                            </BreadcrumbItem>
+                        ))}
+                    </BreadcrumbList>
+                </Breadcrumb>
+            </div> */}
 
-            <div className="flex flex-col gap-8 lg:flex-row">
+            <div className="flex flex-col gap-10 lg:flex-row lg:gap-14">
                 {/* ── SIDEBAR (Desktop) ─────────────────────────────── */}
-                <aside className="hidden lg:sticky lg:top-24 lg:flex lg:w-[240px] lg:shrink-0 lg:self-start lg:flex-col lg:gap-5">
-                    <div className="rounded-2xl border border-neutral-200/80 bg-white/95 p-5 shadow-lg shadow-neutral-200/30 backdrop-blur-xl dark:border-neutral-700/60 dark:bg-neutral-900/95 dark:shadow-neutral-950/30 max-h-[calc(100vh-10rem)] overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-neutral-300 [&::-webkit-scrollbar-thumb]:hover:bg-neutral-400 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-600 dark:[&::-webkit-scrollbar-thumb]:hover:bg-neutral-500">
-                        <div className="mb-5 flex items-center justify-between">
-                            <h2 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                                <span className="inline-flex items-center gap-2">
-                                    <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-neutral-900 text-[10px] font-bold text-white dark:bg-neutral-100 dark:text-neutral-900">≡</span>
-                                    Filters
-                                </span>
+                <aside className="hidden lg:sticky lg:top-24 lg:flex g:w-[260px] xl:w-[280px] lg:shrink-0 lg:self-start lg:flex-col lg:gap-5">
+                    <div className="space-y-5">
+                        <div className="mb-4 flex items-center justify-between">
+
+                            <h2 className="text-3xl font-bold">
+                                Filters
                             </h2>
+
                             {hasActiveFilters && (
                                 <Link href={baseUrl} className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 transition hover:text-neutral-900 dark:hover:text-neutral-200">
                                     <RotateCcw size={11} /> Reset
                                 </Link>
                             )}
                         </div>
-                        <div className="space-y-5">
-                            <div>
-                                <SectionTitle label="Category" />
-                                <div className="flex flex-col gap-1">
-                                    <Link href="/shop" className={`group flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all ${!gender ? "bg-neutral-900 text-white shadow-sm dark:bg-neutral-100 dark:text-neutral-900" : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"}`}>
-                                        <span className={`flex h-5 w-5 items-center justify-center rounded-md text-[10px] font-bold transition-all ${!gender ? "bg-white/20 text-white dark:bg-neutral-900/20 dark:text-neutral-900" : "bg-neutral-200 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"}`}>★</span>
+
+                        <div className="space-y-3">
+                            {/* Category — default open */}
+                            <SidebarAccordion
+                                icon={<Tags size={13} className="text-neutral-500" />}
+                                title="Category"
+                                defaultOpen={true}
+                            >
+                                <div className="flex flex-col gap-0.5">
+                                    <Link
+                                        href="/shop"
+                                        className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all ${!gender ? "bg-neutral-900 text-white shadow-sm dark:bg-neutral-100 dark:text-neutral-900" : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"}`}
+                                    >
+                                        <span className={`flex h-5 w-5 items-center justify-center rounded-md text-[10px] font-bold ${!gender ? "bg-white/20 text-white dark:bg-neutral-900/20 dark:text-neutral-900" : "bg-neutral-200 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"}`}>
+                                            <Star size={9} />
+                                        </span>
                                         All Items
                                     </Link>
                                     {genders.map((g) => (
                                         <div key={g.id}>
-                                            <Link href={`/shop/${g.slug}`} className={`group flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all ${gender === g.slug && !clothingCategory ? "bg-neutral-900 text-white shadow-sm dark:bg-neutral-100 dark:text-neutral-900" : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"}`}>
-                                                <span className={`flex h-5 w-5 items-center justify-center rounded-md text-[10px] font-bold transition-all ${gender === g.slug && !clothingCategory ? "bg-white/20 text-white dark:bg-neutral-900/20 dark:text-neutral-900" : "bg-neutral-200 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"}`}>{g.name.charAt(0)}</span>
+                                            <Link
+                                                href={`/shop/${g.slug}`}
+                                                className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all ${gender === g.slug && !clothingCategory ? "bg-neutral-900 text-white shadow-sm dark:bg-neutral-100 dark:text-neutral-900" : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"}`}
+                                            >
+                                                <span className={`flex h-5 w-5 items-center justify-center rounded-md text-[10px] font-bold ${gender === g.slug && !clothingCategory ? "bg-white/20 text-white dark:bg-neutral-900/20 dark:text-neutral-900" : "bg-neutral-200 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"}`}>
+                                                    {g.name.charAt(0)}
+                                                </span>
                                                 {g.name}
                                             </Link>
                                             {gender === g.slug && (
-                                                <div className="ml-3 mt-1 flex flex-col gap-0.5 border-l border-neutral-200 pl-3 dark:border-neutral-700">
-                                                    {categories.filter((c) => c.gender.toLowerCase() === g.name.toLowerCase()).map((c) => (
-                                                        <Link key={c.id} href={`/shop/${g.slug}/${c.slug}`} className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${clothingCategory === c.slug ? "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100" : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"}`}>{c.name}</Link>
-                                                    ))}
+                                                <div className="ml-3 mt-0.5 flex flex-col gap-0.5 border-l border-neutral-200 pl-3 dark:border-neutral-700">
+                                                    {categories
+                                                        .filter((c) => c.gender.toLowerCase() === g.name.toLowerCase())
+                                                        .map((c) => (
+                                                            <Link
+                                                                key={c.id}
+                                                                href={`/shop/${g.slug}/${c.slug}`}
+                                                                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${clothingCategory === c.slug ? "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100" : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"}`}
+                                                            >
+                                                                {c.name}
+                                                            </Link>
+                                                        ))}
                                                 </div>
                                             )}
                                         </div>
                                     ))}
                                 </div>
-                                <div className="my-5 h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent dark:via-neutral-700" />
-                                <div><SectionTitle label="Brand" /><BrandFilter brands={brands} /></div>
-                                <div className="my-5 h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent dark:via-neutral-700" />
-                                <div><SectionTitle label="Size" /><SizeFilter /></div>
-                                <div className="my-5 h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent dark:via-neutral-700" />
-                                <div><SectionTitle label="Price" /><PriceFilter /></div>
-                                <div className="my-5 h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent dark:via-neutral-700" />
-                                <div><SectionTitle label="Measurements" /><MeasurementFilter /></div>
-                            </div>
-                            {hasActiveFilters && (
-                                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-50/50 p-4 ring-1 ring-emerald-200/60 dark:from-emerald-900/20 dark:to-emerald-900/10 dark:ring-emerald-800/40">
-                                    <div className="flex items-center justify-between">
-                                        <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[9px] font-bold text-white dark:bg-emerald-500 dark:text-neutral-900">{activeFilterCount}</span>
-                                            Active
-                                        </span>
-                                        <Link href={baseUrl} className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 underline-offset-2 transition hover:text-emerald-700 hover:underline dark:text-emerald-400">Clear all</Link>
-                                    </div>
-                                </motion.div>
-                            )}
+                            </SidebarAccordion>
+
+                            {/* Brand */}
+                            <SidebarAccordion
+                                icon={<Building2 size={13} className="text-neutral-500" />}
+                                title="Brand"
+                            >
+                                <BrandFilter brands={brands} />
+                            </SidebarAccordion>
+
+                            {/* Size */}
+                            <SidebarAccordion
+                                icon={<Ruler size={13} className="text-neutral-500" />}
+                                title="Size"
+                            >
+                                <SizeFilter />
+                            </SidebarAccordion>
+
+                            {/* Price */}
+                            <SidebarAccordion
+                                icon={<Banknote size={13} className="text-neutral-500" />}
+                                title="Price"
+                            >
+                                <PriceFilter />
+                            </SidebarAccordion>
+
+                            {/* Measurements */}
+                            <SidebarAccordion
+                                icon={<Ruler size={13} className="text-neutral-500" />}
+                                title="Measurements"
+                            >
+                                <MeasurementFilter />
+                            </SidebarAccordion>
                         </div>
                     </div>
                 </aside>
 
                 {/* ── MAIN CONTENT ─────────────────────────────── */}
-                <div className="flex-1">
+                <div className="min-w-0 flex-1 pl-2 xl:pl-4">
                     {/* Toolbar */}
-                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                    <div className="mb-10 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             {/* Mobile Filter Drawer */}
                             <div className="lg:hidden">
@@ -327,7 +462,14 @@ export default function ShopContent({
                                             ).toString()}`}
                                             className="flex items-center gap-1 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-neutral-600 transition hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
                                         >
-                                            {initialMeasurement} <span className="ml-0.5 text-neutral-400">×</span>
+                                            {initialMeasurement
+                                                .replace(/^chest-/i, "Chest ")
+                                                .replace(/^waist-/i, "Waist ")
+                                                .replace(/^length-/i, "Length ")
+                                                .replace(/^inseam-/i, "Inseam ")
+                                                .replace(/-plus/g, "+")
+                                                .replace(/-/g, "–")}
+                                            <span className="ml-0.5 text-neutral-400">×</span>
                                         </Link>
                                     )}
                                 </div>
@@ -335,9 +477,11 @@ export default function ShopContent({
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500">
-                                {filteredProducts.length} {filteredProducts.length === 1 ? "item" : "items"}
-                            </span>
+                            <div className="flex-1 text-center">
+                                <p className="text-sm font-medium text-neutral-500">
+                                    Showing {filteredProducts.length} Products
+                                </p>
+                            </div>
                             <SortDropdown defaultValue={initialSort} />
                         </div>
                     </div>
@@ -371,8 +515,8 @@ export default function ShopContent({
                                 <div
                                     className={
                                         viewMode === "grid"
-                                            ? "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4"
-                                            : "flex flex-col gap-4"
+                                            ? "grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4"
+                                            : "flex flex-col gap-5"
                                     }
                                 >
                                     {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
@@ -387,7 +531,7 @@ export default function ShopContent({
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             exit={{ opacity: 0 }}
-                                            className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4"
+                                            className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4"
                                         >
                                             {pageProducts.map((product) => (
                                                 <ProductCardGrid
@@ -402,6 +546,7 @@ export default function ShopContent({
                                                     category={product.category}
                                                     chest={product.chest}
                                                     waist={product.waist}
+                                                    length={product.length}
                                                     onlyOneLeft={false}
                                                 />
                                             ))}
@@ -412,7 +557,7 @@ export default function ShopContent({
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             exit={{ opacity: 0 }}
-                                            className="flex flex-col gap-4"
+                                            className="flex flex-col gap-5"
                                         >
                                             {pageProducts.map((product) => (
                                                 <ProductCardList
@@ -427,6 +572,7 @@ export default function ShopContent({
                                                     category={product.category}
                                                     chest={product.chest}
                                                     waist={product.waist}
+                                                    length={product.length}
                                                     material={product.material}
                                                     description={product.description}
                                                     onlyOneLeft={false}

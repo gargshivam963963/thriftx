@@ -70,6 +70,7 @@ export const PRODUCT_FIELDS: ProductField[] = [
       "Shorts",
       "Skirts",
       "Dresses",
+      "Lower",
     ],
   },
 

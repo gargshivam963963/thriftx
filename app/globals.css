@@ -620,3 +620,61 @@ body {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+
+/* ─── CUSTOM RANGE SLIDER ────────────────────────────────────────────────── */
+
+.range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-border);
+  outline: none;
+  transition: background 0.2s ease;
+}
+
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+  border: 2px solid var(--color-bg-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.range-slider::-webkit-slider-thumb:active {
+  transform: scale(1.05);
+}
+
+.range-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+  border: 2px solid var(--color-bg-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.dark .range-slider {
+  background: var(--color-border);
+}
+
+.dark .range-slider::-webkit-slider-thumb {
+  border-color: var(--color-bg-card);
+}
+
+.dark .range-slider::-moz-range-thumb {
+  border-color: var(--color-bg-card);
+}

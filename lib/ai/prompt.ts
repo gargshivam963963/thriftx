@@ -19,7 +19,14 @@ const UPPER_CATEGORIES = [
   "Tops",
 ];
 
-const LOWER_CATEGORIES = ["Jeans", "Cargo", "Trousers", "Shorts", "Skirts"];
+const LOWER_CATEGORIES = [
+  "Jeans",
+  "Cargo",
+  "Trousers",
+  "Shorts",
+  "Skirts",
+  "Lower",
+];
 
 const VALID_CATEGORIES = [...UPPER_CATEGORIES, ...LOWER_CATEGORIES, "Dresses"];
 

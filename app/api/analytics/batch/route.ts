@@ -46,7 +46,16 @@ export async function POST(request: NextRequest) {
           storedEvents.push(doc.$id);
         }
       } catch (err) {
-        console.warn("Failed to store event:", err);
+        console.error("❌ Failed to store analytics event");
+        console.error(err);
+
+        return NextResponse.json(
+          {
+            success: false,
+            error: String(err),
+          },
+          { status: 500 },
+        );
       }
     }
 

@@ -1,11 +1,7 @@
-# Live Analytics Tracking — Implementation
+# TODO: Add Lower subcategory filter for Men
 
 ## Steps
-
-- [x] Step 1: Add analytics tracking to Product Detail page (server component → client wrapper)
-- [x] Step 2: Add analytics tracking to Search (GlobalSearch and ShopContent)
-- [x] Step 3: Add analytics tracking to Add to Cart (ProductActions)
-- [x] Step 4: Add analytics tracking to Checkout page (checkout_start, checkout_complete, purchase)
-- [x] Step 5: Add analytics tracking to Wishlist (WishlistButton)
-- [x] Step 6: Add analytics tracking to Success page (trackPurchase — already handled in checkout page redirect)
+1. ✅ Update `FilterDrawer.tsx` – Show subcategories (including "Lower") under each gender in the mobile filter drawer
+2. ✅ Update `ShopContent.tsx` – Desktop sidebar already has correct logic to show "Lower" under Men subcategories
+3. ✅ Verify the changes
 

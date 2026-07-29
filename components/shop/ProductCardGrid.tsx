@@ -14,12 +14,25 @@ const TOPWEAR_KEYWORDS = [
     "sweater", "top", "blouse", "cardigan", "vest", "jersey",
 ];
 
-function getMeasurement(category: string, chest?: string, waist?: string): string | null {
+const LOWER_KEYWORDS = [
+    "jeans", "cargo", "trouser", "short", "skirt", "lower",
+    "pant", "chino", "jogger", "legging",
+];
+
+function getMeasurementDisplay(category: string, chest?: string, waist?: string, length?: string): { primary: string | null; length_: string | null } {
     const cat = category.toLowerCase();
     const isTopwear = TOPWEAR_KEYWORDS.some(k => cat.includes(k));
-    if (isTopwear && chest) return `Chest ${chest}`;
-    if (!isTopwear && waist) return `Waist ${waist}`;
-    return null;
+    const isLower = LOWER_KEYWORDS.some(k => cat.includes(k));
+
+    let primary: string | null = null;
+    if (isTopwear && chest) primary = `Chest ${chest}″`;
+    else if (isLower && waist) primary = `Waist ${waist}″`;
+    else if (chest) primary = `Chest ${chest}″`;
+    else if (waist) primary = `Waist ${waist}″`;
+
+    const length_: string | null = length ? `Length ${length}″` : null;
+
+    return { primary, length_ };
 }
 
 interface ProductCardGridProps {
@@ -33,6 +46,7 @@ interface ProductCardGridProps {
     category?: string;
     chest?: string;
     waist?: string;
+    length?: string;
     onlyOneLeft?: boolean;
 }
 
@@ -47,6 +61,7 @@ export default function ProductCardGrid({
     category = "",
     chest,
     waist,
+    length,
     onlyOneLeft = false,
 }: ProductCardGridProps) {
     const [wishlisted, setWishlisted] = useState(false);
@@ -71,7 +86,7 @@ export default function ProductCardGrid({
         }
     };
 
-    const measurement = getMeasurement(category, chest, waist);
+    const { primary: measurement, length_: lengthDisplay } = getMeasurementDisplay(category, chest, waist, length);
     const discount =
         retailPrice && retailPrice > price
             ? Math.round(((retailPrice - price) / retailPrice) * 100)
@@ -136,10 +151,11 @@ export default function ProductCardGrid({
                         {title}
                     </h3>
 
-                    {measurement && (
-                        <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-                            {measurement}
-                        </p>
+                    {(measurement || lengthDisplay) && (
+                        <div className="mt-0.5 flex items-center gap-3 text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+                            {measurement && <span>{measurement}</span>}
+                            {lengthDisplay && <span>{lengthDisplay}</span>}
+                        </div>
                     )}
 
                     <div className="flex items-baseline gap-1.5 pt-0.5">

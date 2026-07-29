@@ -65,7 +65,7 @@ const CONDITION_OPTIONS = [
 ];
 const ALL_CATEGORIES = [
     "T-Shirts", "Shirts", "Hoodies", "Sweatshirts", "Jackets", "Blazers",
-    "Tops", "Jeans", "Cargo", "Trousers", "Shorts", "Skirts", "Dresses",
+    "Tops", "Jeans", "Cargo", "Trousers", "Shorts", "Skirts", "Dresses", "Lower",
 ];
 
 interface Props {
@@ -836,7 +836,6 @@ hover:bg-neutral-50
                                 <span className="text-red-400">*</span>
                             </div>
                             <DescriptionCell
-                                required
                                 value={product.description || ""}
                                 placeholder="Describe product condition, fit, style..."
                                 onChange={(v) =>

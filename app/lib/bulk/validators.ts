@@ -26,6 +26,7 @@ const VALID_CATEGORIES = [
   "Shorts",
   "Skirts",
   "Dresses",
+  "Lower",
 ];
 
 const UPPER_CATEGORIES = [
@@ -38,7 +39,14 @@ const UPPER_CATEGORIES = [
   "Tops",
 ];
 
-const LOWER_CATEGORIES = ["Jeans", "Cargo", "Trousers", "Shorts", "Skirts"];
+const LOWER_CATEGORIES = [
+  "Jeans",
+  "Cargo",
+  "Trousers",
+  "Shorts",
+  "Skirts",
+  "Lower",
+];
 
 export interface ValidationOptions {
   categories?: string[];

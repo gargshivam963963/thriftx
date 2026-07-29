@@ -238,11 +238,40 @@ export async function getProducts(
       filters.gender.charAt(0).toUpperCase() +
       filters.gender.slice(1).toLowerCase();
 
-    queries.push(AppwriteQuery.equal("gender", gender));
+    switch (gender) {
+      case "Men":
+        queries.push(AppwriteQuery.equal("gender", ["Men", "Unisex"]));
+        break;
+
+      case "Women":
+        queries.push(AppwriteQuery.equal("gender", ["Women", "Unisex"]));
+        break;
+
+      case "Kids":
+        queries.push(AppwriteQuery.equal("gender", "Kids"));
+        break;
+
+      case "Unisex":
+        queries.push(AppwriteQuery.equal("gender", "Unisex"));
+        break;
+
+      default:
+        queries.push(AppwriteQuery.equal("gender", gender));
+    }
   }
 
   if (filters.category) {
-    queries.push(AppwriteQuery.equal("categorySlug", filters.category));
+    // Convert URL slug to human-readable name: "t-shirts" → "T-Shirts"
+    const categoryName = filters.category
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join("-");
+    // Match by human-readable `category` field (exists on ALL products)
+    // AND by lowercase `categorySlug` field (for products with slug set).
+    // Using an array on a single equal() acts as OR in Appwrite.
+    queries.push(
+      AppwriteQuery.equal("category", [categoryName, filters.category]),
+    );
   }
 
   if (filters.brand?.length) {

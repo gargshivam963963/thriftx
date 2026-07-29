@@ -43,6 +43,26 @@ const topwearMeasurements: MeasurementConfig[] = [
   },
 ];
 
+/** General lower body: Waist + Length (used by "Lower" catch-all) */
+const lowerMeasurements: MeasurementConfig[] = [
+  {
+    label: "Waist",
+    field: "waist",
+    required: true,
+    unit: "inches",
+    placeholder: '32"',
+    description: "Measure across waistband from end to end, then double",
+  },
+  {
+    label: "Length",
+    field: "length",
+    required: true,
+    unit: "inches",
+    placeholder: '10"',
+    description: "From waistband to bottom hem (inseam for trousers)",
+  },
+];
+
 /** Bottomwear (lower body): Waist + Length */
 const bottomwearMeasurements: MeasurementConfig[] = [
   {
@@ -170,6 +190,11 @@ const categoryRules: Record<string, CategoryMeasurementRule> = {
     measurements: bottomwearMeasurements,
     showSizeTag: false,
     hint: "Skirt length is a key preference — be precise",
+  },
+  Lower: {
+    measurements: lowerMeasurements,
+    showSizeTag: true,
+    hint: "Waist and length are the key measurements for lower wear",
   },
 
   // ── Dresses ───────────────────────────────────────────

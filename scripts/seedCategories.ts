@@ -76,6 +76,13 @@ const categories = [
     order: 8,
     active: true,
   },
+  {
+    name: "Lower",
+    slug: "lower",
+    gender: "Men",
+    order: 9,
+    active: true,
+  },
 
   // Women
   {
@@ -120,6 +127,13 @@ const categories = [
     order: 14,
     active: true,
   },
+  {
+    name: "Lower",
+    slug: "lower",
+    gender: "Women",
+    order: 15,
+    active: true,
+  },
 
   // Kids
   {
@@ -150,27 +164,41 @@ const categories = [
     order: 18,
     active: true,
   },
+  {
+    name: "Lower",
+    slug: "lower",
+    gender: "Kids",
+    order: 19,
+    active: true,
+  },
 
   // Unisex
   {
     name: "Hoodies",
     slug: "hoodies",
     gender: "Unisex",
-    order: 19,
+    order: 20,
     active: true,
   },
   {
     name: "Jackets",
     slug: "jackets",
     gender: "Unisex",
-    order: 20,
+    order: 21,
     active: true,
   },
   {
     name: "Sweatshirts",
     slug: "sweatshirts",
     gender: "Unisex",
-    order: 21,
+    order: 22,
+    active: true,
+  },
+  {
+    name: "Lower",
+    slug: "lower",
+    gender: "Unisex",
+    order: 23,
     active: true,
   },
 ];

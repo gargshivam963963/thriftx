@@ -14,12 +14,25 @@ const TOPWEAR_KEYWORDS = [
     "sweater", "top", "blouse", "cardigan", "vest", "jersey",
 ];
 
-function getMeasurement(category: string, chest?: string, waist?: string): string | null {
+const LOWER_KEYWORDS = [
+    "jeans", "cargo", "trouser", "short", "skirt", "lower",
+    "pant", "chino", "jogger", "legging",
+];
+
+function getMeasurementDisplay(category: string, chest?: string, waist?: string, length?: string): { primary: string | null; length_: string | null } {
     const cat = category.toLowerCase();
     const isTopwear = TOPWEAR_KEYWORDS.some(k => cat.includes(k));
-    if (isTopwear && chest) return `Chest ${chest}`;
-    if (!isTopwear && waist) return `Waist ${waist}`;
-    return null;
+    const isLower = LOWER_KEYWORDS.some(k => cat.includes(k));
+
+    let primary: string | null = null;
+    if (isTopwear && chest) primary = `Chest ${chest}″`;
+    else if (isLower && waist) primary = `Waist ${waist}″`;
+    else if (chest) primary = `Chest ${chest}″`;
+    else if (waist) primary = `Waist ${waist}″`;
+
+    const length_: string | null = length ? `${length}″` : null;
+
+    return { primary, length_ };
 }
 
 interface ProductCardListProps {
@@ -33,6 +46,7 @@ interface ProductCardListProps {
     category?: string;
     chest?: string;
     waist?: string;
+    length?: string;
     material?: string;
     description?: string;
     onlyOneLeft?: boolean;
@@ -49,6 +63,7 @@ export default function ProductCardList({
     category = "",
     chest,
     waist,
+    length,
     material,
     description,
     onlyOneLeft = false,
@@ -75,7 +90,7 @@ export default function ProductCardList({
         }
     };
 
-    const measurement = getMeasurement(category, chest, waist);
+    const { primary: measurement, length_: lengthDisplay } = getMeasurementDisplay(category, chest, waist, length);
     const discount =
         retailPrice && retailPrice > price
             ? Math.round(((retailPrice - price) / retailPrice) * 100)
@@ -155,6 +170,12 @@ export default function ProductCardList({
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400">
                                 <Ruler size={12} className="text-neutral-500" />
                                 {measurement}
+                                {lengthDisplay && (
+                                    <>
+                                        <span className="text-neutral-300 dark:text-neutral-600">·</span>
+                                        <span>{lengthDisplay}</span>
+                                    </>
+                                )}
                             </span>
                         )}
                         {material && (

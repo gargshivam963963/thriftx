@@ -29,8 +29,8 @@ import {
 } from "@/lib/services/adminService";
 import { uploadImages } from "@/lib/services/storage";
 import { Button } from "@/components/ui/button";
-import { showToast } from "@/components/admin/bulk/Toast";
-import ToastContainer from "@/components/admin/bulk/Toast";
+import { showToast } from "@/components/admin/toast/Toast";
+import ToastContainer from "@/components/admin/toast/Toast";
 import ProductFormModal, { type ProductFormData } from "@/components/admin/products/ProductFormModal";
 import ConfirmDialog from "@/components/admin/products/ConfirmDialog";
 

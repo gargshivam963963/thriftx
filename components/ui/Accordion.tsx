@@ -1,72 +1,51 @@
 "use client";
 
-import * as AccordionPrimitive from "@radix-ui/react-accordion";
+import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AccordionItem {
-    value: string;
-    title: React.ReactNode;
+    title: string;
     content: React.ReactNode;
 }
 
 interface AccordionProps {
     items: AccordionItem[];
-    type?: "single" | "multiple";
-    collapsible?: boolean;
     className?: string;
+    defaultOpen?: number;
 }
 
-export default function Accordion({
-    items,
-    type = "single",
-    collapsible = true,
-    className,
-}: AccordionProps) {
-    return (
-        <AccordionPrimitive.Root
-            type={type}
-            collapsible={type === "single" ? collapsible : undefined}
-            className={cn("w-full space-y-3", className)}
-        >
-            {items.map((item) => (
-                <AccordionPrimitive.Item
-                    key={item.value}
-                    value={item.value}
-                    className="overflow-hidden rounded-2xl border border-neutral-200 bg-white"
-                >
-                    <AccordionPrimitive.Header>
-                        <AccordionPrimitive.Trigger
-                            className={cn(
-                                "group flex w-full items-center justify-between",
-                                "px-5 py-4 text-left font-medium",
-                                "transition-colors hover:bg-neutral-50"
-                            )}
-                        >
-                            <span>{item.title}</span>
+export default function Accordion({ items, className, defaultOpen }: AccordionProps) {
+    const [openIndex, setOpenIndex] = useState<number | null>(defaultOpen ?? null);
 
+    return (
+        <div className={cn("divide-y divide-neutral-200 dark:divide-neutral-700", className)}>
+            {items.map((item, index) => {
+                const isOpen = openIndex === index;
+                return (
+                    <div key={index}>
+                        <button
+                            type="button"
+                            onClick={() => setOpenIndex(isOpen ? null : index)}
+                            className="flex w-full items-center justify-between py-4 text-left text-sm font-medium transition hover:text-neutral-600 dark:text-neutral-200 dark:hover:text-neutral-400"
+                        >
+                            {item.title}
                             <ChevronDown
+                                size={16}
                                 className={cn(
-                                    "h-5 w-5 shrink-0 transition-transform duration-200",
-                                    "group-data-[state=open]:rotate-180"
+                                    "transition-transform duration-200",
+                                    isOpen && "rotate-180",
                                 )}
                             />
-                        </AccordionPrimitive.Trigger>
-                    </AccordionPrimitive.Header>
-
-                    <AccordionPrimitive.Content
-                        className={cn(
-                            "overflow-hidden",
-                            "data-[state=closed]:animate-accordion-up",
-                            "data-[state=open]:animate-accordion-down"
+                        </button>
+                        {isOpen && (
+                            <div className="pb-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+                                {item.content}
+                            </div>
                         )}
-                    >
-                        <div className="px-5 pb-5 text-sm leading-7 text-neutral-600">
-                            {item.content}
-                        </div>
-                    </AccordionPrimitive.Content>
-                </AccordionPrimitive.Item>
-            ))}
-        </AccordionPrimitive.Root>
+                    </div>
+                );
+            })}
+        </div>
     );
 }

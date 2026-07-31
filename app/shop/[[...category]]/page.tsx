@@ -83,7 +83,7 @@ export default async function Shop({ params, searchParams }: PageProps) {
     size: size ? [size] : undefined,
     price,
     sort: sort as "newest" | "price-low" | "price-high" | "name",
-    limit: 48,
+    limit: 9,
   });
 
   const genders = await getGenders();

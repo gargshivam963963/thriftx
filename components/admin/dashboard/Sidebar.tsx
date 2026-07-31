@@ -9,12 +9,9 @@ import {
     ShoppingCart,
     Users,
     BarChart3,
-    Upload,
-    Database,
-    FileSpreadsheet,
     LogOut,
     ArrowLeft,
-    Sparkles,
+    CloudUpload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
@@ -45,6 +42,11 @@ const NAV_ITEMS = [
                 icon: Package,
             },
             {
+                label: "Bulk Upload",
+                href: "/admin/bulk-upload",
+                icon: CloudUpload,
+            },
+            {
                 label: "Customers",
                 href: "/admin/customers",
                 icon: Users,
@@ -53,21 +55,6 @@ const NAV_ITEMS = [
                 label: "Analytics",
                 href: "/admin/analytics",
                 icon: BarChart3,
-            },
-        ],
-    },
-    {
-        section: "Management",
-        items: [
-            {
-                label: "Upload Product",
-                href: "/admin/upload",
-                icon: Upload,
-            },
-            {
-                label: "Bulk Upload",
-                href: "/admin/bulk-upload",
-                icon: Database,
             },
         ],
     },

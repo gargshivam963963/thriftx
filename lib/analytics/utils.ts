@@ -163,6 +163,73 @@ export function throttle<T extends (...args: unknown[]) => void>(
   };
 }
 
+// ─── Analytics Tracking Filter ───────────────────────────────────────────────────
+// Prevents admin, localhost, and dev traffic from polluting real customer analytics.
+
+/**
+ * Returns true if the current page is running on localhost or a development domain.
+ */
+export function isLocalhost(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "0.0.0.0" ||
+    host.endsWith(".local") ||
+    host.startsWith("192.168.") ||
+    host.startsWith("10.") ||
+    host.startsWith("172.") // 172.16-31.x.x
+  );
+}
+
+/**
+ * Returns true if the given pathname is an admin route.
+ * Safe to call on both client and server.
+ */
+export function isAdminPath(pathname?: string): boolean {
+  const path =
+    pathname || (typeof window !== "undefined" ? window.location.pathname : "");
+  return path.startsWith("/admin") || path.startsWith("/api/admin");
+}
+
+/**
+ * Returns true if the event should be tracked.
+ * Filters out:
+ *   - localhost / dev environments
+ *   - admin routes (/admin/*)
+ *   - (optionally) authenticated admin users (pass isAdmin = true)
+ *
+ * @param isAdmin - Whether the current user is an authenticated admin.
+ * @param pathname - Optional explicit pathname (defaults to current page).
+ */
+export function shouldTrack(isAdmin?: boolean, pathname?: string): boolean {
+  if (isLocalhost()) return false;
+  if (isAdminPath(pathname)) return false;
+  if (isAdmin) return false;
+  return true;
+}
+
+/**
+ * Returns true if a given page path is a public storefront page that should be tracked.
+ */
+export function isPublicStorefrontPath(pathname: string): boolean {
+  if (!pathname) return false;
+  // Always skip admin paths
+  if (isAdminPath(pathname)) return false;
+  // Skip API routes
+  if (pathname.startsWith("/api/")) return false;
+  // Skip auth pages
+  if (pathname.startsWith("/login") || pathname.startsWith("/signup"))
+    return false;
+  // Skip profile/account pages
+  if (pathname.startsWith("/profile")) return false;
+  // Skip non-customer-facing pages
+  if (pathname.startsWith("/_next") || pathname.startsWith("/favicon"))
+    return false;
+  return true;
+}
+
 // ─── Formatters ─────────────────────────────────────────────────────────────────
 
 export function formatDuration(seconds: number): string {

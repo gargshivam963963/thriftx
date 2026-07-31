@@ -109,6 +109,7 @@ function WishlistCard({
     onRemove: () => void;
     removing: boolean;
 }) {
+    const router = useRouter();
     return (
         <motion.div
             layout
@@ -134,11 +135,17 @@ function WishlistCard({
 
                     {/* Quick actions overlay */}
                     <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/0 opacity-0 transition-all group-hover:bg-black/20 group-hover:opacity-100">
-                        <Link href={`/product/${item.slug}`}>
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg transition hover:scale-110">
-                                <Eye size={18} className="text-zinc-900" />
-                            </div>
-                        </Link>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                router.push(`/product/${item.slug}`);
+                            }}
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg transition hover:scale-110"
+                        >
+                            <Eye size={18} className="text-zinc-900" />
+                        </button>
                     </div>
 
                     {/* Remove button */}
@@ -325,4 +332,3 @@ export default function ProfileWishlistPage() {
         </main>
     );
 }
-

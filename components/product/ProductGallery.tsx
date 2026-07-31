@@ -366,7 +366,7 @@ export default function ProductGallery({
                     {/* Main Image */}
                     <div
                         ref={imageContainerRef}
-                        className="group relative order-1 overflow-hidden rounded-[32px] border border-neutral-200 bg-gradient-to-br from-neutral-50 via-white to-neutral-100 shadow-xl"
+                        className="group relative order-1 overflow-hidden rounded-[32px] shadow-sm"
                         onMouseEnter={() => setZoomed(true)}
                         onMouseLeave={() => {
                             setZoomed(false);

@@ -1,22 +1,23 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { CloudUpload, RotateCcw, Table2 } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-
-// import ExcelUploader from "@/components/admin/bulk/ExcelUploader";
-// import FolderUploader from "@/components/admin/bulk/FolderUploader";
 import ToastContainer, { showToast } from "@/components/admin/bulk/Toast";
 import SpreadsheetEditor from "@/components/admin/bulk/SpreadsheetEditor";
+import AIProcessingOverlay from "@/components/admin/bulk/AIProcessingOverlay";
+import UploadProgress from "@/components/admin/bulk/UploadProgress";
 
 import type { BulkProduct } from "@/app/lib/bulk/types";
 import { uploadProducts } from "@/app/lib/bulk/uploader";
+import { processSmartFolders } from "@/app/lib/bulk/smart-processor";
+import { sortByFilename } from "@/app/lib/bulk/image-sorter";
 import { mapAIResponseToProduct } from "@/lib/ai/parser";
 import {
     loadDraft,
     saveDraft,
     clearDraft,
     createBlankProduct,
+    generateSku,
 } from "@/lib/bulk/spreadsheetStorage";
 
 export default function BulkUploadPage() {
@@ -34,11 +35,46 @@ export default function BulkUploadPage() {
         failed: number;
     } | null>(null);
     const [aiLoadingSku, setAiLoadingSku] = useState<string | null>(null);
+    const [bulkAiLoading, setBulkAiLoading] = useState(false);
 
     // ── Spreadsheet mode state ─────────────────────────────────
     const [nextSkuNumber, setNextSkuNumber] = useState(1);
     const [draftLoaded, setDraftLoaded] = useState(false);
 
+    // ── Auto AI queue (after image drop) ───────────────────────
+    const autoAiQueueRef = useRef<BulkProduct[]>([]);
+    const [autoAiRunning, setAutoAiRunning] = useState(false);
+    const [aiProcessingInfo, setAiProcessingInfo] = useState<{
+        current: number;
+        total: number;
+        currentSku: string;
+    } | null>(null);
+
+    // ── Draft persistence ──────────────────────────────────────
+    useEffect(() => {
+        const draft = loadDraft();
+        if (draft.products.length > 0) {
+            setProducts(draft.products);
+            setNextSkuNumber(draft.nextSkuNumber);
+            showToast({
+                type: "info",
+                title: "Draft restored",
+                message: `${draft.products.length} product(s) loaded from your last session. Images need re-upload.`,
+                duration: 5000,
+            });
+        }
+        setDraftLoaded(true);
+    }, []);
+
+    useEffect(() => {
+        if (!draftLoaded) return;
+        const t = setTimeout(() => {
+            saveDraft(products, nextSkuNumber);
+        }, 600);
+        return () => clearTimeout(t);
+    }, [products, nextSkuNumber, draftLoaded]);
+
+    // ── Core handlers ──────────────────────────────────────────
     const handleAddRow = useCallback(() => {
         const newProduct = createBlankProduct(nextSkuNumber);
         setProducts((prev) => [...prev, newProduct]);
@@ -51,13 +87,8 @@ export default function BulkUploadPage() {
         });
     }, [nextSkuNumber]);
 
-    // Keyboard shortcut: Ctrl+Shift+A to add a row in spreadsheet mode
-
     const handleDeleteRow = useCallback((sku: string) => {
-        setProducts((prev) => {
-            const filtered = prev.filter((p) => p.sku !== sku);
-            return filtered;
-        });
+        setProducts((prev) => prev.filter((p) => p.sku !== sku));
         showToast({
             type: "info",
             title: "Row deleted",
@@ -65,6 +96,34 @@ export default function BulkUploadPage() {
             duration: 2000,
         });
     }, []);
+
+    const handleDuplicateRow = useCallback(
+        (sku: string) => {
+            setProducts((prev) => {
+                const source = prev.find((p) => p.sku === sku);
+                if (!source) return prev;
+                const copy: BulkProduct = {
+                    ...source,
+                    sku: generateSku(nextSkuNumber),
+                    row: prev.length + 1,
+                    title: source.title ? `${source.title} (Copy)` : "",
+                    aiGenerated: false,
+                    aiConfidence: undefined,
+                    aiNeedsReview: undefined,
+                    status: "Ready",
+                    errors: [],
+                };
+                setNextSkuNumber((n) => n + 1);
+                return [...prev, copy];
+            });
+            showToast({
+                type: "success",
+                title: "Product duplicated",
+                duration: 2000,
+            });
+        },
+        [nextSkuNumber],
+    );
 
     const handleImagesChange = useCallback(
         (sku: string, files: File[]) => {
@@ -74,7 +133,9 @@ export default function BulkUploadPage() {
                         ? {
                             ...p,
                             imageFiles: files,
-                            imageUrls: files.map((f) => URL.createObjectURL(f)),
+                            imageUrls: files.map((f) =>
+                                URL.createObjectURL(f),
+                            ),
                             errors: [],
                         }
                         : p,
@@ -88,30 +149,20 @@ export default function BulkUploadPage() {
         (sku: string, updates: Partial<BulkProduct>) => {
             setProducts((prev) =>
                 prev.map((p) =>
-                    p.sku === sku
-                        ? {
-                            ...p,
-                            ...updates,
-                            errors: [],
-                        }
-                        : p
-                )
+                    p.sku === sku ? { ...p, ...updates, errors: [] } : p,
+                ),
             );
         },
-        []
+        [],
     );
 
-    const handleAiFill = useCallback(
-        async (sku: string) => {
-            setAiLoadingSku(sku);
-            try {
-                const product = products.find((p) => p.sku === sku);
-                if (!product || product.imageFiles.length === 0) {
-                    showToast({ type: "warning", title: "No images", message: "Upload images first." });
-                    return;
-                }
+    // ── Core AI fill for a single product ──────────────────────
+    const runAiFillForProduct = useCallback(
+        async (product: BulkProduct) => {
+            if (!product || product.imageFiles.length === 0) return;
 
-                // Convert ALL images to base64 (they represent ONE product)
+            setAiLoadingSku(product.sku);
+            try {
                 const base64Images = await Promise.all(
                     product.imageFiles.map(
                         (file) =>
@@ -139,24 +190,38 @@ export default function BulkUploadPage() {
                         showToast({
                             type: "warning",
                             title: "AI quota exceeded",
-                            message: "Please wait a moment before trying again, or upgrade your Gemini API plan.",
+                            message:
+                                "Please wait a moment before trying again, or upgrade your Gemini API plan.",
                             duration: 6000,
                         });
                         return;
                     }
-                    showToast({ type: "error", title: "AI Fill failed", message: result.message || "Could not extract details." });
+                    showToast({
+                        type: "error",
+                        title: "AI Fill failed",
+                        message:
+                            result.message ||
+                            "Could not extract details.",
+                    });
                     return;
                 }
 
-                // Map AI response (with confidence) to product updates
-                const { updates, needsReview } = mapAIResponseToProduct(result.data);
+                const { updates, needsReview } =
+                    mapAIResponseToProduct(result.data);
 
-                // Collect confidence scores for display
                 const aiConfidence: Record<string, number> = {};
                 if (result.data) {
-                    for (const [field, extracted] of Object.entries(result.data)) {
-                        if (extracted && typeof extracted === 'object' && 'confidence' in extracted) {
-                            aiConfidence[field] = (extracted as { confidence: number }).confidence;
+                    for (const [field, extracted] of Object.entries(
+                        result.data,
+                    )) {
+                        if (
+                            extracted &&
+                            typeof extracted === "object" &&
+                            "confidence" in extracted
+                        ) {
+                            aiConfidence[field] = (
+                                extracted as { confidence: number }
+                            ).confidence;
                         }
                     }
                 }
@@ -165,49 +230,186 @@ export default function BulkUploadPage() {
                     ...updates,
                     aiGenerated: true,
                     aiConfidence,
-                    aiNeedsReview: needsReview.length > 0 ? needsReview : undefined,
+                    aiNeedsReview:
+                        needsReview.length > 0 ? needsReview : undefined,
                     errors: [],
                 };
 
-                handleProductUpdate(sku, productUpdates);
+                handleProductUpdate(product.sku, productUpdates);
 
                 if (needsReview.length > 0) {
                     showToast({
                         type: "info",
                         title: "AI Fill — needs review",
-                        message: `${needsReview.length} field${needsReview.length !== 1 ? 's' : ''} need review: ${needsReview.join(', ')}`,
+                        message: `${needsReview.length} field${needsReview.length !== 1 ? "s" : ""
+                            } need review: ${needsReview.join(", ")}`,
                         duration: 6000,
                     });
                 } else {
                     showToast({
                         type: "success",
                         title: "AI Fill complete",
-                        message: `All fields extracted for ${product.title || sku}`,
+                        message: `All fields extracted for ${product.title || product.sku
+                            }`,
                     });
                 }
             } catch (err) {
                 console.error("AI Fill error:", err);
-                showToast({ type: "error", title: "AI Fill failed", message: "An error occurred. Check your Gemini API key and quota." });
+                showToast({
+                    type: "error",
+                    title: "AI Fill failed",
+                    message:
+                        "An error occurred. Check your Gemini API key and quota.",
+                });
             } finally {
                 setAiLoadingSku(null);
             }
         },
-        [products, handleProductUpdate],
+        [handleProductUpdate],
     );
 
-    /**
-     * Bulk AI Fill — processes all products sequentially with 2s delay
-     * to avoid hammering the Gemini API rate limits.
-     */
-    const [bulkAiLoading, setBulkAiLoading] = useState(false);
+    const handleAiFill = useCallback(
+        async (sku: string) => {
+            const product = products.find((p) => p.sku === sku);
+            if (!product) return;
+            if (product.imageFiles.length === 0) {
+                showToast({
+                    type: "warning",
+                    title: "No images",
+                    message: "Upload images first.",
+                });
+                return;
+            }
+            await runAiFillForProduct(product);
+        },
+        [products, runAiFillForProduct],
+    );
 
+    // ── Auto-AI queue processor ────────────────────────────────
+    const processAutoAiQueue = useCallback(async () => {
+        if (autoAiRunning) return;
+        const queue = autoAiQueueRef.current;
+        if (queue.length === 0) return;
+
+        setAutoAiRunning(true);
+        const total = queue.length;
+
+        for (let i = 0; i < queue.length; i++) {
+            const p = queue[i];
+            setAiProcessingInfo({
+                current: i + 1,
+                total,
+                currentSku: p.sku,
+            });
+            await runAiFillForProduct(p);
+            if (i < queue.length - 1) {
+                await new Promise((r) => setTimeout(r, 800));
+            }
+        }
+
+        autoAiQueueRef.current = [];
+        setAutoAiRunning(false);
+        setAiProcessingInfo(null);
+        setAiLoadingSku(null);
+    }, [autoAiRunning, runAiFillForProduct]);
+
+    const enqueueAi = useCallback(
+        (items: BulkProduct[]) => {
+            const withImages = items.filter((p) => p.imageFiles.length > 0);
+            if (withImages.length === 0) return;
+            autoAiQueueRef.current = [
+                ...autoAiQueueRef.current,
+                ...withImages,
+            ];
+            processAutoAiQueue();
+        },
+        [processAutoAiQueue],
+    );
+
+    // ── Dropzone handlers ──────────────────────────────────────
+    const handleFilesSelected = useCallback(
+        (files: File[]) => {
+            const hasFolderPath = files.some(
+                (f) =>
+                    (f as File & { webkitRelativePath?: string })
+                        .webkitRelativePath,
+            );
+
+            if (hasFolderPath) {
+                // Folder structure → each subfolder is one product
+                const result = processSmartFolders(files);
+                if (result.products.length === 0) {
+                    showToast({
+                        type: "warning",
+                        title: "No products detected",
+                        message:
+                            "Place images inside subfolders — each folder becomes one product.",
+                        duration: 5000,
+                    });
+                    return;
+                }
+
+                setProducts((prev) => {
+                    const merged = [...prev, ...result.products];
+                    // Renumber rows sequentially
+                    return merged.map((p, idx) => ({ ...p, row: idx + 1 }));
+                });
+
+                showToast({
+                    type: "success",
+                    title: `${result.products.length} product${result.products.length !== 1 ? "s" : ""
+                        } detected`,
+                    message: `Auto-starting AI to extract details...`,
+                    duration: 4000,
+                });
+
+                // Auto-AI each detected product
+                enqueueAi(result.products);
+            } else {
+                // Loose images → treat as one product (sorted)
+                const sorted = sortByFilename(files);
+                const newProduct: BulkProduct = {
+                    ...createBlankProduct(nextSkuNumber),
+                    imageFiles: sorted,
+                    imageUrls: sorted.map((f) => URL.createObjectURL(f)),
+                };
+                setProducts((prev) => [...prev, newProduct]);
+                setNextSkuNumber((n) => n + 1);
+                showToast({
+                    type: "success",
+                    title: "Product created",
+                    message: `${newProduct.sku} · ${sorted.length} images. Auto-starting AI...`,
+                    duration: 4000,
+                });
+                enqueueAi([newProduct]);
+            }
+        },
+        [nextSkuNumber, enqueueAi],
+    );
+
+    const handleFolderSelected = useCallback(
+        (files: File[]) => {
+            handleFilesSelected(files);
+        },
+        [handleFilesSelected],
+    );
+
+    // ── Bulk AI Fill ───────────────────────────────────────────
     const handleBulkAiFill = useCallback(async () => {
         const productsWithoutData = products.filter(
-            (p) => !p.title && !p.brand && p.errors.length === 0 && p.imageFiles.length > 0,
+            (p) =>
+                !p.title &&
+                !p.brand &&
+                p.errors.length === 0 &&
+                p.imageFiles.length > 0,
         );
 
         if (productsWithoutData.length === 0) {
-            showToast({ type: "info", title: "Nothing to fill", message: "All products already have data or have issues." });
+            showToast({
+                type: "info",
+                title: "Nothing to fill",
+                message: "All products already have data or have issues.",
+            });
             return;
         }
 
@@ -220,6 +422,11 @@ export default function BulkUploadPage() {
 
             const product = productsWithoutData[i];
             setAiLoadingSku(product.sku);
+            setAiProcessingInfo({
+                current: i + 1,
+                total: productsWithoutData.length,
+                currentSku: product.sku,
+            });
 
             try {
                 const base64Images = await Promise.all(
@@ -242,7 +449,16 @@ export default function BulkUploadPage() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         images: base64Images,
-                        selectedFields: ["title", "brand", "gender", "category", "size", "color", "material", "description"],
+                        selectedFields: [
+                            "title",
+                            "brand",
+                            "gender",
+                            "category",
+                            "size",
+                            "color",
+                            "material",
+                            "description",
+                        ],
                     }),
                 });
 
@@ -254,7 +470,8 @@ export default function BulkUploadPage() {
                         showToast({
                             type: "warning",
                             title: "AI quota exceeded",
-                            message: `Stopped after ${i} product${i !== 1 ? "s" : ""}. Try again later or upgrade your plan.`,
+                            message: `Stopped after ${i} product${i !== 1 ? "s" : ""
+                                }. Try again later or upgrade your plan.`,
                             duration: 6000,
                         });
                         break;
@@ -271,12 +488,12 @@ export default function BulkUploadPage() {
                 if (aiData.size) updates.size = aiData.size;
                 if (aiData.color) updates.color = aiData.color;
                 if (aiData.material) updates.material = aiData.material;
-                if (aiData.description) updates.description = aiData.description;
+                if (aiData.description)
+                    updates.description = aiData.description;
 
                 handleProductUpdate(product.sku, updates);
                 successCount++;
 
-                // 2s delay between products to respect rate limits
                 if (i < productsWithoutData.length - 1 && !quotaExceeded) {
                     await new Promise((r) => setTimeout(r, 2000));
                 }
@@ -288,16 +505,19 @@ export default function BulkUploadPage() {
 
         setAiLoadingSku(null);
         setBulkAiLoading(false);
+        setAiProcessingInfo(null);
 
         if (successCount > 0) {
             showToast({
                 type: "success",
                 title: "Bulk AI Fill complete",
-                message: `${successCount} product${successCount !== 1 ? "s" : ""} filled.`,
+                message: `${successCount} product${successCount !== 1 ? "s" : ""
+                    } filled.`,
             });
         }
     }, [products, handleProductUpdate]);
 
+    // ── Upload ─────────────────────────────────────────────────
     const handleUpload = useCallback(async () => {
         const ready = products.filter((p) => p.errors.length === 0);
         if (ready.length === 0) {
@@ -310,7 +530,12 @@ export default function BulkUploadPage() {
         }
 
         setUploading(true);
-        setProgress({ current: 0, total: ready.length, percentage: 0, currentSku: "" });
+        setProgress({
+            current: 0,
+            total: ready.length,
+            percentage: 0,
+            currentSku: "",
+        });
         setUploadResult(null);
 
         try {
@@ -325,16 +550,19 @@ export default function BulkUploadPage() {
                     }),
             });
 
-            const res = { success: result.success.length, failed: result.failed.length };
+            const res = {
+                success: result.success.length,
+                failed: result.failed.length,
+            };
             setUploadResult(res);
 
             if (result.failed.length === 0) {
                 showToast({
                     type: "success",
                     title: "Upload complete",
-                    message: `${result.success.length} product${result.success.length !== 1 ? "s" : ""} uploaded successfully.`,
+                    message: `${result.success.length} product${result.success.length !== 1 ? "s" : ""
+                        } uploaded successfully.`,
                 });
-                // Clear products and draft after successful upload
                 setTimeout(() => {
                     clearDraft();
                     setProducts([]);
@@ -357,14 +585,9 @@ export default function BulkUploadPage() {
         }
     }, [products]);
 
-    const readyCount = products.filter((p) => p.errors.length === 0).length;
-    const issueCount = products.filter((p) => p.errors.length > 0).length;
-    const totalImages = products.reduce((s, p) => s + p.imageFiles.length, 0);
-
     return (
         <div className="min-h-screen">
             <ToastContainer />
-            {/* ── Content ────────────────────────────────────────────── */}
             <motion.div
                 key="spreadsheet"
                 initial={{ opacity: 0, y: 8 }}
@@ -372,19 +595,37 @@ export default function BulkUploadPage() {
                 exit={{ opacity: 0, y: -8 }}
                 className="space-y-4"
             >
-                {/* Spreadsheet Editor */}
                 <SpreadsheetEditor
                     products={products}
                     onUpdate={handleProductUpdate}
                     onAddRow={handleAddRow}
                     onDeleteRow={handleDeleteRow}
+                    onDuplicateRow={handleDuplicateRow}
                     onImagesChange={handleImagesChange}
                     onAiFill={handleAiFill}
                     aiLoadingSku={aiLoadingSku}
                     onUpload={handleUpload}
                     uploading={uploading}
+                    bulkAiLoading={bulkAiLoading}
+                    onAiFillAll={handleBulkAiFill}
+                    onFilesSelected={handleFilesSelected}
+                    onFolderSelected={handleFolderSelected}
+                    aiProcessing={autoAiRunning}
+                    aiProcessingInfo={aiProcessingInfo}
                 />
             </motion.div>
+
+            {/* Upload Progress */}
+            <UploadProgress progress={progress} uploadResult={uploadResult} />
+
+            {/* AI Processing Overlay */}
+            <AIProcessingOverlay
+                open={autoAiRunning || bulkAiLoading}
+                current={aiProcessingInfo?.current ?? 0}
+                total={aiProcessingInfo?.total ?? 0}
+                currentSku={aiProcessingInfo?.currentSku ?? ""}
+            />
         </div>
     );
 }
+

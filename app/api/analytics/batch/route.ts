@@ -11,6 +11,42 @@ const ANALYTICS_EVENTS_COLLECTION_ID =
 const ANALYTICS_SESSIONS_COLLECTION_ID =
   process.env.NEXT_PUBLIC_APPWRITE_ANALYTICS_SESSIONS_COLLECTION_ID || "";
 
+/**
+ * Server-side filter: returns true if the event should be stored.
+ * Defense-in-depth — client-side filtering should catch most, but this
+ * ensures no admin/localhost/dev data ever reaches Appwrite.
+ */
+function shouldStoreEvent(event: Record<string, unknown>): boolean {
+  const page = (event.page as string) || "";
+
+  // 1. Skip admin routes
+  if (page.startsWith("/admin") || page.startsWith("/api/admin")) {
+    return false;
+  }
+
+  // 2. Skip API routes (non-customer-facing)
+  if (page.startsWith("/api/")) {
+    return false;
+  }
+
+  // 3. Skip auth pages
+  if (page.startsWith("/login") || page.startsWith("/signup")) {
+    return false;
+  }
+
+  // 4. Skip profile/account pages
+  if (page.startsWith("/profile")) {
+    return false;
+  }
+
+  // 5. Skip internal Next.js routes
+  if (page.startsWith("/_next") || page.startsWith("/favicon")) {
+    return false;
+  }
+
+  return true;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -23,9 +59,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Store events in Appwrite
+    // Server-side: filter out non-customer events before storing
+    const customerEvents = events.filter((event: Record<string, unknown>) => {
+      const shouldStore = shouldStoreEvent(event);
+      if (!shouldStore) {
+        console.log(
+          `[Analytics] Server-side filtered out event: ${event.eventType} on ${event.page}`,
+        );
+      }
+      return shouldStore;
+    });
+
+    if (customerEvents.length === 0) {
+      return NextResponse.json({
+        success: true,
+        stored: 0,
+        total: events.length,
+        filtered: events.length,
+        message: "All events filtered out (non-customer traffic)",
+      });
+    }
+
+    // Store filtered events in Appwrite
     const storedEvents = [];
-    for (const event of events) {
+    for (const event of customerEvents) {
       try {
         if (ANALYTICS_EVENTS_COLLECTION_ID) {
           const doc = await databases.createDocument(

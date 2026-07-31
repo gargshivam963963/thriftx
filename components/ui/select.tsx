@@ -21,7 +21,8 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                     ref={ref}
                     className={cn(
                         // Base
-                        "flex h-11 w-full appearance-none rounded-xl border bg-white px-4 py-2.5 pr-10",
+                        "flex w-full appearance-none rounded-xl border bg-white pr-10",
+                        "h-11 px-4 py-2.5",
                         "text-sm font-medium text-neutral-900",
                         // Border
                         "border-neutral-300",
@@ -34,6 +35,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         "dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-600",
                         "dark:focus-visible:ring-white/20 dark:focus-visible:border-neutral-400",
                         "dark:disabled:bg-neutral-950",
+                        // Allow className to override height & padding
                         className,
                     )}
                     {...props}

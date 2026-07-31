@@ -433,7 +433,6 @@ function ProductCard({
     onDeleteRow,
     onAiFill,
     aiLoading,
-    onDuplicate,
 }: {
     product: BulkProduct;
     index: number;
@@ -442,7 +441,6 @@ function ProductCard({
     onDeleteRow: (sku: string) => void;
     onAiFill: (sku: string) => void;
     aiLoading: boolean;
-    onDuplicate: (sku: string) => void;
 }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -562,16 +560,6 @@ function ProductCard({
                             )}
                         </div>
                         <div className="flex items-center gap-1">
-                            <Button
-                                type="button"
-                                onClick={() => onDuplicate(product.sku)}
-                                variant="ghost"
-                                size="iconXs"
-                                className="text-neutral-400 hover:text-neutral-600"
-                                title="Duplicate product"
-                            >
-                                <Copy size={12} />
-                            </Button>
                             <Button
                                 type="button"
                                 onClick={() => onDeleteRow(product.sku)}

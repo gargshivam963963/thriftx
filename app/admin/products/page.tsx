@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     Search,
     Package,
@@ -14,6 +14,9 @@ import {
     ToggleLeft,
     ToggleRight,
     AlertCircle,
+    ChevronLeft,
+    ChevronRight,
+    X,
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -73,6 +76,62 @@ interface AdminProduct {
     isActive: boolean;
 }
 
+// ── Measurement helpers ──
+const UPPER_CATEGORIES = [
+    "T-Shirts",
+    "Shirts",
+    "Hoodies",
+    "Sweatshirts",
+    "Jackets",
+    "Blazers",
+    "Tops",
+];
+
+const LOWER_CATEGORIES = [
+    "Jeans",
+    "Cargo",
+    "Trousers",
+    "Shorts",
+    "Skirts",
+    "Lower",
+];
+
+function getMeasurementLabel(category: string): string | null {
+    const cat = category?.trim();
+    if (UPPER_CATEGORIES.includes(cat)) return "Chest / Length";
+    if (LOWER_CATEGORIES.includes(cat)) return "Waist / Length";
+    if (cat === "Dresses") return "Chest / Waist / Length";
+    return "Chest / Waist";
+}
+
+function getMeasurementValues(product: AdminProduct): { label: string; value: string }[] | null {
+    const cat = product.category?.trim();
+    if (UPPER_CATEGORIES.includes(cat)) {
+        const parts: { label: string; value: string }[] = [];
+        if (product.chest) parts.push({ label: "Chest", value: product.chest });
+        if (product.length) parts.push({ label: "Length", value: product.length });
+        return parts.length > 0 ? parts : null;
+    }
+    if (LOWER_CATEGORIES.includes(cat)) {
+        const parts: { label: string; value: string }[] = [];
+        if (product.waist) parts.push({ label: "Waist", value: product.waist });
+        if (product.length) parts.push({ label: "Length", value: product.length });
+        return parts.length > 0 ? parts : null;
+    }
+    if (cat === "Dresses") {
+        const parts: { label: string; value: string }[] = [];
+        if (product.chest) parts.push({ label: "Chest", value: product.chest });
+        if (product.waist) parts.push({ label: "Waist", value: product.waist });
+        if (product.length) parts.push({ label: "Length", value: product.length });
+        return parts.length > 0 ? parts : null;
+    }
+    // Default
+    const parts: { label: string; value: string }[] = [];
+    if (product.chest) parts.push({ label: "Chest", value: product.chest });
+    if (product.waist) parts.push({ label: "Waist", value: product.waist });
+    return parts.length > 0 ? parts : null;
+}
+
 export default function AdminProductsPage() {
     const [products, setProducts] = useState<AdminProduct[]>([]);
     const [loading, setLoading] = useState(true);
@@ -97,6 +156,10 @@ export default function AdminProductsPage() {
         title: string;
     } | null>(null);
     const [deleting, setDeleting] = useState(false);
+
+    // Image preview
+    const [previewProduct, setPreviewProduct] = useState<AdminProduct | null>(null);
+    const [previewIndex, setPreviewIndex] = useState(0);
 
     const loadProducts = useCallback(async () => {
         setLoading(true);
@@ -223,6 +286,30 @@ export default function AdminProductsPage() {
         setFormOpen(true);
     };
 
+    // ── Image Preview Navigation ──
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if (!previewProduct) return;
+            const allImages = previewProduct.images?.length
+                ? previewProduct.images
+                : previewProduct.primaryImage
+                    ? [previewProduct.primaryImage]
+                    : [];
+            if (e.key === "Escape") {
+                setPreviewProduct(null);
+                setPreviewIndex(0);
+            }
+            if (e.key === "ArrowLeft") {
+                setPreviewIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+            }
+            if (e.key === "ArrowRight") {
+                setPreviewIndex((prev) => (prev + 1) % allImages.length);
+            }
+        }
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [previewProduct]);
+
     const handleSave = async (data: ProductFormData, orderedImageUrls: string[], filesToUpload: File[]) => {
         setSaving(true);
         try {
@@ -312,12 +399,10 @@ export default function AdminProductsPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={loadProducts} loading={loading}>
-                        <RefreshCw size={14} />
+                    <Button variant="outline" size="sm" onClick={loadProducts} loading={loading} leftIcon={<RefreshCw size={14} />}>
                         Refresh
                     </Button>
-                    <Button variant="primary" size="sm" onClick={openAddModal}>
-                        <Plus size={15} />
+                    <Button variant="primary" size="sm" onClick={openAddModal} leftIcon={<Plus size={15} />}>
                         Add Product
                     </Button>
                 </div>
@@ -410,8 +495,7 @@ export default function AdminProductsPage() {
                     </div>
                     <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Failed to load</h3>
                     <p className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">{error}</p>
-                    <Button variant="primary" size="sm" className="mt-6" onClick={loadProducts}>
-                        <RefreshCw size={14} />
+                    <Button variant="primary" size="sm" className="mt-6" onClick={loadProducts} leftIcon={<RefreshCw size={14} />}>
                         Try Again
                     </Button>
                 </motion.div>
@@ -433,8 +517,7 @@ export default function AdminProductsPage() {
                             : "Add your first product to start selling."}
                     </p>
                     {!search && categoryFilter === "all" && (
-                        <Button variant="primary" size="sm" className="mt-6" onClick={openAddModal}>
-                            <Plus size={15} />
+                        <Button variant="primary" size="sm" className="mt-6" onClick={openAddModal} leftIcon={<Plus size={15} />}>
                             Add Product
                         </Button>
                     )}
@@ -448,8 +531,15 @@ export default function AdminProductsPage() {
                             animate={{ opacity: 1, y: 0 }}
                             className="group relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm transition-all hover:shadow-md dark:border-neutral-700/60 dark:bg-neutral-900"
                         >
-                            {/* Image */}
-                            <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                            {/* Image - clickable to preview */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setPreviewProduct(product);
+                                    setPreviewIndex(0);
+                                }}
+                                className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800"
+                            >
                                 {product.primaryImage ? (
                                     <Image
                                         src={product.primaryImage}
@@ -461,6 +551,12 @@ export default function AdminProductsPage() {
                                 ) : (
                                     <div className="flex h-full items-center justify-center">
                                         <Package size={32} className="text-neutral-300 dark:text-neutral-600" />
+                                    </div>
+                                )}
+                                {/* Image count badge */}
+                                {product.images && product.images.length > 1 && (
+                                    <div className="absolute bottom-2 right-2 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                                        +{product.images.length - 1}
                                     </div>
                                 )}
                                 {/* Status badge */}
@@ -481,7 +577,7 @@ export default function AdminProductsPage() {
                                         </span>
                                     )}
                                 </div>
-                            </div>
+                            </button>
 
                             {/* Info */}
                             <div className="p-4">
@@ -508,6 +604,34 @@ export default function AdminProductsPage() {
                                     <span>&middot;</span>
                                     <span>{product.gender}</span>
                                 </div>
+                                {/* Measurements - chest/waist left, length right */}
+                                {(product.chest || product.waist || product.length) && (
+                                    <div className="mt-1.5 flex items-center justify-between gap-1">
+                                        <div className="flex flex-wrap items-center gap-1">
+                                            {getMeasurementValues(product)
+                                                ?.filter((m) => m.label !== "Length")
+                                                .map((m) => (
+                                                    <span
+                                                        key={m.label}
+                                                        className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-0.5 text-[9px] font-semibold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                                                        title={`${m.label}: ${m.value}`}
+                                                    >
+                                                        {m.label} {m.value}
+                                                    </span>
+                                                ))}
+                                        </div>
+                                        {getMeasurementValues(product)
+                                            ?.filter((m) => m.label === "Length")
+                                            .map((m) => (
+                                                <span
+                                                    key={m.label}
+                                                    className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-0.5 text-[9px] font-semibold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                                                >
+                                                    {m.label} {m.value}
+                                                </span>
+                                            ))}
+                                    </div>
+                                )}
 
                                 {/* Actions */}
                                 <div className="mt-3 flex items-center gap-1.5 border-t border-neutral-100 pt-3 dark:border-neutral-800">
@@ -561,7 +685,14 @@ export default function AdminProductsPage() {
                             animate={{ opacity: 1 }}
                             className="flex items-center gap-4 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-neutral-700/60 dark:bg-neutral-900"
                         >
-                            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setPreviewProduct(product);
+                                    setPreviewIndex(0);
+                                }}
+                                className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800"
+                            >
                                 {product.primaryImage ? (
                                     <Image
                                         src={product.primaryImage}
@@ -575,7 +706,7 @@ export default function AdminProductsPage() {
                                         <Package size={18} className="text-neutral-300" />
                                     </div>
                                 )}
-                            </div>
+                            </button>
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-bold text-neutral-900 dark:text-neutral-100">
                                     {product.title}
@@ -583,6 +714,33 @@ export default function AdminProductsPage() {
                                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
                                     {product.brand} &middot; {product.category} &middot; {product.size}
                                 </p>
+                                {/* Measurements - chest/waist left, length right */}
+                                {(product.chest || product.waist || product.length) && (
+                                    <div className="mt-1 flex items-center justify-between gap-1">
+                                        <div className="flex flex-wrap items-center gap-1">
+                                            {getMeasurementValues(product)
+                                                ?.filter((m) => m.label !== "Length")
+                                                .map((m) => (
+                                                    <span
+                                                        key={m.label}
+                                                        className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-1.5 py-0.5 text-[9px] font-semibold text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                                                    >
+                                                        {m.label} {m.value}
+                                                    </span>
+                                                ))}
+                                        </div>
+                                        {getMeasurementValues(product)
+                                            ?.filter((m) => m.label === "Length")
+                                            .map((m) => (
+                                                <span
+                                                    key={m.label}
+                                                    className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-1.5 py-0.5 text-[9px] font-semibold text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                                                >
+                                                    {m.label} {m.value}
+                                                </span>
+                                            ))}
+                                    </div>
+                                )}
                             </div>
                             <div className="hidden items-center gap-2 sm:flex">
                                 <span
@@ -659,6 +817,122 @@ export default function AdminProductsPage() {
                 confirmText="Delete"
                 loading={deleting}
             />
+
+            {/* ── Full-Screen Image Preview ── */}
+            <AnimatePresence>
+                {previewProduct && (() => {
+                    const allImages = previewProduct.images?.length
+                        ? previewProduct.images
+                        : previewProduct.primaryImage
+                            ? [previewProduct.primaryImage]
+                            : [];
+                    const currentImage = allImages[previewIndex];
+                    if (!currentImage) return null;
+
+                    return (
+                        <>
+                            <motion.div
+                                key="preview-backdrop"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                onClick={() => {
+                                    setPreviewProduct(null);
+                                    setPreviewIndex(0);
+                                }}
+                                className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-sm"
+                            />
+                            <motion.div
+                                key="preview-content"
+                                initial={{ opacity: 0, scale: 0.92 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.92 }}
+                                transition={{ duration: 0.25, ease: "easeOut" }}
+                                className="fixed inset-0 z-[60] flex items-center justify-center"
+                            >
+                                {/* Close button */}
+                                <button
+                                    onClick={() => {
+                                        setPreviewProduct(null);
+                                        setPreviewIndex(0);
+                                    }}
+                                    className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+                                >
+                                    <X size={20} />
+                                </button>
+
+                                {/* Image counter */}
+                                <div className="absolute left-1/2 top-4 z-10 -translate-x-1/2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+                                    {previewIndex + 1} / {allImages.length}
+                                </div>
+
+                                {/* Product info overlay */}
+                                <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-2xl bg-white/10 px-5 py-3 text-center text-white backdrop-blur-sm">
+                                    <p className="text-sm font-bold">{previewProduct.title}</p>
+                                    <p className="text-xs text-white/70">
+                                        {previewProduct.brand} &middot; ₹{previewProduct.price}
+                                    </p>
+                                </div>
+
+                                {/* Previous button */}
+                                {allImages.length > 1 && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPreviewIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+                                        }}
+                                        className="absolute left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+                                    >
+                                        <ChevronLeft size={22} />
+                                    </button>
+                                )}
+
+                                {/* Image */}
+                                <div
+                                    className="relative flex h-full w-full items-center justify-center p-4 sm:p-8"
+                                    onClick={() => {
+                                        setPreviewProduct(null);
+                                        setPreviewIndex(0);
+                                    }}
+                                >
+                                    <motion.div
+                                        key={previewIndex}
+                                        initial={{ opacity: 0, x: 40 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -40 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="relative h-full w-full max-h-[85vh] max-w-[90vw]"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <Image
+                                            src={currentImage}
+                                            alt={`${previewProduct.title} image ${previewIndex + 1}`}
+                                            fill
+                                            unoptimized
+                                            className="object-contain"
+                                            sizes="90vw"
+                                        />
+                                    </motion.div>
+                                </div>
+
+                                {/* Next button */}
+                                {allImages.length > 1 && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPreviewIndex((prev) => (prev + 1) % allImages.length);
+                                        }}
+                                        className="absolute right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+                                    >
+                                        <ChevronRight size={22} />
+                                    </button>
+                                )}
+                            </motion.div>
+                        </>
+                    );
+                })()}
+            </AnimatePresence>
         </div>
     );
 }

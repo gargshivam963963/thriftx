@@ -1,7 +1,14 @@
-# TODO: Add Lower subcategory filter for Men
+# Task: Dynamic Measurements & Image Preview on Admin Products Page
 
 ## Steps
-1. ✅ Update `FilterDrawer.tsx` – Show subcategories (including "Lower") under each gender in the mobile filter drawer
-2. ✅ Update `ShopContent.tsx` – Desktop sidebar already has correct logic to show "Lower" under Men subcategories
-3. ✅ Verify the changes
+
+- [x] 1. Analyze codebase and understand existing measurement logic
+- [x] 2. Plan changes
+- [x] 3. Add measurements display on admin product cards (grid + list view)
+- [x] 4. Add image preview modal when clicking product image
+- [x] 5. Add measurement helper and display on shop ProductCardGrid / ProductCardList
+- [x] 6. Refactor ShopContent with proper pagination (Load More) using shadcn components
+- [x] 7. Create API route for paginated product fetching
+- [x] 8. Fix measurement alignment (chest/waist left, length right) in shop cards
+- [x] 9. Build passes compilation successfully
 

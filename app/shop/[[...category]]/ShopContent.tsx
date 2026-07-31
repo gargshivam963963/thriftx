@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
 import {
     LayoutGrid,
     List,
@@ -15,13 +14,16 @@ import {
     Building2,
     Ruler,
     Banknote,
+    X,
     Star,
-    SlidersHorizontal,
+    Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import type { Product } from "@/lib/services/products";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
     Breadcrumb,
     BreadcrumbList,
@@ -30,6 +32,12 @@ import {
     BreadcrumbSeparator,
     BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+} from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import ProductCardGrid from "@/components/shop/ProductCardGrid";
 import ProductCardList from "@/components/shop/ProductCardList";
 import ProductCardSkeleton from "@/components/shop/ProductCardSkeleton";
@@ -37,8 +45,8 @@ import BrandFilter from "@/components/shop/BrandFilter";
 import SizeFilter from "@/components/shop/SizeFilter";
 import PriceFilter from "@/components/shop/PriceFilter";
 import MeasurementFilter from "@/components/shop/MeasurementFilter";
-import SortDropdown from "@/components/shop/SortDropdown";
 import FilterDrawer from "@/components/shop/FilterDrawer";
+import SortDropdown from "@/components/shop/SortDropdown";
 
 interface ShopContentProps {
     products: Product[];
@@ -59,7 +67,7 @@ interface ShopContentProps {
 
 const ITEMS_PER_PAGE = 12;
 
-// ─── Accordion Section ──────────────────────────────────────────────────────────
+// ─── Accordion Section (shadcn-like using Card) ─────────────────────────────
 
 function SidebarAccordion({
     icon,
@@ -75,14 +83,14 @@ function SidebarAccordion({
     const [open, setOpen] = useState(defaultOpen);
 
     return (
-        <div className="border-b border-neutral-200 pb-5 last:border-none">
+        <Card className="overflow-hidden border-neutral-200 dark:border-neutral-700">
             <button
                 type="button"
                 onClick={() => setOpen(!open)}
                 className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
             >
                 <span className="flex items-center gap-2">
-                    <span className="text-neutral-500">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
                         {icon}
                     </span>
                     {title}
@@ -110,14 +118,14 @@ function SidebarAccordion({
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </Card>
     );
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export default function ShopContent({
-    products,
+    products: initialProducts,
     genders,
     categories,
     brands,
@@ -134,10 +142,13 @@ export default function ShopContent({
 }: ShopContentProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const { trackSearch } = useAnalytics();
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-    const [currentPage, setCurrentPage] = useState(1);
+    const [products, setProducts] = useState<Product[]>(initialProducts);
     const [loading, setLoading] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [offset, setOffset] = useState(ITEMS_PER_PAGE);
+    const [hasMore, setHasMore] = useState(true);
+    const [totalCount, setTotalCount] = useState(initialProducts.length);
 
     const baseUrl = gender
         ? `/shop/${gender}${clothingCategory ? `/${clothingCategory}` : ""}`
@@ -165,10 +176,51 @@ export default function ShopContent({
         return { type: match[1] as "chest" | "waist" | "length" | "inseam", value: parseInt(match[2], 10) };
     }, [initialMeasurement]);
 
+    const searchTrackedRef = useRef(false);
+
+    useEffect(() => {
+        setOffset(ITEMS_PER_PAGE);
+        setHasMore(true);
+        setProducts(initialProducts);
+        setTotalCount(initialProducts.length);
+    }, [initialProducts, searchParams]);
+
+    // ── Load More Handler ──
+    const handleLoadMore = useCallback(async () => {
+        setLoadingMore(true);
+        try {
+            const params = new URLSearchParams();
+            if (gender) params.set("gender", gender);
+            if (clothingCategory) params.set("category", clothingCategory);
+            if (initialBrand) params.set("brand", initialBrand);
+            if (initialSize) params.set("size", initialSize);
+            if (initialPrice) params.set("price", initialPrice);
+            if (initialMeasurement) params.set("measurement", initialMeasurement);
+            if (initialSearch) params.set("search", initialSearch);
+            params.set("sort", initialSort);
+            params.set("limit", String(ITEMS_PER_PAGE));
+            params.set("offset", String(offset));
+
+            const res = await fetch(`/api/shop/products?${params.toString()}`);
+            const data = await res.json();
+
+            if (data.success) {
+                setProducts((prev) => [...prev, ...data.products]);
+                setOffset((prev) => prev + ITEMS_PER_PAGE);
+                setHasMore(data.hasMore);
+                setTotalCount((prev) => prev + data.products.length);
+            }
+        } catch (err) {
+            console.error("Failed to load more products:", err);
+        } finally {
+            setLoadingMore(false);
+        }
+    }, [offset, gender, clothingCategory, initialBrand, initialSize, initialPrice, initialMeasurement, initialSearch, initialSort]);
+
+    // Client-side measurement & search filter for initial products
     const filteredProducts = useMemo(() => {
         let results = products;
 
-        // Search filter
         if (initialSearch) {
             const q = initialSearch.toLowerCase().trim();
             results = results.filter(
@@ -179,7 +231,6 @@ export default function ShopContent({
             );
         }
 
-        // Measurement filter
         if (parsedMeasurement) {
             const { type, value } = parsedMeasurement;
             results = results.filter((p) => {
@@ -187,47 +238,15 @@ export default function ShopContent({
                 if (!fieldValue) return false;
                 const numVal = parseInt(fieldValue.toString().replace(/[^\d]/g, ""), 10);
                 if (isNaN(numVal)) return false;
-                // "plus" means >= value, otherwise exact match within range
                 if (initialMeasurement?.endsWith("-plus")) {
                     return numVal >= value;
                 }
-                // Range match: within ±2 inches of the selected value
                 return Math.abs(numVal - value) <= 2;
             });
         }
 
         return results;
     }, [products, initialSearch, parsedMeasurement, initialMeasurement]);
-
-    const searchTrackedRef = useRef(false);
-
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [searchParams]);
-
-    useEffect(() => {
-        if (initialSearch && !searchTrackedRef.current) {
-            searchTrackedRef.current = true;
-            trackSearch(initialSearch, filteredProducts.length);
-        }
-    }, [initialSearch, filteredProducts.length, trackSearch]);
-
-    const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const pageProducts = useMemo(
-        () => filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE),
-        [filteredProducts, startIndex]
-    );
-
-    const handleLoadMore = useCallback(() => {
-        setLoading(true);
-        setTimeout(() => {
-            setCurrentPage((prev) => prev + 1);
-            setLoading(false);
-        }, 400);
-    }, []);
-
-    const itemsLoaded = currentPage * ITEMS_PER_PAGE;
 
     // Build breadcrumb trail
     const breadcrumbs: { label: string; href: string; isLast: boolean }[] = [
@@ -244,51 +263,24 @@ export default function ShopContent({
 
     return (
         <div className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8 2xl:px-10">
-            {/* ── Breadcrumbs ──────────────────────────────── */}
-            {/* <div className="px-4 sm:px-6 lg:px-8 mb-6">
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        {breadcrumbs.map((crumb, i) => (
-                            <BreadcrumbItem key={crumb.href}>
-                                {i > 0 && <BreadcrumbSeparator />}
-                                {crumb.isLast ? (
-                                    <BreadcrumbPage className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-                                        {crumb.label}
-                                    </BreadcrumbPage>
-                                ) : (
-                                    <BreadcrumbLink
-                                        href={crumb.href}
-                                        className="text-xs text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 flex items-center gap-1"
-                                    >
-                                        {i === 0 && <Home size={10} />}
-                                        {crumb.label}
-                                    </BreadcrumbLink>
-                                )}
-                            </BreadcrumbItem>
-                        ))}
-                    </BreadcrumbList>
-                </Breadcrumb>
-            </div> */}
-
             <div className="flex flex-col gap-10 lg:flex-row lg:gap-14">
                 {/* ── SIDEBAR (Desktop) ─────────────────────────────── */}
-                <aside className="hidden lg:sticky lg:top-24 lg:flex g:w-[260px] xl:w-[280px] lg:shrink-0 lg:self-start lg:flex-col lg:gap-5">
+                <aside className="hidden lg:sticky lg:top-24 lg:flex lg:w-[260px] xl:w-[280px] lg:shrink-0 lg:self-start lg:flex-col lg:gap-5">
                     <div className="space-y-5">
                         <div className="mb-4 flex items-center justify-between">
-
-                            <h2 className="text-3xl font-bold">
-                                Filters
-                            </h2>
-
+                            <h2 className="text-3xl font-bold">Filters</h2>
                             {hasActiveFilters && (
-                                <Link href={baseUrl} className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 transition hover:text-neutral-900 dark:hover:text-neutral-200">
+                                <Link
+                                    href={baseUrl}
+                                    className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 transition hover:text-neutral-900 dark:hover:text-neutral-200"
+                                >
                                     <RotateCcw size={11} /> Reset
                                 </Link>
                             )}
                         </div>
 
                         <div className="space-y-3">
-                            {/* Category — default open */}
+                            {/* Category - default open */}
                             <SidebarAccordion
                                 icon={<Tags size={13} className="text-neutral-500" />}
                                 title="Category"
@@ -406,7 +398,7 @@ export default function ShopContent({
                                 </Button>
                             </div>
 
-                            {/* Active filter chips */}
+                            {/* Active filter chips - using shadcn Badge */}
                             {hasActiveFilters && (
                                 <div className="hidden items-center gap-1.5 sm:flex">
                                     {initialBrand && (
@@ -418,9 +410,11 @@ export default function ShopContent({
                                                     )
                                                 )
                                             ).toString()}`}
-                                            className="flex items-center gap-1 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-neutral-600 transition hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
                                         >
-                                            {initialBrand} <span className="ml-0.5 text-neutral-400">×</span>
+                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700">
+                                                {initialBrand}
+                                                <X size={10} className="ml-1" />
+                                            </Badge>
                                         </Link>
                                     )}
                                     {initialSize && (
@@ -432,9 +426,11 @@ export default function ShopContent({
                                                     )
                                                 )
                                             ).toString()}`}
-                                            className="flex items-center gap-1 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-neutral-600 transition hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
                                         >
-                                            Size {initialSize} <span className="ml-0.5 text-neutral-400">×</span>
+                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700">
+                                                Size {initialSize}
+                                                <X size={10} className="ml-1" />
+                                            </Badge>
                                         </Link>
                                     )}
                                     {initialPrice && (
@@ -446,9 +442,11 @@ export default function ShopContent({
                                                     )
                                                 )
                                             ).toString()}`}
-                                            className="flex items-center gap-1 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-neutral-600 transition hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
                                         >
-                                            {initialPrice} <span className="ml-0.5 text-neutral-400">×</span>
+                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700">
+                                                {initialPrice}
+                                                <X size={10} className="ml-1" />
+                                            </Badge>
                                         </Link>
                                     )}
                                     {initialMeasurement && (
@@ -460,16 +458,17 @@ export default function ShopContent({
                                                     )
                                                 )
                                             ).toString()}`}
-                                            className="flex items-center gap-1 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-neutral-600 transition hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
                                         >
-                                            {initialMeasurement
-                                                .replace(/^chest-/i, "Chest ")
-                                                .replace(/^waist-/i, "Waist ")
-                                                .replace(/^length-/i, "Length ")
-                                                .replace(/^inseam-/i, "Inseam ")
-                                                .replace(/-plus/g, "+")
-                                                .replace(/-/g, "–")}
-                                            <span className="ml-0.5 text-neutral-400">×</span>
+                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700">
+                                                {initialMeasurement
+                                                    .replace(/^chest-/i, "Chest ")
+                                                    .replace(/^waist-/i, "Waist ")
+                                                    .replace(/^length-/i, "Length ")
+                                                    .replace(/^inseam-/i, "Inseam ")
+                                                    .replace(/-plus/g, "+")
+                                                    .replace(/-/g, "–")}
+                                                <X size={10} className="ml-1" />
+                                            </Badge>
                                         </Link>
                                     )}
                                 </div>
@@ -487,7 +486,19 @@ export default function ShopContent({
                     </div>
 
                     {/* Product Grid / List */}
-                    {filteredProducts.length === 0 ? (
+                    {loading ? (
+                        <div
+                            className={
+                                viewMode === "grid"
+                                    ? "grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4"
+                                    : "flex flex-col gap-5"
+                            }
+                        >
+                            {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+                                <ProductCardSkeleton key={i} list={viewMode === "list"} />
+                            ))}
+                        </div>
+                    ) : filteredProducts.length === 0 ? (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -503,7 +514,7 @@ export default function ShopContent({
                             {hasActiveFilters && (
                                 <Link
                                     href={baseUrl}
-                                    className="mt-6 flex items-center gap-2 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+                                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
                                 >
                                     <RotateCcw size={14} /> Reset Filters
                                 </Link>
@@ -511,125 +522,106 @@ export default function ShopContent({
                         </motion.div>
                     ) : (
                         <>
-                            {loading ? (
-                                <div
-                                    className={
-                                        viewMode === "grid"
-                                            ? "grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4"
-                                            : "flex flex-col gap-5"
-                                    }
+                            {viewMode === "grid" ? (
+                                <motion.div
+                                    key="grid"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4"
                                 >
-                                    {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
-                                        <ProductCardSkeleton key={i} list={viewMode === "list"} />
+                                    {filteredProducts.map((product) => (
+                                        <ProductCardGrid
+                                            key={product.id}
+                                            id={product.id}
+                                            slug={product.slug}
+                                            brand={product.brand}
+                                            title={product.title}
+                                            price={product.price}
+                                            retailPrice={product.retailPrice}
+                                            image={product.primaryImage || product.images?.[0] || ""}
+                                            category={product.category}
+                                            chest={product.chest}
+                                            waist={product.waist}
+                                            length={product.length}
+                                            onlyOneLeft={false}
+                                        />
                                     ))}
-                                </div>
+                                </motion.div>
                             ) : (
-                                <AnimatePresence mode="wait">
-                                    {viewMode === "grid" ? (
-                                        <motion.div
-                                            key="grid"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4"
-                                        >
-                                            {pageProducts.map((product) => (
-                                                <ProductCardGrid
-                                                    key={product.id}
-                                                    id={product.id}
-                                                    slug={product.slug}
-                                                    brand={product.brand}
-                                                    title={product.title}
-                                                    price={product.price}
-                                                    retailPrice={product.retailPrice}
-                                                    image={product.primaryImage || product.images?.[0] || ""}
-                                                    category={product.category}
-                                                    chest={product.chest}
-                                                    waist={product.waist}
-                                                    length={product.length}
-                                                    onlyOneLeft={false}
-                                                />
-                                            ))}
-                                        </motion.div>
-                                    ) : (
-                                        <motion.div
-                                            key="list"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            className="flex flex-col gap-5"
-                                        >
-                                            {pageProducts.map((product) => (
-                                                <ProductCardList
-                                                    key={product.id}
-                                                    id={product.id}
-                                                    slug={product.slug}
-                                                    brand={product.brand}
-                                                    title={product.title}
-                                                    price={product.price}
-                                                    retailPrice={product.retailPrice}
-                                                    image={product.primaryImage || product.images?.[0] || ""}
-                                                    category={product.category}
-                                                    chest={product.chest}
-                                                    waist={product.waist}
-                                                    length={product.length}
-                                                    material={product.material}
-                                                    description={product.description}
-                                                    onlyOneLeft={false}
-                                                />
-                                            ))}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                <motion.div
+                                    key="list"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="flex flex-col gap-5"
+                                >
+                                    {filteredProducts.map((product) => (
+                                        <ProductCardList
+                                            key={product.id}
+                                            id={product.id}
+                                            slug={product.slug}
+                                            brand={product.brand}
+                                            title={product.title}
+                                            price={product.price}
+                                            retailPrice={product.retailPrice}
+                                            image={product.primaryImage || product.images?.[0] || ""}
+                                            category={product.category}
+                                            chest={product.chest}
+                                            waist={product.waist}
+                                            length={product.length}
+                                            material={product.material}
+                                            description={product.description}
+                                            onlyOneLeft={false}
+                                        />
+                                    ))}
+                                </motion.div>
                             )}
 
-                            {/* Load More Button */}
-                            {totalPages > 1 && (
+                            {/* Load More / Pagination - using shadcn Progress and Button */}
+                            {hasMore && (
                                 <div className="mt-10 flex flex-col items-center gap-3">
-                                    {/* Progress bar */}
+                                    {/* Progress bar - shadcn Progress component */}
                                     <div className="flex w-full max-w-xs items-center gap-3">
-                                        <div className="h-1 flex-1 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
-                                            <div
-                                                className="h-full rounded-full bg-neutral-900 transition-all duration-500 dark:bg-neutral-100"
-                                                style={{
-                                                    width: `${Math.min((itemsLoaded / filteredProducts.length) * 100, 100)}%`,
-                                                }}
-                                            />
-                                        </div>
+                                        <Progress
+                                            value={Math.min((filteredProducts.length / (totalCount || filteredProducts.length + ITEMS_PER_PAGE)) * 100, 100)}
+                                            className="h-1 bg-neutral-100 dark:bg-neutral-800"
+                                        />
                                         <span className="shrink-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500">
-                                            {Math.min(itemsLoaded, filteredProducts.length)}/{filteredProducts.length}
+                                            {filteredProducts.length}+
                                         </span>
                                     </div>
 
-                                    {currentPage < totalPages ? (
-                                        <Button
-                                            type="button"
-                                            onClick={handleLoadMore}
-                                            loading={loading}
-                                            loadingText="Loading..."
-                                            variant="outline"
-                                            size="lg"
-                                            fullWidth
-                                            className="max-w-xs rounded-2xl shadow-sm"
-                                        >
-                                            <ChevronDown size={16} />
-                                            Load More ({filteredProducts.length - itemsLoaded} remaining)
-                                        </Button>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-1">
-                                            <span className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
-                                                Showing all {filteredProducts.length} items
-                                            </span>
-                                            <Button
-                                                type="button"
-                                                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                                                variant="ghost"
-                                                size="sm"
-                                            >
-                                                Back to top ↑
-                                            </Button>
-                                        </div>
-                                    )}
+                                    <Button
+                                        type="button"
+                                        onClick={handleLoadMore}
+                                        loading={loadingMore}
+                                        loadingText="Loading..."
+                                        variant="outline"
+                                        size="lg"
+                                        rounded="xl"
+                                        fullWidth
+                                        className="max-w-xs shadow-sm"
+                                    >
+                                        <ChevronDown size={16} />
+                                        Load More
+                                    </Button>
+                                </div>
+                            )}
+
+                            {!hasMore && filteredProducts.length > 0 && (
+                                <div className="mt-10 flex flex-col items-center gap-2">
+                                    <Badge variant="secondary" size="md" rounded="full">
+                                        Showing all {filteredProducts.length} items
+                                    </Badge>
+                                    <Button
+                                        type="button"
+                                        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                                        variant="ghost"
+                                        size="sm"
+                                        rounded="lg"
+                                        className="mt-2"
+                                    >
+                                        Back to top ↑
+                                    </Button>
                                 </div>
                             )}
                         </>
@@ -639,3 +631,4 @@ export default function ShopContent({
         </div>
     );
 }
+

@@ -15,64 +15,64 @@ interface ProductInformationProps {
     ) => React.ReactNode;
 }
 
-const CATEGORY_MEASUREMENTS: Record<
-    string,
-    {
-        key: string;
-        label: string;
-        placeholder: string;
-    }[]
-> = {
-    "t-shirts": [
+const UPPER_CATEGORIES = [
+    "T-Shirts",
+    "Shirts",
+    "Hoodies",
+    "Sweatshirts",
+    "Jackets",
+    "Blazers",
+    "Tops",
+];
+
+const LOWER_CATEGORIES = [
+    "Jeans",
+    "Cargo",
+    "Trousers",
+    "Shorts",
+    "Skirts",
+    "Lower",
+];
+
+function getMeasurementsForCategory(category: string) {
+    const cat = category?.trim();
+
+    if (UPPER_CATEGORIES.includes(cat)) {
+        return [
+            { key: "chest", label: "Chest", placeholder: '22"' },
+            { key: "length", label: "Length", placeholder: '29"' },
+        ];
+    }
+
+    if (LOWER_CATEGORIES.includes(cat)) {
+        return [
+            { key: "waist", label: "Waist", placeholder: '34"' },
+            { key: "length", label: "Length", placeholder: '42"' },
+        ];
+    }
+
+    if (cat === "Dresses") {
+        return [
+            { key: "chest", label: "Chest", placeholder: '22"' },
+            { key: "waist", label: "Waist", placeholder: '34"' },
+            { key: "length", label: "Length", placeholder: '42"' },
+        ];
+    }
+
+    // Default fallback
+    return [
         { key: "chest", label: "Chest", placeholder: '22"' },
-        { key: "length", label: "Length", placeholder: '29"' },
-        { key: "shoulder", label: "Shoulder", placeholder: '19"' },
-    ],
-
-    shirts: [
-        { key: "chest", label: "Chest", placeholder: '22"' },
-        { key: "length", label: "Length", placeholder: '30"' },
-        { key: "shoulder", label: "Shoulder", placeholder: '18"' },
-        { key: "sleeve", label: "Sleeve", placeholder: '25"' },
-    ],
-
-    hoodies: [
-        { key: "chest", label: "Chest", placeholder: '24"' },
-        { key: "length", label: "Length", placeholder: '28"' },
-    ],
-
-    jeans: [
         { key: "waist", label: "Waist", placeholder: '34"' },
-        { key: "inseam", label: "Inseam", placeholder: '30"' },
-        { key: "length", label: "Length", placeholder: '42"' },
-    ],
-
-    trousers: [
-        { key: "waist", label: "Waist", placeholder: '34"' },
-        { key: "inseam", label: "Inseam", placeholder: '31"' },
-        { key: "length", label: "Length", placeholder: '41"' },
-    ],
-
-    shorts: [
-        { key: "waist", label: "Waist", placeholder: '34"' },
-        { key: "length", label: "Length", placeholder: '20"' },
-    ],
-
-    default: [
-        { key: "chest", label: "Chest", placeholder: '22"' },
-        { key: "waist", label: "Waist", placeholder: '34"' },
-    ],
-};
-
-const measurements =
-    // CATEGORY_MEASUREMENTS[form.categorySlug] ??
-    CATEGORY_MEASUREMENTS.default;
+    ];
+}
 
 export default function ProductInformation({
     form,
     handleChange,
     renderField,
 }: ProductInformationProps) {
+    const measurements = getMeasurementsForCategory(form.category);
+
     const productFields = PRODUCT_FIELDS.filter(
         (field) => field.section === "product"
     );

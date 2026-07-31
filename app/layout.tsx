@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { AuthProvider } from "@/lib/AuthContext";
 import { CartProvider } from "@/lib/CartContext";
 import { ThemeProvider } from "@/lib/ThemeContext";
-import { AnalyticsProvider } from "@/lib/analytics/AnalyticsContext";
+import AnalyticsProviderWrapper from "@/components/AnalyticsProviderWrapper";
 import BottomNav from "@/components/BottomNav";
 import { Toaster } from "sonner";
 import { siteConfig } from "@/lib/seo";
@@ -152,7 +152,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <CartProvider>
-              <AnalyticsProvider>
+              <AnalyticsProviderWrapper>
                 <div className="pointer-events-none fixed left-4 top-4 z-[60] hidden">
                   <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-xl backdrop-blur-md">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
@@ -175,7 +175,7 @@ export default function RootLayout({
                   closeButton
                   duration={3000}
                 />
-              </AnalyticsProvider>
+              </AnalyticsProviderWrapper>
             </CartProvider>
           </AuthProvider>
         </ThemeProvider>

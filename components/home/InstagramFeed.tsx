@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Instagram } from "lucide-react";
+import { Instagram } from "lucide-react";
 
-import { Container } from "@/components/ui/Container";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/Container";
 import {
     FadeUp,
     StaggerContainer,
@@ -23,92 +24,58 @@ const posts = [
 
 export default function InstagramFeed() {
     return (
-        <section className="bg-neutral-50 py-24">
-
+        <section className="bg-white py-24 dark:bg-neutral-900">
             <Container>
-
                 <FadeUp>
-
                     <div className="mb-14 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-
-                        <div>
-
-                            <span className="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500">
+                        <div className="space-y-4">
+                            <Badge variant="secondary" size="md" rounded="full">
                                 Instagram
-                            </span>
-
-                            <h2 className="mt-3 text-4xl font-bold tracking-tight text-neutral-900">
+                            </Badge>
+                            <h2 className="text-h2 font-bold text-neutral-900 dark:text-neutral-100">
                                 Follow Our Journey
                             </h2>
-
-                            <p className="mt-4 max-w-2xl text-neutral-600">
-                                Daily drops, styling inspiration and
-                                premium thrift finds.
+                            <p className="max-w-xl text-body text-neutral-600 dark:text-neutral-400">
+                                Daily drops, styling inspiration and premium thrift finds.
                             </p>
-
                         </div>
-
-                        <Button
-                            variant="outline"
-                        >
-                            <Link
-                                href="https://instagram.com/thriftx"
-                                target="_blank"
-                            >
-                                <Instagram className="mr-2 h-4 w-4" />
+                        <Link href="https://instagram.com/thriftx" target="_blank">
+                            <Button variant="outline" size="lg" leftIcon={<Instagram />}>
                                 Follow Us
-                            </Link>
-                        </Button>
-
+                            </Button>
+                        </Link>
                     </div>
-
                 </FadeUp>
 
                 <StaggerContainer className="grid grid-cols-2 gap-5 md:grid-cols-3">
-
                     {posts.map((image, index) => (
-
                         <StaggerItem key={index}>
-
                             <Link
                                 href="https://instagram.com/thriftx"
                                 target="_blank"
                                 className="group block"
                             >
-
-                                <div className="relative aspect-square overflow-hidden rounded-3xl">
-
+                                <div className="relative aspect-square overflow-hidden rounded-2xl">
                                     <Image
                                         src={image}
                                         alt={`Instagram ${index + 1}`}
                                         fill
-                                        className="object-cover transition duration-700 group-hover:scale-110"
+                                        sizes="(max-width: 768px) 50vw, 33vw"
+                                        className="object-cover transition-all duration-700 group-hover:scale-110"
                                     />
-
-                                    <div className="absolute inset-0 bg-black/0 transition duration-300 group-hover:bg-black/30" />
-
-                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition duration-300 group-hover:opacity-100">
-
-                                        <div className="rounded-full bg-white p-4">
-
-                                            <ArrowUpRight className="h-5 w-5" />
-
+                                    <div className="absolute inset-0 bg-black/0 transition-all duration-300 group-hover:bg-black/40" />
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-300 group-hover:opacity-100">
+                                        <div className="rounded-full bg-white/90 p-3 shadow-lg backdrop-blur-sm">
+                                            <Instagram className="h-5 w-5 text-neutral-900" />
                                         </div>
-
                                     </div>
-
                                 </div>
-
                             </Link>
-
                         </StaggerItem>
-
                     ))}
-
                 </StaggerContainer>
-
             </Container>
-
         </section>
     );
 }
+

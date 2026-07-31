@@ -3,323 +3,209 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-    ArrowRight,
-    ShieldCheck,
-    Sparkles,
-    Truck,
-    Zap,
-} from "lucide-react";
+import { ArrowRight, ShieldCheck, Sparkles, Truck, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/Container";
-import { GlassCard } from "@/components/ui/GlassCard";
-import {
-    FadeIn,
-    FadeUp,
-    ScaleIn,
-} from "@/components/animations";
+import { FadeUp, ScaleIn } from "@/components/animations";
 
 const heroStats = [
-    {
-        value: "5000+",
-        label: "Curated Pieces",
-    },
-    {
-        value: "150+",
-        label: "Premium Brands",
-    },
-    {
-        value: "100%",
-        label: "Quality Checked",
-    },
+    { value: "5000+", label: "Curated Pieces" },
+    { value: "150+", label: "Premium Brands" },
+    { value: "100%", label: "Quality Checked" },
 ];
 
-const trustItems = [
-    {
-        icon: ShieldCheck,
-        title: "Quality Checked",
-        subtitle: "Every item inspected",
-    },
-    {
-        icon: Truck,
-        title: "Fast Shipping",
-        subtitle: "Quick & secure delivery",
-    },
-    {
-        icon: Sparkles,
-        title: "Unique Pieces",
-        subtitle: "Only one available",
-    },
+const floatingFeatures = [
+    { icon: ShieldCheck, title: "Quality Checked", subtitle: "Every item inspected" },
+    { icon: Truck, title: "Fast Shipping", subtitle: "Quick & secure delivery" },
+    { icon: Sparkles, title: "Unique Pieces", subtitle: "Only one available" },
 ];
 
 export default function Hero() {
     return (
-        <section className="relative overflow-hidden bg-white">
-            {/* Background */}
-
-            <div className="absolute inset-0">
-
-                <div className="absolute left-0 top-0 h-[500px] w-[500px] rounded-full bg-neutral-200/30 blur-3xl" />
-
-                <div className="absolute right-0 bottom-0 h-[450px] w-[450px] rounded-full bg-neutral-300/30 blur-3xl" />
-
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,.7),transparent_65%)]" />
-
+        <section className="relative min-h-[90vh] overflow-hidden bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-950 dark:to-neutral-900">
+            {/* Background decorative elements */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-neutral-200/40 to-transparent blur-3xl dark:from-neutral-800/30" />
+                <div className="absolute -bottom-32 -right-32 h-[450px] w-[450px] rounded-full bg-gradient-to-tl from-neutral-300/30 to-transparent blur-3xl dark:from-neutral-700/20" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,0,0,0.02),transparent_60%)] dark:bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.03),transparent_60%)]" />
             </div>
 
             <Container className="relative z-10">
-                <div className="grid min-h-[90vh] items-center gap-28 py-24 lg:grid-cols-[0.75fr_1.25fr]">
-                    {/* LEFT */}
-                    <FadeUp>
+                <div className="flex min-h-[90vh] flex-col items-center gap-16 py-20 lg:flex-row lg:gap-24">
+                    {/* ─── LEFT: Content ─────────────────────────────────── */}
+                    <div className="flex-1 pt-8 lg:pt-16">
+                        <FadeUp>
+                            <div className="space-y-6">
+                                {/* Badge */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.5 }}
+                                >
+                                    <Badge variant="outline" size="lg" rounded="full" className="border-neutral-300 bg-white/70 px-4 py-2 text-xs font-semibold tracking-wide dark:border-neutral-700 dark:bg-neutral-900/70">
+                                        ✨ Curated Premium Thrift Fashion
+                                    </Badge>
+                                </motion.div>
 
-                        <div className="space-y-8">
-                            <motion.span
-                                initial={{
-                                    opacity: 0,
-                                    y: 10,
-                                }}
-                                animate={{
-                                    opacity: 1,
-                                    y: 0,
-                                }}
-                                transition={{
-                                    duration: 0.5,
-                                }}
-                                className="inline-flex items-center rounded-full border border-neutral-200 bg-white/70 px-4 py-2 text-sm font-medium backdrop-blur-xl"
-                            >
-                                ✨ Curated Premium Thrift Fashion
-                            </motion.span>
-
-                            <div className="space-y-5">
-                                <h1 className="text-display font-serif font-bold text-neutral-900">
-                                    Discover
-                                    <br />
-
-                                    Premium
-                                    <br />
-
-                                    <span className="text-neutral-500">
-                                        Fashion.
+                                {/* Headline */}
+                                <h1 className="text-display font-serif font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                                    Discover{" "}
+                                    <span className="bg-gradient-to-r from-neutral-900 via-neutral-600 to-neutral-900 bg-clip-text text-transparent dark:from-neutral-100 dark:via-neutral-400 dark:to-neutral-100">
+                                        Premium
                                     </span>
-
+                                    <br />
+                                    Fashion.
                                 </h1>
 
-                                <p className="
-max-w-[620px]
-text-body
-leading-9
-text-neutral-600
-">
-                                    Handpicked branded clothing that
-                                    combines luxury, sustainability,
-                                    and affordability. Every piece is
-                                    individually inspected before it
-                                    reaches your wardrobe.
+                                <p className="max-w-lg text-body leading-relaxed text-neutral-600 dark:text-neutral-400">
+                                    Handpicked branded clothing that combines luxury, sustainability,
+                                    and affordability. Every piece is individually inspected before
+                                    it reaches your wardrobe.
                                 </p>
-                            </div>
 
-                            <div className="flex flex-wrap items-center gap-5 pt-4">
-                                <Link href="/shop?gender=men">
-                                    <Button
-                                        size="lg"
-                                        className="group"
-                                    >
-                                        Shop Men
+                                {/* CTA Buttons */}
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <Link href="/shop?gender=men">
+                                        <Button size="lg" rightIcon={<ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />}>
+                                            Shop Men
+                                        </Button>
+                                    </Link>
+                                    <Link href="/shop?gender=women">
+                                        <Button variant="outline" size="lg">
+                                            Shop Women
+                                        </Button>
+                                    </Link>
+                                </div>
 
-                                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                                    </Button>
-                                </Link>
+                                {/* Stats Bar */}
+                                <div className="grid grid-cols-3 divide-x divide-neutral-200 overflow-hidden rounded-2xl border border-neutral-200 bg-white/80 shadow-sm backdrop-blur-xl dark:divide-neutral-700 dark:border-neutral-700 dark:bg-neutral-900/80">
+                                    {heroStats.map((item) => (
+                                        <div key={item.label} className="px-4 py-5 text-center sm:px-6 sm:py-6">
+                                            <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 sm:text-3xl">
+                                                {item.value}
+                                            </p>
+                                            <p className="mt-1 text-xs font-medium text-neutral-500 dark:text-neutral-400 sm:text-sm">
+                                                {item.label}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
 
-                                <Link href="/shop?gender=women">
-                                    <Button
-                                        variant="outline"
-                                        size="lg"
-                                    >
-                                        Shop Women
-                                    </Button>
-                                </Link>
-                            </div>
-
-                            <div className="
-mt-12
-flex
-overflow-hidden
-rounded-[28px]
-border
-border-neutral-200
-bg-white/80
-backdrop-blur-xl
-shadow-lg
-">
-                                {heroStats.map((item, index) => (
-                                    <div
-                                        key={item.label}
-                                        className={`
-            flex-1
-            px-8
-            py-6
-            ${index !== heroStats.length - 1 ? "border-r border-neutral-200" : ""}
-        `}
-                                    >
-                                        <p className="text-4xl font-bold text-neutral-900">
-                                            {item.value}
+                                {/* Same-Day Delivery Banner */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3, duration: 0.4 }}
+                                    className="inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-5 py-3 dark:from-emerald-950/30 dark:to-emerald-900/20"
+                                >
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/20">
+                                        <Zap size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-emerald-900 dark:text-emerald-300">
+                                            Free Same-Day Delivery in Panipat
                                         </p>
-
-                                        <p className="mt-2 text-sm text-neutral-500">
-                                            {item.label}
+                                        <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                                            Order before 2 PM — delivered today! 🚀
                                         </p>
                                     </div>
-                                ))}
+                                </motion.div>
                             </div>
+                        </FadeUp>
+                    </div>
 
-                            {/* ⚡ Panipat Local Delivery */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.35, duration: 0.4 }}
-                                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-50/80 px-5 py-3 backdrop-blur-sm"
-                            >
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
-                                    <Zap size={16} />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-emerald-900">
-                                        Free Same-Day Delivery in Panipat
-                                    </p>
-                                    <p className="text-[10px] text-emerald-600">
-                                        Order before 2 PM — delivered today! 🚀
-                                    </p>
-                                </div>
-                            </motion.div>
-                        </div>
-                    </FadeUp>
-
-                    {/* RIGHT */}
-
-                    <ScaleIn>
+                    {/* ─── RIGHT: Visual ─────────────────────────────────── */}
+                    <ScaleIn className="flex-1">
                         <div className="relative">
-                            <div className="relative flex justify-end">
+                            {/* Main Image */}
+                            <div className="relative mx-auto aspect-[4/5] max-w-lg overflow-hidden rounded-3xl shadow-2xl shadow-neutral-900/10 dark:shadow-black/30">
                                 <Image
                                     src="/images/hero.jpg"
                                     alt="THRIFTX Premium Fashion"
-                                    width={1400}
-                                    height={1700}
+                                    fill
                                     priority
                                     quality={100}
-                                    className="
-            h-[920px]
-            w-[108%]
-            max-w-none
-            rounded-[44px]
-            object-cover
-            shadow-[0_70px_120px_rgba(0,0,0,.18)]
-            transition-all
-            duration-700
-            hover:scale-[1.02]
-        "
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover transition-all duration-700 hover:scale-105"
                                 />
-
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                             </div>
 
-                            <GlassCard className="absolute -bottom-10 left-10 max-w-[300px] rounded-[28px] p-6">
-
-                                <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-neutral-500">
+                            {/* Floating Badge - Bottom Left */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{ delay: 0.4, duration: 0.5 }}
+                                className="absolute -bottom-6 -left-4 hidden max-w-[240px] rounded-2xl border border-neutral-200/80 bg-white/90 p-5 shadow-xl backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/90 lg:block"
+                            >
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-neutral-500 dark:text-neutral-400">
                                     Featured Collection
-                                </span>
-
-                                <h3 className="mt-3 text-2xl font-semibold text-neutral-900">
+                                </p>
+                                <h3 className="mt-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                                     Curated Premium
                                 </h3>
-
-                                <p className="mt-3 text-sm leading-7 text-neutral-600">
-                                    Every product is individually photographed,
-                                    inspected and carefully selected before
-                                    reaching your wardrobe.
+                                <p className="mt-2 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
+                                    Every product individually photographed and inspected before reaching your wardrobe.
                                 </p>
+                            </motion.div>
 
-                            </GlassCard>
-
-                            <GlassCard className="
-absolute
--right-6
-top-24
-hidden
-max-w-[260px]
-rounded-[28px]
-p-6
-xl:block
-">
-
+                            {/* Floating Features - Right Side */}
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.5, duration: 0.5 }}
+                                className="absolute -right-8 top-12 hidden max-w-[220px] space-y-3 rounded-2xl border border-neutral-200/80 bg-white/90 p-5 shadow-xl backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/90 xl:block"
+                            >
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-neutral-500 dark:text-neutral-400">
+                                    Why THRIFTX
+                                </p>
                                 <div className="space-y-3">
-
-                                    <p className="text-xs uppercase tracking-[0.25em] text-neutral-500">
-                                        Why THRIFTX
-                                    </p>
-
-                                    <div className="space-y-3">
-                                        {trustItems.map(({ icon: Icon, title, subtitle }) => (
-                                            <div
-                                                key={title}
-                                                className="flex items-center gap-4 rounded-2xl p-2 transition-all duration-300 hover:bg-neutral-100/60"
-                                            >
-                                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-neutral-900 text-white">
-                                                    <Icon className="h-5 w-5" />
-                                                </div>
-
-                                                <div>
-                                                    <p className="text-sm font-semibold text-neutral-900">
-                                                        {title}
-                                                    </p>
-
-                                                    <p className="text-xs text-neutral-500">
-                                                        {subtitle}
-                                                    </p>
-                                                </div>
+                                    {floatingFeatures.map(({ icon: Icon, title, subtitle }) => (
+                                        <div
+                                            key={title}
+                                            className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-neutral-100/60 dark:hover:bg-neutral-800/60"
+                                        >
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900">
+                                                <Icon size={16} />
                                             </div>
-                                        ))}
-
-                                    </div>
-
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                                                    {title}
+                                                </p>
+                                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                                    {subtitle}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-
-                            </GlassCard>
-
+                            </motion.div>
                         </div>
                     </ScaleIn>
-
                 </div>
 
-                <FadeIn>
-
-                    <div className="flex justify-center pb-6">
-
-                        <motion.div
-                            whileHover={{
-                                scale: 1.02,
-                            }}
-                            animate={{
-                                y: [0, 10, 0],
-                            }}
-                            transition={{
-                                duration: 2,
-                                repeat: Infinity,
-                            }}
-                            className="flex flex-col items-center gap-2"
-                        >
-                            <span className="text-xs uppercase tracking-[0.35em] text-neutral-400">
-                                Scroll
-                            </span>
-
-                            <div className="h-12 w-[2px] rounded-full bg-neutral-300" />
-                        </motion.div>
-
-                    </div>
-
-                </FadeIn>
-
+                {/* Scroll Indicator */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1, duration: 0.6 }}
+                    className="flex justify-center pb-8"
+                >
+                    <motion.div
+                        animate={{ y: [0, 8, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        className="flex flex-col items-center gap-2"
+                    >
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
+                            Scroll
+                        </span>
+                        <div className="h-10 w-[1.5px] rounded-full bg-neutral-300 dark:bg-neutral-600" />
+                    </motion.div>
+                </motion.div>
             </Container>
-
         </section>
     );
 }
+

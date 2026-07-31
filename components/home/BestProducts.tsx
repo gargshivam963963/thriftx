@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import ProductCard from "@/components/ProductCard";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/Container";
 import type { Product } from "@/lib/services/products";
@@ -17,52 +18,35 @@ interface BestProductsProps {
     products: Product[];
 }
 
-export default function BestProducts({
-    products,
-}: BestProductsProps) {
+export default function BestProducts({ products }: BestProductsProps) {
     return (
-        <section className="bg-white py-20">
-
+        <section className="bg-neutral-50 py-16 dark:bg-neutral-950 md:py-24">
             <Container>
-
                 <FadeUp>
-
-                    <div className="mb-14 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-
+                    <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
                         <div>
-
-                            <span className="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500">
-                                Trending
-                            </span>
-
-                            <h2 className="mt-3 text-4xl font-bold tracking-tight text-neutral-900">
+                            <Badge variant="secondary" size="md" rounded="full" className="mb-4">
+                                Trending Now
+                            </Badge>
+                            <h2 className="text-h2 font-bold text-neutral-900 dark:text-neutral-100">
                                 Best Picks
                             </h2>
-
-                            <p className="mt-4 max-w-2xl text-neutral-600">
-                                Fresh arrivals handpicked by our team.
-                                Every item is unique and available in
-                                limited quantity.
+                            <p className="mt-3 max-w-xl text-body text-neutral-600 dark:text-neutral-400">
+                                Fresh arrivals handpicked by our team. Every item is unique and
+                                available in limited quantity.
                             </p>
-
                         </div>
-
                         <Link href="/shop">
-                            <Button variant="outline">
+                            <Button variant="outline" size="lg" rightIcon={<ArrowRight />}>
                                 View All
-                                <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </Link>
                     </div>
-
                 </FadeUp>
 
-                <StaggerContainer className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
-
+                <StaggerContainer className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6">
                     {products.map((product) => (
-
                         <StaggerItem key={product.id}>
-
                             <ProductCard
                                 id={product.id}
                                 slug={product.slug}
@@ -70,20 +54,20 @@ export default function BestProducts({
                                 title={product.title}
                                 price={product.price}
                                 retailPrice={product.retailPrice}
-                                image={product.primaryImage ?? product.images?.[0] ?? "/placeholder.webp"}
+                                image={
+                                    product.primaryImage ??
+                                    product.images?.[0] ??
+                                    "/placeholder.webp"
+                                }
                                 category={product.category}
                                 chest={product.chest}
                                 waist={product.waist}
                             />
-
                         </StaggerItem>
-
                     ))}
-
                 </StaggerContainer>
-
             </Container>
-
         </section>
     );
 }
+

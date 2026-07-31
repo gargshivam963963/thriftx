@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     X,
@@ -8,6 +8,11 @@ import {
     Star,
     ChevronLeft,
     ChevronRight,
+    Sparkles,
+    Wand2,
+    CheckCircle2,
+    RotateCcw,
+    Check,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -56,6 +61,12 @@ export interface ImageItem {
     isExisting: boolean;
 }
 
+interface MeasurementField {
+    key: string;
+    label: string;
+    placeholder: string;
+}
+
 interface ProductFormModalProps {
     open: boolean;
     onClose: () => void;
@@ -67,6 +78,62 @@ interface ProductFormModalProps {
         images: string[];
     } | null;
 }
+
+const UPPER_CATEGORIES = [
+    "T-Shirts",
+    "Shirts",
+    "Hoodies",
+    "Sweatshirts",
+    "Jackets",
+    "Blazers",
+    "Tops",
+];
+
+const LOWER_CATEGORIES = [
+    "Jeans",
+    "Cargo",
+    "Trousers",
+    "Shorts",
+    "Skirts",
+    "Lower",
+];
+
+function getMeasurementsForCategory(category: string): MeasurementField[] {
+    const cat = category?.trim();
+    if (UPPER_CATEGORIES.includes(cat)) {
+        return [
+            { key: "chest", label: "Chest", placeholder: '22"' },
+            { key: "length", label: "Length", placeholder: '29"' },
+        ];
+    }
+    if (LOWER_CATEGORIES.includes(cat)) {
+        return [
+            { key: "waist", label: "Waist", placeholder: '34"' },
+            { key: "length", label: "Length", placeholder: '42"' },
+        ];
+    }
+    if (cat === "Dresses") {
+        return [
+            { key: "chest", label: "Chest", placeholder: '22"' },
+            { key: "waist", label: "Waist", placeholder: '34"' },
+            { key: "length", label: "Length", placeholder: '42"' },
+        ];
+    }
+    return [
+        { key: "chest", label: "Chest", placeholder: '22"' },
+        { key: "waist", label: "Waist", placeholder: '34"' },
+    ];
+}
+
+const AI_FEATURES = [
+    "Brand Detection",
+    "Product Description",
+    "Category Prediction",
+    "Material & Color",
+    "Measurement Extraction",
+];
+
+const AI_FIELD_NAMES = PRODUCT_FIELDS.filter((f) => f.ai).map((f) => f.name);
 
 const defaultForm: ProductFormData = {
     title: "",
@@ -84,7 +151,7 @@ const defaultForm: ProductFormData = {
     length: "",
     inseam: "",
     description: "",
-    shippingInfo: "Ships within 24 hours. Pan India delivery in 3–7 business days.",
+    shippingInfo: "Ships within 24 hours. Pan India delivery in 3\u20137 business days.",
 };
 
 let _imageIdCounter = 0;
@@ -105,8 +172,11 @@ export default function ProductFormModal({
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [previewIndex, setPreviewIndex] = useState<number | null>(null);
     const [isDeletingImage, setIsDeletingImage] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [selectedAiFields, setSelectedAiFields] = useState<string[]>(AI_FIELD_NAMES);
     const fileRef = useRef<HTMLInputElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const aiTriggeredRef = useRef(false);
 
     const isEditing = !!editProduct;
 
@@ -114,6 +184,11 @@ export default function ProductFormModal({
         activationConstraint: { distance: 5 },
     });
     const sensors = useSensors(pointerSensor);
+
+    const measurements = useMemo(
+        () => getMeasurementsForCategory(form.category),
+        [form.category]
+    );
 
     // Reset state on open/close
     useEffect(() => {
@@ -133,9 +208,10 @@ export default function ProductFormModal({
             }
             setErrors({});
             setPreviewIndex(null);
+            aiTriggeredRef.current = false;
             if (scrollRef.current) scrollRef.current.scrollTop = 0;
         } else {
-            // Cleanup blob URLs when closing
+            aiTriggeredRef.current = false;
             setImages((prev) => {
                 prev.forEach((img) => {
                     if (!img.isExisting && img.url.startsWith("blob:")) {
@@ -161,6 +237,10 @@ export default function ProductFormModal({
         }
     }
 
+    function handleMeasurementFieldChange(key: string, value: string) {
+        setForm((prev) => ({ ...prev, [key]: value }));
+    }
+
     // ── Image Management ──
 
     function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -175,15 +255,21 @@ export default function ProductFormModal({
         }));
 
         setImages((prev) => [...prev, ...newItems]);
-        // Reset file input so re-selecting the same file works
         if (fileRef.current) fileRef.current.value = "";
+
+        // Auto-trigger AI fill when images are added (only for new products)
+        if (!isEditing && !aiTriggeredRef.current) {
+            aiTriggeredRef.current = true;
+            setTimeout(() => {
+                handleAIFillWithFiles([...images, ...newItems].filter((img) => img.file).map((img) => img.file!));
+            }, 500);
+        }
     }
 
     async function removeImage(index: number) {
         const target = images[index];
         if (!target) return;
 
-        // If it's an existing image on the server, delete from storage
         if (target.isExisting) {
             setIsDeletingImage(true);
             try {
@@ -194,7 +280,6 @@ export default function ProductFormModal({
                 setIsDeletingImage(false);
             }
         } else {
-            // Revoke the blob URL
             if (target.url.startsWith("blob:")) {
                 URL.revokeObjectURL(target.url);
             }
@@ -214,6 +299,127 @@ export default function ProductFormModal({
             return arrayMove(prev, oldIndex, newIndex);
         });
     }, []);
+
+    // ── AI Fill ──
+
+    async function fileToBase64(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result as string;
+                resolve(result.split(",")[1]);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    /** Maps AI response keys to form field names */
+    const AI_TO_FORM_MAP: Record<string, string> = {
+        seoTitle: "title",
+        seoDescription: "description",
+        brand: "brand",
+        gender: "gender",
+        category: "category",
+        size: "size",
+        color: "color",
+        material: "material",
+        condition: "condition",
+        chest: "chest",
+        waist: "waist",
+        length: "length",
+        inseam: "inseam",
+        productType: "", // Not used in form directly
+    };
+
+    function extractAiData(data: Record<string, unknown>): Record<string, string> {
+        const flatData: Record<string, string> = {};
+        for (const [key, field] of Object.entries(data)) {
+            const extracted = field as { value?: string | null };
+            if (extracted?.value) {
+                // Map AI key to form field name
+                const formKey = AI_TO_FORM_MAP[key] || key;
+                if (formKey) {
+                    flatData[formKey] = extracted.value;
+                }
+            }
+        }
+        return flatData;
+    }
+
+    async function handleAIFillWithFiles(files: File[]) {
+        if (!files.length) return;
+        try {
+            setIsGenerating(true);
+            const base64Images = await Promise.all(files.map(fileToBase64));
+
+            const response = await fetch("/api/ai/fill", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    images: base64Images,
+                    selectedFields: selectedAiFields,
+                }),
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                console.warn("Auto AI fill:", result.message);
+                return;
+            }
+
+            const flatData = extractAiData(result.data);
+            if (Object.keys(flatData).length > 0) {
+                setForm((prev) => ({ ...prev, ...flatData }));
+            }
+        } catch (error) {
+            console.error("Auto AI fill failed:", error);
+        } finally {
+            setIsGenerating(false);
+        }
+    }
+
+    async function handleAIFill() {
+        const allFiles = images.filter((img) => img.file).map((img) => img.file!);
+        if (!allFiles.length) {
+            if (isEditing) {
+                alert("For AI fill, please re-upload the images you want to analyze.");
+                return;
+            }
+            alert("Please upload at least one image first.");
+            return;
+        }
+
+        try {
+            setIsGenerating(true);
+            const base64Images = await Promise.all(allFiles.map(fileToBase64));
+
+            const response = await fetch("/api/ai/fill", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    images: base64Images,
+                    selectedFields: selectedAiFields,
+                }),
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                alert(result.message || "AI generation failed.");
+                return;
+            }
+
+            const flatData = extractAiData(result.data);
+            if (Object.keys(flatData).length > 0) {
+                setForm((prev) => ({ ...prev, ...flatData }));
+            }
+        } catch (error) {
+            console.error("AI fill failed:", error);
+            alert("AI generation failed. Please try again.");
+        } finally {
+            setIsGenerating(false);
+        }
+    }
 
     // ── Preview Modal ──
 
@@ -248,6 +454,22 @@ export default function ProductFormModal({
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [previewIndex, images.length]);
 
+    // ── AI Field Selector ──
+
+    function toggleAiField(name: string) {
+        setSelectedAiFields((prev) =>
+            prev.includes(name) ? prev.filter((f) => f !== name) : [...prev, name]
+        );
+    }
+
+    function selectAllAiFields() {
+        setSelectedAiFields(AI_FIELD_NAMES);
+    }
+
+    function clearAiFields() {
+        setSelectedAiFields([]);
+    }
+
     // ── Validation & Submit ──
 
     function validate(): boolean {
@@ -267,17 +489,16 @@ export default function ProductFormModal({
 
     function handleSubmit() {
         if (!validate()) return;
-
-        // Build ordered URLs and extract files for upload
         const orderedImageUrls = images.map((img) => img.url);
         const filesToUpload = images
             .filter((img) => img.file)
             .map((img) => img.file!);
-
         onSave(form, orderedImageUrls, filesToUpload);
     }
 
     // ── Render ──
+
+    const aiFieldsList = PRODUCT_FIELDS.filter((f) => f.ai);
 
     return (
         <AnimatePresence>
@@ -298,14 +519,22 @@ export default function ProductFormModal({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 40, scale: 0.97 }}
                         transition={{ type: "spring", damping: 25, stiffness: 280 }}
-                        className="fixed inset-x-4 bottom-4 top-4 z-50 mx-auto max-w-2xl"
+                        className="fixed inset-x-4 bottom-4 top-4 z-50 mx-auto max-w-6xl"
                     >
                         <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
                             {/* Header */}
                             <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4 dark:border-neutral-800">
-                                <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
-                                    {isEditing ? "Edit Product" : "Add Product"}
-                                </h2>
+                                <div className="flex items-center gap-3">
+                                    <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
+                                        {isEditing ? "Edit Product" : "Add Product"}
+                                    </h2>
+                                    {isGenerating && (
+                                        <span className="flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+                                            AI Generating...
+                                        </span>
+                                    )}
+                                </div>
                                 <button
                                     onClick={onClose}
                                     className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-neutral-100 dark:hover:bg-neutral-800"
@@ -314,257 +543,289 @@ export default function ProductFormModal({
                                 </button>
                             </div>
 
-                            {/* Scrollable Body */}
-                            <div
-                                ref={scrollRef}
-                                className="flex-1 overflow-y-auto px-5 py-4 space-y-5"
-                            >
-                                {/* Basic Fields */}
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    {PRODUCT_FIELDS.filter((f) => f.section === "product").map((field) => (
-                                        <div key={field.name} className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                                                {field.label}
-                                                {field.required && <span className="ml-0.5 text-red-500">*</span>}
-                                            </label>
-                                            {field.type === "select" ? (
-                                                <select
-                                                    name={field.name}
-                                                    value={form[field.name]}
-                                                    onChange={handleChange}
-                                                    className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
-                                                        ? "border-red-400 focus:border-red-500"
-                                                        : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
-                                                        }`}
-                                                >
-                                                    <option value="">Select</option>
-                                                    {(field.options || []).map((opt) => (
-                                                        <option key={opt} value={opt}>
-                                                            {opt}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            ) : (
-                                                <input
-                                                    type={field.type}
-                                                    name={field.name}
-                                                    value={form[field.name]}
-                                                    onChange={handleChange}
-                                                    placeholder={field.placeholder}
-                                                    className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
-                                                        ? "border-red-400 focus:border-red-500"
-                                                        : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
-                                                        }`}
-                                                />
-                                            )}
-                                            {errors[field.name] && (
-                                                <p className="text-[10px] font-medium text-red-500">{errors[field.name]}</p>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
-
-                                {/* Pricing */}
-                                <div className="grid gap-4 sm:grid-cols-3">
-                                    {PRODUCT_FIELDS.filter((f) => f.section === "pricing").map((field) => (
-                                        <div key={field.name} className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                                                {field.label}
-                                                {field.required && <span className="ml-0.5 text-red-500">*</span>}
-                                            </label>
-                                            {field.type === "select" ? (
-                                                <select
-                                                    name={field.name}
-                                                    value={form[field.name]}
-                                                    onChange={handleChange}
-                                                    className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
-                                                        ? "border-red-400"
-                                                        : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
-                                                        }`}
-                                                >
-                                                    {(field.options || []).map((opt) => (
-                                                        <option key={opt} value={opt}>
-                                                            {opt}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            ) : (
-                                                <input
-                                                    type={field.type}
-                                                    name={field.name}
-                                                    value={form[field.name]}
-                                                    onChange={handleChange}
-                                                    placeholder={field.placeholder}
-                                                    className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
-                                                        ? "border-red-400"
-                                                        : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
-                                                        }`}
-                                                />
-                                            )}
-                                            {errors[field.name] && (
-                                                <p className="text-[10px] font-medium text-red-500">{errors[field.name]}</p>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
-
-                                {/* Details */}
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    {PRODUCT_FIELDS.filter((f) => f.section === "details").map((field) => (
-                                        <div key={field.name} className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                                                {field.label}
-                                                {field.required && <span className="ml-0.5 text-red-500">*</span>}
-                                            </label>
-                                            <input
-                                                type={field.type}
-                                                name={field.name}
-                                                value={form[field.name]}
-                                                onChange={handleChange}
-                                                placeholder={field.placeholder}
-                                                className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
-                                                    ? "border-red-400"
-                                                    : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
-                                                    }`}
-                                            />
-                                            {errors[field.name] && (
-                                                <p className="text-[10px] font-medium text-red-500">{errors[field.name]}</p>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
-
-                                {/* Measurements */}
-                                <div>
-                                    <h3 className="mb-3 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                                        Measurements
-                                    </h3>
-                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                        {PRODUCT_FIELDS.filter((f) => f.section === "measurements").map((field) => (
-                                            <div key={field.name} className="space-y-1">
-                                                <label className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                                                    {field.label}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name={field.name}
-                                                    value={form[field.name]}
-                                                    onChange={handleChange}
-                                                    placeholder={field.placeholder}
-                                                    className="h-9 w-full rounded-lg border border-neutral-300 px-3 text-xs outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
-
-                                {/* Description */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                                        Description
-                                    </label>
-                                    <textarea
-                                        name="description"
-                                        value={form.description}
-                                        onChange={handleChange}
-                                        rows={4}
-                                        placeholder="Write a complete product description..."
-                                        className="w-full resize-none rounded-xl border border-neutral-300 p-3.5 text-sm outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
-                                    />
-                                    <div className="flex justify-end">
-                                        <span className="text-[10px] text-neutral-400">{form.description.length} chars</span>
-                                    </div>
-                                </div>
-
-                                <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
-
-                                {/* ── Images Section ── */}
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                                                Images
-                                            </h3>
-                                            {images.length > 0 && (
-                                                <Badge variant="secondary" size="xs" rounded="md">
-                                                    {images.length} {images.length === 1 ? "image" : "images"}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        {images.length > 0 && (
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-[10px] text-neutral-400">
-                                                    Drag to reorder &middot; First = Cover
-                                                </span>
-                                                <Star size={12} className="text-amber-500" />
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {errors.images && (
-                                        <p className="text-[10px] font-medium text-red-500">{errors.images}</p>
-                                    )}
-
-                                    <DndContext
-                                        sensors={sensors}
-                                        collisionDetection={closestCenter}
-                                        onDragEnd={handleDragEnd}
+                            {/* 3-Column Body */}
+                            <div className="flex-1 overflow-hidden">
+                                <div className="grid h-full grid-cols-1 gap-0 lg:grid-cols-[1fr_1fr_280px]">
+                                    {/* ── LEFT COLUMN: Product Form ── */}
+                                    <div
+                                        ref={scrollRef}
+                                        className="overflow-y-auto border-r border-neutral-100 px-5 py-4 dark:border-neutral-800 space-y-5"
                                     >
-                                        <SortableContext
-                                            items={images.map((img) => img.id)}
-                                            strategy={rectSortingStrategy}
-                                        >
-                                            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
-                                                {images.map((img, index) => (
-                                                    <SortableImage
-                                                        key={img.id}
-                                                        id={img.id}
-                                                        src={img.url}
-                                                        index={index}
-                                                        isCover={index === 0}
-                                                        onDelete={() => removeImage(index)}
-                                                        onPreview={() => openPreview(index)}
+                                        {/* Basic Fields */}
+                                        <div className="grid gap-4 sm:grid-cols-2">
+                                            {PRODUCT_FIELDS.filter((f) => f.section === "product").map((field) => (
+                                                <div key={field.name} className="space-y-1.5">
+                                                    <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                                        {field.label}
+                                                        {field.required && <span className="ml-0.5 text-red-500">*</span>}
+                                                    </label>
+                                                    {field.type === "select" ? (
+                                                        <select
+                                                            name={field.name}
+                                                            value={form[field.name]}
+                                                            onChange={handleChange}
+                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
+                                                                ? "border-red-400 focus:border-red-500"
+                                                                : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                                }`}
+                                                        >
+                                                            <option value="">Select</option>
+                                                            {(field.options || []).map((opt) => (
+                                                                <option key={opt} value={opt}>
+                                                                    {opt}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <input
+                                                            type={field.type}
+                                                            name={field.name}
+                                                            value={form[field.name]}
+                                                            onChange={handleChange}
+                                                            placeholder={field.placeholder}
+                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
+                                                                ? "border-red-400 focus:border-red-500"
+                                                                : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                                }`}
+                                                        />
+                                                    )}
+                                                    {errors[field.name] && (
+                                                        <p className="text-[10px] font-medium text-red-500">{errors[field.name]}</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
+
+                                        {/* Pricing */}
+                                        <div className="grid gap-4 sm:grid-cols-3">
+                                            {PRODUCT_FIELDS.filter((f) => f.section === "pricing").map((field) => (
+                                                <div key={field.name} className="space-y-1.5">
+                                                    <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                                        {field.label}
+                                                        {field.required && <span className="ml-0.5 text-red-500">*</span>}
+                                                    </label>
+                                                    {field.type === "select" ? (
+                                                        <select
+                                                            name={field.name}
+                                                            value={form[field.name]}
+                                                            onChange={handleChange}
+                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
+                                                                ? "border-red-400"
+                                                                : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                                }`}
+                                                        >
+                                                            {(field.options || []).map((opt) => (
+                                                                <option key={opt} value={opt}>
+                                                                    {opt}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <input
+                                                            type={field.type}
+                                                            name={field.name}
+                                                            value={form[field.name]}
+                                                            onChange={handleChange}
+                                                            placeholder={field.placeholder}
+                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
+                                                                ? "border-red-400"
+                                                                : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                                }`}
+                                                        />
+                                                    )}
+                                                    {errors[field.name] && (
+                                                        <p className="text-[10px] font-medium text-red-500">{errors[field.name]}</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
+
+                                        {/* Details */}
+                                        <div className="grid gap-4 sm:grid-cols-2">
+                                            {PRODUCT_FIELDS.filter((f) => f.section === "details").map((field) => (
+                                                <div key={field.name} className="space-y-1.5">
+                                                    <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                                        {field.label}
+                                                        {field.required && <span className="ml-0.5 text-red-500">*</span>}
+                                                    </label>
+                                                    <input
+                                                        type={field.type}
+                                                        name={field.name}
+                                                        value={form[field.name]}
+                                                        onChange={handleChange}
+                                                        placeholder={field.placeholder}
+                                                        className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
+                                                            ? "border-red-400"
+                                                            : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                            }`}
                                                     />
-                                                ))}
+                                                    {errors[field.name] && (
+                                                        <p className="text-[10px] font-medium text-red-500">{errors[field.name]}</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
 
-                                                {/* Upload button */}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => fileRef.current?.click()}
-                                                    className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 transition hover:border-neutral-400 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800/50 dark:hover:border-neutral-500 dark:hover:bg-neutral-800"
-                                                >
-                                                    <ImagePlus size={22} className="text-neutral-400" />
-                                                    <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400">
-                                                        {images.length === 0 ? "Add Images" : "Add More"}
+                                        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
+
+                                        {/* Measurements (conditional) */}
+                                        <div>
+                                            <h3 className="mb-3 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                                Measurements
+                                                {form.category && (
+                                                    <span className="ml-2 text-[10px] font-normal text-neutral-400">
+                                                        ({form.category === "Dresses" ? "Chest + Waist + Length" :
+                                                            UPPER_CATEGORIES.includes(form.category) ? "Chest + Length" :
+                                                                LOWER_CATEGORIES.includes(form.category) ? "Waist + Length" :
+                                                                    "Chest + Waist"})
                                                     </span>
-                                                </button>
+                                                )}
+                                            </h3>
+                                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                                {measurements.map((m) => (
+                                                    <div key={m.key} className="space-y-1">
+                                                        <label className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                                                            {m.label}
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            name={m.key}
+                                                            value={form[m.key] ?? ""}
+                                                            onChange={(e) => handleMeasurementFieldChange(m.key, e.target.value)}
+                                                            placeholder={m.placeholder}
+                                                            className="h-9 w-full rounded-lg border border-neutral-300 px-3 text-xs outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+                                                        />
+                                                    </div>
+                                                ))}
                                             </div>
-                                        </SortableContext>
-                                    </DndContext>
+                                        </div>
 
-                                    {/* Hidden file input */}
-                                    <input
-                                        ref={fileRef}
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={handleImageUpload}
-                                        className="hidden"
-                                    />
+                                        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
 
-                                    {/* Helper text */}
-                                    <p className="text-[10px] text-neutral-400 leading-relaxed">
-                                        Supported formats: JPEG, PNG, WebP. First image is automatically set as the
-                                        product cover. Drag to reorder.
-                                    </p>
+                                        {/* Description */}
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                                Description
+                                            </label>
+                                            <textarea
+                                                name="description"
+                                                value={form.description}
+                                                onChange={handleChange}
+                                                rows={4}
+                                                placeholder="Write a complete product description..."
+                                                className="w-full resize-none rounded-xl border border-neutral-300 p-3.5 text-sm outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+                                            />
+                                            <div className="flex justify-end">
+                                                <span className="text-[10px] text-neutral-400">{form.description.length} chars</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* ── CENTER COLUMN: Images + Preview Grid with Measurements ── */}
+                                    <div className="overflow-y-auto px-5 py-4 space-y-5 border-r border-neutral-100 dark:border-neutral-800">
+                                        {/* Images Section */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                                        Images
+                                                    </h3>
+                                                    {images.length > 0 && (
+                                                        <Badge variant="secondary" size="xs" rounded="md">
+                                                            {images.length} {images.length === 1 ? "image" : "images"}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                {images.length > 0 && (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[10px] text-neutral-400">
+                                                            Drag to reorder
+                                                        </span>
+                                                        <Star size={12} className="text-amber-500" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {errors.images && (
+                                                <p className="text-[10px] font-medium text-red-500">{errors.images}</p>
+                                            )}
+
+                                            <DndContext
+                                                sensors={sensors}
+                                                collisionDetection={closestCenter}
+                                                onDragEnd={handleDragEnd}
+                                            >
+                                                <SortableContext
+                                                    items={images.map((img) => img.id)}
+                                                    strategy={rectSortingStrategy}
+                                                >
+                                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                                        {images.map((img, index) => (
+                                                            <div key={img.id} className="space-y-2">
+                                                                <SortableImage
+                                                                    id={img.id}
+                                                                    src={img.url}
+                                                                    index={index}
+                                                                    isCover={index === 0}
+                                                                    onDelete={() => removeImage(index)}
+                                                                    onPreview={() => openPreview(index)}
+                                                                />
+                                                                {/* Measurement fields below each card */}
+                                                                {measurements.length > 0 && (
+                                                                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-2 space-y-1.5 dark:border-neutral-700 dark:bg-neutral-800/50">
+                                                                        {measurements.map((m) => (
+                                                                            <div key={m.key} className="flex items-center gap-1.5">
+                                                                                <label className="text-[10px] font-semibold text-neutral-500 w-12 shrink-0">
+                                                                                    {m.label}
+                                                                                </label>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    value={form[m.key] ?? ""}
+                                                                                    onChange={(e) => handleMeasurementFieldChange(m.key, e.target.value)}
+                                                                                    placeholder={m.placeholder}
+                                                                                    className="h-7 w-full rounded-md border border-neutral-300 bg-white px-2 text-[10px] text-center outline-none transition focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900/10 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+                                                                                />
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+
+                                                        {/* Upload button */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => fileRef.current?.click()}
+                                                            className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 transition hover:border-neutral-400 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800/50 dark:hover:border-neutral-500 dark:hover:bg-neutral-800"
+                                                        >
+                                                            <ImagePlus size={22} className="text-neutral-400" />
+                                                            <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400">
+                                                                {images.length === 0 ? "Add Images" : "Add More"}
+                                                            </span>
+                                                        </button>
+                                                    </div>
+                                                </SortableContext>
+                                            </DndContext>
+
+                                            <input
+                                                ref={fileRef}
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                onChange={handleImageUpload}
+                                                className="hidden"
+                                            />
+
+                                            <p className="text-[10px] text-neutral-400 leading-relaxed">
+                                                Supported formats: JPEG, PNG, WebP. First image is automatically set as the
+                                                product cover. Drag to reorder.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -606,33 +867,23 @@ export default function ProductFormModal({
                                     transition={{ duration: 0.25, ease: "easeOut" }}
                                     className="fixed inset-0 z-[60] flex items-center justify-center"
                                 >
-                                    {/* Close button */}
                                     <button
                                         onClick={closePreview}
                                         className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
                                     >
                                         <X size={20} />
                                     </button>
-
-                                    {/* Image counter */}
                                     <div className="absolute left-1/2 top-4 z-10 -translate-x-1/2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
                                         {previewIndex + 1} / {images.length}
                                     </div>
-
-                                    {/* Prev button */}
                                     {images.length > 1 && (
                                         <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                prevPreview();
-                                            }}
+                                            onClick={(e) => { e.stopPropagation(); prevPreview(); }}
                                             className="absolute left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
                                         >
                                             <ChevronLeft size={22} />
                                         </button>
                                     )}
-
-                                    {/* Image */}
                                     <div
                                         className="relative flex h-full w-full items-center justify-center p-4 sm:p-8"
                                         onClick={closePreview}
@@ -656,14 +907,9 @@ export default function ProductFormModal({
                                             />
                                         </motion.div>
                                     </div>
-
-                                    {/* Next button */}
                                     {images.length > 1 && (
                                         <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                nextPreview();
-                                            }}
+                                            onClick={(e) => { e.stopPropagation(); nextPreview(); }}
                                             className="absolute right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
                                         >
                                             <ChevronRight size={22} />
@@ -678,4 +924,3 @@ export default function ProductFormModal({
         </AnimatePresence>
     );
 }
-

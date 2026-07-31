@@ -107,8 +107,8 @@ export default function AdminAnalyticsPage() {
                                 key={opt.value}
                                 onClick={() => setRange(opt.value)}
                                 className={`rounded-lg px-3.5 py-1.5 text-[11px] font-semibold transition ${range === opt.value
-                                        ? "bg-neutral-900 text-white shadow-sm dark:bg-white dark:text-black"
-                                        : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                                    ? "bg-neutral-900 text-white shadow-sm dark:bg-white dark:text-black"
+                                    : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
                                     }`}
                             >
                                 {opt.label}
@@ -147,49 +147,52 @@ export default function AdminAnalyticsPage() {
             </div>
 
             {/* ── Top Pages ──────────────────────────────────── */}
-            {pages && pages.length > 0 && (
-                <motion.div
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
-                >
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                        Top Pages
-                    </h3>
+            {
+                pages && pages.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
+                    >
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                            Top Pages
+                        </h3>
 
-                    <div className="mt-3 space-y-1">
-                        <div className="grid grid-cols-[1fr_80px_100px] gap-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
-                            <div>Page</div>
-                            <div className="text-right">Views</div>
-                            <div className="text-right">Unique Sessions</div>
-                        </div>
-                        {pages.map((page: any, i: number) => (
-                            <div
-                                key={page.page}
-                                className="grid grid-cols-[1fr_80px_100px] items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
-                            >
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-neutral-100 text-[9px] font-bold text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-                                        {i + 1}
-                                    </span>
-                                    <span className="truncate text-sm font-mono text-neutral-700 dark:text-neutral-300">
-                                        {page.page}
-                                    </span>
-                                </div>
-                                <div className="text-right text-sm font-semibold text-neutral-900 dark:text-white">
-                                    {page.views.toLocaleString()}
-                                </div>
-                                <div className="text-right text-sm text-neutral-500 dark:text-neutral-400">
-                                    {page.uniqueSessions}
-                                </div>
+                        <div className="mt-3 space-y-1">
+                            <div className="grid grid-cols-[1fr_80px_100px] gap-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                                <div>Page</div>
+                                <div className="text-right">Views</div>
+                                <div className="text-right">Unique Sessions</div>
                             </div>
-                        ))}
-                    </div>
-                </motion.div>
-            )}
+                            {pages.map((page: any, i: number) => (
+                                <div
+                                    key={page.page}
+                                    className="grid grid-cols-[1fr_80px_100px] items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-neutral-100 text-[9px] font-bold text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                                            {i + 1}
+                                        </span>
+                                        <span className="truncate text-sm font-mono text-neutral-700 dark:text-neutral-300">
+                                            {page.page}
+                                        </span>
+                                    </div>
+                                    <div className="text-right text-sm font-semibold text-neutral-900 dark:text-white">
+                                        {page.views.toLocaleString()}
+                                    </div>
+                                    <div className="text-right text-sm text-neutral-500 dark:text-neutral-400">
+                                        {page.uniqueSessions}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )
+            }
 
             {/* ── Empty State ────────────────────────────────── */}
-            {!loading &&
+            {
+                !loading &&
                 !overview &&
                 !sources &&
                 !searches &&
@@ -213,46 +216,48 @@ export default function AdminAnalyticsPage() {
                             here.
                         </p>
                     </motion.div>
-                )}
+                )
+            }
 
             {/* ── Footer ─────────────────────────────────────── */}
-            {!loading && (overview || timeline) && (
-                <div className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white/80 px-5 py-3 text-xs text-neutral-400 dark:border-neutral-700 dark:bg-neutral-900/80">
-                    <span>
-                        Showing data for the last{" "}
-                        {range === "24h" ? "24 hours" : range === "7d" ? "7 days" : range === "30d" ? "30 days" : "90 days"}
-                    </span>
-                    <button
-                        onClick={() => {
-                            const csvData = [
-                                ["Metric", "Value"],
-                                ["Page Views", overview?.pageViews || 0],
-                                ["Product Views", overview?.productViews || 0],
-                                ["Searches", overview?.searches || 0],
-                                ["Add to Cart", overview?.addToCarts || 0],
-                                ["Purchases", overview?.purchases || 0],
-                                ["Sessions", overview?.totalSessions || 0],
-                                ["Conversion Rate", `${overview?.conversionRate || 0}%`],
-                            ]
-                                .map((r) => r.join(","))
-                                .join("\n");
+            {
+                !loading && (overview || timeline) && (
+                    <div className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white/80 px-5 py-3 text-xs text-neutral-400 dark:border-neutral-700 dark:bg-neutral-900/80">
+                        <span>
+                            Showing data for the last{" "}
+                            {range === "24h" ? "24 hours" : range === "7d" ? "7 days" : range === "30d" ? "30 days" : "90 days"}
+                        </span>
+                        <button
+                            onClick={() => {
+                                const csvData = [
+                                    ["Metric", "Value"],
+                                    ["Page Views", overview?.pageViews || 0],
+                                    ["Product Views", overview?.productViews || 0],
+                                    ["Searches", overview?.searches || 0],
+                                    ["Add to Cart", overview?.addToCarts || 0],
+                                    ["Purchases", overview?.purchases || 0],
+                                    ["Sessions", overview?.totalSessions || 0],
+                                    ["Conversion Rate", `${overview?.conversionRate || 0}%`],
+                                ]
+                                    .map((r) => r.join(","))
+                                    .join("\n");
 
-                            const blob = new Blob([csvData], { type: "text/csv" });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = `thriftx-analytics-${new Date().toISOString().split("T")[0]}.csv`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                        }}
-                        className="flex items-center gap-1.5 font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
-                    >
-                        <Download size={13} />
-                        Export CSV
-                    </button>
-                </div>
-            )}
+                                const blob = new Blob([csvData], { type: "text/csv" });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `thriftx-analytics-${new Date().toISOString().split("T")[0]}.csv`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                            }}
+                            className="flex items-center gap-1.5 font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+                        >
+                            <Download size={13} />
+                            Export CSV
+                        </button>
+                    </div>
+                )
+            }
         </div>
     );
 }
-

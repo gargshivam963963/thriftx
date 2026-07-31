@@ -2,11 +2,20 @@
 
 import ImageCard from "./ImageCard";
 
+interface MeasurementField {
+    key: string;
+    label: string;
+    placeholder: string;
+}
+
 interface ImagePreviewGridProps {
     previews: string[];
     onRemove: (index: number) => void;
     primaryIndex?: number;
     onPrimary?: (index: number) => void;
+    measurements?: MeasurementField[];
+    form?: Record<string, string>;
+    onMeasurementChange?: (key: string, value: string) => void;
 }
 
 export default function ImagePreviewGrid({
@@ -14,6 +23,9 @@ export default function ImagePreviewGrid({
     onRemove,
     primaryIndex = 0,
     onPrimary,
+    measurements = [],
+    form = {},
+    onMeasurementChange,
 }: ImagePreviewGridProps) {
     if (!previews.length) {
         return (
@@ -85,6 +97,9 @@ export default function ImagePreviewGrid({
                         onRemove={onRemove}
                         onPrimary={onPrimary}
                         isPrimary={primaryIndex === index}
+                        measurements={measurements}
+                        form={form}
+                        onMeasurementChange={onMeasurementChange}
                     />
 
                 ))}

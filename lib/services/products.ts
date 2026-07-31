@@ -85,6 +85,7 @@ export interface ProductFilters {
   price?: string;
   sort?: "newest" | "price-low" | "price-high" | "name";
   limit?: number;
+  offset?: number;
 }
 
 function normalizeProduct(
@@ -326,6 +327,10 @@ export async function getProducts(
   }
 
   queries.push(AppwriteQuery.limit(filters.limit ?? 48));
+
+  if (filters.offset) {
+    queries.push(AppwriteQuery.offset(filters.offset));
+  }
 
   const response = await databases.listDocuments(
     APPWRITE_DATABASE_ID,

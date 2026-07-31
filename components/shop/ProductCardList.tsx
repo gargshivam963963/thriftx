@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Heart, Ruler, ShoppingBag } from "lucide-react";
+import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
+import {
+    Card,
+    CardContent,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import PremiumImage from "@/components/ui/PremiumImage";
 import { isWishlisted, toggleWishlist } from "@/lib/services/wishlist";
 
@@ -30,7 +35,7 @@ function getMeasurementDisplay(category: string, chest?: string, waist?: string,
     else if (chest) primary = `Chest ${chest}″`;
     else if (waist) primary = `Waist ${waist}″`;
 
-    const length_: string | null = length ? `${length}″` : null;
+    const length_: string | null = length ? `Length ${length}″` : null;
 
     return { primary, length_ };
 }
@@ -105,105 +110,115 @@ export default function ProductCardList({
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="group"
         >
-            <Link
-                href={`/product/${slug}`}
-                className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-500 hover:shadow-lg hover:-translate-y-0.5 dark:bg-neutral-900 sm:flex-row"
-            >
-                {/* ── Image — Uniform Height ──────────────────────────────── */}
-                <div className="relative h-[200px] w-full sm:h-[220px] sm:w-[240px] md:w-[260px] shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-                    <PremiumImage
-                        src={image || "/images/placeholder.jpg"}
-                        alt={title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, 240px"
-                        className="object-cover transition-all duration-1000 ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.08]"
-                    />
+            <Link href={`/product/${slug}`} className="block">
+                <Card className="overflow-hidden border-neutral-200/80 bg-white shadow-sm transition-all hover:shadow-md dark:border-neutral-700/60 dark:bg-neutral-900">
+                    <div className="flex flex-col sm:flex-row">
+                        {/* ── Image ──────────────────────────────────── */}
+                        <div className="relative h-[200px] w-full sm:h-[220px] sm:w-[240px] md:w-[260px] shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                            <PremiumImage
+                                src={image || "/images/placeholder.jpg"}
+                                alt={title}
+                                fill
+                                sizes="(max-width: 640px) 100vw, 240px"
+                                className="object-cover transition-all duration-1000 ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.08]"
+                            />
 
-                    {onlyOneLeft && (
-                        <span className="absolute left-3 top-3 z-10 rounded-lg bg-amber-500/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-white shadow">
-                            Last Piece
-                        </span>
-                    )}
+                            {onlyOneLeft && (
+                                <Badge variant="warning" size="xs" rounded="md" className="absolute left-3 top-3 z-10">
+                                    Last Piece
+                                </Badge>
+                            )}
 
-                    {discount && discount > 0 && (
-                        <span className="absolute left-3 top-3 z-10 rounded-lg bg-white/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-red-600 shadow-sm">
-                            -{discount}%
-                        </span>
-                    )}
+                            {discount && discount > 0 && (
+                                <Badge variant="error" size="xs" rounded="md" className="absolute left-3 top-3 z-10 bg-white/90 text-red-600 dark:bg-white/90">
+                                    -{discount}%
+                                </Badge>
+                            )}
 
-                    <motion.button
-                        type="button"
-                        onClick={handleWishlist}
-                        disabled={wishlistLoading}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur-xl shadow-lg transition-colors hover:bg-white"
-                        aria-label="Wishlist"
-                    >
-                        <Heart
-                            size={15}
-                            className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-neutral-700"
-                                }`}
-                        />
-                    </motion.button>
-                </div>
-
-                {/* ── Content ──────────────────────────────────────────────── */}
-                <div className="flex flex-1 flex-col p-5 sm:p-6">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
-                        {brand}
-                    </p>
-
-                    <h3 className="mt-1.5 text-lg font-bold leading-tight text-neutral-900 dark:text-neutral-100 sm:text-xl">
-                        {title}
-                    </h3>
-
-                    {description && (
-                        <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
-                            {description}
-                        </p>
-                    )}
-
-                    {/* Badges */}
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                        {measurement && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400">
-                                <Ruler size={12} className="text-neutral-500" />
-                                {measurement}
-                                {lengthDisplay && (
-                                    <>
-                                        <span className="text-neutral-300 dark:text-neutral-600">·</span>
-                                        <span>{lengthDisplay}</span>
-                                    </>
-                                )}
-                            </span>
-                        )}
-                        {material && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400">
-                                {material}
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Price */}
-                    <div className="mt-auto flex items-center justify-between gap-4 pt-4">
-                        <div>
-                            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">
-                                Price
-                            </p>
-                            <div className="flex items-baseline gap-1.5">
-                                <span className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-                                    ₹{Number(price || 0).toLocaleString("en-IN")}
-                                </span>
-                                {retailPrice && retailPrice > price && (
-                                    <span className="text-sm text-neutral-400 line-through">
-                                        ₹{retailPrice.toLocaleString("en-IN")}
-                                    </span>
-                                )}
-                            </div>
+                            <button
+                                type="button"
+                                onClick={handleWishlist}
+                                disabled={wishlistLoading}
+                                className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur-xl shadow-lg transition-colors hover:bg-white"
+                                aria-label="Wishlist"
+                            >
+                                <Heart
+                                    size={15}
+                                    className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-neutral-700"
+                                        }`}
+                                />
+                            </button>
                         </div>
+
+                        {/* ── Content ────────────────────────────────── */}
+                        <CardContent className="flex flex-1 flex-col p-5 sm:p-6">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
+                                {brand}
+                            </p>
+
+                            <h3 className="mt-1.5 text-lg font-bold leading-tight text-neutral-900 dark:text-neutral-100 sm:text-xl">
+                                {title}
+                            </h3>
+
+                            {description && (
+                                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
+                                    {description}
+                                </p>
+                            )}
+
+                            {/* Measurements - chest/waist left, length right */}
+                            {(measurement || lengthDisplay) && (
+                                <div className="mt-3 flex items-center justify-between gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        {measurement && (
+                                            <Badge variant="secondary" size="sm" rounded="full">
+                                                {measurement}
+                                            </Badge>
+                                        )}
+                                        {material && (
+                                            <Badge variant="secondary" size="sm" rounded="full">
+                                                {material}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    {lengthDisplay && (
+                                        <Badge variant="outline" size="sm" rounded="full">
+                                            {lengthDisplay}
+                                        </Badge>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* If no measurements but material exists */}
+                            {!measurement && !lengthDisplay && material && (
+                                <div className="mt-3">
+                                    <Badge variant="secondary" size="sm" rounded="full">
+                                        {material}
+                                    </Badge>
+                                </div>
+                            )}
+
+                            {/* Price */}
+                            <div className="mt-auto flex items-center justify-between gap-4 pt-4">
+                                <div>
+                                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">
+                                        Price
+                                    </p>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                                            ₹{Number(price || 0).toLocaleString("en-IN")}
+                                        </span>
+                                        {retailPrice && retailPrice > price && (
+                                            <span className="text-sm text-neutral-400 line-through">
+                                                ₹{retailPrice.toLocaleString("en-IN")}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
                     </div>
-                </div>
+                </Card>
             </Link>
         </motion.div>
     );

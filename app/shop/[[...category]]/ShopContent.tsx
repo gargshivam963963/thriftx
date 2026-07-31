@@ -36,7 +36,7 @@ import {
     Card,
     CardContent,
     CardFooter,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import { Select } from "@/components/ui/select";
 import ProductCardGrid from "@/components/shop/ProductCardGrid";
 import ProductCardList from "@/components/shop/ProductCardList";

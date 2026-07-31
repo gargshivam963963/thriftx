@@ -3,7 +3,7 @@ import { Package, CheckCircle2, AlertTriangle, ImageIcon } from "lucide-react";
 import {
     Card,
     CardContent,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 
 interface StatsCardsProps {
     totalProducts: number;

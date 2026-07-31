@@ -4,10 +4,10 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/Container";
 import PremiumImage from "@/components/ui/PremiumImage";
 import { FadeUp, StaggerContainer, StaggerItem } from "@/components/animations";
+import { Card } from "@/components/ui/Card";
 
 const categories = [
     {

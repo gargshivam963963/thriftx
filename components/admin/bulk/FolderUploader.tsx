@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { FolderOpen, Upload, CheckCircle2, AlertCircle, X, Image as ImageIcon } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

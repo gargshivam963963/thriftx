@@ -5,7 +5,7 @@ import { ArrowRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
 import PremiumImage from "@/components/ui/PremiumImage";
 import {

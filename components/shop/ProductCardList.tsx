@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import {
     Card,
     CardContent,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import { Badge } from "@/components/ui/badge";
 import PremiumImage from "@/components/ui/PremiumImage";
 import { isWishlisted, toggleWishlist } from "@/lib/services/wishlist";

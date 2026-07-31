@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 import Section from "@/components/ui/Section";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/ui/Card";
 import Accordion from "@/components/ui/Accordion";
 
 import ProductGallery from "@/components/product/ProductGallery";

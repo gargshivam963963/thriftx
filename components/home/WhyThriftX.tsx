@@ -4,7 +4,7 @@ import { CheckCircle2, Leaf, ShieldCheck, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
 import {
     FadeUp,

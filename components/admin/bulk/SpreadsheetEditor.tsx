@@ -40,7 +40,7 @@ import {
 import {
     Card,
     CardContent,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import { Select } from "@/components/ui/select";
 import EmptyState from "@/components/ui/EmptyState";
 

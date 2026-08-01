@@ -16,6 +16,7 @@ import {
 import { account } from '@/lib/appwrite';
 import { OAuthProvider } from 'appwrite';
 import { useAuth } from '@/lib/AuthContext';
+import { Button } from '@/components/ui/button';
 
 export default function Login() {
     const router = useRouter();
@@ -180,7 +181,7 @@ export default function Login() {
                         </AnimatePresence>
 
                         {/* Google OAuth */}
-                        <Button
+                        <button
                             type="button"
                             disabled={googleLoading}
                             onClick={handleGoogleLogin}
@@ -200,7 +201,7 @@ export default function Login() {
                                     Continue with Google
                                 </>
                             )}
-                        </Button>
+                        </button>
 
                         {/* OR Divider */}
                         <div className="relative mb-5 sm:mb-6">
@@ -240,9 +241,9 @@ export default function Login() {
                                     <label className="text-xs font-semibold uppercase tracking-[3px] text-neutral-500 dark:text-neutral-400">
                                         Password
                                     </label>
-                                    <Button type="button" variant="ghost" size="sm" className="text-xs font-semibold uppercase tracking-[2px] text-neutral-500 transition hover:text-black dark:text-neutral-400 dark:hover:text-neutral-200" onClick={handleForgotPassword}>
+                                    <button type="button" variant="ghost" size="sm" className="text-xs font-semibold uppercase tracking-[2px] text-neutral-500 transition hover:text-black dark:text-neutral-400 dark:hover:text-neutral-200" onClick={handleForgotPassword}>
                                         Forgot Password?
-                                    </Button>
+                                    </button>
                                 </div>
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 sm:left-5" size={16} />
@@ -254,9 +255,9 @@ export default function Login() {
                                         onChange={(e) => { setPassword(e.target.value); if (error) setError('') }}
                                         className="h-12 w-full rounded-2xl border border-neutral-300 bg-neutral-50 pl-11 pr-11 text-sm text-neutral-900 outline-none transition-all duration-300 focus:border-black focus:bg-white sm:h-14 sm:pl-14 sm:pr-14 sm:text-base dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-neutral-400 dark:focus:bg-neutral-800"
                                     />
-                                    <Button type="button" variant="ghost" size="iconSm" className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black sm:right-5 dark:hover:text-neutral-200" onClick={() => setShowPassword(!showPassword)}>
+                                    <button type="button" variant="ghost" size="iconSm" className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black sm:right-5 dark:hover:text-neutral-200" onClick={() => setShowPassword(!showPassword)}>
                                         {showPassword ? <EyeOff size={17} className="sm:size-[19px]" /> : <Eye size={17} className="sm:size-[19px]" />}
-                                    </Button>
+                                    </button>
                                 </div>
                             </div>
 

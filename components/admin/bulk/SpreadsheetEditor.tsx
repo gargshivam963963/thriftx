@@ -6,7 +6,7 @@ import { Search, Plus, Package } from "lucide-react";
 import type { BulkProduct } from "@/app/lib/bulk/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import StickyToolbar from "./StickyToolbar";
 import BulkProductCard from "./BulkProductCard";

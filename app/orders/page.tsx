@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import PremiumImage from "@/components/ui/PremiumImage";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
 import { getUserOrders } from "@/lib/services/orderService";
@@ -301,16 +302,13 @@ export default function OrdersPage() {
                                             {/* Product thumbnail */}
                                             {firstProduct && (
                                                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-zinc-100 sm:h-20 sm:w-20">
-                                                    <img
-                                                        src={firstProduct.image}
+                                                    <PremiumImage
+                                                        src={firstProduct.image || "/images/placeholder.jpg"}
                                                         alt={firstProduct.title}
-                                                        className="h-full w-full object-cover"
-                                                        onError={(e) => {
-                                                            (
-                                                                e.target as HTMLImageElement
-                                                            ).style.display =
-                                                                "none";
-                                                        }}
+                                                        fill
+                                                        sizes="80px"
+                                                        className="object-cover"
+                                                        fallbackSrc="/images/placeholder.jpg"
                                                     />
                                                 </div>
                                             )}

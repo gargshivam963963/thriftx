@@ -8,6 +8,9 @@ import { toast } from "sonner";
 
 import PremiumImage from "@/components/ui/PremiumImage";
 import { isWishlisted, toggleWishlist } from "@/lib/services/wishlist";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/Card";
 
 const TOPWEAR_KEYWORDS = [
   "t-shirts", "shirt", "hoodie", "jacket", "blazer",
@@ -85,81 +88,82 @@ export default function ProductCard({
       transition={{ duration: 0.3 }}
       className="h-full"
     >
-      <Link
-        href={`/product/${slug}`}
-        className="group relative flex h-full flex-col"
-      >
-        {/* ── Image — Uniform Fixed Height ──────────────────────── */}
-        <div className="relative h-[200px] xs:h-[220px] sm:h-[260px] md:h-[280px] xl:h-[320px] w-full overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800">
-          <PremiumImage
-            src={image || "/images/placeholder.jpg"}
-            alt={title}
-            fill
-            sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 25vw"
-            className="object-cover transition-all duration-700 ease-out group-hover:scale-[1.08]"
-          />
-
-          {/* Wishlist */}
-          <button
-            type="button"
-            onClick={handleWishlist}
-            disabled={wishlistLoading}
-            className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-md shadow-lg transition-all duration-200 hover:scale-110 active:scale-90 hover:bg-white"
-          >
-            <Heart
-              size={14}
-              className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-neutral-700"
-                }`}
+      <Card className="group relative h-full overflow-hidden border-border/70 bg-card/80 shadow-sm">
+        <Link href={`/product/${slug}`} className="flex h-full flex-col">
+          {/* ── Image — Uniform Fixed Height ──────────────────────── */}
+          <div className="relative h-[220px] w-full overflow-hidden bg-muted sm:h-[260px] md:h-[280px] xl:h-[320px]">
+            <PremiumImage
+              src={image || "/images/placeholder.jpg"}
+              alt={title}
+              fill
+              sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 25vw"
+              className="object-cover transition-all duration-700 ease-out group-hover:scale-[1.08]"
             />
-          </button>
 
-          {/* Discount */}
-          {discount && discount > 0 && (
-            <div className="absolute left-2 top-2 z-20">
-              <span className="rounded-lg bg-white/90 backdrop-blur-md px-2 py-1 text-[10px] font-bold text-red-600 shadow-sm">
-                -{discount}%
-              </span>
-            </div>
-          )}
+            {/* Wishlist */}
+            <Button
+              type="button"
+              onClick={handleWishlist}
+              disabled={wishlistLoading}
+              variant="ghost"
+              size="iconSm"
+              rounded="full"
+              className="absolute right-2 top-2 z-20 border border-border/70 bg-background/80 backdrop-blur-md shadow-sm"
+            >
+              <Heart
+                size={14}
+                className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-foreground"}`}
+              />
+            </Button>
 
-          {/* Only 1 left */}
-          {onlyOneLeft && (
-            <div className="absolute left-2 top-2 z-20">
-              <span className="rounded-lg bg-amber-500/90 backdrop-blur-md px-2 py-1 text-[10px] font-bold text-white shadow-sm">
-                Only 1
-              </span>
-            </div>
-          )}
-        </div>
+            {/* Discount */}
+            {discount && discount > 0 && (
+              <div className="absolute left-2 top-2 z-20">
+                <Badge variant="error" size="xs" rounded="md" className="bg-red-500/90 text-white">
+                  -{discount}%
+                </Badge>
+              </div>
+            )}
 
-        {/* ── Info — Minimal ────────────────────────────────────── */}
-        <div className="mt-2.5 space-y-0.5 px-0.5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-400 dark:text-neutral-500">
-            {brand}
-          </p>
-
-          <h3 className="text-sm font-semibold leading-tight text-neutral-900 dark:text-neutral-100 line-clamp-1">
-            {title}
-          </h3>
-
-          {measurement && (
-            <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-              {measurement}
-            </p>
-          )}
-
-          <div className="flex items-baseline gap-1.5 pt-1">
-            <span className="text-sm font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              ₹{Number(price || 0).toLocaleString("en-IN")}
-            </span>
-            {retailPrice && retailPrice > price && (
-              <span className="text-[11px] text-neutral-400 line-through">
-                ₹{retailPrice.toLocaleString("en-IN")}
-              </span>
+            {/* Only 1 left */}
+            {onlyOneLeft && (
+              <div className="absolute left-2 top-2 z-20">
+                <Badge variant="warning" size="xs" rounded="md" className="bg-amber-500/90 text-white">
+                  Only 1
+                </Badge>
+              </div>
             )}
           </div>
-        </div>
-      </Link>
+
+          {/* ── Info — Minimal ────────────────────────────────────── */}
+          <CardContent className="mt-2.5 flex-1 space-y-1.5 px-3 pb-4 pt-0">
+            <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              {brand}
+            </p>
+
+            <h3 className="text-h4 font-semibold leading-tight text-foreground line-clamp-1">
+              {title}
+            </h3>
+
+            {measurement && (
+              <p className="text-small text-muted-foreground">
+                {measurement}
+              </p>
+            )}
+
+            <div className="flex items-baseline gap-1.5 pt-1">
+              <span className="text-body font-semibold tracking-tight text-foreground">
+                ₹{Number(price || 0).toLocaleString("en-IN")}
+              </span>
+              {retailPrice && retailPrice > price && (
+                <span className="text-small text-muted-foreground line-through">
+                  ₹{retailPrice.toLocaleString("en-IN")}
+                </span>
+              )}
+            </div>
+          </CardContent>
+        </Link>
+      </Card>
     </motion.div>
   );
 }

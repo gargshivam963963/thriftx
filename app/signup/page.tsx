@@ -225,10 +225,11 @@ export default function Signup() {
             </AnimatePresence>
 
             {/* Google OAuth */}
-            <button
+            <Button
               type="button"
               disabled={googleLoading}
               onClick={handleGoogleSignup}
+              variant="outline"
               className="mb-5 flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-neutral-300 bg-white font-medium text-sm transition-all hover:border-black hover:bg-neutral-50 sm:mb-6 sm:h-14 sm:text-base dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:border-neutral-400 dark:hover:bg-neutral-700"
             >
               {googleLoading ? (
@@ -256,7 +257,7 @@ export default function Signup() {
                   Continue with Google
                 </>
               )}
-            </button>
+            </Button>
 
             {/* OR Divider */}
             <div className="relative mb-5 sm:mb-6">
@@ -344,8 +345,10 @@ export default function Signup() {
                     className="h-12 w-full rounded-2xl border border-neutral-300 bg-neutral-50 pl-11 pr-11 text-sm text-neutral-900 outline-none transition-all duration-300 focus:border-black focus:bg-white sm:h-14 sm:pl-14 sm:pr-14 sm:text-base dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-neutral-400 dark:focus:bg-neutral-800"
                     required
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="iconSm"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black sm:right-5 dark:text-neutral-400 dark:hover:text-neutral-200"
                   >
@@ -354,7 +357,7 @@ export default function Signup() {
                     ) : (
                       <Eye size={17} className="sm:size-[19px]" />
                     )}
-                  </button>
+                  </Button>
                 </div>
                 <PasswordStrengthBar password={password} />
               </div>

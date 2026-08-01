@@ -55,7 +55,10 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
     // Determine if the current user is an admin (any authenticated user on admin routes)
     const isAdmin = useRef(false);
-    isAdmin.current = !!user;
+
+    useEffect(() => {
+        isAdmin.current = !!user;
+    }, [user]);
 
     useEffect(() => {
         const tracker = initTracker({
@@ -108,7 +111,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     }, [isReady]);
 
     // Whether tracking is allowed for the current session
-    const trackingAllowed = shouldTrack(isAdmin.current, pathname);
+    const trackingAllowed = shouldTrack(!!user && pathname.startsWith("/admin"), pathname);
 
     const track = useCallback(
         (eventType: EventType, eventName: string, properties: Record<string, string | number | boolean | string[] | number[] | null> = {}) => {

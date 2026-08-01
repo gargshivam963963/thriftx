@@ -10,6 +10,11 @@ import ShareButton from "@/components/product/ShareButton";
 import WishlistButton from "@/components/product/WishlistButton";
 import ProductActions from "@/app/product/[slug]/ProductActions";
 import ProductViewTracker from "@/app/product/[slug]/ProductViewTracker";
+import RecentlyViewedTracker from "@/components/product/RecentlyViewedTracker";
+import RecentlyViewedSection from "@/components/product/RecentlyViewedSection";
+import SimilarProductsSection from "@/components/product/SimilarProductsSection";
+import SizeRecommendation from "@/components/product/SizeRecommendation";
+import CompleteTheLookSection from "@/components/product/CompleteTheLookSection";
 import { siteConfig } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -70,6 +75,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
   return (
     <Section className="pt-8 pb-16">
       <ProductViewTracker product={product} />
+      <RecentlyViewedTracker product={product} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-2 text-small text-neutral-500 dark:text-neutral-400">
         <Link href="/" className="transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white">Home</Link>
@@ -121,7 +127,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
         </div>
 
         {/* RIGHT COLUMN - Sticky sidebar */}
-        <div className="sticky top-24 h-fit space-y-6 rounded-3xl p-2 dark:border-neutral-700 dark:bg-neutral-900 dark:shadow-none">
+        <div className="sticky top-24 h-fit space-y-6 rounded-3xl p-2">
           <div>
             <div className="flex items-start justify-between gap-6">
               <div>
@@ -182,6 +188,13 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
             </div>
           </Card>
         </div>
+      </div>
+
+      <div className="mt-10 space-y-6">
+        <SizeRecommendation product={product} />
+        <RecentlyViewedSection excludeSlug={product.slug} />
+        <SimilarProductsSection product={product} />
+        <CompleteTheLookSection product={product} />
       </div>
     </Section>
   );

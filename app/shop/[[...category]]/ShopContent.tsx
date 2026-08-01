@@ -86,8 +86,8 @@ function SidebarAccordion({
         <Card className="overflow-hidden border-neutral-200 dark:border-neutral-700">
             <button
                 type="button"
-                onClick={() => setOpen(!open)}
                 className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
+                onClick={() => setOpen(!open)}
             >
                 <span className="flex items-center gap-2">
                     <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">

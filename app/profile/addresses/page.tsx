@@ -49,7 +49,7 @@ export default function ProfileAddressesPage() {
     if (authLoading || !user) return null;
 
     return (
-        <main className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50">
+        <main className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
             <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
                 <motion.div
                     initial={{ opacity: 0, x: -10 }}
@@ -57,9 +57,9 @@ export default function ProfileAddressesPage() {
                 >
                     <Link
                         href="/profile"
-                        className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-zinc-400 transition hover:text-zinc-900"
+                        className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-zinc-400 transition hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-100"
                     >
-                        <div className="rounded-full border border-zinc-200 bg-white p-1.5 transition group-hover:border-zinc-900 group-hover:bg-zinc-900 group-hover:text-white">
+                        <div className="rounded-full border border-zinc-200 bg-white p-1.5 transition group-hover:border-zinc-900 group-hover:bg-zinc-900 group-hover:text-white dark:border-zinc-700 dark:bg-zinc-900 dark:group-hover:border-zinc-100 dark:group-hover:bg-zinc-100 dark:group-hover:text-zinc-900">
                             <ArrowLeft size={14} />
                         </div>
                         Profile
@@ -68,10 +68,10 @@ export default function ProfileAddressesPage() {
 
                 <div className="mb-6 flex items-center justify-between">
                     <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
                             Saved Addresses
                         </p>
-                        <h1 className="font-serif text-2xl font-bold tracking-tight text-zinc-900">
+                        <h1 className="font-serif text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
                             My Addresses
                         </h1>
                     </div>

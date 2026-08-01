@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface ThemeToggleProps {
     className?: string;
@@ -29,21 +30,12 @@ export default function ThemeToggle({
     };
 
     return (
-        <button
+        <Button
             onClick={toggleTheme}
-            className={cn(
-                "relative flex items-center justify-center rounded-full",
-                "border border-zinc-200 dark:border-zinc-700",
-                "bg-white dark:bg-zinc-800",
-                "text-zinc-600 dark:text-zinc-300",
-                "shadow-sm hover:shadow-md",
-                "transition-all duration-200",
-                "hover:bg-zinc-50 dark:hover:bg-zinc-700",
-                "focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-500",
-                "active:scale-95",
-                sizeClasses[size],
-                className,
-            )}
+            variant="ghost"
+            size={size === "sm" ? "iconSm" : size === "lg" ? "iconLg" : "iconMd"}
+            rounded="full"
+            className={cn("shrink-0", className)}
             aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
             title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
         >
@@ -72,7 +64,7 @@ export default function ThemeToggle({
                     </motion.span>
                 )}
             </AnimatePresence>
-        </button>
+        </Button>
     );
 }
 

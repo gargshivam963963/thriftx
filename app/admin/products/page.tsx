@@ -33,6 +33,7 @@ import { showToast } from "@/components/admin/toast/Toast";
 import ToastContainer from "@/components/admin/toast/Toast";
 import ProductFormModal, { type ProductFormData } from "@/components/admin/products/ProductFormModal";
 import ConfirmDialog from "@/components/admin/products/ConfirmDialog";
+import ProductSkeleton from "@/components/admin/products/ProductSkeleton";
 
 const slugify = (value: string) =>
     value
@@ -40,7 +41,6 @@ const slugify = (value: string) =>
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
-import ProductSkeleton from "@/components/admin/products/ProductSkeleton";
 
 interface AdminProduct {
     $id: string;

@@ -127,10 +127,10 @@ function TrackingTimeline({
                         <div className="flex flex-col items-center">
                             <div
                                 className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${isCompleted
-                                        ? "bg-emerald-500 text-white shadow-md"
-                                        : isCurrent
-                                            ? "bg-zinc-900 text-white ring-4 ring-zinc-900/10"
-                                            : "bg-zinc-100 text-zinc-400"
+                                    ? "bg-emerald-500 text-white shadow-md"
+                                    : isCurrent
+                                        ? "bg-zinc-900 text-white ring-4 ring-zinc-900/10"
+                                        : "bg-zinc-100 text-zinc-400"
                                     }`}
                             >
                                 {isCompleted ? (
@@ -142,8 +142,8 @@ function TrackingTimeline({
                             {i < steps.length - 1 && (
                                 <div
                                     className={`mt-1 h-full w-0.5 ${isCompleted
-                                            ? "bg-emerald-200"
-                                            : "bg-zinc-200"
+                                        ? "bg-emerald-200"
+                                        : "bg-zinc-200"
                                         }`}
                                 />
                             )}
@@ -152,10 +152,10 @@ function TrackingTimeline({
                         <div className="pt-1.5">
                             <h4
                                 className={`text-sm font-semibold ${isCurrent
-                                        ? "text-zinc-900"
-                                        : isCompleted
-                                            ? "text-emerald-700"
-                                            : "text-zinc-400"
+                                    ? "text-zinc-900"
+                                    : isCompleted
+                                        ? "text-emerald-700"
+                                        : "text-zinc-400"
                                     }`}
                             >
                                 {step.title}
@@ -419,15 +419,13 @@ export default function OrderTrackingPage() {
                                         className="flex items-center gap-4 px-6 py-4"
                                     >
                                         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-zinc-100">
-                                            <img
-                                                src={item.image}
+                                            <PremiumImage
+                                                src={item.image || "/images/placeholder.jpg"}
                                                 alt={item.title}
-                                                className="h-full w-full object-cover"
-                                                onError={(e) => {
-                                                    (
-                                                        e.target as HTMLImageElement
-                                                    ).style.display = "none";
-                                                }}
+                                                fill
+                                                sizes="80px"
+                                                className="object-cover"
+                                                fallbackSrc="/images/placeholder.jpg"
                                             />
                                         </div>
                                         <div className="min-w-0 flex-1">

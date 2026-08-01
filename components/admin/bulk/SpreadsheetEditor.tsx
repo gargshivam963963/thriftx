@@ -224,7 +224,7 @@ export default function SpreadsheetEditor({
                     >
                         <Search size={20} className="text-neutral-300" />
                         <p className="mt-2 text-sm font-medium text-neutral-500 dark:text-neutral-400">
-                            No products match "{searchQuery}"
+                            No products match &quot;{searchQuery}&quot;
                         </p>
                         <Button
                             type="button"

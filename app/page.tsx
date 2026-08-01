@@ -9,6 +9,7 @@ import {
   WhyThriftX,
 } from "@/components/home";
 import { getProducts } from "@/lib/services/products";
+import RecentlyViewedSection from "@/components/product/RecentlyViewedSection";
 
 export default async function HomePage() {
   const products = await getProducts({
@@ -21,6 +22,7 @@ export default async function HomePage() {
       <TrustStrip />
       <FeaturedCategories />
       <BestProducts products={products} />
+      <RecentlyViewedSection />
       <BrandSection />
       <WhyThriftX />
       <InstagramFeed />

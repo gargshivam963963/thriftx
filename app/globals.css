@@ -207,12 +207,88 @@ body {
   color: var(--foreground);
   font-size: var(--step-0);
   line-height: var(--leading-relaxed);
+  font-family:
+    var(--font-sans),
+    "Plus Jakarta Sans",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--primary) 20%, transparent);
+  color: var(--foreground);
+}
+
+* {
+  @apply box-border;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body * {
+  @apply transition-colors duration-200;
+}
+
+/* ─── APP-WIDE DARK MODE OVERRIDES ─────────────────────────────────────── */
+.dark .bg-white,
+.dark .bg-zinc-50,
+.dark .bg-zinc-100,
+.dark .bg-neutral-50,
+.dark .bg-neutral-100 {
+  background-color: var(--color-bg-card) !important;
+}
+
+.dark .bg-zinc-900,
+.dark .bg-neutral-900 {
+  background-color: var(--color-bg-elevated) !important;
+}
+
+.dark .text-zinc-900,
+.dark .text-zinc-800,
+.dark .text-neutral-900,
+.dark .text-neutral-800 {
+  color: var(--color-text) !important;
+}
+
+.dark .text-zinc-700,
+.dark .text-zinc-600,
+.dark .text-zinc-500,
+.dark .text-zinc-400,
+.dark .text-neutral-700,
+.dark .text-neutral-600,
+.dark .text-neutral-500,
+.dark .text-neutral-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+.dark .border-zinc-200,
+.dark .border-zinc-100,
+.dark .border-neutral-200,
+.dark .border-neutral-100 {
+  border-color: var(--color-border) !important;
+}
+
+.dark .border-zinc-800,
+.dark .border-neutral-800 {
+  border-color: var(--color-border) !important;
+}
+
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl {
+  box-shadow: var(--shadow-md) !important;
 }
 
 /* ─── FLUID TYPOGRAPHY UTILITY CLASSES ──────────────────────────────────── */
@@ -367,7 +443,12 @@ input,
 textarea,
 select,
 label {
-  font-family: var(--font-sans), "Plus Jakarta Sans", system-ui, sans-serif;
+  font-family: inherit;
+}
+
+.font-serif {
+  font-family:
+    var(--font-serif), "Playfair Display", Georgia, "Times New Roman", serif;
 }
 
 /* ─── THEME TRANSITION ───────────────────────────────────────────────────── */

@@ -409,6 +409,89 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   );
 }
 
+export async function getSimilarProducts(
+  product: Product,
+  limit = 6,
+): Promise<Product[]> {
+  if (!isAppwriteDataConfigured) {
+    return [];
+  }
+
+  try {
+    const response = await databases.listDocuments(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_PRODUCTS_COLLECTION_ID,
+      [
+        AppwriteQuery.equal("isActive", true),
+        AppwriteQuery.equal("status", "active"),
+        AppwriteQuery.limit(200),
+      ],
+    );
+
+    const candidates = response.documents
+      .map((doc) => {
+        const { $id, ...data } = doc;
+        return normalizeProduct(
+          {
+            ...(data as Partial<AppwriteProductDocument>),
+            $createdAt: doc.$createdAt,
+            $updatedAt: doc.$updatedAt,
+          },
+          $id,
+        );
+      })
+      .filter((candidate) => candidate.id !== product.id);
+
+    const scored = candidates.map((candidate) => {
+      const sharedCategory = candidate.category === product.category ? 4 : 0;
+      const sharedBrand = candidate.brand === product.brand ? 4 : 0;
+      const sharedColor =
+        candidate.color &&
+        product.color &&
+        candidate.color.toLowerCase() === product.color.toLowerCase()
+          ? 3
+          : 0;
+      const sharedSize =
+        candidate.size &&
+        product.size &&
+        candidate.size.toLowerCase() === product.size.toLowerCase()
+          ? 2
+          : 0;
+      const priceDelta =
+        Math.abs(candidate.price - product.price) / Math.max(product.price, 1);
+      const priceScore = priceDelta < 0.25 ? 2 : priceDelta < 0.45 ? 1 : 0;
+      const categorySimilarity =
+        (candidate.category || "")
+          .toLowerCase()
+          .includes((product.category || "").toLowerCase()) ||
+        (product.category || "")
+          .toLowerCase()
+          .includes((candidate.category || "").toLowerCase())
+          ? 2
+          : 0;
+
+      return {
+        product: candidate,
+        score:
+          sharedCategory +
+          sharedBrand +
+          sharedColor +
+          sharedSize +
+          priceScore +
+          categorySimilarity,
+      };
+    });
+
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((entry) => entry.product);
+  } catch (error) {
+    console.error("getSimilarProducts:", error);
+    return [];
+  }
+}
+
 let brandsCache: { data: string[]; timestamp: number } | null = null;
 const BRANDS_CACHE_TTL = 60_000; // 1 minute
 

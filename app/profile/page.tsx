@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
 import { getUserOrders } from "@/lib/services/orderService";
@@ -42,15 +43,15 @@ function StatsCard({
     color: string;
 }) {
     return (
-        <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md">
+        <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${color}`}>
                 {icon}
             </div>
             <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-400">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-400 dark:text-zinc-500">
                     {label}
                 </p>
-                <p className="font-serif text-xl font-bold text-zinc-900">
+                <p className="font-serif text-xl font-bold text-zinc-900 dark:text-zinc-100">
                     {value}
                 </p>
             </div>
@@ -75,41 +76,48 @@ function MenuRow({
     onClick?: () => void;
     danger?: boolean;
 }) {
-    const content = (
-        <div
-            className={`flex items-center justify-between rounded-2xl border border-zinc-100 bg-white p-4 transition hover:shadow-sm ${danger ? "hover:border-red-200 hover:bg-red-50/50" : "hover:border-zinc-200 hover:bg-zinc-50"
-                }`}
+    const router = useRouter();
+    const handleAction = () => {
+        if (href) {
+            router.push(href);
+            return;
+        }
+        onClick?.();
+    };
+
+    return (
+        <Button
+            type="button"
+            variant={danger ? "danger" : "ghost"}
+            size="md"
+            fullWidth
+            className={cn(
+                "justify-between rounded-2xl border border-zinc-100 bg-white p-4 text-left transition hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900",
+                danger
+                    ? "hover:border-red-200 hover:bg-red-50/50 dark:hover:border-red-800 dark:hover:bg-red-950/30"
+                    : "hover:border-zinc-200 hover:bg-zinc-50 dark:hover:border-zinc-700 dark:hover:bg-zinc-800/80",
+            )}
+            onClick={handleAction}
         >
             <div className="flex items-center gap-3">
                 <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl ${danger ? "bg-red-100 text-red-500" : "bg-zinc-100 text-zinc-500"
-                        }`}
+                    className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-xl",
+                        danger
+                            ? "bg-red-100 text-red-500 dark:bg-red-950/40 dark:text-red-400"
+                            : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+                    )}
                 >
                     {icon}
                 </div>
                 <div>
-                    <p className={`text-sm font-semibold ${danger ? "text-red-700" : "text-zinc-900"}`}>
-                        {label}
-                    </p>
-                    {subtitle && (
-                        <p className="text-xs text-zinc-500">{subtitle}</p>
-                    )}
+                    <p className={cn("text-sm font-semibold", danger ? "text-red-700 dark:text-red-400" : "text-zinc-900 dark:text-zinc-100")}>{label}</p>
+                    {subtitle && <p className="text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</p>}
                 </div>
             </div>
-            <ChevronRight
-                size={18}
-                className={`${danger ? "text-red-300" : "text-zinc-300"}`}
-            />
-        </div>
+            <ChevronRight size={18} className={danger ? "text-red-300 dark:text-red-400" : "text-zinc-300 dark:text-zinc-500"} />
+        </Button>
     );
-
-    if (href) {
-        return <Link href={href}>{content}</Link>;
-    }
-
-    return <button type="button" onClick={onClick} className="w-full text-left">
-        {content}
-    </button>;
 }
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
@@ -182,7 +190,7 @@ export default function ProfilePage() {
 
     if (authLoading) {
         return (
-            <main className="min-h-screen bg-zinc-50">
+            <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
                 <div className="mx-auto max-w-2xl px-4 py-8 sm:py-12">
                     <ProfileSkeleton />
                 </div>
@@ -197,7 +205,7 @@ export default function ProfilePage() {
     const recentOrders = orders.slice(0, 3);
 
     return (
-        <main className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50">
+        <main className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
             <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
                 {/* ── Profile Header ────────────────────────────────────── */}
                 <motion.div
@@ -206,16 +214,16 @@ export default function ProfilePage() {
                     className="mb-6"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 text-2xl font-bold text-white shadow-lg sm:h-20 sm:w-20 sm:text-3xl">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 text-2xl font-bold text-white shadow-lg sm:h-20 sm:w-20 sm:text-3xl dark:from-zinc-700 dark:to-zinc-800">
                             {(user.name || user.email || "U")
                                 .charAt(0)
                                 .toUpperCase()}
                         </div>
                         <div>
-                            <h1 className="font-serif text-2xl font-bold text-zinc-900 sm:text-3xl">
+                            <h1 className="font-serif text-2xl font-bold text-zinc-900 dark:text-zinc-100 sm:text-3xl">
                                 {user.name || "User"}
                             </h1>
-                            <p className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
+                            <p className="mt-1 flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
                                 <Mail size={14} />
                                 {user.email || "No email"}
                             </p>
@@ -263,7 +271,7 @@ export default function ProfilePage() {
                     transition={{ delay: 0.1 }}
                     className="space-y-2"
                 >
-                    <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+                    <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
                         Account
                     </p>
 
@@ -302,7 +310,7 @@ export default function ProfilePage() {
                     />
 
                     <div className="pt-4">
-                        <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+                        <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
                             Settings
                         </p>
 
@@ -348,20 +356,20 @@ export default function ProfilePage() {
                                 <Link
                                     key={order.$id}
                                     href={`/orders/${order.$id}`}
-                                    className="flex items-center justify-between rounded-2xl border border-zinc-100 bg-white px-4 py-3 transition hover:border-zinc-200 hover:shadow-sm"
+                                    className="flex items-center justify-between rounded-2xl border border-zinc-100 bg-white px-4 py-3 transition hover:border-zinc-200 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
                                             <Package
                                                 size={14}
-                                                className="text-zinc-500"
+                                                className="text-zinc-500 dark:text-zinc-400"
                                             />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-medium text-zinc-900">
+                                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                                                 Order #{order.$id.slice(0, 8).toUpperCase()}
                                             </p>
-                                            <p className="text-xs text-zinc-500">
+                                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
                                                 {new Intl.DateTimeFormat("en-IN", {
                                                     dateStyle: "medium",
                                                 }).format(new Date(order.$createdAt))}
@@ -369,7 +377,7 @@ export default function ProfilePage() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-bold text-zinc-900">
+                                        <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
                                             ₹{order.total.toLocaleString("en-IN")}
                                         </p>
                                     </div>
@@ -384,7 +392,7 @@ export default function ProfilePage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className="mt-10 text-center text-xs text-zinc-400"
+                    className="mt-10 text-center text-xs text-zinc-400 dark:text-zinc-500"
                 >
                     <Sparkles size={12} className="mx-auto mb-1" />
                     <p>Premium Thrift Fashion &mdash; THRIFTX</p>

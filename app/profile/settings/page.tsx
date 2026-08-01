@@ -34,6 +34,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import FloatingInput from "@/components/ui/FloatingInput";
 import { useAuth } from "@/lib/AuthContext";
+import { useTheme } from "@/lib/ThemeContext";
 import { cn } from "@/lib/utils";
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -152,11 +153,13 @@ function ToggleSwitch({
                 <p className="text-sm font-medium text-zinc-900">{label}</p>
                 <p className="text-xs text-zinc-500">{description}</p>
             </div>
-            <button
+            <Button
                 type="button"
+                variant="ghost"
+                size="iconSm"
                 onClick={() => onChange(!enabled)}
                 className={cn(
-                    "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors",
+                    "relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors p-0",
                     enabled ? "bg-zinc-900" : "bg-zinc-200",
                 )}
             >
@@ -166,7 +169,7 @@ function ToggleSwitch({
                         enabled ? "translate-x-5" : "translate-x-0",
                     )}
                 />
-            </button>
+            </Button>
         </div>
     );
 }
@@ -176,6 +179,7 @@ function ToggleSwitch({
 export default function SettingsPage() {
     const router = useRouter();
     const { user, loading: authLoading, logout } = useAuth();
+    const { theme, setTheme } = useTheme();
 
     const [showCurrentPw, setShowCurrentPw] = useState(false);
     const [showNewPw, setShowNewPw] = useState(false);
@@ -186,7 +190,7 @@ export default function SettingsPage() {
     // Notifications / preferences
     const [emailNotifs, setEmailNotifs] = useState(true);
     const [smsNotifs, setSmsNotifs] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
+    const [darkMode, setDarkMode] = useState(theme === "dark");
 
     // Delete account confirmation
     const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -216,6 +220,14 @@ export default function SettingsPage() {
             });
         }
     }, [user, resetProfile]);
+
+    useEffect(() => {
+        setDarkMode(theme === "dark");
+    }, [theme]);
+
+    useEffect(() => {
+        setTheme(darkMode ? "dark" : "light");
+    }, [darkMode, setTheme]);
 
     // ── Password Form ─────────────────────────────────────────────────────────
     const {
@@ -399,8 +411,10 @@ export default function SettingsPage() {
                                     error={pwErrors.currentPassword?.message}
                                     {...registerPw("currentPassword")}
                                 />
-                                <button
+                                <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="iconSm"
                                     onClick={() =>
                                         setShowCurrentPw(!showCurrentPw)
                                     }
@@ -411,7 +425,7 @@ export default function SettingsPage() {
                                     ) : (
                                         <Eye size={16} />
                                     )}
-                                </button>
+                                </Button>
                             </div>
 
                             <div className="grid gap-4 sm:grid-cols-2">
@@ -422,8 +436,10 @@ export default function SettingsPage() {
                                         error={pwErrors.newPassword?.message}
                                         {...registerPw("newPassword")}
                                     />
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="ghost"
+                                        size="iconSm"
                                         onClick={() => setShowNewPw(!showNewPw)}
                                         className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900"
                                     >
@@ -432,7 +448,7 @@ export default function SettingsPage() {
                                         ) : (
                                             <Eye size={16} />
                                         )}
-                                    </button>
+                                    </Button>
                                 </div>
                                 <div className="relative">
                                     <FloatingInput
@@ -445,8 +461,10 @@ export default function SettingsPage() {
                                         }
                                         {...registerPw("confirmPassword")}
                                     />
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="ghost"
+                                        size="iconSm"
                                         onClick={() =>
                                             setShowConfirmPw(!showConfirmPw)
                                         }
@@ -457,7 +475,7 @@ export default function SettingsPage() {
                                         ) : (
                                             <Eye size={16} />
                                         )}
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
 

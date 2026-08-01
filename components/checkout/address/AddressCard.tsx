@@ -94,24 +94,24 @@ export default function AddressCard({
                 }}
                 whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.995 }}
-                className={`w-full overflow-hidden rounded-2xl border bg-white text-left transition-all duration-200 sm:rounded-3xl ${selected
-                        ? "border-neutral-900 bg-neutral-50/30 ring-1 ring-neutral-900/20 shadow-lg"
-                        : "border-neutral-200 hover:border-neutral-400 hover:shadow-md"
+                className={`w-full overflow-hidden rounded-2xl border bg-white text-left transition-all duration-200 sm:rounded-3xl dark:bg-neutral-900 ${selected
+                    ? "border-neutral-900 bg-neutral-50/30 ring-1 ring-neutral-900/20 shadow-lg dark:border-neutral-100 dark:bg-neutral-800/80 dark:ring-neutral-100/20"
+                    : "border-neutral-200 hover:border-neutral-400 hover:shadow-md dark:border-neutral-800 dark:hover:border-neutral-600"
                     }`}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3.5 sm:px-6 sm:py-4">
+                <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3.5 sm:px-6 sm:py-4 dark:border-neutral-800">
                     <div className="flex items-center gap-3">
                         <div
                             className={`rounded-full p-2 transition-colors ${selected
-                                    ? "bg-neutral-900 text-white"
-                                    : typeInfo.color
+                                ? "bg-neutral-900 text-white"
+                                : typeInfo.color
                                 }`}
                         >
                             <TypeIcon size={16} className="sm:h-[18px] sm:w-[18px]" />
                         </div>
                         <div>
-                            <h3 className="text-sm font-semibold text-neutral-900 sm:text-base">
+                            <h3 className="text-sm font-semibold text-neutral-900 sm:text-base dark:text-neutral-100">
                                 {address.fullName}
                             </h3>
                             <div className="mt-0.5 flex items-center gap-1.5">
@@ -153,7 +153,7 @@ export default function AddressCard({
                         <button
                             type="button"
                             onClick={handleEditClick}
-                            className="rounded-xl border border-neutral-200 p-2 text-neutral-600 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white"
+                            className="rounded-xl border border-neutral-200 p-2 text-neutral-600 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-neutral-100 dark:hover:bg-neutral-100 dark:hover:text-neutral-900"
                             aria-label="Edit address"
                         >
                             <Pencil size={14} className="sm:h-[15px] sm:w-[15px]" />
@@ -162,7 +162,7 @@ export default function AddressCard({
                         <button
                             type="button"
                             onClick={handleDeleteClick}
-                            className="rounded-xl border border-red-200 p-2 text-red-500 transition hover:bg-red-600 hover:text-white"
+                            className="rounded-xl border border-red-200 p-2 text-red-500 transition hover:bg-red-600 hover:text-white dark:border-red-900/60 dark:text-red-400"
                             aria-label="Delete address"
                         >
                             <Trash2 size={14} className="sm:h-[15px] sm:w-[15px]" />
@@ -178,17 +178,17 @@ export default function AddressCard({
                             size={16}
                             className="mt-0.5 shrink-0 text-neutral-400 sm:mt-1 sm:h-[18px] sm:w-[18px]"
                         />
-                        <div className="text-sm leading-6 text-neutral-700 sm:leading-7">
-                            <p className="font-medium text-neutral-900">
+                        <div className="text-sm leading-6 text-neutral-700 sm:leading-7 dark:text-neutral-300">
+                            <p className="font-medium text-neutral-900 dark:text-neutral-100">
                                 {address.addressLine1}
                             </p>
                             {address.addressLine2 && <p>{address.addressLine2}</p>}
                             {address.landmark && (
-                                <p className="text-neutral-500">📍 {address.landmark}</p>
+                                <p className="text-neutral-500 dark:text-neutral-400">📍 {address.landmark}</p>
                             )}
-                            <p className="text-neutral-600">
+                            <p className="text-neutral-600 dark:text-neutral-400">
                                 {address.city}, {address.state}{" "}
-                                <span className="font-semibold text-neutral-800">
+                                <span className="font-semibold text-neutral-800 dark:text-neutral-200">
                                     — {address.pincode}
                                 </span>
                             </p>
@@ -202,14 +202,14 @@ export default function AddressCard({
                             className="mt-0.5 shrink-0 text-neutral-400 sm:mt-1 sm:h-[18px] sm:w-[18px]"
                         />
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-400 sm:text-[11px]">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-400 sm:text-[11px] dark:text-neutral-500">
                                 Contact
                             </p>
-                            <p className="mt-0.5 text-sm font-medium text-neutral-800 sm:text-base">
+                            <p className="mt-0.5 text-sm font-medium text-neutral-800 sm:text-base dark:text-neutral-200">
                                 {address.phone}
                             </p>
                             {address.alternatePhone && (
-                                <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">
+                                <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm dark:text-neutral-400">
                                     Alt: {address.alternatePhone}
                                 </p>
                             )}

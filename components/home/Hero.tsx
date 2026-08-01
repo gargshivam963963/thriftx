@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/Container";
 import { FadeUp, ScaleIn } from "@/components/animations";
+import { Card } from "@/components/ui/Card";
 
 const heroStats = [
     { value: "5000+", label: "Curated Pieces" },
@@ -24,7 +25,7 @@ const floatingFeatures = [
 
 export default function Hero() {
     return (
-        <section className="relative min-h-[90vh] overflow-hidden bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-950 dark:to-neutral-900">
+        <section className="relative min-h-[90vh] overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(0,0,0,0.03),_transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.06),_transparent_60%)]">
             {/* Background decorative elements */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-neutral-200/40 to-transparent blur-3xl dark:from-neutral-800/30" />
@@ -80,7 +81,7 @@ export default function Hero() {
                                 </div>
 
                                 {/* Stats Bar */}
-                                <div className="grid grid-cols-3 divide-x divide-neutral-200 overflow-hidden rounded-2xl border border-neutral-200 bg-white/80 shadow-sm backdrop-blur-xl dark:divide-neutral-700 dark:border-neutral-700 dark:bg-neutral-900/80">
+                                <div className="grid grid-cols-3 divide-x divide-border overflow-hidden rounded-2xl border border-border bg-card/80 shadow-sm backdrop-blur-xl">
                                     {heroStats.map((item) => (
                                         <div key={item.label} className="px-4 py-5 text-center sm:px-6 sm:py-6">
                                             <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 sm:text-3xl">

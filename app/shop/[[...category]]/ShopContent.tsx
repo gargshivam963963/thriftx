@@ -1,22 +1,20 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
     LayoutGrid,
     List,
     ChevronDown,
     RotateCcw,
     AlertCircle,
-    Home,
     Tags,
     Building2,
     Ruler,
     Banknote,
     X,
     Star,
-    Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -24,20 +22,7 @@ import type { Product } from "@/lib/services/products";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-    Breadcrumb,
-    BreadcrumbList,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbSeparator,
-    BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
-import {
-    Card,
-    CardContent,
-    CardFooter,
-} from "@/components/ui/Card";
-import { Select } from "@/components/ui/select";
+import { Card } from "@/components/ui/Card";
 import ProductCardGrid from "@/components/shop/ProductCardGrid";
 import ProductCardList from "@/components/shop/ProductCardList";
 import ProductCardSkeleton from "@/components/shop/ProductCardSkeleton";
@@ -83,14 +68,14 @@ function SidebarAccordion({
     const [open, setOpen] = useState(defaultOpen);
 
     return (
-        <Card className="overflow-hidden border-neutral-200 dark:border-neutral-700">
+        <Card className="overflow-hidden border-border">
             <button
                 type="button"
-                className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
+                className="flex w-full items-center justify-between px-4 py-3 text-body-sm font-semibold text-foreground transition hover:bg-muted"
                 onClick={() => setOpen(!open)}
             >
                 <span className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-muted">
                         {icon}
                     </span>
                     {title}
@@ -99,7 +84,7 @@ function SidebarAccordion({
                     animate={{ rotate: open ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                 >
-                    <ChevronDown size={14} className="text-neutral-400" />
+                    <ChevronDown size={14} className="text-muted-foreground" />
                 </motion.span>
             </button>
             <AnimatePresence initial={false}>
@@ -140,7 +125,6 @@ export default function ShopContent({
     initialMeasurement,
     initialSearch,
 }: ShopContentProps) {
-    const pathname = usePathname();
     const searchParams = useSearchParams();
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -157,14 +141,6 @@ export default function ShopContent({
     const hasActiveFilters =
         initialBrand || initialSize || initialPrice || initialMeasurement || initialSearch;
 
-    const activeFilterCount = [
-        initialBrand,
-        initialSize,
-        initialPrice,
-        initialMeasurement,
-        initialSearch,
-    ].filter((v) => v !== null && v !== undefined).length;
-
     /**
      * Parse measurement query param: "chest-24", "waist-30", "length-28", "inseam-28"
      * Returns { type, value } or null
@@ -175,8 +151,6 @@ export default function ShopContent({
         if (!match) return null;
         return { type: match[1] as "chest" | "waist" | "length" | "inseam", value: parseInt(match[2], 10) };
     }, [initialMeasurement]);
-
-    const searchTrackedRef = useRef(false);
 
     useEffect(() => {
         setOffset(ITEMS_PER_PAGE);
@@ -248,19 +222,6 @@ export default function ShopContent({
         return results;
     }, [products, initialSearch, parsedMeasurement, initialMeasurement]);
 
-    // Build breadcrumb trail
-    const breadcrumbs: { label: string; href: string; isLast: boolean }[] = [
-        { label: "Home", href: "/", isLast: false },
-        { label: "Shop", href: "/shop", isLast: false },
-    ];
-    if (gender) {
-        const genderName = genders.find((g) => g.slug === gender)?.name || gender.charAt(0).toUpperCase() + gender.slice(1);
-        breadcrumbs.push({ label: genderName, href: `/shop/${gender}`, isLast: !clothingCategory });
-    }
-    if (clothingCategory) {
-        breadcrumbs.push({ label: categoryTitle, href: `/shop/${gender}/${clothingCategory}`, isLast: true });
-    }
-
     return (
         <div className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8 2xl:px-10">
             <div className="flex flex-col gap-10 lg:flex-row lg:gap-14">
@@ -268,11 +229,11 @@ export default function ShopContent({
                 <aside className="hidden lg:sticky lg:top-24 lg:flex lg:w-[260px] xl:w-[280px] lg:shrink-0 lg:self-start lg:flex-col lg:gap-5">
                     <div className="space-y-5">
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-3xl font-bold">Filters</h2>
+                            <h2 className="text-heading-3 font-bold text-foreground">Filters</h2>
                             {hasActiveFilters && (
                                 <Link
                                     href={baseUrl}
-                                    className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 transition hover:text-neutral-900 dark:hover:text-neutral-200"
+                                    className="flex items-center gap-1 text-badge font-semibold uppercase tracking-wider text-muted-foreground transition hover:text-foreground"
                                 >
                                     <RotateCcw size={11} /> Reset
                                 </Link>
@@ -282,16 +243,16 @@ export default function ShopContent({
                         <div className="space-y-3">
                             {/* Category - default open */}
                             <SidebarAccordion
-                                icon={<Tags size={13} className="text-neutral-500" />}
+                                icon={<Tags size={13} className="text-muted-foreground" />}
                                 title="Category"
                                 defaultOpen={true}
                             >
                                 <div className="flex flex-col gap-0.5">
                                     <Link
                                         href="/shop"
-                                        className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all ${!gender ? "bg-neutral-900 text-white shadow-sm dark:bg-neutral-100 dark:text-neutral-900" : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"}`}
+                                        className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-body-sm font-medium transition-all ${!gender ? "bg-foreground text-background shadow-card" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                                     >
-                                        <span className={`flex h-5 w-5 items-center justify-center rounded-md text-[10px] font-bold ${!gender ? "bg-white/20 text-white dark:bg-neutral-900/20 dark:text-neutral-900" : "bg-neutral-200 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"}`}>
+                                        <span className={`flex h-5 w-5 items-center justify-center rounded-md text-badge font-bold ${!gender ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"}`}>
                                             <Star size={9} />
                                         </span>
                                         All Items
@@ -300,22 +261,22 @@ export default function ShopContent({
                                         <div key={g.id}>
                                             <Link
                                                 href={`/shop/${g.slug}`}
-                                                className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all ${gender === g.slug && !clothingCategory ? "bg-neutral-900 text-white shadow-sm dark:bg-neutral-100 dark:text-neutral-900" : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"}`}
+                                                className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-body-sm font-medium transition-all ${gender === g.slug && !clothingCategory ? "bg-foreground text-background shadow-card" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                                             >
-                                                <span className={`flex h-5 w-5 items-center justify-center rounded-md text-[10px] font-bold ${gender === g.slug && !clothingCategory ? "bg-white/20 text-white dark:bg-neutral-900/20 dark:text-neutral-900" : "bg-neutral-200 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400"}`}>
+                                                <span className={`flex h-5 w-5 items-center justify-center rounded-md text-badge font-bold ${gender === g.slug && !clothingCategory ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"}`}>
                                                     {g.name.charAt(0)}
                                                 </span>
                                                 {g.name}
                                             </Link>
                                             {gender === g.slug && (
-                                                <div className="ml-3 mt-0.5 flex flex-col gap-0.5 border-l border-neutral-200 pl-3 dark:border-neutral-700">
+                                                <div className="ml-3 mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
                                                     {categories
                                                         .filter((c) => c.gender.toLowerCase() === g.name.toLowerCase())
                                                         .map((c) => (
                                                             <Link
                                                                 key={c.id}
                                                                 href={`/shop/${g.slug}/${c.slug}`}
-                                                                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${clothingCategory === c.slug ? "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100" : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"}`}
+                                                                className={`rounded-lg px-3 py-1.5 text-body-sm font-medium transition-all ${clothingCategory === c.slug ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                                                             >
                                                                 {c.name}
                                                             </Link>
@@ -329,7 +290,7 @@ export default function ShopContent({
 
                             {/* Brand */}
                             <SidebarAccordion
-                                icon={<Building2 size={13} className="text-neutral-500" />}
+                                icon={<Building2 size={13} className="text-muted-foreground" />}
                                 title="Brand"
                             >
                                 <BrandFilter brands={brands} />
@@ -337,7 +298,7 @@ export default function ShopContent({
 
                             {/* Size */}
                             <SidebarAccordion
-                                icon={<Ruler size={13} className="text-neutral-500" />}
+                                icon={<Ruler size={13} className="text-muted-foreground" />}
                                 title="Size"
                             >
                                 <SizeFilter />
@@ -345,7 +306,7 @@ export default function ShopContent({
 
                             {/* Price */}
                             <SidebarAccordion
-                                icon={<Banknote size={13} className="text-neutral-500" />}
+                                icon={<Banknote size={13} className="text-muted-foreground" />}
                                 title="Price"
                             >
                                 <PriceFilter />
@@ -353,7 +314,7 @@ export default function ShopContent({
 
                             {/* Measurements */}
                             <SidebarAccordion
-                                icon={<Ruler size={13} className="text-neutral-500" />}
+                                icon={<Ruler size={13} className="text-muted-foreground" />}
                                 title="Measurements"
                             >
                                 <MeasurementFilter />
@@ -377,7 +338,7 @@ export default function ShopContent({
                             </div>
 
                             {/* View Toggle */}
-                            <div className="hidden items-center rounded-xl border border-neutral-200 bg-white p-0.5 dark:border-neutral-700 dark:bg-neutral-800 sm:flex">
+                            <div className="hidden items-center rounded-xl border border-border bg-card p-0.5 sm:flex">
                                 <Button
                                     type="button"
                                     onClick={() => setViewMode("grid")}
@@ -411,7 +372,7 @@ export default function ShopContent({
                                                 )
                                             ).toString()}`}
                                         >
-                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700">
+                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-muted">
                                                 {initialBrand}
                                                 <X size={10} className="ml-1" />
                                             </Badge>
@@ -427,7 +388,7 @@ export default function ShopContent({
                                                 )
                                             ).toString()}`}
                                         >
-                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700">
+                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-muted">
                                                 Size {initialSize}
                                                 <X size={10} className="ml-1" />
                                             </Badge>
@@ -443,7 +404,7 @@ export default function ShopContent({
                                                 )
                                             ).toString()}`}
                                         >
-                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700">
+                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-muted">
                                                 {initialPrice}
                                                 <X size={10} className="ml-1" />
                                             </Badge>
@@ -459,7 +420,7 @@ export default function ShopContent({
                                                 )
                                             ).toString()}`}
                                         >
-                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700">
+                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-muted">
                                                 {initialMeasurement
                                                     .replace(/^chest-/i, "Chest ")
                                                     .replace(/^waist-/i, "Waist ")
@@ -477,7 +438,7 @@ export default function ShopContent({
 
                         <div className="flex items-center gap-3">
                             <div className="flex-1 text-center">
-                                <p className="text-sm font-medium text-neutral-500">
+                                <p className="text-body-sm font-medium text-muted-foreground">
                                     Showing {filteredProducts.length} Products
                                 </p>
                             </div>
@@ -504,17 +465,17 @@ export default function ShopContent({
                             animate={{ opacity: 1, y: 0 }}
                             className="flex flex-col items-center justify-center py-20 text-center"
                         >
-                            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-100 dark:bg-neutral-800">
-                                <AlertCircle size={28} className="text-neutral-400" />
+                            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                                <AlertCircle size={28} className="text-muted-foreground" />
                             </div>
-                            <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">No items found</h3>
-                            <p className="mt-1.5 max-w-sm text-sm text-neutral-500 dark:text-neutral-400">
+                            <h3 className="text-heading-4 font-bold text-foreground">No items found</h3>
+                            <p className="mt-1.5 max-w-sm text-body-sm text-muted-foreground">
                                 Try adjusting your filters or check back later for new arrivals.
                             </p>
                             {hasActiveFilters && (
                                 <Link
                                     href={baseUrl}
-                                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+                                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-body-sm font-semibold text-background transition hover:opacity-90"
                                 >
                                     <RotateCcw size={14} /> Reset Filters
                                 </Link>
@@ -583,9 +544,9 @@ export default function ShopContent({
                                     <div className="flex w-full max-w-xs items-center gap-3">
                                         <Progress
                                             value={Math.min((filteredProducts.length / (totalCount || filteredProducts.length + ITEMS_PER_PAGE)) * 100, 100)}
-                                            className="h-1 bg-neutral-100 dark:bg-neutral-800"
+                                            className="h-1 bg-muted"
                                         />
-                                        <span className="shrink-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500">
+                                        <span className="shrink-0 text-badge font-semibold text-muted-foreground">
                                             {filteredProducts.length}+
                                         </span>
                                     </div>

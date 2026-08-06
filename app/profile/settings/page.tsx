@@ -7,8 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     ArrowLeft,
     User,
-    Mail,
-    Phone,
     Lock,
     Eye,
     EyeOff,
@@ -16,14 +14,9 @@ import {
     AlertTriangle,
     LogOut,
     Check,
-    X,
     ShieldCheck,
-    Smartphone,
-    Globe,
     Bell,
-    Moon,
     Sparkles,
-    Loader2,
     Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -77,13 +70,13 @@ function SettingsSkeleton() {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
-                <div className="h-10 w-10 animate-pulse rounded-full bg-zinc-200" />
-                <div className="h-5 w-40 animate-pulse rounded bg-zinc-200" />
+                <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
+                <div className="h-5 w-40 animate-pulse rounded bg-muted" />
             </div>
             {[1, 2, 3].map((i) => (
                 <div
                     key={i}
-                    className="h-48 animate-pulse rounded-2xl bg-zinc-200"
+                    className="h-48 animate-pulse rounded-2xl bg-muted"
                 />
             ))}
         </div>
@@ -110,20 +103,20 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-                "overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-md sm:rounded-3xl",
+                "overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:shadow-modal",
                 className,
             )}
         >
-            <div className="flex items-center gap-3 border-b border-zinc-100 px-5 py-4 sm:px-6 sm:py-5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-white sm:h-10 sm:w-10">
+            <div className="flex items-center gap-3 border-b border-border px-5 py-4 sm:px-6 sm:py-5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background sm:h-10 sm:w-10">
                     {icon}
                 </div>
                 <div>
-                    <h3 className="text-sm font-semibold text-zinc-900 sm:text-base">
+                    <h3 className="text-body-sm font-semibold text-foreground sm:text-body">
                         {title}
                     </h3>
                     {subtitle && (
-                        <p className="text-xs text-zinc-500 sm:text-sm">
+                        <p className="text-small text-muted-foreground sm:text-body-sm">
                             {subtitle}
                         </p>
                     )}
@@ -150,8 +143,8 @@ function ToggleSwitch({
     return (
         <div className="flex items-center justify-between gap-4">
             <div>
-                <p className="text-sm font-medium text-zinc-900">{label}</p>
-                <p className="text-xs text-zinc-500">{description}</p>
+                <p className="text-body-sm font-medium text-foreground">{label}</p>
+                <p className="text-small text-muted-foreground">{description}</p>
             </div>
             <Button
                 type="button"
@@ -160,7 +153,7 @@ function ToggleSwitch({
                 onClick={() => onChange(!enabled)}
                 className={cn(
                     "relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors p-0",
-                    enabled ? "bg-zinc-900" : "bg-zinc-200",
+                    enabled ? "bg-foreground" : "bg-muted",
                 )}
             >
                 <span
@@ -297,7 +290,7 @@ export default function SettingsPage() {
 
     if (authLoading) {
         return (
-            <main className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50">
+            <main className="min-h-screen bg-background">
                 <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
                     <SettingsSkeleton />
                 </div>
@@ -308,7 +301,7 @@ export default function SettingsPage() {
     if (!user) return null;
 
     return (
-        <main className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50">
+        <main className="min-h-screen bg-background">
             <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
                 {/* ── Header ────────────────────────────────────────────── */}
                 <motion.div
@@ -319,15 +312,15 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-3">
                         <Link
                             href="/profile"
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white"
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card transition hover:border-foreground hover:bg-foreground hover:text-background"
                         >
                             <ArrowLeft size={16} />
                         </Link>
                         <div>
-                            <h1 className="font-serif text-xl font-bold text-zinc-900 sm:text-2xl">
+                            <h1 className="font-display text-heading-4 font-bold text-foreground">
                                 Account Settings
                             </h1>
-                            <p className="text-xs text-zinc-500 sm:text-sm">
+                            <p className="text-small text-muted-foreground sm:text-body-sm">
                                 Manage your profile, security &amp; preferences
                             </p>
                         </div>
@@ -343,16 +336,16 @@ export default function SettingsPage() {
                     >
                         <div className="space-y-4">
                             <div className="flex items-center gap-4 pb-4">
-                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 text-xl font-bold text-white shadow-lg sm:h-16 sm:w-16 sm:text-2xl">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-foreground to-foreground/80 text-xl font-bold text-background shadow-lg sm:h-16 sm:w-16 sm:text-2xl">
                                     {(user.name || user.email || "U")
                                         .charAt(0)
                                         .toUpperCase()}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-zinc-900">
+                                    <p className="text-body-sm font-semibold text-foreground">
                                         {user.name || "User"}
                                     </p>
-                                    <p className="text-xs text-zinc-500">
+                                    <p className="text-small text-muted-foreground">
                                         {user.email || ""}
                                     </p>
                                 </div>
@@ -380,7 +373,7 @@ export default function SettingsPage() {
                                 {...registerProfile("phone")}
                             />
 
-                            <div className="flex justify-end border-t border-zinc-100 pt-4">
+                            <div className="flex justify-end border-t border-border pt-4">
                                 <Button
                                     type="submit"
                                     loading={profileSaving}
@@ -418,7 +411,7 @@ export default function SettingsPage() {
                                     onClick={() =>
                                         setShowCurrentPw(!showCurrentPw)
                                     }
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
                                     {showCurrentPw ? (
                                         <EyeOff size={16} />
@@ -441,7 +434,7 @@ export default function SettingsPage() {
                                         variant="ghost"
                                         size="iconSm"
                                         onClick={() => setShowNewPw(!showNewPw)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                     >
                                         {showNewPw ? (
                                             <EyeOff size={16} />
@@ -468,7 +461,7 @@ export default function SettingsPage() {
                                         onClick={() =>
                                             setShowConfirmPw(!showConfirmPw)
                                         }
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                     >
                                         {showConfirmPw ? (
                                             <EyeOff size={16} />
@@ -480,31 +473,31 @@ export default function SettingsPage() {
                             </div>
 
                             {/* Password requirements hint */}
-                            <div className="rounded-xl bg-zinc-50 px-4 py-3 text-xs text-zinc-500">
-                                <p className="mb-1 font-medium text-zinc-700">
+                            <div className="rounded-xl bg-muted px-4 py-3 text-small text-muted-foreground">
+                                <p className="mb-1 font-medium text-foreground">
                                     Password must contain:
                                 </p>
                                 <ul className="space-y-0.5">
                                     <li className="flex items-center gap-1.5">
-                                        <Check size={10} className="text-emerald-500" />
+                                        <Check size={10} className="text-success" />
                                         At least 8 characters
                                     </li>
                                     <li className="flex items-center gap-1.5">
-                                        <Check size={10} className="text-emerald-500" />
+                                        <Check size={10} className="text-success" />
                                         One uppercase letter
                                     </li>
                                     <li className="flex items-center gap-1.5">
-                                        <Check size={10} className="text-emerald-500" />
+                                        <Check size={10} className="text-success" />
                                         One lowercase letter
                                     </li>
                                     <li className="flex items-center gap-1.5">
-                                        <Check size={10} className="text-emerald-500" />
+                                        <Check size={10} className="text-success" />
                                         One number
                                     </li>
                                 </ul>
                             </div>
 
-                            <div className="flex justify-end border-t border-zinc-100 pt-4">
+                            <div className="flex justify-end border-t border-border pt-4">
                                 <Button
                                     type="submit"
                                     loading={passwordSaving}
@@ -534,14 +527,14 @@ export default function SettingsPage() {
                             label="Email Notifications"
                             description="Receive order updates & offers via email"
                         />
-                        <div className="h-px bg-zinc-100" />
+                        <div className="h-px bg-border" />
                         <ToggleSwitch
                             enabled={smsNotifs}
                             onChange={setSmsNotifs}
                             label="SMS Notifications"
                             description="Get delivery updates on your phone"
                         />
-                        <div className="h-px bg-zinc-100" />
+                        <div className="h-px bg-border" />
                         <ToggleSwitch
                             enabled={darkMode}
                             onChange={setDarkMode}
@@ -577,7 +570,7 @@ export default function SettingsPage() {
                     icon={<AlertTriangle size={18} />}
                     title="Danger Zone"
                     subtitle="Irreversible actions"
-                    className="mt-4 border-red-200 sm:mt-5"
+                    className="mt-4 border-error/30 sm:mt-5"
                 >
                     <div className="space-y-4">
                         <AnimatePresence>
@@ -605,18 +598,18 @@ export default function SettingsPage() {
                                     initial={{ opacity: 0, y: -8 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -8 }}
-                                    className="space-y-3 rounded-2xl border border-red-200 bg-red-50 p-4"
+                                    className="space-y-3 rounded-2xl border border-error/30 bg-error-bg p-4"
                                 >
                                     <div className="flex items-start gap-2">
                                         <AlertTriangle
                                             size={16}
-                                            className="mt-0.5 shrink-0 text-red-600"
+                                            className="mt-0.5 shrink-0 text-error-foreground"
                                         />
                                         <div>
-                                            <p className="text-sm font-semibold text-red-700">
+                                            <p className="text-sm font-semibold text-error-foreground">
                                                 Are you absolutely sure?
                                             </p>
-                                            <p className="mt-1 text-xs text-red-600">
+                                            <p className="mt-1 text-xs text-error-foreground">
                                                 This will permanently delete your
                                                 account and all associated data.
                                                 This action cannot be undone.
@@ -668,7 +661,7 @@ export default function SettingsPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className="mt-8 text-center text-xs text-zinc-400"
+                    className="mt-8 text-center text-small text-muted-foreground"
                 >
                     <Sparkles size={12} className="mx-auto mb-1" />
                     <p>

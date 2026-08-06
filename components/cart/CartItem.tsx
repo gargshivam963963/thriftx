@@ -49,11 +49,11 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }: Car
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12, scale: 0.98 }}
                 transition={{ duration: 0.25 }}
-                className="overflow-hidden rounded-xl border border-neutral-200 bg-white transition-all duration-200 hover:border-neutral-300 hover:shadow-sm dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-neutral-500"
+                className="overflow-hidden rounded-xl border border-border bg-card transition-all duration-200 hover:border-muted-foreground hover:shadow-card"
             >
                 <div className="flex flex-col md:flex-row md:items-stretch">
                     {/* Image */}
-                    <div className="relative aspect-[4/3] w-full md:aspect-auto md:w-[140px] shrink-0 overflow-hidden bg-neutral-50 dark:bg-neutral-800">
+                    <div className="relative aspect-[4/3] w-full md:aspect-auto md:w-[140px] shrink-0 overflow-hidden bg-muted">
                         <Image
                             src={item.primaryImage}
                             alt={item.title}
@@ -68,10 +68,10 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }: Car
                         {/* Top row: title + actions */}
                         <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0 flex-1">
-                                <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2">
+                                <h3 className="text-body font-semibold text-foreground line-clamp-2">
                                     {item.title}
                                 </h3>
-                                <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                                <p className="mt-0.5 text-small text-muted-foreground">
                                     {item.brand} &middot; Size {item.size}
                                 </p>
                             </div>
@@ -81,18 +81,18 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }: Car
                                     type="button"
                                     onClick={handleWishlistToggle}
                                     disabled={wishlistLoading}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-200 text-neutral-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 dark:border-neutral-600 dark:hover:border-red-500 dark:hover:bg-red-950/20"
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-error hover:bg-error-bg hover:text-error"
                                 >
                                     <Heart
                                         size={13}
-                                        className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : ""
+                                        className={`transition-all duration-200 ${wishlisted ? "fill-error text-error" : ""
                                             }`}
                                     />
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setDeleteOpen(true)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-200 text-neutral-500 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:border-neutral-600 dark:hover:border-red-500 dark:hover:bg-red-950/20"
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-error hover:bg-error-bg hover:text-error"
                                 >
                                     <Trash2 size={13} />
                                 </button>
@@ -100,10 +100,10 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }: Car
                         </div>
 
                         {/* Meta row */}
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                            <span className="rounded-md bg-neutral-100 px-2 py-0.5 dark:bg-neutral-800">{item.condition}</span>
+                        <div className="flex flex-wrap items-center gap-2 text-small text-muted-foreground">
+                            <span className="rounded-md bg-muted px-2 py-0.5">{item.condition}</span>
                             {retailPrice && (
-                                <span className="text-neutral-400">
+                                <span className="text-muted-foreground">
                                     MRP <span className="line-through">₹{retailPrice.toLocaleString("en-IN")}</span>
                                 </span>
                             )}
@@ -111,25 +111,25 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }: Car
 
                         {/* Bottom row: price + quantity */}
                         <div className="mt-auto flex items-center justify-between pt-1">
-                            <span className="text-base font-bold text-neutral-900 dark:text-neutral-100">
+                            <span className="text-body-lg font-bold text-foreground">
                                 ₹{item.price.toLocaleString("en-IN")}
                             </span>
 
-                            <div className="flex items-center rounded-lg border border-neutral-200 bg-neutral-50 p-0.5 dark:border-neutral-600 dark:bg-neutral-800">
+                            <div className="flex items-center rounded-lg border border-border bg-muted p-0.5">
                                 <button
                                     type="button"
                                     onClick={() => onDecrease(item.cartId, item.quantity)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-md transition hover:bg-white dark:hover:bg-neutral-700 active:scale-90"
+                                    className="flex h-8 w-8 items-center justify-center rounded-md transition hover:bg-card active:scale-90"
                                 >
                                     <Minus size={13} />
                                 </button>
-                                <span className="min-w-[32px] text-center text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                                <span className="min-w-[32px] text-center text-small font-semibold text-foreground">
                                     {item.quantity}
                                 </span>
                                 <button
                                     type="button"
                                     onClick={() => onIncrease(item.cartId)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-md transition hover:bg-white dark:hover:bg-neutral-700 active:scale-90"
+                                    className="flex h-8 w-8 items-center justify-center rounded-md transition hover:bg-card active:scale-90"
                                 >
                                     <Plus size={13} />
                                 </button>

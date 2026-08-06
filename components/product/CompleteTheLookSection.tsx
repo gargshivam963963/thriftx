@@ -29,12 +29,12 @@ export default async function CompleteTheLookSection({ product }: { product: Pro
     }
 
     return (
-        <section className="rounded-[28px] border border-neutral-200 bg-white/90 p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/80">
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
             <div className="mb-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-neutral-400 dark:text-neutral-500">
+                <p className="text-badge font-semibold uppercase tracking-widest text-muted-foreground">
                     Complete The Look
                 </p>
-                <h3 className="mt-1 text-xl font-semibold text-neutral-900 dark:text-white">
+                <h3 className="mt-1 text-heading-4 font-semibold text-foreground">
                     Pair this with pieces that feel intentional
                 </h3>
             </div>
@@ -58,7 +58,7 @@ export default async function CompleteTheLookSection({ product }: { product: Pro
                 ))}
             </div>
 
-            <div className="mt-5 text-sm text-neutral-600 dark:text-neutral-300">
+            <div className="mt-5 text-body text-muted-foreground">
                 Recommended styles: {recommendations.join(" • ")}
             </div>
         </section>

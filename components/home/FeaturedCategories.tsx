@@ -13,28 +13,28 @@ const categories = [
     {
         title: "Men",
         image: "/images/categories/men.jpg",
-        href: "/shop?gender=men",
+        href: "/shop/men",
         productCount: 326,
         badge: "Trending",
     },
     {
         title: "Women",
         image: "/images/categories/women.jpg",
-        href: "/shop?gender=women",
+        href: "/shop/women",
         productCount: 294,
         badge: "New",
     },
     {
         title: "Vintage",
         image: "/images/categories/vintage.jpg",
-        href: "/shop?category=vintage",
+        href: "/shop?sort=newest",
         productCount: 186,
         badge: "Editor's Pick",
     },
     {
         title: "Luxury",
         image: "/images/categories/luxury.jpg",
-        href: "/shop?category=luxury",
+        href: "/shop?sort=price-high",
         productCount: 148,
         badge: "Premium",
     },
@@ -49,10 +49,10 @@ export default function FeaturedCategories() {
                         <Badge variant="secondary" size="md" rounded="full" className="mb-5">
                             Curated Collections
                         </Badge>
-                        <h2 className="text-h2 font-bold text-neutral-900 dark:text-neutral-100">
+                        <h2 className="text-h2 font-bold text-foreground">
                             Shop by Category
                         </h2>
-                        <p className="mt-4 text-body text-neutral-600 dark:text-neutral-400">
+                        <p className="mt-4 text-body text-muted-foreground">
                             Every collection is carefully curated with premium branded pieces,
                             individually quality checked before reaching your wardrobe.
                         </p>
@@ -63,7 +63,7 @@ export default function FeaturedCategories() {
                     {categories.map((category) => (
                         <StaggerItem key={category.title}>
                             <Link href={category.href} className="group block h-full">
-                                <Card className="relative h-full overflow-hidden border-neutral-200 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl dark:border-neutral-700">
+                                <Card className="relative h-full overflow-hidden border-border transition-all duration-500 hover:-translate-y-1 hover:shadow-xl">
                                     <div className="relative aspect-[4/5] overflow-hidden">
                                         <PremiumImage
                                             src={category.image}
@@ -81,7 +81,7 @@ export default function FeaturedCategories() {
                                                     variant="secondary"
                                                     size="sm"
                                                     rounded="full"
-                                                    className="bg-white/90 text-neutral-800 backdrop-blur-sm dark:bg-neutral-900/90 dark:text-neutral-100"
+                                                    className="bg-white/90 text-foreground backdrop-blur-sm dark:bg-foreground/90 dark:text-foreground"
                                                 >
                                                     {category.badge}
                                                 </Badge>
@@ -89,13 +89,13 @@ export default function FeaturedCategories() {
                                         )}
 
                                         <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                                            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
+                                            <p className="text-caption font-semibold uppercase tracking-widest text-white/70">
                                                 {category.productCount}+ Products
                                             </p>
-                                            <h3 className="mt-1.5 text-2xl font-bold tracking-tight">
+                                            <h3 className="mt-1.5 text-heading-4 font-bold tracking-tight">
                                                 {category.title}
                                             </h3>
-                                            <div className="mt-4 flex items-center gap-1 text-sm font-medium text-white/90">
+                                            <div className="mt-4 flex items-center gap-1 text-body font-medium text-white/90">
                                                 Shop Collection
                                                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                                             </div>

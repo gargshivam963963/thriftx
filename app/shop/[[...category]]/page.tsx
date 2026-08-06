@@ -88,8 +88,6 @@ export default async function Shop({ params, searchParams }: PageProps) {
 
   const genders = await getGenders();
   const categories = await getCategories();
-  console.log(categories, "cat");
-  console.log(categories.length, "length");
   const brands = await getBrands();
 
   return (

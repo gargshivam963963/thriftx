@@ -40,15 +40,15 @@ export function OrderCard({
             whileHover={{
                 y: -4,
             }}
-            className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm transition-shadow duration-300 hover:shadow-xl"
+            className="overflow-hidden rounded-3xl border border-border bg-white shadow-sm transition-shadow duration-300 hover:shadow-xl"
         >
             {/* Header */}
 
-            <div className="flex flex-col gap-5 border-b border-neutral-100 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-5 border-b border-border p-6 sm:flex-row sm:items-center sm:justify-between">
 
                 <div>
 
-                    <p className="text-xs uppercase tracking-widest text-neutral-500">
+                    <p className="text-xs uppercase tracking-widest text-muted-foreground">
                         Order ID
                     </p>
 
@@ -70,7 +70,7 @@ export function OrderCard({
 
                 <div>
 
-                    <div className="mb-2 flex items-center gap-2 text-neutral-500">
+                    <div className="mb-2 flex items-center gap-2 text-muted-foreground">
 
                         <User className="h-4 w-4" />
 
@@ -90,7 +90,7 @@ export function OrderCard({
 
                 <div>
 
-                    <div className="mb-2 flex items-center gap-2 text-neutral-500">
+                    <div className="mb-2 flex items-center gap-2 text-muted-foreground">
 
                         <MapPin className="h-4 w-4" />
 
@@ -110,7 +110,7 @@ export function OrderCard({
 
                 <div>
 
-                    <div className="mb-2 flex items-center gap-2 text-neutral-500">
+                    <div className="mb-2 flex items-center gap-2 text-muted-foreground">
 
                         <Receipt className="h-4 w-4" />
 
@@ -132,9 +132,9 @@ export function OrderCard({
 
             {/* Footer */}
 
-            <div className="flex flex-col gap-4 border-t border-neutral-100 bg-neutral-50 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 border-t border-border bg-subtle p-6 sm:flex-row sm:items-center sm:justify-between">
 
-                <div className="flex items-center gap-2 text-sm text-neutral-500">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
 
                     <CalendarDays className="h-4 w-4" />
 

@@ -68,17 +68,17 @@ export default function UploadDropzone({
                     "relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-all",
                     dragOver
                         ? "border-violet-400 bg-violet-50/60 dark:border-violet-500 dark:bg-violet-950/20"
-                        : "border-neutral-300 bg-neutral-50/60 hover:border-neutral-400 hover:bg-neutral-100/60 dark:border-neutral-700 dark:bg-neutral-900/50 dark:hover:border-neutral-600",
+                        : "border-border bg-subtle/60 hover:border-foreground hover:bg-muted/60 dark:border-border dark:bg-foreground/50 dark:hover:border-border",
                 )}
             >
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-600/20">
                     <UploadCloud size={26} />
                 </div>
                 <div>
-                    <p className="text-base font-bold text-neutral-900 dark:text-neutral-100">
+                    <p className="text-base font-bold text-foreground">
                         Drop Product Images Here
                     </p>
-                    <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                    <p className="mt-1 text-xs text-muted-foreground">
                         Drag &amp; drop images or an entire folder of products
                     </p>
                 </div>
@@ -149,7 +149,7 @@ export default function UploadDropzone({
                     "relative flex flex-col items-center justify-center gap-5 rounded-3xl border-2 border-dashed px-6 py-16 text-center transition-all duration-300 sm:py-20",
                     dragOver
                         ? "border-violet-400 bg-violet-50/80 dark:border-violet-500 dark:bg-violet-950/20"
-                        : "border-neutral-300 bg-white hover:border-neutral-400 hover:bg-neutral-50/80 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-neutral-600",
+                        : "border-border bg-white hover:border-foreground hover:bg-subtle/80 dark:border-border dark:bg-foreground dark:hover:border-border",
                 )}
             >
                 {/* Animated icon */}
@@ -166,10 +166,10 @@ export default function UploadDropzone({
                 </motion.div>
 
                 <div>
-                    <h3 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                    <h3 className="text-2xl font-bold tracking-tight text-foreground">
                         Drop Product Images Here
                     </h3>
-                    <p className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+                    <p className="mt-1.5 text-sm text-muted-foreground">
                         Drag &amp; drop images or an entire folder &mdash; AI will
                         automatically detect and organize products.
                     </p>
@@ -214,7 +214,7 @@ export default function UploadDropzone({
                             e.stopPropagation();
                             setDragOver(false);
                         }}
-                        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-neutral-400 transition hover:bg-white hover:text-neutral-600"
+                        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-muted-foreground transition hover:bg-white hover:text-muted-foreground"
                     >
                         <X size={14} />
                     </button>

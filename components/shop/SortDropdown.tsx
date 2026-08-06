@@ -44,14 +44,14 @@ export default function SortDropdown({ defaultValue }: { defaultValue: string })
             <button
                 type="button"
                 onClick={() => setOpen((p) => !p)}
-                className="flex h-11 items-center gap-2.5 rounded-2xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 shadow-sm transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-neutral-500"
+                className="flex h-11 items-center gap-2.5 rounded-2xl border border-border bg-card px-4 py-2.5 text-body-sm font-medium text-foreground shadow-card transition-all hover:border-foreground hover:shadow-md"
             >
-                <ArrowUpDown size={14} className="shrink-0 text-neutral-400 dark:text-neutral-500" />
+                <ArrowUpDown size={14} className="shrink-0 text-muted-foreground" />
                 <span className="hidden sm:inline">{currentLabel}</span>
                 <span className="sm:hidden">Sort</span>
                 <ChevronDown
                     size={14}
-                    className={`shrink-0 text-neutral-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+                    className={`shrink-0 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`}
                 />
             </button>
 
@@ -62,7 +62,7 @@ export default function SortDropdown({ defaultValue }: { defaultValue: string })
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
                         transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-                        className="absolute right-0 z-50 mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.10)] dark:border-neutral-700 dark:bg-neutral-800 dark:shadow-[0_12px_40px_rgba(0,0,0,0.40)]"
+                        className="absolute right-0 z-50 mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-border bg-card shadow-float"
                     >
                         <div className="p-1.5">
                             {sortOptions.map((opt) => {
@@ -76,7 +76,7 @@ export default function SortDropdown({ defaultValue }: { defaultValue: string })
                                             transition-all duration-150
                                             ${active
                                                 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                                                : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                                : "text-foreground hover:bg-muted"
                                             }
                                         `}
                                     >

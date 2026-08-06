@@ -334,7 +334,7 @@ export default function ProductGallery({
                                         "group relative h-24 w-24 shrink-0 overflow-hidden rounded-3xl border bg-white shadow-sm transition-all duration-300",
                                         active
                                             ? "border-black shadow-xl ring-2 ring-black/10"
-                                            : "border-neutral-200 hover:border-neutral-400 hover:shadow-md",
+                                            : "border-border hover:border-foreground hover:shadow-md",
                                     ].join(" ")}
                                 >
                                     <Image
@@ -386,7 +386,7 @@ export default function ProductGallery({
                                 transition={{ duration: 0.35 }}
                                 className="absolute inset-0 z-10 overflow-hidden rounded-[32px]"
                             >
-                                <div className="absolute inset-0 bg-neutral-100" />
+                                <div className="absolute inset-0 bg-muted" />
 
                                 <motion.div
                                     animate={{

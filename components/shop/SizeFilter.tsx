@@ -33,7 +33,7 @@ export default function SizeFilter() {
                         variant={active ? "primary" : "outline"}
                         size="sm"
                         rounded="lg"
-                        className="h-10 text-xs font-semibold"
+                        className="h-10 text-small font-semibold"
                     >
                         {size}
                     </Button>

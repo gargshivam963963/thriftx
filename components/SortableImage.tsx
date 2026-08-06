@@ -41,8 +41,8 @@ export default function SortableImage({
                 transition,
             }}
             className={cn(
-                "group relative rounded-xl border bg-white shadow-sm transition-all dark:bg-neutral-800 dark:border-neutral-700",
-                isDragging && "z-50 shadow-2xl scale-105 opacity-90 ring-2 ring-neutral-900/20 dark:ring-neutral-100/20"
+                "group relative rounded-xl border bg-white shadow-sm transition-all dark:bg-card dark:border-border",
+                isDragging && "z-50 shadow-2xl scale-105 opacity-90 ring-2 ring-foreground/20 dark:ring-foreground/20"
             )}
         >
             {/* Image preview */}
@@ -66,7 +66,7 @@ export default function SortableImage({
             </button>
 
             {/* Bottom bar */}
-            <div className="flex items-center justify-between gap-1 border-t border-neutral-100 px-2 py-1.5 dark:border-neutral-700">
+            <div className="flex items-center justify-between gap-1 border-t border-border px-2 py-1.5 dark:border-border">
                 <div className="flex items-center gap-1.5">
                     {isCover ? (
                         <Badge variant="default" size="xs" rounded="md" className="bg-amber-500 text-white dark:bg-amber-500 dark:text-white">
@@ -74,7 +74,7 @@ export default function SortableImage({
                             Cover
                         </Badge>
                     ) : (
-                        <span className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500">
+                        <span className="text-[10px] font-medium text-muted-foreground">
                             #{index + 1}
                         </span>
                     )}
@@ -86,7 +86,7 @@ export default function SortableImage({
                         type="button"
                         {...listeners}
                         {...attributes}
-                        className="cursor-grab touch-none rounded-md p-1 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600 active:cursor-grabbing dark:hover:bg-neutral-700 dark:hover:text-neutral-300"
+                        className="cursor-grab touch-none rounded-md p-1 text-muted-foreground transition hover:bg-muted hover:text-muted-foreground active:cursor-grabbing dark:hover:bg-muted dark:hover:text-muted-foreground"
                         title="Drag to reorder"
                     >
                         <GripVertical size={14} />

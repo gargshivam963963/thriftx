@@ -94,36 +94,36 @@ export default function AddressCard({
                 }}
                 whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.995 }}
-                className={`w-full overflow-hidden rounded-2xl border bg-white text-left transition-all duration-200 sm:rounded-3xl dark:bg-neutral-900 ${selected
-                    ? "border-neutral-900 bg-neutral-50/30 ring-1 ring-neutral-900/20 shadow-lg dark:border-neutral-100 dark:bg-neutral-800/80 dark:ring-neutral-100/20"
-                    : "border-neutral-200 hover:border-neutral-400 hover:shadow-md dark:border-neutral-800 dark:hover:border-neutral-600"
+                className={`w-full overflow-hidden rounded-2xl border bg-card text-left transition-all duration-200 sm:rounded-3xl ${selected
+                    ? "border-foreground bg-muted/30 ring-1 ring-foreground/20 shadow-lg"
+                    : "border-border hover:border-foreground/50 hover:shadow-md"
                     }`}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3.5 sm:px-6 sm:py-4 dark:border-neutral-800">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3.5 sm:px-6 sm:py-4">
                     <div className="flex items-center gap-3">
                         <div
                             className={`rounded-full p-2 transition-colors ${selected
-                                ? "bg-neutral-900 text-white"
+                                ? "bg-foreground text-background"
                                 : typeInfo.color
                                 }`}
                         >
                             <TypeIcon size={16} className="sm:h-[18px] sm:w-[18px]" />
                         </div>
                         <div>
-                            <h3 className="text-sm font-semibold text-neutral-900 sm:text-base dark:text-neutral-100">
+                            <h3 className="text-body font-semibold text-foreground">
                                 {address.fullName}
                             </h3>
                             <div className="mt-0.5 flex items-center gap-1.5">
                                 <span
-                                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${selected ? typeInfo.selectedColor : typeInfo.color
+                                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-badge font-medium ${selected ? typeInfo.selectedColor : typeInfo.color
                                         }`}
                                 >
                                     <TypeIcon size={10} />
                                     {address.type}
                                 </span>
                                 {address.isDefault && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-badge font-semibold tracking-wider text-background">
                                         <BadgeCheck size={10} />
                                         Default
                                     </span>
@@ -145,7 +145,7 @@ export default function AddressCard({
                             >
                                 <CheckCircle2
                                     size={22}
-                                    className="shrink-0 text-emerald-600"
+                                    className="shrink-0 text-success"
                                 />
                             </motion.div>
                         )}
@@ -153,7 +153,7 @@ export default function AddressCard({
                         <button
                             type="button"
                             onClick={handleEditClick}
-                            className="rounded-xl border border-neutral-200 p-2 text-neutral-600 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-neutral-100 dark:hover:bg-neutral-100 dark:hover:text-neutral-900"
+                            className="rounded-xl border border-border p-2 text-muted-foreground transition hover:border-foreground hover:bg-foreground hover:text-background"
                             aria-label="Edit address"
                         >
                             <Pencil size={14} className="sm:h-[15px] sm:w-[15px]" />
@@ -176,19 +176,19 @@ export default function AddressCard({
                     <div className="flex items-start gap-3">
                         <MapPinned
                             size={16}
-                            className="mt-0.5 shrink-0 text-neutral-400 sm:mt-1 sm:h-[18px] sm:w-[18px]"
+                            className="mt-0.5 shrink-0 text-muted-foreground sm:mt-1 sm:h-[18px] sm:w-[18px]"
                         />
-                        <div className="text-sm leading-6 text-neutral-700 sm:leading-7 dark:text-neutral-300">
-                            <p className="font-medium text-neutral-900 dark:text-neutral-100">
+                        <div className="text-body leading-6 text-muted-foreground sm:leading-7">
+                            <p className="font-medium text-foreground">
                                 {address.addressLine1}
                             </p>
                             {address.addressLine2 && <p>{address.addressLine2}</p>}
                             {address.landmark && (
-                                <p className="text-neutral-500 dark:text-neutral-400">📍 {address.landmark}</p>
+                                <p className="text-muted-foreground">📍 {address.landmark}</p>
                             )}
-                            <p className="text-neutral-600 dark:text-neutral-400">
+                            <p className="text-muted-foreground">
                                 {address.city}, {address.state}{" "}
-                                <span className="font-semibold text-neutral-800 dark:text-neutral-200">
+                                <span className="font-semibold text-foreground">
                                     — {address.pincode}
                                 </span>
                             </p>
@@ -199,17 +199,17 @@ export default function AddressCard({
                     <div className="flex items-start gap-3">
                         <Phone
                             size={16}
-                            className="mt-0.5 shrink-0 text-neutral-400 sm:mt-1 sm:h-[18px] sm:w-[18px]"
+                            className="mt-0.5 shrink-0 text-muted-foreground sm:mt-1 sm:h-[18px] sm:w-[18px]"
                         />
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-400 sm:text-[11px] dark:text-neutral-500">
+                            <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                 Contact
                             </p>
-                            <p className="mt-0.5 text-sm font-medium text-neutral-800 sm:text-base dark:text-neutral-200">
+                            <p className="mt-0.5 text-body font-medium text-foreground">
                                 {address.phone}
                             </p>
                             {address.alternatePhone && (
-                                <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm dark:text-neutral-400">
+                                <p className="mt-0.5 text-small text-muted-foreground sm:text-body-sm">
                                     Alt: {address.alternatePhone}
                                 </p>
                             )}
@@ -223,12 +223,12 @@ export default function AddressCard({
                             animate={{ opacity: 1, height: "auto" }}
                             className="overflow-hidden"
                         >
-                            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5">
+                            <div className="flex items-center gap-2 rounded-xl bg-success-bg px-4 py-2.5">
                                 <CheckCircle2
                                     size={16}
-                                    className="shrink-0 text-emerald-600"
+                                    className="shrink-0 text-success"
                                 />
-                                <span className="text-xs font-medium text-emerald-700 sm:text-sm">
+                                <span className="text-small font-medium text-success-foreground sm:text-body-sm">
                                     Selected for this order
                                 </span>
                             </div>

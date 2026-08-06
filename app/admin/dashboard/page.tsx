@@ -75,12 +75,12 @@ export default function AdminDashboardPage() {
             >
                 <div>
                     <div className="flex items-center gap-2">
-                        <h1 className="font-serif text-2xl font-bold tracking-tight text-[var(--color-text)] sm:text-3xl">
+                        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                             {greeting}, Admin
                         </h1>
                         <Sparkles size={20} className="text-amber-400" />
                     </div>
-                    <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                    <p className="mt-1 text-sm text-muted-foreground">
                         Here&apos;s what&apos;s happening with your store today.
                     </p>
                 </div>

@@ -23,18 +23,18 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         // Base
                         "flex w-full appearance-none rounded-xl border bg-white pr-10",
                         "h-11 px-4 py-2.5",
-                        "text-sm font-medium text-neutral-900",
+                        "text-sm font-medium text-foreground",
                         // Border
-                        "border-neutral-300",
+                        "border-border",
                         error && "border-red-400",
                         // Focus
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/20 focus-visible:border-neutral-600",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20 focus-visible:border-border",
                         // Disabled
-                        "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-neutral-50",
+                        "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-subtle",
                         // Dark mode
-                        "dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-600",
-                        "dark:focus-visible:ring-white/20 dark:focus-visible:border-neutral-400",
-                        "dark:disabled:bg-neutral-950",
+                        "bg-foreground dark:border-border",
+                        "dark:focus-visible:ring-white/20 dark:focus-visible:border-foreground",
+                        "dark:disabled:bg-foreground",
                         // Allow className to override height & padding
                         className,
                     )}
@@ -57,8 +57,8 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                     size={16}
                     className={cn(
                         "pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2",
-                        "text-neutral-400",
-                        "dark:text-neutral-500",
+                        "text-muted-foreground",
+                        "dark:text-muted-foreground",
                     )}
                 />
             </div>

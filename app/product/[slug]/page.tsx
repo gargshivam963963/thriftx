@@ -44,8 +44,8 @@ function getRetailPrice(price?: number): string {
 function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
     <div className="flex items-center justify-between py-4">
-      <span className="text-sm text-neutral-500 dark:text-neutral-400">{icon} {label}</span>
-      <span className="text-sm font-semibold text-neutral-900 dark:text-white">{value}</span>
+      <span className="text-body-sm text-muted-foreground">{icon} {label}</span>
+      <span className="text-body-sm font-semibold text-foreground">{value}</span>
     </div>
   );
 }
@@ -77,50 +77,50 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
       <ProductViewTracker product={product} />
       <RecentlyViewedTracker product={product} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-2 text-small text-neutral-500 dark:text-neutral-400">
-        <Link href="/" className="transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white">Home</Link>
-        <span className="text-neutral-300 dark:text-neutral-600">/</span>
-        <Link href="/shop" className="transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white">Shop</Link>
-        <span className="text-neutral-300 dark:text-neutral-600">/</span>
+      <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-2 text-small text-muted-foreground">
+        <Link href="/" className="transition-colors hover:text-foreground">Home</Link>
+        <span className="text-muted">/</span>
+        <Link href="/shop" className="transition-colors hover:text-foreground">Shop</Link>
+        <span className="text-muted">/</span>
         {product.category && (
           <>
-            <Link href={`/shop/${product.gender.toLowerCase()}/${product.categorySlug}`} className="transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white">{product.category}</Link>
-            <span className="text-neutral-300 dark:text-neutral-600">/</span>
+            <Link href={`/shop/${product.gender.toLowerCase()}/${product.categorySlug}`} className="transition-colors hover:text-foreground">{product.category}</Link>
+            <span className="text-muted">/</span>
           </>
         )}
-        <span className="font-medium text-neutral-900 dark:text-white">{product.title}</span>
+        <span className="font-medium text-foreground">{product.title}</span>
       </nav>
       <div className="grid gap-6 xl:grid-cols-[1.25fr_500px]">
         {/* LEFT COLUMN */}
         <div className="space-y-8">
           <ProductGallery title={product.title} primaryImage={product.primaryImage} images={product.images} />
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <Card className="flex items-center gap-4 rounded-2xl border bg-white p-5 transition-all hover:-translate-y-1 hover:shadow-md dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-750">
-              <ShieldCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            <Card className="flex items-center gap-4 rounded-2xl border bg-card p-5 transition-all hover:-translate-y-1 hover:shadow-md">
+              <ShieldCheck className="h-6 w-6 text-success" />
               <div>
-                <p className="text-sm font-semibold dark:text-white">100% Authentic</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Quality Checked</p>
+                <p className="text-body font-semibold text-foreground">100% Authentic</p>
+                <p className="text-small text-muted-foreground">Quality Checked</p>
               </div>
             </Card>
-            <Card className="flex items-center gap-4 rounded-2xl border bg-white p-5 transition-all hover:-translate-y-1 hover:shadow-md dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-750">
-              <RotateCcw className="h-6 w-6 text-orange-500 dark:text-orange-400" />
+            <Card className="flex items-center gap-4 rounded-2xl border bg-card p-5 transition-all hover:-translate-y-1 hover:shadow-md">
+              <RotateCcw className="h-6 w-6 text-warning" />
               <div>
-                <p className="text-sm font-semibold dark:text-white">7 Days Returns</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Easy Returns</p>
+                <p className="text-body font-semibold text-foreground">7 Days Returns</p>
+                <p className="text-small text-muted-foreground">Easy Returns</p>
               </div>
             </Card>
-            <Card className="flex items-center gap-3 p-4 dark:bg-neutral-800 dark:border-neutral-700">
-              <PackageCheck className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+            <Card className="flex items-center gap-3 p-4 bg-card">
+              <PackageCheck className="h-6 w-6 text-info" />
               <div>
-                <p className="text-sm font-semibold dark:text-white">Secure Packaging</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Safe Delivery</p>
+                <p className="text-body font-semibold text-foreground">Secure Packaging</p>
+                <p className="text-small text-muted-foreground">Safe Delivery</p>
               </div>
             </Card>
-            <Card className="flex items-center gap-3 p-4 dark:bg-neutral-800 dark:border-neutral-700">
-              <Truck className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <Card className="flex items-center gap-3 p-4 bg-card">
+              <Truck className="h-6 w-6 text-info" />
               <div>
-                <p className="text-sm font-semibold dark:text-white">Pan India Shipping</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Fast &amp; Reliable</p>
+                <p className="text-body font-semibold text-foreground">Pan India Shipping</p>
+                <p className="text-small text-muted-foreground">Fast &amp; Reliable</p>
               </div>
             </Card>
           </div>
@@ -131,8 +131,8 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
           <div>
             <div className="flex items-start justify-between gap-6">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-neutral-400 dark:text-neutral-500">{product.brand || "THRIFTX"}</p>
-                <div className="mt-2 text-[2rem] leading-[1.15] font-semibold text-neutral-900 dark:text-white max-w-[16ch]">{product.title}</div>
+                <p className="text-caption font-semibold uppercase tracking-[0.28em] text-muted-foreground">{product.brand || "THRIFTX"}</p>
+                <div className="mt-2 text-display-md leading-[1.15] font-semibold text-foreground max-w-[16ch]">{product.title}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <WishlistButton productId={product.id} />
@@ -140,28 +140,28 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
               </div>
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
-              <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">Only 1 Left</span>
-              <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">Quality Checked</span>
+              <span className="rounded-full bg-warning-bg px-3 py-1 text-small font-semibold text-warning-foreground">Only 1 Left</span>
+              <span className="rounded-full bg-success-bg px-3 py-1 text-small font-semibold text-success-foreground">Quality Checked</span>
             </div>
           </div>
           <div className="space-y-3">
             <div className="flex flex-col items-start gap-2">
-              <span className="text-5xl font-bold tracking-tight text-neutral-950 dark:text-white">₹{product.price.toLocaleString("en-IN")}</span>
-              {discount && <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">{discount}% OFF</span>}
+              <span className="text-display-lg font-bold tracking-tight text-foreground">₹{product.price.toLocaleString("en-IN")}</span>
+              {discount && <span className="rounded-full bg-success-bg px-3 py-1 text-small font-semibold text-success-foreground">{discount}% OFF</span>}
             </div>
             {retailPrice && (
               <div className="flex items-center gap-3">
-                <p className="text-neutral-500 dark:text-neutral-400">MRP <span className="ml-1 line-through">{retailPrice}</span></p>
-                {savings && <p className="font-semibold text-emerald-600 dark:text-emerald-400">You Save ₹{savings.toLocaleString("en-IN")}</p>}
+                <p className="text-body-sm text-muted-foreground">MRP <span className="ml-1 line-through">{retailPrice}</span></p>
+                {savings && <p className="text-body-sm font-semibold text-success">You Save ₹{savings.toLocaleString("en-IN")}</p>}
               </div>
             )}
-            <p className="text-xs text-neutral-400 dark:text-neutral-500">Inclusive of all taxes</p>
+            <p className="text-small text-muted-foreground">Inclusive of all taxes</p>
           </div>
-          <hr className="border-neutral-200 dark:border-neutral-700" />
+          <hr className="border-border" />
           <ProductActions product={product} />
-          <Card className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-none dark:bg-neutral-800 dark:border-neutral-700">
-            <h3 className="mb-5 text-sm font-semibold uppercase tracking-[0.18em] text-neutral-500 dark:text-neutral-400">Product Information</h3>
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-700">
+          <Card className="rounded-2xl border border-border bg-card p-6 shadow-none">
+            <h3 className="mb-5 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">Product Information</h3>
+            <div className="divide-y divide-border">
               {product.size && <InfoRow icon="📏" label="Size" value={product.size} />}
               {product.chest && <InfoRow icon="📐" label="Chest" value={product.chest} />}
               {product.waist && <InfoRow icon="📐" label="Waist" value={product.waist} />}
@@ -171,20 +171,20 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
               {product.material && <InfoRow icon="🧵" label="Material" value={product.material} />}
               {product.condition && (
                 <div className="flex items-center justify-between py-4">
-                  <span className="text-sm text-neutral-500 dark:text-neutral-400">Condition</span>
-                  <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">{product.condition}</span>
+                  <span className="text-body-sm text-muted-foreground">Condition</span>
+                  <span className="rounded-full bg-success-bg px-3 py-1 text-small font-semibold text-success-foreground">{product.condition}</span>
                 </div>
               )}
             </div>
           </Card>
-          <Card className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-none dark:bg-neutral-800 dark:border-neutral-700">
-            <h3 className="mb-5 text-sm font-semibold uppercase tracking-[0.18em] text-neutral-500 dark:text-neutral-400">Description</h3>
-            <div className="space-y-3 text-sm leading-7 text-neutral-600 dark:text-neutral-300">
-              <div className="flex items-center gap-2"><span className="text-emerald-500 dark:text-emerald-400">✔</span><span>Premium thrift piece</span></div>
-              <div className="flex items-center gap-2"><span className="text-emerald-500 dark:text-emerald-400">✔</span><span>Quality Checked</span></div>
-              <div className="flex items-center gap-2"><span className="text-emerald-500 dark:text-emerald-400">✔</span><span>Freshly Sanitized</span></div>
-              <div className="flex items-center gap-2"><span className="text-emerald-500 dark:text-emerald-400">✔</span><span>Original Product Photos</span></div>
-              <p className="pt-3 border-t border-neutral-100 dark:border-neutral-700 dark:text-neutral-400">{descriptionText}</p>
+          <Card className="rounded-2xl border border-border bg-card p-6 shadow-none">
+            <h3 className="mb-5 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">Description</h3>
+            <div className="space-y-3 text-body-sm leading-7 text-foreground">
+              <div className="flex items-center gap-2"><span className="text-success">✔</span><span>Premium thrift piece</span></div>
+              <div className="flex items-center gap-2"><span className="text-success">✔</span><span>Quality Checked</span></div>
+              <div className="flex items-center gap-2"><span className="text-success">✔</span><span>Freshly Sanitized</span></div>
+              <div className="flex items-center gap-2"><span className="text-success">✔</span><span>Original Product Photos</span></div>
+              <p className="pt-3 border-t border-border text-muted-foreground">{descriptionText}</p>
             </div>
           </Card>
         </div>

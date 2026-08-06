@@ -44,7 +44,7 @@ const benefits = [
 
 export default function WhyThriftX() {
     return (
-        <section className="bg-neutral-50 py-24 dark:bg-neutral-950">
+        <section className="bg-muted py-24">
             <Container>
                 <div className="grid items-center gap-16 lg:grid-cols-2">
                     {/* ── Left: Content ─────────────────────────────── */}
@@ -53,12 +53,12 @@ export default function WhyThriftX() {
                             <Badge variant="secondary" size="md" rounded="full" className="mb-2">
                                 About THRIFTX
                             </Badge>
-                            <h2 className="text-h2 font-bold text-neutral-900 dark:text-neutral-100">
+                            <h2 className="text-h2 font-bold text-foreground">
                                 Premium thrift shopping,
                                 <br />
                                 without compromise.
                             </h2>
-                            <p className="max-w-xl text-body leading-relaxed text-neutral-600 dark:text-neutral-400">
+                            <p className="max-w-xl text-body leading-relaxed text-muted-foreground">
                                 THRIFTX combines premium fashion, sustainability and trust to
                                 create an online thrift experience that feels as polished as buying
                                 from a luxury brand.
@@ -69,7 +69,7 @@ export default function WhyThriftX() {
                                 {benefits.map((item) => (
                                     <div key={item} className="flex items-center gap-2.5">
                                         <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
-                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                        <span className="text-body font-medium text-muted-foreground">
                                             {item}
                                         </span>
                                     </div>
@@ -86,15 +86,15 @@ export default function WhyThriftX() {
                     <StaggerContainer className="space-y-6">
                         {features.map(({ icon: Icon, title, description }) => (
                             <StaggerItem key={title}>
-                                <Card className="border-neutral-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-neutral-700">
+                                <Card className="border-border transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                                     <CardContent className="p-6 md:p-8">
-                                        <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900">
+                                        <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground text-background">
                                             <Icon className="h-7 w-7" />
                                         </div>
-                                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+                                        <h3 className="text-heading-4 font-semibold text-foreground">
                                             {title}
                                         </h3>
-                                        <p className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+                                        <p className="mt-3 text-body leading-relaxed text-muted-foreground">
                                             {description}
                                         </p>
                                     </CardContent>

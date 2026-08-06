@@ -84,9 +84,9 @@ export default function AIProcessingOverlay({
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="fixed left-1/2 top-1/2 z-[81] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2"
                     >
-                        <div className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-700 dark:bg-neutral-900">
+                        <div className="overflow-hidden rounded-3xl border border-border bg-white shadow-2xl dark:border-border dark:bg-foreground">
                             {/* Header */}
-                            <div className="flex items-center gap-3 border-b border-neutral-100 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 px-6 py-5 text-white dark:border-neutral-800">
+                            <div className="flex items-center gap-3 border-b border-border bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 px-6 py-5 text-white dark:border-border">
                                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
                                     <Sparkles size={22} />
                                 </div>
@@ -111,7 +111,7 @@ export default function AIProcessingOverlay({
                                 {/* Progress bar */}
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between text-xs">
-                                        <span className="font-semibold text-neutral-700 dark:text-neutral-300">
+                                        <span className="font-semibold text-muted-foreground">
                                             Progress
                                         </span>
                                         <span className="font-mono text-sm font-bold text-violet-600 dark:text-violet-400">
@@ -150,16 +150,16 @@ export default function AIProcessingOverlay({
                                                         className="shrink-0 animate-spin text-violet-600 dark:text-violet-400"
                                                     />
                                                 ) : (
-                                                    <div className="h-4 w-4 shrink-0 rounded-full border-2 border-neutral-200 dark:border-neutral-700" />
+                                                    <div className="h-4 w-4 shrink-0 rounded-full border-2 border-border" />
                                                 )}
                                                 <span
                                                     className={cn(
                                                         "text-sm font-medium",
                                                         isDone
-                                                            ? "text-neutral-500 line-through decoration-neutral-300 dark:text-neutral-400"
+                                                            ? "text-muted-foreground line-through decoration-muted-foreground dark:text-muted-foreground"
                                                             : isActive
                                                                 ? "text-violet-700 dark:text-violet-300"
-                                                                : "text-neutral-400 dark:text-neutral-500",
+                                                                : "text-muted-foreground",
                                                     )}
                                                 >
                                                     {s.label}
@@ -180,7 +180,7 @@ export default function AIProcessingOverlay({
                                 </div>
 
                                 {/* Bottom note */}
-                                <div className="flex items-center gap-2 rounded-xl bg-neutral-50 px-3 py-2.5 text-[11px] text-neutral-500 dark:bg-neutral-800/50 dark:text-neutral-400">
+                                <div className="flex items-center gap-2 rounded-xl bg-subtle px-3 py-2.5 text-[11px] text-muted-foreground dark:bg-card/50 dark:text-muted-foreground">
                                     <Sparkles size={13} className="shrink-0 text-violet-500" />
                                     You can keep editing products while AI runs.
                                 </div>

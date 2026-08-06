@@ -116,7 +116,7 @@ export default function OverviewCards({
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.04 }}
-                        className="relative overflow-hidden rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-neutral-700 dark:bg-neutral-900"
+                        className="relative overflow-hidden rounded-xl border border-border bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-border dark:bg-foreground"
                     >
                         <div className="flex items-start justify-between">
                             <div
@@ -127,13 +127,13 @@ export default function OverviewCards({
                         </div>
                         <div className="mt-3">
                             {loading ? (
-                                <div className="h-7 w-20 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700" />
+                                <div className="h-7 w-20 animate-pulse rounded bg-muted" />
                             ) : (
-                                <p className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">
+                                <p className="text-xl font-bold tracking-tight text-foreground dark:text-white">
                                     {card.format(value)}
                                 </p>
                             )}
-                            <p className="mt-0.5 text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+                            <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">
                                 {card.label}
                             </p>
                         </div>

@@ -14,7 +14,7 @@ export default function AddressEmpty({ onAdd }: AddressEmptyProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.25 }}
-            className="flex flex-col items-center rounded-3xl border border-dashed border-neutral-200 bg-gradient-to-b from-neutral-50/80 to-white px-6 py-14 sm:px-8 sm:py-16"
+            className="flex flex-col items-center rounded-3xl border border-dashed border-border bg-gradient-to-b from-subtle/80 to-card px-6 py-14 sm:px-8 sm:py-16"
         >
             {/* Icon with spring animation */}
             <motion.div
@@ -28,7 +28,7 @@ export default function AddressEmpty({ onAdd }: AddressEmptyProps) {
                 }}
                 className="relative"
             >
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-900 text-white shadow-lg sm:h-20 sm:w-20">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-foreground text-white shadow-lg sm:h-20 sm:w-20">
                     <MapPin size={28} className="sm:h-[34px] sm:w-[34px]" />
                 </div>
                 <motion.div
@@ -50,7 +50,7 @@ export default function AddressEmpty({ onAdd }: AddressEmptyProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15, duration: 0.3 }}
-                className="mt-6 font-bold text-xl font-semibold tracking-tight text-neutral-900 sm:mt-7 sm:text-2xl"
+                className="mt-6 font-bold text-xl font-semibold tracking-tight text-foreground sm:mt-7 sm:text-2xl"
             >
                 Add your delivery address
             </motion.h3>
@@ -59,7 +59,7 @@ export default function AddressEmpty({ onAdd }: AddressEmptyProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
-                className="mt-3 max-w-sm text-center text-sm leading-6 text-neutral-500 sm:leading-7"
+                className="mt-3 max-w-sm text-center text-sm leading-6 text-muted-foreground sm:leading-7"
             >
                 Save your address once for a faster checkout next time. We ensure safe
                 and timely delivery to your doorstep.
@@ -73,7 +73,7 @@ export default function AddressEmpty({ onAdd }: AddressEmptyProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25, duration: 0.3 }}
-                className="group mt-8 inline-flex items-center gap-3 rounded-2xl bg-neutral-900 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/20 transition-all duration-300 hover:shadow-xl hover:shadow-neutral-900/30 sm:mt-10 sm:px-8 sm:py-4"
+                className="group mt-8 inline-flex items-center gap-3 rounded-2xl bg-foreground px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-foreground/20 transition-all duration-300 hover:shadow-xl hover:shadow-foreground/30 sm:mt-10 sm:px-8 sm:py-4"
             >
                 <Plus size={18} />
                 Add Address

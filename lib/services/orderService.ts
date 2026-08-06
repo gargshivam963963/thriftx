@@ -12,6 +12,9 @@ export interface OrderData {
   subtotal: number;
   shipping: number;
   total: number;
+  discount?: number;
+  couponCode?: string;
+  creditUsed?: number;
   paymentMethod: string;
   paymentId?: string;
   orderId?: string;
@@ -99,9 +102,13 @@ export async function getOrder(documentId: string): Promise<Order> {
 
     orderId: doc.orderId,
     status: doc.status,
+    email: doc.email ?? "",
 
     subtotal: doc.subtotal,
     shipping: doc.shipping,
+    discount: doc.discount ?? 0,
+    couponCode: doc.couponCode ?? "",
+    creditUsed: doc.creditUsed ?? 0,
     total: doc.total,
 
     firstName: doc.firstName,
@@ -168,6 +175,9 @@ export async function createOrder(data: OrderData) {
 
       subtotal: data.subtotal,
       shipping: data.shipping,
+      discount: data.discount ?? 0,
+      couponCode: data.couponCode ?? "",
+      creditUsed: data.creditUsed ?? 0,
       total: data.total,
 
       paymentMethod: data.paymentMethod,
@@ -239,9 +249,13 @@ export async function getUserOrders(): Promise<Order[]> {
 
     orderId: doc.orderId,
     status: doc.status,
+    email: doc.email ?? "",
 
     subtotal: doc.subtotal,
     shipping: doc.shipping,
+    discount: doc.discount ?? 0,
+    couponCode: doc.couponCode ?? "",
+    creditUsed: doc.creditUsed ?? 0,
     total: doc.total,
 
     firstName: doc.firstName,

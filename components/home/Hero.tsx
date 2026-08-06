@@ -28,8 +28,8 @@ export default function Hero() {
         <section className="relative min-h-[90vh] overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(0,0,0,0.03),_transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.06),_transparent_60%)]">
             {/* Background decorative elements */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                <div className="absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-neutral-200/40 to-transparent blur-3xl dark:from-neutral-800/30" />
-                <div className="absolute -bottom-32 -right-32 h-[450px] w-[450px] rounded-full bg-gradient-to-tl from-neutral-300/30 to-transparent blur-3xl dark:from-neutral-700/20" />
+                <div className="absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-muted/40 to-transparent blur-3xl dark:from-muted/30" />
+                <div className="absolute -bottom-32 -right-32 h-[450px] w-[450px] rounded-full bg-gradient-to-tl from-muted/30 to-transparent blur-3xl dark:from-muted/20" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,0,0,0.02),transparent_60%)] dark:bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.03),transparent_60%)]" />
             </div>
 
@@ -45,22 +45,22 @@ export default function Hero() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.5 }}
                                 >
-                                    <Badge variant="outline" size="lg" rounded="full" className="border-neutral-300 bg-white/70 px-4 py-2 text-xs font-semibold tracking-wide dark:border-neutral-700 dark:bg-neutral-900/70">
+                                    <Badge variant="outline" size="lg" rounded="full" className="border-border bg-card/70 px-4 py-2 text-small font-semibold tracking-wide dark:border-border dark:bg-foreground/70">
                                         ✨ Curated Premium Thrift Fashion
                                     </Badge>
                                 </motion.div>
 
                                 {/* Headline */}
-                                <h1 className="text-display font-serif font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                                <h1 className="text-display-xl font-display font-bold tracking-tight text-foreground">
                                     Discover{" "}
-                                    <span className="bg-gradient-to-r from-neutral-900 via-neutral-600 to-neutral-900 bg-clip-text text-transparent dark:from-neutral-100 dark:via-neutral-400 dark:to-neutral-100">
+                                    <span className="bg-gradient-to-r from-foreground via-muted-foreground to-foreground bg-clip-text text-transparent dark:from-muted dark:via-muted-foreground dark:to-muted">
                                         Premium
                                     </span>
                                     <br />
                                     Fashion.
                                 </h1>
 
-                                <p className="max-w-lg text-body leading-relaxed text-neutral-600 dark:text-neutral-400">
+                                <p className="max-w-lg text-body leading-relaxed text-muted-foreground">
                                     Handpicked branded clothing that combines luxury, sustainability,
                                     and affordability. Every piece is individually inspected before
                                     it reaches your wardrobe.
@@ -84,10 +84,10 @@ export default function Hero() {
                                 <div className="grid grid-cols-3 divide-x divide-border overflow-hidden rounded-2xl border border-border bg-card/80 shadow-sm backdrop-blur-xl">
                                     {heroStats.map((item) => (
                                         <div key={item.label} className="px-4 py-5 text-center sm:px-6 sm:py-6">
-                                            <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 sm:text-3xl">
+                                            <p className="text-heading-4 font-bold text-foreground">
                                                 {item.value}
                                             </p>
-                                            <p className="mt-1 text-xs font-medium text-neutral-500 dark:text-neutral-400 sm:text-sm">
+                                            <p className="mt-1 text-small font-medium text-muted-foreground">
                                                 {item.label}
                                             </p>
                                         </div>
@@ -105,10 +105,10 @@ export default function Hero() {
                                         <Zap size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-bold text-emerald-900 dark:text-emerald-300">
+                                        <p className="text-body font-bold text-emerald-900 dark:text-emerald-300">
                                             Free Same-Day Delivery in Panipat
                                         </p>
-                                        <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                                        <p className="text-small text-emerald-600 dark:text-emerald-400">
                                             Order before 2 PM — delivered today! 🚀
                                         </p>
                                     </div>
@@ -121,7 +121,7 @@ export default function Hero() {
                     <ScaleIn className="flex-1">
                         <div className="relative">
                             {/* Main Image */}
-                            <div className="relative mx-auto aspect-[4/5] max-w-lg overflow-hidden rounded-3xl shadow-2xl shadow-neutral-900/10 dark:shadow-black/30">
+                            <div className="relative mx-auto aspect-[4/5] max-w-lg overflow-hidden rounded-3xl shadow-2xl shadow-foreground/10 dark:shadow-black/30">
                                 <Image
                                     src="/images/hero.jpg"
                                     alt="THRIFTX Premium Fashion"
@@ -139,15 +139,15 @@ export default function Hero() {
                                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 transition={{ delay: 0.4, duration: 0.5 }}
-                                className="absolute -bottom-6 -left-4 hidden max-w-[240px] rounded-2xl border border-neutral-200/80 bg-white/90 p-5 shadow-xl backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/90 lg:block"
+                                className="absolute -bottom-6 -left-4 hidden max-w-[240px] rounded-2xl border border-border/80 bg-white/90 p-5 shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-foreground/90 lg:block"
                             >
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-neutral-500 dark:text-neutral-400">
+                                <p className="text-caption text-muted-foreground">
                                     Featured Collection
                                 </p>
-                                <h3 className="mt-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                                <h3 className="mt-2 text-heading-4 font-semibold text-foreground">
                                     Curated Premium
                                 </h3>
-                                <p className="mt-2 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
+                                <p className="mt-2 text-small leading-relaxed text-muted-foreground">
                                     Every product individually photographed and inspected before reaching your wardrobe.
                                 </p>
                             </motion.div>
@@ -157,25 +157,25 @@ export default function Hero() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.5, duration: 0.5 }}
-                                className="absolute -right-8 top-12 hidden max-w-[220px] space-y-3 rounded-2xl border border-neutral-200/80 bg-white/90 p-5 shadow-xl backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/90 xl:block"
+                                className="absolute -right-8 top-12 hidden max-w-[220px] space-y-3 rounded-2xl border border-border/80 bg-white/90 p-5 shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-foreground/90 xl:block"
                             >
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-neutral-500 dark:text-neutral-400">
+                                <p className="text-caption text-muted-foreground">
                                     Why THRIFTX
                                 </p>
                                 <div className="space-y-3">
                                     {floatingFeatures.map(({ icon: Icon, title, subtitle }) => (
                                         <div
                                             key={title}
-                                            className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-neutral-100/60 dark:hover:bg-neutral-800/60"
+                                            className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted/60"
                                         >
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900">
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
                                                 <Icon size={16} />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                                                <p className="text-body font-semibold text-foreground">
                                                     {title}
                                                 </p>
-                                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                                <p className="text-small text-muted-foreground">
                                                     {subtitle}
                                                 </p>
                                             </div>
@@ -199,10 +199,10 @@ export default function Hero() {
                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                         className="flex flex-col items-center gap-2"
                     >
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
+                        <span className="text-caption text-muted-foreground">
                             Scroll
                         </span>
-                        <div className="h-10 w-[1.5px] rounded-full bg-neutral-300 dark:bg-neutral-600" />
+                        <div className="h-10 w-[1.5px] rounded-full bg-muted-foreground/50" />
                     </motion.div>
                 </motion.div>
             </Container>

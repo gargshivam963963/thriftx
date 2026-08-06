@@ -11,17 +11,17 @@ export default async function SimilarProductsSection({ product }: { product: Pro
     }
 
     return (
-        <section className="rounded-[28px] border border-neutral-200 bg-white/90 p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/80">
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
             <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-neutral-400 dark:text-neutral-500">
+                    <p className="text-badge font-semibold uppercase tracking-widest text-muted-foreground">
                         Similar Products
                     </p>
-                    <h3 className="mt-1 text-xl font-semibold text-neutral-900 dark:text-white">
+                    <h3 className="mt-1 text-heading-4 font-semibold text-foreground">
                         Carefully matched to this style
                     </h3>
                 </div>
-                <Link href="/shop" className="text-sm font-semibold text-neutral-600 transition hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white">
+                <Link href="/shop" className="text-body-sm font-semibold text-muted-foreground transition hover:text-foreground">
                     Browse all similar pieces
                 </Link>
             </div>

@@ -393,8 +393,8 @@ export default function AdminProductsPage() {
             {/* Header */}
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Products</h1>
-                    <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    <h1 className="text-2xl font-bold text-foreground">Products</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
                         {products.length} total &middot; {activeCount} active &middot; {draftCount}
                     </p>
                 </div>
@@ -411,25 +411,25 @@ export default function AdminProductsPage() {
             {/* Search & Filters */}
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="relative flex-1 max-w-md">
-                    <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                    <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search products..."
-                        className="h-10 w-full rounded-xl border border-neutral-300 bg-white pl-9 pr-4 text-sm outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+                        className="h-10 w-full rounded-xl border border-border bg-white pl-9 pr-4 text-sm outline-none transition focus:border-foreground focus:ring-2 focus:ring-foreground/10 dark:border-border dark:bg-card dark:text-foreground"
                     />
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 rounded-xl border border-neutral-200 bg-white p-0.5 dark:border-neutral-700 dark:bg-neutral-800">
+                    <div className="flex items-center gap-1 rounded-xl border border-border bg-white p-0.5 dark:border-border dark:bg-card">
                         <button
                             type="button"
                             onClick={() => setViewMode("grid")}
                             className={cn(
                                 "flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-all",
                                 viewMode === "grid"
-                                    ? "bg-neutral-900 text-white shadow-sm dark:bg-neutral-100 dark:text-neutral-900"
-                                    : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400"
+                                    ? "bg-foreground text-white shadow-sm dark:bg-muted dark:text-foreground"
+                                    : "text-muted-foreground hover:text-muted-foreground dark:text-muted-foreground"
                             )}
                         >
                             <Grid3X3 size={14} />
@@ -440,8 +440,8 @@ export default function AdminProductsPage() {
                             className={cn(
                                 "flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-all",
                                 viewMode === "list"
-                                    ? "bg-neutral-900 text-white shadow-sm dark:bg-neutral-100 dark:text-neutral-900"
-                                    : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400"
+                                    ? "bg-foreground text-white shadow-sm dark:bg-muted dark:text-foreground"
+                                    : "text-muted-foreground hover:text-muted-foreground dark:text-muted-foreground"
                             )}
                         >
                             <List size={14} />
@@ -458,8 +458,8 @@ export default function AdminProductsPage() {
                     className={cn(
                         "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
                         categoryFilter === "all"
-                            ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
-                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400"
+                            ? "bg-foreground text-white dark:bg-muted dark:text-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted dark:bg-card dark:text-muted-foreground"
                     )}
                 >
                     All
@@ -472,8 +472,8 @@ export default function AdminProductsPage() {
                         className={cn(
                             "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
                             categoryFilter === cat
-                                ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
-                                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400"
+                                ? "bg-foreground text-white dark:bg-muted dark:text-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-muted dark:bg-card dark:text-muted-foreground"
                         )}
                     >
                         {cat}
@@ -493,8 +493,8 @@ export default function AdminProductsPage() {
                     <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-900/20">
                         <AlertCircle size={28} className="text-red-400" />
                     </div>
-                    <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Failed to load</h3>
-                    <p className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">{error}</p>
+                    <h3 className="text-lg font-bold text-foreground">Failed to load</h3>
+                    <p className="mt-1.5 text-sm text-muted-foreground">{error}</p>
                     <Button variant="primary" size="sm" className="mt-6" onClick={loadProducts} leftIcon={<RefreshCw size={14} />}>
                         Try Again
                     </Button>
@@ -505,13 +505,13 @@ export default function AdminProductsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="flex flex-col items-center justify-center py-20 text-center"
                 >
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-100 dark:bg-neutral-800">
-                        <Package size={28} className="text-neutral-400" />
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                        <Package size={28} className="text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
+                    <h3 className="text-lg font-bold text-foreground">
                         {search || categoryFilter !== "all" ? "No products found" : "No products yet"}
                     </h3>
-                    <p className="mt-1.5 max-w-sm text-sm text-neutral-500 dark:text-neutral-400">
+                    <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">
                         {search || categoryFilter !== "all"
                             ? "Try adjusting your search or filters."
                             : "Add your first product to start selling."}
@@ -529,7 +529,7 @@ export default function AdminProductsPage() {
                             key={product.$id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="group relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm transition-all hover:shadow-md dark:border-neutral-700/60 dark:bg-neutral-900"
+                            className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white shadow-sm transition-all hover:shadow-md dark:border-border/60 dark:bg-foreground"
                         >
                             {/* Image - clickable to preview */}
                             <button
@@ -538,7 +538,7 @@ export default function AdminProductsPage() {
                                     setPreviewProduct(product);
                                     setPreviewIndex(0);
                                 }}
-                                className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800"
+                                className="relative aspect-[4/3] w-full overflow-hidden bg-muted"
                             >
                                 {product.primaryImage ? (
                                     <Image
@@ -550,7 +550,7 @@ export default function AdminProductsPage() {
                                     />
                                 ) : (
                                     <div className="flex h-full items-center justify-center">
-                                        <Package size={32} className="text-neutral-300 dark:text-neutral-600" />
+                                        <Package size={32} className="text-muted-foreground dark:text-muted-foreground" />
                                     </div>
                                 )}
                                 {/* Image count badge */}
@@ -566,13 +566,13 @@ export default function AdminProductsPage() {
                                             "rounded-md px-2 py-0.5 text-[10px] font-bold",
                                             product.isActive
                                                 ? "bg-emerald-500/90 text-white"
-                                                : "bg-neutral-500/80 text-white"
+                                                : "bg-subtle0/80 text-white"
                                         )}
                                     >
                                         {product.isActive ? "Active" : "Inactive"}
                                     </span>
                                     {product.condition && (
-                                        <span className="rounded-md bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-neutral-700 backdrop-blur-sm dark:bg-neutral-800/80 dark:text-neutral-300">
+                                        <span className="rounded-md bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground backdrop-blur-sm dark:bg-card/80 dark:text-muted-foreground">
                                             {product.condition}
                                         </span>
                                     )}
@@ -581,23 +581,23 @@ export default function AdminProductsPage() {
 
                             {/* Info */}
                             <div className="p-4">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                                <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     {product.brand}
                                 </p>
-                                <h3 className="mt-0.5 truncate text-sm font-bold text-neutral-900 dark:text-neutral-100">
+                                <h3 className="mt-0.5 truncate text-sm font-bold text-foreground">
                                     {product.title}
                                 </h3>
                                 <div className="mt-1 flex items-center gap-2">
-                                    <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
+                                    <span className="text-sm font-bold text-foreground">
                                         ₹{product.price}
                                     </span>
                                     {product.retailPrice && product.retailPrice > product.price && (
-                                        <span className="text-[10px] text-neutral-400 line-through">
+                                        <span className="text-badge text-muted-foreground line-through">
                                             ₹{product.retailPrice}
                                         </span>
                                     )}
                                 </div>
-                                <div className="mt-1 flex items-center gap-2 text-[10px] text-neutral-400 dark:text-neutral-500">
+                                <div className="mt-1 flex items-center gap-2 text-badge text-muted-foreground">
                                     <span>{product.category}</span>
                                     <span>&middot;</span>
                                     <span>{product.size}</span>
@@ -613,7 +613,7 @@ export default function AdminProductsPage() {
                                                 .map((m) => (
                                                     <span
                                                         key={m.label}
-                                                        className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-0.5 text-[9px] font-semibold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                                                        className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-badge font-semibold text-muted-foreground"
                                                         title={`${m.label}: ${m.value}`}
                                                     >
                                                         {m.label} {m.value}
@@ -625,7 +625,7 @@ export default function AdminProductsPage() {
                                             .map((m) => (
                                                 <span
                                                     key={m.label}
-                                                    className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-0.5 text-[9px] font-semibold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                                                    className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-badge font-semibold text-muted-foreground"
                                                 >
                                                     {m.label} {m.value}
                                                 </span>
@@ -634,7 +634,7 @@ export default function AdminProductsPage() {
                                 )}
 
                                 {/* Actions */}
-                                <div className="mt-3 flex items-center gap-1.5 border-t border-neutral-100 pt-3 dark:border-neutral-800">
+                                <div className="mt-3 flex items-center gap-1.5 border-t border-border pt-3 dark:border-border">
                                     <Button
                                         variant="ghost"
                                         size="iconXs"
@@ -654,7 +654,7 @@ export default function AdminProductsPage() {
                                         className={cn(
                                             product.isActive
                                                 ? "text-emerald-600 hover:text-emerald-700"
-                                                : "text-neutral-400 hover:text-neutral-600"
+                                                : "text-muted-foreground hover:text-muted-foreground"
                                         )}
                                     >
                                         {product.isActive ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
@@ -683,7 +683,7 @@ export default function AdminProductsPage() {
                             key={product.$id}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="flex items-center gap-4 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-neutral-700/60 dark:bg-neutral-900"
+                            className="flex items-center gap-4 rounded-2xl border border-border/80 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-border/60 dark:bg-foreground"
                         >
                             <button
                                 type="button"
@@ -691,7 +691,7 @@ export default function AdminProductsPage() {
                                     setPreviewProduct(product);
                                     setPreviewIndex(0);
                                 }}
-                                className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800"
+                                className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted"
                             >
                                 {product.primaryImage ? (
                                     <Image
@@ -703,15 +703,15 @@ export default function AdminProductsPage() {
                                     />
                                 ) : (
                                     <div className="flex h-full items-center justify-center">
-                                        <Package size={18} className="text-neutral-300" />
+                                        <Package size={18} className="text-muted-foreground" />
                                     </div>
                                 )}
                             </button>
                             <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-bold text-neutral-900 dark:text-neutral-100">
+                                <p className="truncate text-sm font-bold text-foreground">
                                     {product.title}
                                 </p>
-                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                <p className="text-xs text-muted-foreground">
                                     {product.brand} &middot; {product.category} &middot; {product.size}
                                 </p>
                                 {/* Measurements - chest/waist left, length right */}
@@ -723,7 +723,7 @@ export default function AdminProductsPage() {
                                                 .map((m) => (
                                                     <span
                                                         key={m.label}
-                                                        className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-1.5 py-0.5 text-[9px] font-semibold text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                                                        className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-badge font-semibold text-muted-foreground"
                                                     >
                                                         {m.label} {m.value}
                                                     </span>
@@ -734,7 +734,7 @@ export default function AdminProductsPage() {
                                             .map((m) => (
                                                 <span
                                                     key={m.label}
-                                                    className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-1.5 py-0.5 text-[9px] font-semibold text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                                                    className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-badge font-semibold text-muted-foreground"
                                                 >
                                                     {m.label} {m.value}
                                                 </span>
@@ -748,14 +748,14 @@ export default function AdminProductsPage() {
                                         "rounded-md px-2 py-0.5 text-[10px] font-bold",
                                         product.isActive
                                             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                            : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                                            : "bg-muted text-muted-foreground dark:bg-card dark:text-muted-foreground"
                                     )}
                                 >
                                     {product.isActive ? "Active" : "Inactive"}
                                 </span>
                             </div>
                             <div className="text-right">
-                                <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
+                                <p className="text-sm font-bold text-foreground">
                                     ₹{product.price}
                                 </p>
                             </div>
@@ -777,7 +777,7 @@ export default function AdminProductsPage() {
                                     className={cn(
                                         product.isActive
                                             ? "text-emerald-600"
-                                            : "text-neutral-400"
+                                            : "text-muted-foreground"
                                     )}
                                 >
                                     {product.isActive ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}

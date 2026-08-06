@@ -16,23 +16,23 @@ export default function CheckoutButton({
     onCheckout,
 }: CheckoutButtonProps) {
     return (
-        <div className="rounded-[32px] border border-neutral-200 bg-white p-8 shadow-sm">
+        <div className="rounded-[32px] border border-border bg-card p-8 shadow-card">
 
-            <div className="rounded-2xl bg-neutral-50 p-5">
+            <div className="rounded-2xl bg-muted p-5">
 
                 <div className="flex items-center gap-3">
 
-                    <div className="rounded-xl bg-black p-3 text-white">
+                    <div className="rounded-xl bg-foreground p-3 text-background">
                         <CreditCard className="h-5 w-5" />
                     </div>
 
                     <div>
 
-                        <p className="font-semibold">
+                        <p className="font-semibold text-foreground">
                             Ready to Checkout
                         </p>
 
-                        <p className="text-sm text-neutral-500">
+                        <p className="text-body-sm text-muted-foreground">
                             Secure payment powered by Razorpay.
                         </p>
 
@@ -46,7 +46,7 @@ export default function CheckoutButton({
                 type="button"
                 disabled={loading || disabled}
                 onClick={onCheckout}
-                className="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl bg-black px-6 py-5 text-lg font-semibold text-white transition-all duration-300 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl bg-foreground px-6 py-5 text-body-lg font-semibold text-background transition-all duration-300 hover:bg-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
                 {loading ? (
                     <>
@@ -61,7 +61,7 @@ export default function CheckoutButton({
                 )}
             </button>
 
-            <div className="mt-6 space-y-3 text-sm text-neutral-500">
+            <div className="mt-6 space-y-3 text-body-sm text-muted-foreground">
 
                 <div className="flex items-center justify-between">
                     <span>SSL Encrypted Checkout</span>

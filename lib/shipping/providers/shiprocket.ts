@@ -1,4 +1,4 @@
-import type { ShippingRate } from "../types";
+import type { ShippingRate, ShipmentStatus } from "../types";
 import { PICKUP_ADDRESS, FALLBACK_SHIPPING_RATES } from "../constants";
 import { detectDeliveryZone } from "@/lib/delivery";
 
@@ -12,6 +12,29 @@ import type {
 import { shiprocketFetch } from "./client";
 import { getAvailableCouriers } from "./couriers";
 
+/**
+ * Map Shiprocket shipment status strings to our internal ShipmentStatus.
+ */
+function mapShiprocketStatus(status: string): ShipmentStatus {
+  const normalized = (status || "").toLowerCase();
+
+  if (normalized.includes("delivered")) return "delivered";
+  if (normalized.includes("cancelled") || normalized.includes("cancel"))
+    return "cancelled";
+  if (normalized.includes("rto") || normalized.includes("return")) return "rto";
+  if (normalized.includes("out for delivery")) return "out_for_delivery";
+  if (normalized.includes("picked up") || normalized.includes("pickup"))
+    return "picked_up";
+  if (normalized.includes("in transit") || normalized.includes("transit"))
+    return "in_transit";
+  if (normalized.includes("shipment created") || normalized.includes("created"))
+    return "shipment_created";
+  if (normalized.includes("confirmed")) return "confirmed";
+  if (normalized.includes("packed")) return "packed";
+
+  return "in_transit";
+}
+
 export class ShiprocketProvider implements ShippingProvider {
   readonly provider = "shiprocket";
 
@@ -19,13 +42,40 @@ export class ShiprocketProvider implements ShippingProvider {
     payload: CreateShipmentPayload,
   ): Promise<ShipmentResult> {
     try {
+      const orderItems =
+        payload.items && payload.items.length > 0
+          ? payload.items.map((item, index) => ({
+              name: item.title || `THRIFTX Item ${index + 1}`,
+              sku: String(item.id || `${payload.orderId}-${index + 1}`),
+              units: Number(item.quantity) || 1,
+              selling_price: Number(item.price) || payload.amount,
+              discount: 0,
+            }))
+          : [
+              {
+                name: "THRIFTX Order",
+                sku: payload.orderId,
+                units: 1,
+                selling_price: payload.amount,
+                discount: 0,
+              },
+            ];
+
       const response = await shiprocketFetch<any>("/orders/create/adhoc", {
         method: "POST",
         body: JSON.stringify({
           order_id: payload.orderId,
-          order_date: new Date().toISOString(),
+          order_date: new Date().toISOString().slice(0, 10),
 
           pickup_location: PICKUP_ADDRESS.name,
+          pickup_customer_name: "ThriftX",
+          pickup_address: PICKUP_ADDRESS.address,
+          pickup_city: PICKUP_ADDRESS.city,
+          pickup_state: PICKUP_ADDRESS.state,
+          pickup_country: PICKUP_ADDRESS.country,
+          pickup_pincode: PICKUP_ADDRESS.pincode,
+          pickup_email: PICKUP_ADDRESS.email,
+          pickup_phone: PICKUP_ADDRESS.phone,
 
           billing_customer_name: payload.customerName,
           billing_last_name: "",
@@ -42,14 +92,7 @@ export class ShiprocketProvider implements ShippingProvider {
 
           shipping_is_billing: true,
 
-          order_items: [
-            {
-              name: "THRIFTX Order",
-              sku: payload.orderId,
-              units: 1,
-              selling_price: payload.amount,
-            },
-          ],
+          order_items: orderItems,
 
           payment_method: payload.cod ? "COD" : "Prepaid",
 
@@ -177,17 +220,19 @@ export class ShiprocketProvider implements ShippingProvider {
       const events = Array.isArray(trackingData)
         ? trackingData.map((event: any) => ({
             status:
-              event.current_status?.toLowerCase().replace(/\s+/g, "_") ??
-              "in_transit",
+              mapShiprocketStatus(event.current_status ?? "") ?? "in_transit",
             description: event.activity ?? "In transit",
             location: event.location ?? "",
             timestamp: event.date ?? new Date().toISOString(),
           }))
         : [];
 
+      // Determine current status from the latest event if present.
+      const latestStatus = events[0]?.status ?? "in_transit";
+
       return {
         success: true,
-        status: "in_transit",
+        status: latestStatus,
         tracking: events,
       };
     } catch (error) {

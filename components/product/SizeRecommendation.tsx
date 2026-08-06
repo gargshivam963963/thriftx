@@ -61,29 +61,29 @@ export default function SizeRecommendation({ product }: { product: Product }) {
     const recommendation = getRecommendation(product);
 
     return (
-        <section className="rounded-[28px] border border-neutral-200 bg-white/90 p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/80">
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-neutral-400 dark:text-neutral-500">
+                    <p className="text-badge font-semibold uppercase tracking-widest text-muted-foreground">
                         Size Recommendation
                     </p>
-                    <h3 className="mt-1 text-xl font-semibold text-neutral-900 dark:text-white">
+                    <h3 className="mt-1 text-heading-4 font-semibold text-foreground">
                         {recommendation.label}
                     </h3>
                 </div>
-                <div className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                <div className="rounded-full bg-warning-bg px-3 py-1 text-body-sm font-semibold text-warning-foreground">
                     {Math.round(recommendation.confidence * 100)}% confidence
                 </div>
             </div>
 
-            <p className="mt-3 text-sm leading-7 text-neutral-600 dark:text-neutral-300">
+            <p className="mt-3 text-body leading-7 text-muted-foreground">
                 {recommendation.detail}
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
-                {product.chest ? <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">Chest {product.chest}</span> : null}
-                {product.waist ? <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">Waist {product.waist}</span> : null}
-                {product.size ? <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">Listed size {product.size}</span> : null}
+                {product.chest ? <span className="rounded-full bg-muted px-3 py-1 text-small font-medium text-muted-foreground">Chest {product.chest}</span> : null}
+                {product.waist ? <span className="rounded-full bg-muted px-3 py-1 text-small font-medium text-muted-foreground">Waist {product.waist}</span> : null}
+                {product.size ? <span className="rounded-full bg-muted px-3 py-1 text-small font-medium text-muted-foreground">Listed size {product.size}</span> : null}
             </div>
         </section>
     );

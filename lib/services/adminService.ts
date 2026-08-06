@@ -372,6 +372,23 @@ export async function getAllOrders(): Promise<Order[]> {
       signature: doc.signature,
       deliveryMethod: doc.deliveryMethod || "courier",
       products: doc.products || "[]",
+
+      // Shipping / fulfillment fields
+      shippingProvider: doc.shippingProvider || "",
+      shipmentStatus: doc.shipmentStatus || "",
+      pickupStatus: doc.pickupStatus || "",
+      shipmentId: doc.shipmentId || "",
+      trackingNumber: doc.trackingNumber || "",
+      awbNumber: doc.awbNumber || "",
+      courier: doc.courier || "",
+      courierId: doc.courierId || "",
+      estimatedDelivery: doc.estimatedDelivery || "",
+      labelUrl: doc.labelUrl || "",
+      invoiceUrl: doc.invoiceUrl || "",
+      trackingUrl: doc.trackingUrl || "",
+      pickupId: doc.pickupId || "",
+      shippedAt: doc.shippedAt || "",
+      deliveredAt: doc.deliveredAt || "",
     }));
   } catch (error) {
     console.error("getAllOrders error:", error);

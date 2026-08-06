@@ -13,14 +13,14 @@ export default function CategoryChart({ data, loading = false }: CategoryChartPr
         return (
             <div className="admin-card p-6">
                 <div className="space-y-4">
-                    <div className="h-5 w-28 animate-pulse rounded bg-[var(--color-bg-muted)]" />
+                    <div className="h-5 w-28 animate-pulse rounded bg-muted" />
                     {[1, 2, 3, 4, 5].map((i) => (
                         <div key={i} className="space-y-1">
                             <div className="flex items-center justify-between">
-                                <div className="h-3 w-20 animate-pulse rounded bg-[var(--color-bg-muted)]" />
-                                <div className="h-3 w-12 animate-pulse rounded bg-[var(--color-bg-muted)]" />
+                                <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+                                <div className="h-3 w-12 animate-pulse rounded bg-muted" />
                             </div>
-                            <div className="h-2 w-full animate-pulse rounded bg-[var(--color-bg-muted)]" />
+                            <div className="h-2 w-full animate-pulse rounded bg-muted" />
                         </div>
                     ))}
                 </div>
@@ -32,8 +32,8 @@ export default function CategoryChart({ data, loading = false }: CategoryChartPr
         return (
             <div className="admin-card p-6">
                 <div className="flex flex-col items-center gap-3 py-8">
-                    <Package size={32} className="text-[var(--color-text-muted)]" />
-                    <p className="text-sm text-[var(--color-text-muted)]">No category data</p>
+                    <Package size={32} className="text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No category data</p>
                 </div>
             </div>
         );
@@ -50,10 +50,10 @@ export default function CategoryChart({ data, loading = false }: CategoryChartPr
             className="admin-card p-6"
         >
             <div className="mb-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                <p className="text-caption font-semibold text-muted-foreground">
                     Category Distribution
                 </p>
-                <p className="text-xs text-[var(--color-text-secondary)]">
+                <p className="text-xs text-muted-foreground">
                     {totalCount} total products across {data.length} categories
                 </p>
             </div>
@@ -66,19 +66,19 @@ export default function CategoryChart({ data, loading = false }: CategoryChartPr
                     return (
                         <div key={item.category} className="group">
                             <div className="mb-1 flex items-center justify-between">
-                                <p className="text-sm font-medium text-[var(--color-text)]">
+                                <p className="text-sm font-medium text-foreground">
                                     {item.category}
                                 </p>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs text-[var(--color-text-muted)]">
+                                    <span className="text-xs text-muted-foreground">
                                         {item.count} items
                                     </span>
-                                    <span className="text-xs font-semibold text-[var(--color-text-secondary)]">
+                                    <span className="text-xs font-semibold text-muted-foreground">
                                         {totalPercentage}%
                                     </span>
                                 </div>
                             </div>
-                            <div className="flex h-2.5 overflow-hidden rounded-full bg-[var(--color-bg-muted)]">
+                            <div className="flex h-2.5 overflow-hidden rounded-full bg-muted">
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${percentage}%` }}

@@ -76,7 +76,7 @@ function ConfidenceBadge({ score, label }: { score: number; label: string }) {
         <Tooltip content={`${label} · AI confidence ${score}%`}>
             <span
                 className={cn(
-                    "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-semibold",
+                    "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-badge font-semibold",
                     isLow
                         ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                         : isMedium
@@ -148,7 +148,7 @@ function ImagePreviewModal({
                     </Button>
                 )}
 
-                <div className="relative overflow-hidden rounded-2xl bg-neutral-900 shadow-2xl">
+                <div className="relative overflow-hidden rounded-2xl bg-foreground shadow-2xl">
                     <Image
                         src={img.src}
                         alt={img.label}
@@ -162,7 +162,7 @@ function ImagePreviewModal({
                     <span
                         className={cn(
                             "absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-[10px] font-bold text-white shadow-lg",
-                            LABEL_COLORS[img.label] || "bg-neutral-600",
+                            LABEL_COLORS[img.label] || "bg-muted-foreground",
                         )}
                     >
                         {img.label} · {currentIndex + 1}/{images.length}
@@ -208,7 +208,7 @@ function Field({
     return (
         <div className={cn("space-y-1", className)}>
             <div className="flex items-center justify-between gap-1">
-                <label className="flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                <label className="flex items-center gap-0.5 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                     {label}
                     {required && <span className="text-red-400">*</span>}
                 </label>
@@ -218,7 +218,7 @@ function Field({
             </div>
             <div className="relative">
                 {prefix && (
-                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-neutral-400">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
                         {prefix}
                     </span>
                 )}
@@ -255,7 +255,7 @@ function SelectField({
     return (
         <div className="space-y-1">
             <div className="flex items-center justify-between gap-1">
-                <label className="flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                <label className="flex items-center gap-0.5 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                     {label}
                     {required && <span className="text-red-400">*</span>}
                 </label>
@@ -375,14 +375,14 @@ export default function BulkProductCard({
                     "group/card relative overflow-hidden rounded-2xl border bg-white transition-all duration-300",
                     hasErrors
                         ? "border-red-200 shadow-sm dark:border-red-800/50"
-                        : "border-neutral-200 shadow-sm hover:shadow-xl hover:-translate-y-0.5 dark:border-neutral-700/60",
+                        : "border-border shadow-sm hover:shadow-xl hover:-translate-y-0.5 dark:border-border/60",
                 )}
             >
                 <CardContent className="p-0">
                     {/* ═══ Header ═══ */}
-                    <div className="flex items-center justify-between border-b border-neutral-100 px-3.5 py-2.5 dark:border-neutral-800">
+                    <div className="flex items-center justify-between border-b border-border px-3.5 py-2.5 dark:border-border">
                         <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-[10px] font-bold text-neutral-400 dark:text-neutral-500">
+                            <span className="font-mono text-[10px] font-bold text-muted-foreground">
                                 #{String(index + 1).padStart(2, "0")}
                             </span>
                             <Badge variant="secondary" size="xs" rounded="md" className="font-mono tracking-tight">
@@ -408,7 +408,7 @@ export default function BulkProductCard({
                                     variant="ghost"
                                     size="iconXs"
                                     onClick={() => onDuplicate(product.sku)}
-                                    className="text-neutral-400 hover:text-neutral-600"
+                                    className="text-muted-foreground hover:text-muted-foreground"
                                 >
                                     <Copy size={12} />
                                 </Button>
@@ -426,7 +426,7 @@ export default function BulkProductCard({
                             </Tooltip>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="iconXs" className="text-neutral-400">
+                                    <Button variant="ghost" size="iconXs" className="text-muted-foreground">
                                         <MoreHorizontal size={13} />
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -464,7 +464,7 @@ export default function BulkProductCard({
                                 "rounded-xl border-2 border-dashed p-2 transition-colors",
                                 dragOverIndex === -1
                                     ? "border-violet-400 bg-violet-50/60 dark:border-violet-500 dark:bg-violet-950/20"
-                                    : "border-neutral-200 dark:border-neutral-700",
+                                    : "border-border",
                             )}
                         >
                             {imageCount === 0 ? (
@@ -473,17 +473,17 @@ export default function BulkProductCard({
                                     onClick={() => fileInputRef.current?.click()}
                                     className="flex w-full flex-col items-center justify-center gap-1.5 py-8 text-center"
                                 >
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-                                        <Plus size={15} className="text-neutral-400" />
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+                                        <Plus size={15} className="text-muted-foreground" />
                                     </div>
-                                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+                                    <p className="text-[11px] font-medium text-muted-foreground">
                                         Add images (first = cover)
                                     </p>
                                 </button>
                             ) : (
                                 <div className="space-y-2">
                                     {/* Cover image */}
-                                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800">
+                                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-muted">
                                         <button
                                             type="button"
                                             onClick={() => openPreview(0)}
@@ -533,10 +533,10 @@ export default function BulkProductCard({
                                                 onDragLeave={() => setDragOverIndex(null)}
                                                 onDrop={(e) => handleImageDrop(e, i)}
                                                 className={cn(
-                                                    "group/thumb relative h-11 w-11 shrink-0 overflow-hidden rounded-md border bg-neutral-100 transition",
+                                                    "group/thumb relative h-11 w-11 shrink-0 overflow-hidden rounded-md border bg-muted transition",
                                                     dragOverIndex === i
                                                         ? "border-violet-400 scale-110 shadow-md"
-                                                        : "border-neutral-200 dark:border-neutral-700",
+                                                        : "border-border",
                                                     i === 0 && "ring-1 ring-amber-400",
                                                 )}
                                             >
@@ -594,7 +594,7 @@ export default function BulkProductCard({
                                         <button
                                             type="button"
                                             onClick={() => fileInputRef.current?.click()}
-                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border-2 border-dashed border-neutral-200 text-neutral-300 transition hover:border-violet-400 hover:text-violet-400 dark:border-neutral-700"
+                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border-2 border-dashed border-border text-muted-foreground transition hover:border-violet-400 hover:text-violet-400 dark:border-border"
                                         >
                                             <Plus size={13} />
                                         </button>
@@ -690,11 +690,11 @@ export default function BulkProductCard({
                         {measurements.length > 0 && (
                             <div>
                                 <div className="mb-1.5 flex items-center gap-1.5">
-                                    <span className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                                    <span className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                         Measurements
                                     </span>
-                                    <span className="text-[9px] text-neutral-300 dark:text-neutral-600">·</span>
-                                    <span className="truncate text-[9px] italic text-neutral-400 dark:text-neutral-500">
+                                    <span className="text-badge text-muted-foreground">·</span>
+                                    <span className="truncate text-badge italic text-muted-foreground">
                                         {rule.hint}
                                     </span>
                                 </div>
@@ -728,7 +728,7 @@ export default function BulkProductCard({
                         {/* ═══ Description ═══ */}
                         <div>
                             <div className="mb-1 flex items-center gap-1">
-                                <span className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                                <span className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Description
                                 </span>
                                 <span className="text-red-400">*</span>
@@ -751,7 +751,7 @@ export default function BulkProductCard({
                         {/* ═══ Errors ═══ */}
                         {hasErrors && (
                             <div className="rounded-lg border border-red-200 bg-red-50/80 px-3 py-2 dark:border-red-800/50 dark:bg-red-950/20">
-                                <p className="mb-1 text-[9px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
+                                <p className="mb-1 text-badge font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
                                     Issues
                                 </p>
                                 <ul className="space-y-0.5">
@@ -773,7 +773,7 @@ export default function BulkProductCard({
                             product.aiNeedsReview?.length) ? (
                             <div className="rounded-lg border border-violet-100 bg-violet-50/50 p-2.5 dark:border-violet-900/30 dark:bg-violet-950/10">
                                 <div className="mb-1.5 flex items-center justify-between">
-                                    <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
+                                    <span className="flex items-center gap-1 text-badge font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
                                         <Sparkles size={10} />
                                         AI Confidence
                                     </span>

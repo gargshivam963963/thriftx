@@ -12,7 +12,7 @@ export default function ImageSkeleton({
     return (
         <div
             className={cn(
-                "absolute inset-0 overflow-hidden rounded-inherit bg-neutral-100",
+                "absolute inset-0 overflow-hidden rounded-inherit bg-muted",
                 className
             )}
         >

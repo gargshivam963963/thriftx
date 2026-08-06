@@ -521,11 +521,11 @@ export default function ProductFormModal({
                         transition={{ type: "spring", damping: 25, stiffness: 280 }}
                         className="fixed inset-x-4 bottom-4 top-4 z-50 mx-auto max-w-6xl"
                     >
-                        <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
+                        <div className="flex h-full flex-col rounded-2xl border border-border bg-white shadow-xl dark:border-border dark:bg-foreground">
                             {/* Header */}
-                            <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4 dark:border-neutral-800">
+                            <div className="flex items-center justify-between border-b border-border px-5 py-4 dark:border-border">
                                 <div className="flex items-center gap-3">
-                                    <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
+                                    <h2 className="text-lg font-bold text-foreground">
                                         {isEditing ? "Edit Product" : "Add Product"}
                                     </h2>
                                     {isGenerating && (
@@ -537,7 +537,7 @@ export default function ProductFormModal({
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted dark:hover:bg-card"
                                 >
                                     <X size={18} />
                                 </button>
@@ -549,13 +549,13 @@ export default function ProductFormModal({
                                     {/* ── LEFT COLUMN: Product Form ── */}
                                     <div
                                         ref={scrollRef}
-                                        className="overflow-y-auto border-r border-neutral-100 px-5 py-4 dark:border-neutral-800 space-y-5"
+                                        className="overflow-y-auto border-r border-border px-5 py-4 dark:border-border space-y-5"
                                     >
                                         {/* Basic Fields */}
                                         <div className="grid gap-4 sm:grid-cols-2">
                                             {PRODUCT_FIELDS.filter((f) => f.section === "product").map((field) => (
                                                 <div key={field.name} className="space-y-1.5">
-                                                    <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                                    <label className="text-xs font-semibold text-muted-foreground">
                                                         {field.label}
                                                         {field.required && <span className="ml-0.5 text-red-500">*</span>}
                                                     </label>
@@ -564,9 +564,9 @@ export default function ProductFormModal({
                                                             name={field.name}
                                                             value={form[field.name]}
                                                             onChange={handleChange}
-                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
+                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-foreground/10 dark:bg-card dark:text-foreground ${errors[field.name]
                                                                 ? "border-red-400 focus:border-red-500"
-                                                                : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                                : "border-border focus:border-foreground dark:border-border"
                                                                 }`}
                                                         >
                                                             <option value="">Select</option>
@@ -583,9 +583,9 @@ export default function ProductFormModal({
                                                             value={form[field.name]}
                                                             onChange={handleChange}
                                                             placeholder={field.placeholder}
-                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
+                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-foreground/10 dark:bg-card dark:text-foreground ${errors[field.name]
                                                                 ? "border-red-400 focus:border-red-500"
-                                                                : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                                : "border-border focus:border-foreground dark:border-border"
                                                                 }`}
                                                         />
                                                     )}
@@ -596,13 +596,13 @@ export default function ProductFormModal({
                                             ))}
                                         </div>
 
-                                        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
+                                        <div className="h-px bg-muted" />
 
                                         {/* Pricing */}
                                         <div className="grid gap-4 sm:grid-cols-3">
                                             {PRODUCT_FIELDS.filter((f) => f.section === "pricing").map((field) => (
                                                 <div key={field.name} className="space-y-1.5">
-                                                    <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                                    <label className="text-xs font-semibold text-muted-foreground">
                                                         {field.label}
                                                         {field.required && <span className="ml-0.5 text-red-500">*</span>}
                                                     </label>
@@ -611,9 +611,9 @@ export default function ProductFormModal({
                                                             name={field.name}
                                                             value={form[field.name]}
                                                             onChange={handleChange}
-                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
+                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-foreground/10 dark:bg-card dark:text-foreground ${errors[field.name]
                                                                 ? "border-red-400"
-                                                                : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                                : "border-border focus:border-foreground dark:border-border"
                                                                 }`}
                                                         >
                                                             {(field.options || []).map((opt) => (
@@ -629,9 +629,9 @@ export default function ProductFormModal({
                                                             value={form[field.name]}
                                                             onChange={handleChange}
                                                             placeholder={field.placeholder}
-                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
+                                                            className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-foreground/10 dark:bg-card dark:text-foreground ${errors[field.name]
                                                                 ? "border-red-400"
-                                                                : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                                : "border-border focus:border-foreground dark:border-border"
                                                                 }`}
                                                         />
                                                     )}
@@ -642,13 +642,13 @@ export default function ProductFormModal({
                                             ))}
                                         </div>
 
-                                        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
+                                        <div className="h-px bg-muted" />
 
                                         {/* Details */}
                                         <div className="grid gap-4 sm:grid-cols-2">
                                             {PRODUCT_FIELDS.filter((f) => f.section === "details").map((field) => (
                                                 <div key={field.name} className="space-y-1.5">
-                                                    <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                                    <label className="text-xs font-semibold text-muted-foreground">
                                                         {field.label}
                                                         {field.required && <span className="ml-0.5 text-red-500">*</span>}
                                                     </label>
@@ -658,9 +658,9 @@ export default function ProductFormModal({
                                                         value={form[field.name]}
                                                         onChange={handleChange}
                                                         placeholder={field.placeholder}
-                                                        className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-neutral-900/10 dark:bg-neutral-800 dark:text-neutral-200 ${errors[field.name]
+                                                        className={`h-10 w-full rounded-xl border px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-foreground/10 dark:bg-card dark:text-foreground ${errors[field.name]
                                                             ? "border-red-400"
-                                                            : "border-neutral-300 focus:border-neutral-900 dark:border-neutral-600"
+                                                            : "border-border focus:border-foreground dark:border-border"
                                                             }`}
                                                     />
                                                     {errors[field.name] && (
@@ -670,14 +670,14 @@ export default function ProductFormModal({
                                             ))}
                                         </div>
 
-                                        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
+                                        <div className="h-px bg-muted" />
 
                                         {/* Measurements (conditional) */}
                                         <div>
-                                            <h3 className="mb-3 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                            <h3 className="mb-3 text-xs font-semibold text-muted-foreground">
                                                 Measurements
                                                 {form.category && (
-                                                    <span className="ml-2 text-[10px] font-normal text-neutral-400">
+                                                    <span className="ml-2 text-[10px] font-normal text-muted-foreground">
                                                         ({form.category === "Dresses" ? "Chest + Waist + Length" :
                                                             UPPER_CATEGORIES.includes(form.category) ? "Chest + Length" :
                                                                 LOWER_CATEGORIES.includes(form.category) ? "Waist + Length" :
@@ -688,7 +688,7 @@ export default function ProductFormModal({
                                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                                                 {measurements.map((m) => (
                                                     <div key={m.key} className="space-y-1">
-                                                        <label className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                                                        <label className="text-[10px] font-medium text-muted-foreground">
                                                             {m.label}
                                                         </label>
                                                         <input
@@ -697,18 +697,18 @@ export default function ProductFormModal({
                                                             value={form[m.key] ?? ""}
                                                             onChange={(e) => handleMeasurementFieldChange(m.key, e.target.value)}
                                                             placeholder={m.placeholder}
-                                                            className="h-9 w-full rounded-lg border border-neutral-300 px-3 text-xs outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+                                                            className="h-9 w-full rounded-lg border border-border px-3 text-xs outline-none transition focus:border-foreground focus:ring-2 focus:ring-foreground/10 dark:border-border dark:bg-card dark:text-foreground"
                                                         />
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
 
-                                        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
+                                        <div className="h-px bg-muted" />
 
                                         {/* Description */}
                                         <div className="space-y-2">
-                                            <label className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                            <label className="text-xs font-semibold text-muted-foreground">
                                                 Description
                                             </label>
                                             <textarea
@@ -717,21 +717,21 @@ export default function ProductFormModal({
                                                 onChange={handleChange}
                                                 rows={4}
                                                 placeholder="Write a complete product description..."
-                                                className="w-full resize-none rounded-xl border border-neutral-300 p-3.5 text-sm outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+                                                className="w-full resize-none rounded-xl border border-border p-3.5 text-sm outline-none transition focus:border-foreground focus:ring-2 focus:ring-foreground/10 dark:border-border dark:bg-card dark:text-foreground"
                                             />
                                             <div className="flex justify-end">
-                                                <span className="text-[10px] text-neutral-400">{form.description.length} chars</span>
+                                                <span className="text-[10px] text-muted-foreground">{form.description.length} chars</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* ── CENTER COLUMN: Images + Preview Grid with Measurements ── */}
-                                    <div className="overflow-y-auto px-5 py-4 space-y-5 border-r border-neutral-100 dark:border-neutral-800">
+                                    <div className="overflow-y-auto px-5 py-4 space-y-5 border-r border-border">
                                         {/* Images Section */}
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <h3 className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                                                    <h3 className="text-xs font-semibold text-muted-foreground">
                                                         Images
                                                     </h3>
                                                     {images.length > 0 && (
@@ -742,7 +742,7 @@ export default function ProductFormModal({
                                                 </div>
                                                 {images.length > 0 && (
                                                     <div className="flex items-center gap-1.5">
-                                                        <span className="text-[10px] text-neutral-400">
+                                                        <span className="text-[10px] text-muted-foreground">
                                                             Drag to reorder
                                                         </span>
                                                         <Star size={12} className="text-amber-500" />
@@ -776,10 +776,10 @@ export default function ProductFormModal({
                                                                 />
                                                                 {/* Measurement fields below each card */}
                                                                 {measurements.length > 0 && (
-                                                                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-2 space-y-1.5 dark:border-neutral-700 dark:bg-neutral-800/50">
+                                                                    <div className="rounded-lg border border-border bg-subtle p-2 space-y-1.5 dark:border-border dark:bg-card/50">
                                                                         {measurements.map((m) => (
                                                                             <div key={m.key} className="flex items-center gap-1.5">
-                                                                                <label className="text-[10px] font-semibold text-neutral-500 w-12 shrink-0">
+                                                                                <label className="text-[10px] font-semibold text-muted-foreground w-12 shrink-0">
                                                                                     {m.label}
                                                                                 </label>
                                                                                 <input
@@ -787,7 +787,7 @@ export default function ProductFormModal({
                                                                                     value={form[m.key] ?? ""}
                                                                                     onChange={(e) => handleMeasurementFieldChange(m.key, e.target.value)}
                                                                                     placeholder={m.placeholder}
-                                                                                    className="h-7 w-full rounded-md border border-neutral-300 bg-white px-2 text-[10px] text-center outline-none transition focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900/10 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+                                                                                    className="h-7 w-full rounded-md border border-border bg-white px-2 text-[10px] text-center outline-none transition focus:border-foreground focus:ring-1 focus:ring-foreground/10 dark:border-border dark:bg-card dark:text-foreground"
                                                                                 />
                                                                             </div>
                                                                         ))}
@@ -800,10 +800,10 @@ export default function ProductFormModal({
                                                         <button
                                                             type="button"
                                                             onClick={() => fileRef.current?.click()}
-                                                            className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 transition hover:border-neutral-400 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800/50 dark:hover:border-neutral-500 dark:hover:bg-neutral-800"
+                                                            className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border bg-subtle transition hover:border-foreground hover:bg-muted dark:border-border dark:bg-card/50 dark:hover:border-border dark:hover:bg-card"
                                                         >
-                                                            <ImagePlus size={22} className="text-neutral-400" />
-                                                            <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400">
+                                                            <ImagePlus size={22} className="text-muted-foreground" />
+                                                            <span className="text-[10px] font-semibold text-muted-foreground">
                                                                 {images.length === 0 ? "Add Images" : "Add More"}
                                                             </span>
                                                         </button>
@@ -820,7 +820,7 @@ export default function ProductFormModal({
                                                 className="hidden"
                                             />
 
-                                            <p className="text-[10px] text-neutral-400 leading-relaxed">
+                                            <p className="text-[10px] text-muted-foreground leading-relaxed">
                                                 Supported formats: JPEG, PNG, WebP. First image is automatically set as the
                                                 product cover. Drag to reorder.
                                             </p>
@@ -830,7 +830,7 @@ export default function ProductFormModal({
                             </div>
 
                             {/* Footer */}
-                            <div className="flex items-center justify-end gap-3 border-t border-neutral-100 px-5 py-4 dark:border-neutral-800">
+                            <div className="flex items-center justify-end gap-3 border-t border-border px-5 py-4 dark:border-border">
                                 <Button variant="outline" onClick={onClose}>
                                     Cancel
                                 </Button>

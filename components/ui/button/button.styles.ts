@@ -52,44 +52,44 @@ export const buttonVariants = cva(
       variant: {
         // ── Solid Primary ───────────────────────────
         primary: [
-          "bg-black text-white",
-          "hover:bg-neutral-800",
+          "bg-foreground text-background",
+          "hover:bg-foreground/90",
           "shadow-sm hover:shadow-md",
-          "dark:bg-white dark:text-black",
-          "dark:hover:bg-neutral-200",
+          "dark:bg-foreground dark:text-background",
+          "dark:hover:bg-foreground/90",
         ],
 
         // ── Subtle Secondary ────────────────────────
         secondary: [
-          "bg-neutral-100 text-neutral-900",
-          "hover:bg-neutral-200",
-          "dark:bg-neutral-800 dark:text-neutral-100",
-          "dark:hover:bg-neutral-700",
+          "bg-muted text-foreground",
+          "hover:bg-muted-foreground/20",
+          "dark:bg-card dark:text-foreground",
+          "dark:hover:bg-muted",
         ],
 
         // ── Bordered Outline ────────────────────────
         outline: [
-          "border border-neutral-300 bg-transparent text-neutral-900",
-          "hover:bg-neutral-100",
-          "dark:border-neutral-600 dark:text-neutral-100",
-          "dark:hover:bg-neutral-800",
+          "border border-border bg-transparent text-foreground",
+          "hover:bg-muted",
+          "dark:border-border dark:text-foreground",
+          "dark:hover:bg-card",
         ],
 
         // ── Ghost (no background) ───────────────────
         ghost: [
-          "bg-transparent text-neutral-900",
-          "hover:bg-neutral-100",
-          "dark:text-neutral-100",
-          "dark:hover:bg-neutral-800",
+          "bg-transparent text-foreground",
+          "hover:bg-muted",
+          "dark:text-foreground",
+          "dark:hover:bg-card",
         ],
 
         // ── Glass morphism ──────────────────────────
         glass: [
-          "border border-white/30 bg-white/70 text-neutral-900",
+          "border border-white/30 bg-white/70 text-foreground",
           "backdrop-blur-xl shadow-lg",
           "hover:bg-white/80 hover:shadow-xl",
-          "dark:border-neutral-700/50 dark:bg-neutral-900/70 dark:text-neutral-100",
-          "dark:hover:bg-neutral-800/80",
+          "dark:border-border dark:bg-card/70 dark:text-foreground",
+          "dark:hover:bg-card",
         ],
 
         // ── Danger / Destructive ────────────────────
@@ -110,9 +110,9 @@ export const buttonVariants = cva(
 
         // ── Link (looks like an anchor) ─────────────
         link: [
-          "bg-transparent text-neutral-900 underline-offset-4",
+          "bg-transparent text-foreground underline-offset-4",
           "hover:underline",
-          "dark:text-neutral-100",
+          "dark:text-foreground",
         ],
       },
 

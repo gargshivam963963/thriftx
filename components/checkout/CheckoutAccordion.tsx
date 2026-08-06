@@ -7,7 +7,7 @@ import { MapPin, Truck, CreditCard, Check } from "lucide-react";
 import type { Address, CreateAddressPayload } from "@/lib/types/address";
 import type { PaymentMethod } from "@/lib/types/order";
 import { detectDeliveryZone } from "@/lib/delivery";
-import { SHIPPING_DEFAULTS } from "@/lib/shipping/constants";
+import { SHIPPING_DEFAULTS, PANIPAT_LOCAL_DELIVERY } from "@/lib/shipping/constants";
 import { getShippingRates } from "@/lib/shipping/api";
 
 import AddressSection from "./address/AddressSection";
@@ -34,15 +34,15 @@ export async function getShippingOptionsForCity(
     pincode?: string,
     orderSubtotal?: number,
 ): Promise<ShippingMethod[]> {
-    // Local delivery (Panipat) — always free same-day, no courier needed
+    // Local delivery (Panipat) — always free, 2–3 hour delivery, no courier needed
     if (city && pincode && detectDeliveryZone(city, pincode) === "local") {
         return [
             {
                 id: "standard",
                 name: "Panipat Same-Day Delivery",
-                subtitle: "FREE delivery in 30–60 mins",
-                price: 0,
-                eta: "30–60 min",
+                subtitle: PANIPAT_LOCAL_DELIVERY.subtitle,
+                price: PANIPAT_LOCAL_DELIVERY.price,
+                eta: PANIPAT_LOCAL_DELIVERY.etaLabel,
             },
         ];
     }
@@ -184,8 +184,8 @@ function StepIndicator({
                                     className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${status === "complete"
                                         ? "bg-emerald-500 text-white"
                                         : isActive
-                                            ? "bg-neutral-900 text-white ring-4 ring-neutral-900/10"
-                                            : "bg-neutral-200 text-neutral-500"
+                                            ? "bg-foreground text-white ring-4 ring-foreground/10"
+                                            : "bg-muted text-muted-foreground"
                                         }`}
                                 >
                                     {status === "complete" ? (
@@ -205,7 +205,7 @@ function StepIndicator({
                                     )}
                                 </motion.div>
                                 <span
-                                    className={`text-sm font-medium ${isActive ? "text-neutral-900" : "text-neutral-500"
+                                    className={`text-sm font-medium ${isActive ? "text-foreground" : "text-muted-foreground"
                                         }`}
                                 >
                                     {step.label}
@@ -253,8 +253,8 @@ function StepIndicator({
                                 className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold transition-all ${status === "complete"
                                     ? "bg-emerald-500 text-white"
                                     : isActive
-                                        ? "bg-neutral-900 text-white ring-4 ring-neutral-900/10"
-                                        : "bg-neutral-200 text-neutral-400"
+                                        ? "bg-foreground text-white ring-4 ring-foreground/10"
+                                        : "bg-muted text-muted-foreground"
                                     }`}
                             >
                                 {status === "complete" ? (
@@ -264,7 +264,7 @@ function StepIndicator({
                                 )}
                             </motion.div>
                             <span
-                                className={`text-[10px] font-medium ${isActive ? "text-neutral-900" : "text-neutral-400"
+                                className={`text-[10px] font-medium ${isActive ? "text-foreground" : "text-muted-foreground"
                                     }`}
                             >
                                 {step.label}
@@ -296,7 +296,7 @@ function AccordionSkeleton() {
             {[1, 2, 3].map((i) => (
                 <div
                     key={i}
-                    className="h-24 animate-pulse rounded-2xl bg-neutral-100 sm:rounded-3xl"
+                    className="h-24 animate-pulse rounded-2xl bg-muted sm:rounded-3xl"
                 />
             ))}
         </div>

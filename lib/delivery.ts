@@ -1,8 +1,8 @@
 /**
  * THRIFTX Delivery Strategy
  *
- * Panipat          → Same-Day Local Delivery (local)
- * Outside Panipat  → 3-5 Business Days Courier (courier)
+ * Panipat          → Same-Day Local Delivery (2–3 hours, FREE)
+ * Outside Panipat  → 3-5 Business Days Courier (Shiprocket)
  */
 
 const LOCAL_CITIES = new Set([
@@ -10,6 +10,9 @@ const LOCAL_CITIES = new Set([
   "panipat city",
   "panipat urban",
   "panipat rural",
+  "panipat (haryana)",
+  "aggarsain colony",
+  "aggarsain colony panipat",
 ]);
 
 const LOCAL_PINCODE_PREFIXES = [
@@ -66,6 +69,8 @@ export interface DeliveryInfo {
   eta: string;
   icon: string;
   description: string;
+  price: number;
+  free: boolean;
 }
 
 export function detectDeliveryZone(
@@ -86,6 +91,10 @@ export function detectDeliveryZone(
   return "courier";
 }
 
+export function isLocalDelivery(city: string, pincode?: string): boolean {
+  return detectDeliveryZone(city, pincode) === "local";
+}
+
 export function getDeliveryInfo(city: string, pincode?: string): DeliveryInfo {
   const zone = detectDeliveryZone(city, pincode);
 
@@ -93,10 +102,12 @@ export function getDeliveryInfo(city: string, pincode?: string): DeliveryInfo {
     return {
       zone: "local",
       label: "Same-Day Delivery",
-      eta: "Today",
+      eta: "2–3 Hours",
       icon: "⚡",
       description:
-        "We deliver locally in Panipat on the same day. Order before 2 PM for same-day dispatch.",
+        "FREE same-day delivery in Panipat within 2–3 hours. Order before 2 PM for same-day dispatch.",
+      price: 0,
+      free: true,
     };
   }
 
@@ -107,6 +118,8 @@ export function getDeliveryInfo(city: string, pincode?: string): DeliveryInfo {
     icon: "📦",
     description:
       "Shipped via trusted courier partner. Tracking ID will be shared once dispatched.",
+    price: 0,
+    free: false,
   };
 }
 
@@ -116,7 +129,7 @@ export function formatDeliveryTimeline(zone: DeliveryZone): {
 } {
   if (zone === "local") {
     return {
-      label: "Same-Day Delivery",
+      label: "Same-Day Delivery (2–3 Hours)",
       steps: [
         {
           title: "Order Confirmed",

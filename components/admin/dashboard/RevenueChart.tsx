@@ -62,8 +62,8 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
         return (
             <div className="admin-card p-6">
                 <div className="space-y-4">
-                    <div className="h-5 w-36 animate-pulse rounded bg-[var(--color-bg-muted)]" />
-                    <div className="h-[220px] animate-pulse rounded-xl bg-[var(--color-bg-muted)]" />
+                    <div className="h-5 w-36 animate-pulse rounded bg-muted" />
+                    <div className="h-[220px] animate-pulse rounded-xl bg-muted" />
                 </div>
             </div>
         );
@@ -72,7 +72,7 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
     if (!data.length) {
         return (
             <div className="admin-card p-6">
-                <p className="text-center text-sm text-[var(--color-text-muted)]">
+                <p className="text-center text-sm text-muted-foreground">
                     No revenue data available yet
                 </p>
             </div>
@@ -88,24 +88,24 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
             {/* Header */}
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                    <p className="text-caption font-semibold text-muted-foreground">
                         Revenue Overview
                     </p>
-                    <p className="mt-1 font-serif text-2xl font-bold text-[var(--color-text)]">
+                    <p className="mt-1 font-display text-2xl font-bold text-foreground">
                         ₹{totalRevenue.toLocaleString("en-IN")}
                     </p>
-                    <p className="text-xs text-[var(--color-text-secondary)]">
+                    <p className="text-xs text-muted-foreground">
                         Avg. ₹{avgRevenue.toLocaleString("en-IN")}/day • {filteredData.length} days
                     </p>
                 </div>
-                <div className="flex gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-1">
+                <div className="flex gap-1 rounded-xl border border-border bg-muted p-1">
                     {(["7d", "30d"] as Period[]).map((p) => (
                         <button
                             key={p}
                             onClick={() => setPeriod(p)}
                             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${period === p
-                                ? "bg-[var(--color-accent)] text-white dark:bg-white dark:text-black"
-                                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
+                                ? "bg-accent text-white dark:bg-white dark:text-black"
+                                : "text-muted-foreground hover:text-foreground"
                                 }`}
                         >
                             {p}
@@ -183,12 +183,12 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
                                 key={i}
                                 className="group relative cursor-pointer pt-1"
                             >
-                                <div className="mx-auto h-1 w-1 rounded-full bg-[var(--color-accent)] opacity-30" />
-                                <div className="absolute -top-28 left-1/2 hidden -translate-x-1/2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] px-2 py-1.5 shadow-lg group-hover:block">
-                                    <p className="whitespace-nowrap text-[10px] font-semibold text-[var(--color-text)]">
+                                <div className="mx-auto h-1 w-1 rounded-full bg-accent opacity-30" />
+                                <div className="absolute -top-28 left-1/2 hidden -translate-x-1/2 rounded-lg border border-border bg-card px-2 py-1.5 shadow-lg group-hover:block">
+                                    <p className="whitespace-nowrap text-[10px] font-semibold text-foreground">
                                         ₹{dp.revenue.toLocaleString("en-IN")}
                                     </p>
-                                    <p className="text-[9px] text-[var(--color-text-muted)]">
+                                    <p className="text-badge text-muted-foreground">
                                         {dp.label} • {dp.orders} orders
                                     </p>
                                 </div>

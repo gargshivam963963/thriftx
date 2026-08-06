@@ -21,9 +21,9 @@ export default function OrderStatusChart({ data, loading = false }: OrderStatusC
         return (
             <div className="admin-card p-6">
                 <div className="space-y-4">
-                    <div className="h-5 w-32 animate-pulse rounded bg-[var(--color-bg-muted)]" />
+                    <div className="h-5 w-32 animate-pulse rounded bg-muted" />
                     <div className="flex justify-center">
-                        <div className="h-36 w-36 animate-pulse rounded-full bg-[var(--color-bg-muted)]" />
+                        <div className="h-36 w-36 animate-pulse rounded-full bg-muted" />
                     </div>
                 </div>
             </div>
@@ -33,7 +33,7 @@ export default function OrderStatusChart({ data, loading = false }: OrderStatusC
     if (!data.length) {
         return (
             <div className="admin-card p-6">
-                <p className="text-center text-sm text-[var(--color-text-muted)]">
+                <p className="text-center text-sm text-muted-foreground">
                     No order status data
                 </p>
             </div>
@@ -61,10 +61,10 @@ export default function OrderStatusChart({ data, loading = false }: OrderStatusC
             className="admin-card p-6"
         >
             <div className="mb-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                <p className="text-caption font-semibold text-muted-foreground">
                     Order Status
                 </p>
-                <p className="text-xs text-[var(--color-text-secondary)]">
+                <p className="text-xs text-muted-foreground">
                     {total} total orders
                 </p>
             </div>
@@ -80,15 +80,15 @@ export default function OrderStatusChart({ data, loading = false }: OrderStatusC
                                 <div className="mb-0.5 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <span className={`h-2 w-2 rounded-full ${colors.bar}`} />
-                                        <span className="text-xs font-medium text-[var(--color-text)]">
+                                        <span className="text-xs font-medium text-foreground">
                                             {item.status}
                                         </span>
                                     </div>
-                                    <span className="text-xs font-semibold text-[var(--color-text-secondary)]">
+                                    <span className="text-xs font-semibold text-muted-foreground">
                                         {item.count} ({item.percentage.toFixed(1)}%)
                                     </span>
                                 </div>
-                                <div className="flex h-2 overflow-hidden rounded-full bg-[var(--color-bg-muted)]">
+                                <div className="flex h-2 overflow-hidden rounded-full bg-muted">
                                     <motion.div
                                         initial={{ width: 0 }}
                                         animate={{ width: `${item.percentage}%` }}

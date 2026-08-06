@@ -41,14 +41,14 @@ function AccordionSection({
     const [open, setOpen] = useState(defaultOpen);
 
     return (
-        <div className="overflow-hidden rounded-xl border border-neutral-200/80 bg-white dark:border-neutral-700/60 dark:bg-neutral-900/50">
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
             <button
                 type="button"
                 onClick={() => setOpen(!open)}
-                className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
+                className="flex w-full items-center justify-between px-4 py-3 text-body-sm font-semibold text-foreground transition hover:bg-muted"
             >
                 <span className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-muted">
                         {icon}
                     </span>
                     {title}
@@ -57,7 +57,7 @@ function AccordionSection({
                     animate={{ rotate: open ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                 >
-                    <ChevronDown size={14} className="text-neutral-400" />
+                    <ChevronDown size={14} className="text-muted-foreground" />
                 </motion.span>
             </button>
             <AnimatePresence initial={false}>
@@ -112,7 +112,7 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
                 <SlidersHorizontal size={15} />
                 <span>Filters</span>
                 {activeCount > 0 && (
-                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-neutral-900 px-1.5 text-[10px] font-bold text-white dark:bg-neutral-100 dark:text-neutral-900">
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-foreground px-1.5 text-badge font-bold text-background">
                         {activeCount}
                     </span>
                 )}
@@ -136,15 +136,15 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                            className="fixed inset-x-0 bottom-0 z-[90] max-h-[90vh] overflow-y-auto rounded-t-3xl border-t border-neutral-200 bg-neutral-50 pb-8 shadow-2xl dark:border-neutral-700 dark:bg-neutral-950"
+                            className="fixed inset-x-0 bottom-0 z-[90] max-h-[90vh] overflow-y-auto rounded-t-3xl border-t border-border bg-background pb-8 shadow-float"
                         >
                             {/* Sticky header */}
-                            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-5 py-4 backdrop-blur-xl dark:border-neutral-800 dark:bg-neutral-900/95">
+                            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 px-5 py-4 backdrop-blur-xl">
                                 <div className="flex items-center gap-3">
-                                    <div className="mx-auto h-1.5 w-12 rounded-full bg-neutral-300 dark:bg-neutral-600" />
-                                    <h2 className="font-bold text-neutral-900 dark:text-neutral-100">Filters</h2>
+                                    <div className="mx-auto h-1.5 w-12 rounded-full bg-muted-foreground/30" />
+                                    <h2 className="font-bold text-foreground">Filters</h2>
                                     {activeCount > 0 && (
-                                        <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-bold text-white dark:bg-neutral-100 dark:text-neutral-900">
+                                        <span className="rounded-full bg-foreground px-2 py-0.5 text-badge font-bold text-background">
                                             {activeCount}
                                         </span>
                                     )}
@@ -153,7 +153,7 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
                                     {activeCount > 0 && (
                                         <Link
                                             href={pathname}
-                                            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-neutral-500 transition hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+                                            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-small font-semibold text-muted-foreground transition hover:bg-muted"
                                         >
                                             <RotateCcw size={13} /> Reset
                                         </Link>
@@ -174,14 +174,14 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
                             <div className="space-y-3 p-5">
                                 {/* Category — default open */}
                                 <AccordionSection
-                                    icon={<Tags size={13} className="text-neutral-500" />}
+                                    icon={<Tags size={13} className="text-muted-foreground" />}
                                     title="Category"
                                     defaultOpen={true}
                                 >
                                     <div className="flex flex-col gap-1">
                                         <Link
                                             href="/shop"
-                                            className="rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-400 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:border-neutral-500"
+                                            className="rounded-xl border border-border bg-card px-3.5 py-2 text-body-sm font-medium text-muted-foreground transition hover:border-foreground hover:bg-muted"
                                         >
                                             All Items
                                         </Link>
@@ -197,22 +197,22 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
                                                         onClick={() =>
                                                             setExpandedGender(isExpanded ? null : g.slug)
                                                         }
-                                                        className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-400 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:border-neutral-500"
+                                                        className="flex items-center justify-between rounded-xl border border-border bg-card px-3.5 py-2 text-body-sm font-medium text-muted-foreground transition hover:border-foreground hover:bg-muted"
                                                     >
                                                         <span>{g.name}</span>
                                                         <ChevronDown
                                                             size={14}
-                                                            className={`text-neutral-400 transition-transform ${isExpanded ? "rotate-180" : ""
+                                                            className={`text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""
                                                                 }`}
                                                         />
                                                     </button>
                                                     {isExpanded && genderCategories.length > 0 && (
-                                                        <div className="ml-3 mt-1 flex flex-col gap-0.5 border-l border-neutral-200 pl-3 dark:border-neutral-700">
+                                                        <div className="ml-3 mt-1 flex flex-col gap-0.5 border-l border-border pl-3">
                                                             {genderCategories.map((c) => (
                                                                 <Link
                                                                     key={c.id}
                                                                     href={`/shop/${g.slug}/${c.slug}`}
-                                                                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-500 transition hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                                                                    className="rounded-lg px-3 py-1.5 text-body-sm font-medium text-muted-foreground transition hover:text-foreground"
                                                                 >
                                                                     {c.name}
                                                                 </Link>
@@ -227,7 +227,7 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
 
                                 {/* Brand */}
                                 <AccordionSection
-                                    icon={<Building2 size={13} className="text-neutral-500" />}
+                                    icon={<Building2 size={13} className="text-muted-foreground" />}
                                     title="Brand"
                                 >
                                     <BrandFilter brands={brands} />
@@ -235,7 +235,7 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
 
                                 {/* Size */}
                                 <AccordionSection
-                                    icon={<Ruler size={13} className="text-neutral-500" />}
+                                    icon={<Ruler size={13} className="text-muted-foreground" />}
                                     title="Size"
                                 >
                                     <SizeFilter />
@@ -243,7 +243,7 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
 
                                 {/* Price */}
                                 <AccordionSection
-                                    icon={<Banknote size={13} className="text-neutral-500" />}
+                                    icon={<Banknote size={13} className="text-muted-foreground" />}
                                     title="Price"
                                 >
                                     <PriceFilter />
@@ -251,7 +251,7 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
 
                                 {/* Measurements */}
                                 <AccordionSection
-                                    icon={<Ruler size={13} className="text-neutral-500" />}
+                                    icon={<Ruler size={13} className="text-muted-foreground" />}
                                     title="Measurements"
                                 >
                                     <MeasurementFilter />
@@ -269,7 +269,7 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
                                     >
                                         Apply Filters
                                         {activeCount > 0 && (
-                                            <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-xs dark:bg-black/10">
+                                            <span className="ml-2 rounded-full bg-background/20 px-2 py-0.5 text-small dark:bg-background/10">
                                                 {activeCount}
                                             </span>
                                         )}

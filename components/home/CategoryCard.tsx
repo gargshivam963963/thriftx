@@ -50,15 +50,15 @@ export default function CategoryCard({
           group
           block
           overflow-hidden
-          rounded-[28px]
+          rounded-2xl
           border
-          border-neutral-100
-          bg-white
-          shadow-[0_8px_30px_rgba(0,0,0,.05)]
+          border-border
+          bg-card
+          shadow-card
           transition-all
           duration-500
-          hover:border-neutral-300
-          hover:shadow-[0_35px_80px_rgba(0,0,0,.14)]
+          hover:border-foreground/30
+          hover:shadow-float
         "
             >
                 {/* IMAGE */}
@@ -105,10 +105,10 @@ export default function CategoryCard({
                   bg-white/90
                   px-3
                   py-1.5
-                  text-[10px]
+                  text-small
                   font-semibold
                   uppercase
-                  tracking-[0.25em]
+                  tracking-widest
                   backdrop-blur-xl
                 "
                             >
@@ -130,9 +130,9 @@ export default function CategoryCard({
                     >
                         <p
                             className="
-                text-[11px]
+                text-caption
                 uppercase
-                tracking-[0.28em]
+                tracking-widest
                 text-white/80
               "
                         >
@@ -142,9 +142,9 @@ export default function CategoryCard({
                         <h3
                             className="
                 mt-2
-                text-3xl
+                text-heading-3
                 font-semibold
-                tracking-[-0.03em]
+                tracking-tight
               "
                         >
                             {title}
@@ -160,7 +160,7 @@ export default function CategoryCard({
                         >
                             <span
                                 className="
-                  text-sm
+                  text-body
                   font-medium
                   text-white/90
                 "

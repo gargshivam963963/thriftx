@@ -12,16 +12,16 @@ const badgeVariants = cva(
         variants: {
             variant: {
                 default: [
-                    "bg-neutral-900 text-neutral-100",
-                    "dark:bg-neutral-100 dark:text-neutral-900",
+                    "bg-foreground text-muted-foreground",
+                    "dark:bg-muted dark:text-foreground",
                 ],
                 secondary: [
-                    "bg-neutral-100 text-neutral-700",
-                    "dark:bg-neutral-800 dark:text-neutral-300",
+                    "bg-muted text-muted-foreground",
+                    "dark:bg-card dark:text-muted-foreground",
                 ],
                 outline: [
-                    "border border-neutral-300 text-neutral-700 bg-transparent",
-                    "dark:border-neutral-600 dark:text-neutral-300",
+                    "border border-border text-muted-foreground bg-transparent",
+                    "dark:border-border dark:text-muted-foreground",
                 ],
                 success: [
                     "bg-emerald-100 text-emerald-700",

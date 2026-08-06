@@ -20,7 +20,7 @@ interface BestProductsProps {
 
 export default function BestProducts({ products }: BestProductsProps) {
     return (
-        <section className="bg-neutral-50 py-16 dark:bg-neutral-950 md:py-24">
+        <section className="bg-muted py-16 md:py-24">
             <Container>
                 <FadeUp>
                     <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
@@ -28,10 +28,10 @@ export default function BestProducts({ products }: BestProductsProps) {
                             <Badge variant="secondary" size="md" rounded="full" className="mb-4">
                                 Trending Now
                             </Badge>
-                            <h2 className="text-h2 font-bold text-neutral-900 dark:text-neutral-100">
+                            <h2 className="text-h2 font-bold text-foreground">
                                 Best Picks
                             </h2>
-                            <p className="mt-3 max-w-xl text-body text-neutral-600 dark:text-neutral-400">
+                            <p className="mt-3 max-w-xl text-body text-muted-foreground">
                                 Fresh arrivals handpicked by our team. Every item is unique and
                                 available in limited quantity.
                             </p>

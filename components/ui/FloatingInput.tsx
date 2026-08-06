@@ -30,7 +30,7 @@ const FloatingInput = forwardRef<HTMLInputElement, Props>(
 
                 <label
                     className={cn(
-                        "pointer-events-none absolute left-4 top-4 bg-white px-1 text-neutral-500 transition-all",
+                        "pointer-events-none absolute left-4 top-4 bg-white px-1 text-muted-foreground transition-all",
                         "peer-placeholder-shown:top-4 peer-placeholder-shown:text-base",
                         "peer-focus:-top-2 peer-focus:text-xs",
                         "peer-[:not(:placeholder-shown)]:-top-2 peer-[:not(:placeholder-shown)]:text-xs",

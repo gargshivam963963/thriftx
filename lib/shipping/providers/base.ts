@@ -35,6 +35,13 @@ export interface CreateShipmentPayload {
   amount: number;
 
   cod: boolean;
+
+  items?: {
+    id?: string;
+    title?: string;
+    price?: number | string;
+    quantity?: number;
+  }[];
 }
 
 export interface ShipmentResult {

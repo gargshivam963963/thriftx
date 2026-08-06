@@ -25,17 +25,17 @@ const brands = [
 
 export default function BrandSection() {
     return (
-        <section className="bg-white py-24 dark:bg-neutral-900">
+        <section className="bg-card py-24">
             <Container>
                 <FadeUp>
                     <div className="mb-14 text-center">
                         <Badge variant="secondary" size="md" rounded="full" className="mb-5">
                             Premium Labels
                         </Badge>
-                        <h2 className="text-h2 font-bold text-neutral-900 dark:text-neutral-100">
+                        <h2 className="text-h2 font-bold text-foreground">
                             Shop Your Favourite Brands
                         </h2>
-                        <p className="mx-auto mt-4 max-w-xl text-body text-neutral-600 dark:text-neutral-400">
+                        <p className="mx-auto mt-4 max-w-xl text-body text-muted-foreground">
                             Discover authentic branded fashion at a fraction of retail prices.
                         </p>
                     </div>
@@ -48,7 +48,7 @@ export default function BrandSection() {
                                 href={`/shop?brand=${encodeURIComponent(brand.name)}`}
                                 className="group block h-full"
                             >
-                                <Card className="flex h-full flex-col items-center justify-center border-neutral-200 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-neutral-300 hover:shadow-lg dark:border-neutral-700 dark:hover:border-neutral-600">
+                                <Card className="flex h-full flex-col items-center justify-center border-border p-6 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/30 hover:shadow-lg">
                                     <div className="relative mx-auto h-20 w-20 overflow-hidden rounded-xl">
                                         <PremiumImage
                                             src={brand.image}
@@ -60,7 +60,7 @@ export default function BrandSection() {
                                             className="object-contain p-1 transition-all duration-500 group-hover:scale-110"
                                         />
                                     </div>
-                                    <p className="mt-4 text-center text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                                    <p className="mt-4 text-center text-body font-semibold text-foreground">
                                         {brand.name}
                                     </p>
                                 </Card>

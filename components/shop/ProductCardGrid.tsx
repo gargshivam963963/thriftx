@@ -106,9 +106,9 @@ export default function ProductCardGrid({
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         >
             <Link href={`/product/${slug}`} className="group block">
-                <Card className="overflow-hidden border-neutral-200/80 bg-white shadow-sm transition-all hover:shadow-md dark:border-neutral-700/60 dark:bg-neutral-900">
+                <Card className="overflow-hidden border-border bg-card shadow-card transition-all hover:shadow-md">
                     {/* ── Image — Uniform Fixed Height ──────────────── */}
-                    <div className="relative h-[200px] xs:h-[220px] sm:h-[260px] md:h-[280px] xl:h-[320px] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                    <div className="relative h-[200px] xs:h-[220px] sm:h-[260px] md:h-[280px] xl:h-[320px] w-full overflow-hidden bg-muted">
                         <PremiumImage
                             src={image || "/images/placeholder.jpg"}
                             alt={title}
@@ -137,7 +137,7 @@ export default function ProductCardGrid({
                         >
                             <Heart
                                 size={13}
-                                className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-neutral-700"
+                                className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground"
                                     }`}
                             />
                         </button>
@@ -145,22 +145,22 @@ export default function ProductCardGrid({
 
                     {/* ── Info — using shadcn CardContent ──────────── */}
                     <CardContent className="p-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-400 dark:text-neutral-500 truncate">
+                        <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground truncate">
                             {brand}
                         </p>
 
-                        <h3 className="mt-1 text-sm font-semibold leading-tight text-neutral-900 dark:text-neutral-200 line-clamp-1">
+                        <h3 className="mt-1 text-body font-semibold leading-tight text-foreground line-clamp-1">
                             {title}
                         </h3>
 
                         {/* Measurements - chest/waist left, length right */}
                         {(measurement || lengthDisplay) && (
                             <div className="mt-2 flex items-center justify-between gap-2">
-                                <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+                                <span className="text-small font-medium text-muted-foreground">
                                     {measurement}
                                 </span>
                                 {lengthDisplay && (
-                                    <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+                                    <span className="text-small font-medium text-muted-foreground">
                                         {lengthDisplay}
                                     </span>
                                 )}
@@ -168,11 +168,11 @@ export default function ProductCardGrid({
                         )}
 
                         <div className="mt-2 flex items-baseline gap-1.5">
-                            <span className="text-sm font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                            <span className="text-body font-bold tracking-tight text-foreground">
                                 ₹{Number(price || 0).toLocaleString("en-IN")}
                             </span>
                             {retailPrice && retailPrice > price && (
-                                <span className="text-[11px] text-neutral-400 line-through">
+                                <span className="text-small text-muted-foreground line-through">
                                     ₹{retailPrice.toLocaleString("en-IN")}
                                 </span>
                             )}

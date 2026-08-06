@@ -11,7 +11,7 @@ const Breadcrumb = React.forwardRef<
     <nav
         ref={ref}
         aria-label="breadcrumb"
-        className={cn("flex items-center text-sm text-neutral-500", className)}
+        className={cn("flex items-center text-sm text-muted-foreground", className)}
         {...props}
     />
 ));
@@ -48,7 +48,7 @@ const BreadcrumbLink = React.forwardRef<
     <a
         ref={ref}
         className={cn(
-            "transition-colors hover:text-neutral-900 dark:hover:text-neutral-100",
+            "transition-colors hover:text-foreground dark:hover:text-muted-foreground",
             className,
         )}
         {...props}
@@ -81,7 +81,7 @@ const BreadcrumbPage = React.forwardRef<
         role="link"
         aria-disabled="true"
         aria-current="page"
-        className={cn("font-medium text-neutral-900 dark:text-neutral-100", className)}
+        className={cn("font-medium text-foreground", className)}
         {...props}
     />
 ));

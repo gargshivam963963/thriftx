@@ -39,10 +39,10 @@ export default function BrandFilter({ brands }: BrandFilterProps) {
                         variant={active ? "primary" : "ghost"}
                         size="sm"
                         rounded="lg"
-                        className="flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium w-full justify-start"
+                        className="flex items-center gap-2 px-3.5 py-2.5 text-body-sm font-medium w-full justify-start"
                     >
                         <span className="truncate">{brand}</span>
-                        {active && <span className="ml-auto text-[10px] font-bold text-white/70 dark:text-neutral-700">✓</span>}
+                        {active && <span className="ml-auto text-badge font-bold text-background/70">✓</span>}
                     </Button>
                 );
             })}
@@ -53,7 +53,7 @@ export default function BrandFilter({ brands }: BrandFilterProps) {
                     variant="ghost"
                     size="sm"
                     rounded="lg"
-                    className="mt-1 text-xs font-semibold text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 w-full justify-center"
+                    className="mt-1 text-small font-semibold text-muted-foreground hover:text-foreground w-full justify-center"
                 >
                     {showAll ? "− Show less" : `+ ${brands.length - 10} more`}
                 </Button>

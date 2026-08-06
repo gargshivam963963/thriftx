@@ -32,18 +32,18 @@ export default function TimelineChart({
 
     if (loading) {
         return (
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
-                <div className="h-5 w-28 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700" />
-                <div className="mt-4 h-48 animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-800" />
+            <div className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground">
+                <div className="h-5 w-28 animate-pulse rounded bg-muted" />
+                <div className="mt-4 h-48 animate-pulse rounded-lg bg-muted" />
             </div>
         );
     }
 
     if (!data || data.length === 0) {
         return (
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 text-center dark:border-neutral-700 dark:bg-neutral-900">
-                <TrendingUp size={24} className="mx-auto text-neutral-300 dark:text-neutral-600" />
-                <p className="mt-2 text-sm text-neutral-500">No timeline data yet</p>
+            <div className="rounded-xl border border-border bg-white p-5 text-center dark:border-border dark:bg-foreground">
+                <TrendingUp size={24} className="mx-auto text-muted-foreground dark:text-muted-foreground" />
+                <p className="mt-2 text-sm text-muted-foreground">No timeline data yet</p>
             </div>
         );
     }
@@ -64,22 +64,22 @@ export default function TimelineChart({
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground"
         >
             <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Events Timeline
                 </h3>
 
                 {/* Metric selector */}
-                <div className="flex gap-1 rounded-lg bg-neutral-100 p-0.5 dark:bg-neutral-800">
+                <div className="flex gap-1 rounded-lg bg-muted p-0.5 dark:bg-card">
                     {METRICS.map((m) => (
                         <button
                             key={m.key}
                             onClick={() => setSelectedMetric(m.key)}
                             className={`rounded-md px-2.5 py-1 text-[10px] font-semibold transition ${selectedMetric === m.key
-                                    ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-white"
-                                    : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300"
+                                    ? "bg-white text-foreground shadow-sm dark:bg-muted dark:text-white"
+                                    : "text-muted-foreground hover:text-muted-foreground dark:text-muted-foreground dark:hover:text-muted-foreground"
                                 }`}
                         >
                             {m.label === "Page Views" ? "Views" : m.label === "Product Views" ? "Products" : m.label === "Add to Cart" ? "Cart" : "Buy"}
@@ -116,7 +116,7 @@ export default function TimelineChart({
                 </div>
 
                 {/* X-axis labels */}
-                <div className="mt-2 flex justify-between text-[9px] text-neutral-400 dark:text-neutral-500">
+                <div className="mt-2 flex justify-between text-badge text-muted-foreground">
                     {data.length > 0 && (
                         <>
                             <span>{formatDate(data[0].date)}</span>
@@ -132,15 +132,15 @@ export default function TimelineChart({
             </div>
 
             {/* Summary stats */}
-            <div className="mt-3 grid grid-cols-4 gap-2 border-t border-neutral-100 pt-3 dark:border-neutral-800">
+            <div className="mt-3 grid grid-cols-4 gap-2 border-t border-border pt-3 dark:border-border">
                 {METRICS.map((m) => {
                     const total = data.reduce((sum, d) => sum + d[m.key], 0);
                     return (
                         <div key={m.key} className="text-center">
-                            <p className="text-xs font-semibold text-neutral-900 dark:text-white">
+                            <p className="text-xs font-semibold text-foreground dark:text-white">
                                 {total.toLocaleString()}
                             </p>
-                            <p className="text-[9px] text-neutral-400">{m.label}</p>
+                            <p className="text-badge text-muted-foreground">{m.label}</p>
                         </div>
                     );
                 })}

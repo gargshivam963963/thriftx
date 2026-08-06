@@ -39,10 +39,10 @@ export default function AdminLayout({
 
     if (!mounted || loading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)]">
+            <div className="flex min-h-screen items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-3">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--color-text-muted)] border-t-[var(--color-text)]" />
-                    <p className="text-sm text-[var(--color-text-secondary)]">Loading admin...</p>
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
+                    <p className="text-sm text-muted-foreground">Loading admin...</p>
                 </div>
             </div>
         );
@@ -51,7 +51,7 @@ export default function AdminLayout({
     if (!user) return null;
 
     return (
-        <div className="flex min-h-screen bg-[var(--color-bg)]">
+        <div className="flex min-h-screen bg-background">
             {/* Mobile sidebar backdrop */}
             <AnimatePresence>
                 {sidebarOpen && (
@@ -71,10 +71,10 @@ export default function AdminLayout({
             {/* Main content */}
             <div className="flex flex-1 flex-col lg:pl-[280px]">
                 {/* Mobile header */}
-                <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 lg:hidden">
+                <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card px-4 lg:hidden">
                     <button
                         onClick={() => setSidebarOpen(true)}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-bg-muted)]"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-border text-foreground hover:bg-muted"
                     >
                         {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
@@ -82,7 +82,7 @@ export default function AdminLayout({
                         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-black text-[10px] font-bold text-white dark:bg-white dark:text-black">
                             T
                         </div>
-                        <span className="text-sm font-bold tracking-tight text-[var(--color-text)]">
+                        <span className="text-sm font-bold tracking-tight text-foreground">
                             Admin Panel
                         </span>
                     </div>

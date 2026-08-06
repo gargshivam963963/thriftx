@@ -31,9 +31,9 @@ export default function StatsCard({
         return (
             <div className="admin-card p-5">
                 <div className="space-y-3">
-                    <div className="h-4 w-24 animate-pulse rounded bg-[var(--color-bg-muted)]" />
-                    <div className="h-8 w-32 animate-pulse rounded bg-[var(--color-bg-muted)]" />
-                    <div className="h-3 w-20 animate-pulse rounded bg-[var(--color-bg-muted)]" />
+                    <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                    <div className="h-8 w-32 animate-pulse rounded bg-muted" />
+                    <div className="h-3 w-20 animate-pulse rounded bg-muted" />
                 </div>
             </div>
         );
@@ -57,14 +57,14 @@ export default function StatsCard({
             <div className="relative">
                 <div className="flex items-start justify-between">
                     <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                        <p className="text-caption font-semibold text-muted-foreground">
                             {title}
                         </p>
-                        <p className="mt-1.5 font-serif text-2xl font-bold tracking-tight text-[var(--color-text)]">
+                        <p className="mt-1.5 font-display text-2xl font-bold tracking-tight text-foreground">
                             {value}
                         </p>
                         {subtitle && (
-                            <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
+                            <p className="mt-0.5 text-xs text-muted-foreground">
                                 {subtitle}
                             </p>
                         )}
@@ -96,7 +96,7 @@ export default function StatsCard({
                             {trend}%
                         </span>
                         {trendLabel && (
-                            <span className="text-xs text-[var(--color-text-muted)]">
+                            <span className="text-xs text-muted-foreground">
                                 {trendLabel}
                             </span>
                         )}

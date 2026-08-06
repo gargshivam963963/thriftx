@@ -15,9 +15,13 @@ import {
     Truck,
     Package,
     Clock,
+    Rocket,
+    ExternalLink,
+    Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAllOrders, updateOrderStatus, deleteOrder } from "@/lib/services/adminService";
+import { shipOrder } from "@/lib/shipping/admin";
 import type { Order } from "@/lib/types/order";
 import { toast } from "sonner";
 
@@ -55,6 +59,7 @@ export default function AdminOrdersPage() {
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
+    const [shippingId, setShippingId] = useState<string | null>(null);
 
     const loadOrders = useCallback(async () => {
         setLoading(true);
@@ -130,6 +135,30 @@ export default function AdminOrdersPage() {
         }
     };
 
+    const handleShipOrder = async (order: Order) => {
+        if (order.awbNumber) {
+            toast.info("Shipment already created for this order.");
+            return;
+        }
+        setShippingId(order.$id);
+        try {
+            const result = await shipOrder(order.$id);
+            if (result.success) {
+                toast.success("Shipment created successfully!");
+                // Refresh order list to show new shipping fields
+                const data = await getAllOrders();
+                setOrders(data);
+            } else {
+                toast.error(result.message || "Failed to create shipment");
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to create shipment");
+        } finally {
+            setShippingId(null);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -139,10 +168,10 @@ export default function AdminOrdersPage() {
                 className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             >
                 <div>
-                    <h1 className="font-serif text-2xl font-bold text-[var(--color-text)]">
+                    <h1 className="font-display text-2xl font-bold text-foreground">
                         Orders
                     </h1>
-                    <p className="text-sm text-[var(--color-text-secondary)]">
+                    <p className="text-sm text-muted-foreground">
                         {orders.length} total orders •{" "}
                         {orders.filter((o) => o.status === "Delivered").length} delivered
                     </p>
@@ -159,7 +188,7 @@ export default function AdminOrdersPage() {
                             setLoading(false);
                         }
                     }}
-                    className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-all hover:bg-[var(--color-bg-muted)]"
+                    className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-all hover:bg-muted"
                 >
                     <RefreshCw size={16} />
                     Refresh
@@ -171,14 +200,14 @@ export default function AdminOrdersPage() {
                 <div className="relative flex-1 max-w-md">
                     <Search
                         size={18}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]"
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                     />
                     <input
                         type="text"
                         placeholder="Search by name, phone, order ID..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="h-11 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] pl-10 pr-4 text-sm text-[var(--color-text)] outline-none transition-all focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]"
+                        className="h-11 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm text-foreground outline-none transition-all focus:border-accent focus:ring-1 focus:ring-accent"
                     />
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -189,8 +218,8 @@ export default function AdminOrdersPage() {
                             className={cn(
                                 "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
                                 statusFilter === status
-                                    ? "bg-[var(--color-accent)] text-white dark:bg-white dark:text-black"
-                                    : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)]",
+                                    ? "bg-accent text-white dark:bg-white dark:text-black"
+                                    : "border border-border text-muted-foreground hover:bg-muted",
                             )}
                         >
                             {status === "all" ? "All" : status}
@@ -208,26 +237,26 @@ export default function AdminOrdersPage() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead>
-                            <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-muted)]">
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                            <tr className="border-b border-border bg-muted">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Order ID
                                 </th>
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Customer
                                 </th>
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Contact
                                 </th>
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Total
                                 </th>
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Status
                                 </th>
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Date
                                 </th>
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Actions
                                 </th>
                             </tr>
@@ -235,10 +264,10 @@ export default function AdminOrdersPage() {
                         <tbody>
                             {loading ? (
                                 Array.from({ length: 8 }).map((_, i) => (
-                                    <tr key={i} className="border-b border-[var(--color-border)]">
+                                    <tr key={i} className="border-b border-border">
                                         {Array.from({ length: 7 }).map((_, j) => (
                                             <td key={j} className="px-4 py-3">
-                                                <div className="h-4 w-full animate-pulse rounded bg-[var(--color-bg-muted)]" />
+                                                <div className="h-4 w-full animate-pulse rounded bg-muted" />
                                             </td>
                                         ))}
                                     </tr>
@@ -246,8 +275,8 @@ export default function AdminOrdersPage() {
                             ) : filteredOrders.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="px-4 py-12 text-center">
-                                        <ShoppingCart size={32} className="mx-auto mb-2 text-[var(--color-text-muted)]" />
-                                        <p className="text-sm text-[var(--color-text-muted)]">
+                                        <ShoppingCart size={32} className="mx-auto mb-2 text-muted-foreground" />
+                                        <p className="text-sm text-muted-foreground">
                                             {search || statusFilter !== "all"
                                                 ? "No orders match your filters"
                                                 : "No orders found"}
@@ -258,24 +287,24 @@ export default function AdminOrdersPage() {
                                 filteredOrders.map((order) => (
                                     <tr
                                         key={order.$id}
-                                        className="border-b border-[var(--color-border)] transition-all hover:bg-[var(--color-bg-muted)] cursor-pointer"
+                                        className="border-b border-border transition-all hover:bg-muted cursor-pointer"
                                         onClick={() => setSelectedOrder(order)}
                                     >
                                         <td className="px-4 py-3">
-                                            <span className="font-mono text-xs font-semibold text-[var(--color-text)]">
+                                            <span className="font-mono text-xs font-semibold text-foreground">
                                                 #{order.orderId?.slice(0, 8).toUpperCase() || order.$id.slice(0, 8).toUpperCase()}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className="font-semibold text-[var(--color-text)]">
+                                            <span className="font-semibold text-foreground">
                                                 {order.firstName} {order.lastName}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)]">
+                                        <td className="px-4 py-3 text-xs text-muted-foreground">
                                             {order.phone}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className="font-bold text-[var(--color-text)]">
+                                            <span className="font-bold text-foreground">
                                                 ₹{order.total.toLocaleString("en-IN")}
                                             </span>
                                         </td>
@@ -290,7 +319,7 @@ export default function AdminOrdersPage() {
                                                 {order.status}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-xs text-[var(--color-text-muted)]">
+                                        <td className="px-4 py-3 text-xs text-muted-foreground">
                                             {new Date(order.$createdAt).toLocaleDateString("en-IN", {
                                                 day: "numeric",
                                                 month: "short",
@@ -304,7 +333,7 @@ export default function AdminOrdersPage() {
                                                     onClick={(e) => e.stopPropagation()}
                                                     onChange={(e) => handleStatusUpdate(order.$id, e.target.value)}
                                                     disabled={updatingId === order.$id}
-                                                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] px-2 py-1.5 text-[10px] font-medium text-[var(--color-text)] outline-none"
+                                                    className="rounded-lg border border-border bg-card px-2 py-1.5 text-[10px] font-medium text-foreground outline-none"
                                                 >
                                                     {ORDER_STATUSES.map((s) => (
                                                         <option key={s} value={s}>
@@ -312,6 +341,38 @@ export default function AdminOrdersPage() {
                                                         </option>
                                                     ))}
                                                 </select>
+
+                                                {!order.awbNumber ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleShipOrder(order);
+                                                        }}
+                                                        disabled={shippingId === order.$id}
+                                                        title="Create Shiprocket shipment"
+                                                        className="flex items-center gap-1 rounded-lg bg-foreground px-2 py-1.5 text-[10px] font-semibold text-white transition-all hover:bg-muted disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-muted"
+                                                    >
+                                                        {shippingId === order.$id ? (
+                                                            <Loader2 size={12} className="animate-spin" />
+                                                        ) : (
+                                                            <Rocket size={12} />
+                                                        )}
+                                                        Ship
+                                                    </button>
+                                                ) : (
+                                                    <a
+                                                        href={order.trackingUrl || "#"}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        title="AWB: {order.awbNumber}"
+                                                        className="flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1.5 text-[10px] font-semibold text-emerald-700 transition-all hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                                    >
+                                                        <ExternalLink size={12} />
+                                                        AWB
+                                                    </a>
+                                                )}
+
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -341,15 +402,15 @@ export default function AdminOrdersPage() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="relative w-full max-w-lg rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-2xl"
+                        className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="mb-4 flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-bold text-[var(--color-text)]">
+                                <h3 className="text-lg font-bold text-foreground">
                                     Order #{selectedOrder.orderId?.slice(0, 8).toUpperCase() || selectedOrder.$id.slice(0, 8).toUpperCase()}
                                 </h3>
-                                <p className="text-xs text-[var(--color-text-muted)]">
+                                <p className="text-xs text-muted-foreground">
                                     {new Date(selectedOrder.$createdAt).toLocaleDateString("en-IN", {
                                         day: "numeric",
                                         month: "long",
@@ -370,38 +431,79 @@ export default function AdminOrdersPage() {
                         </div>
 
                         <div className="space-y-3">
-                            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-3">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                            <div className="rounded-xl border border-border bg-muted p-3">
+                                <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Customer Details
                                 </p>
-                                <p className="mt-1 font-semibold text-[var(--color-text)]">
+                                <p className="mt-1 font-semibold text-foreground">
                                     {selectedOrder.firstName} {selectedOrder.lastName}
                                 </p>
-                                <p className="text-xs text-[var(--color-text-secondary)]">
+                                <p className="text-xs text-muted-foreground">
                                     {selectedOrder.phone}
                                 </p>
                             </div>
 
-                            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-3">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                            <div className="rounded-xl border border-border bg-muted p-3">
+                                <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Shipping Address
                                 </p>
-                                <p className="mt-1 text-sm text-[var(--color-text)]">
+                                <p className="mt-1 text-sm text-foreground">
                                     {selectedOrder.address}, {selectedOrder.city}, {selectedOrder.postalCode}
                                 </p>
                             </div>
 
-                            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-3">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                            {selectedOrder.awbNumber && (
+                                <div className="rounded-xl border border-border bg-muted p-3">
+                                    <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Shipment (Shiprocket)
+                                    </p>
+                                    <div className="mt-1 space-y-1 text-xs text-muted-foreground">
+                                        <p>
+                                            Courier:{" "}
+                                            <span className="font-semibold text-foreground">
+                                                {selectedOrder.courier || "—"}
+                                            </span>
+                                        </p>
+                                        <p>
+                                            AWB:{" "}
+                                            <span className="font-mono font-semibold text-foreground">
+                                                {selectedOrder.awbNumber}
+                                            </span>
+                                        </p>
+                                        {selectedOrder.estimatedDelivery && (
+                                            <p>
+                                                ETA:{" "}
+                                                <span className="font-semibold text-foreground">
+                                                    {selectedOrder.estimatedDelivery}
+                                                </span>
+                                            </p>
+                                        )}
+                                        {selectedOrder.trackingUrl && (
+                                            <a
+                                                href={selectedOrder.trackingUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="mt-1 inline-flex items-center gap-1 font-semibold text-emerald-600 hover:underline"
+                                            >
+                                                <ExternalLink size={12} />
+                                                Track shipment
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="rounded-xl border border-border bg-muted p-3">
+                                <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Payment
                                 </p>
-                                <p className="mt-1 font-semibold text-[var(--color-text)]">
+                                <p className="mt-1 font-semibold text-foreground">
                                     {selectedOrder.paymentMethod === "razorpay" ? "Online (Razorpay)" : "Cash on Delivery"}
                                 </p>
-                                <div className="mt-1 space-y-0.5 text-xs text-[var(--color-text-secondary)]">
+                                <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
                                     <p>Subtotal: ₹{selectedOrder.subtotal.toLocaleString("en-IN")}</p>
                                     <p>Shipping: ₹{selectedOrder.shipping.toLocaleString("en-IN")}</p>
-                                    <p className="font-bold text-[var(--color-text)]">
+                                    <p className="font-bold text-foreground">
                                         Total: ₹{selectedOrder.total.toLocaleString("en-IN")}
                                     </p>
                                 </div>
@@ -411,7 +513,7 @@ export default function AdminOrdersPage() {
                         <div className="mt-4 flex justify-end">
                             <button
                                 onClick={() => setSelectedOrder(null)}
-                                className="rounded-xl bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-black"
+                                className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-black"
                             >
                                 Close
                             </button>

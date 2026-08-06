@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import CartItems from "@/components/cart/CartItems";
 import OrderSummary from "@/components/cart/OrderSummary";
+import CartOffers from "@/components/marketing/CartOffers";
 
 import { updateCartQuantity, removeCartItem } from "@/lib/services/cart";
 import { getCartProducts, type CartProduct } from "@/lib/services/cartProducts";
@@ -97,21 +98,34 @@ export default function CartPage() {
     }
   };
 
-  const applyCoupon = (code: string) => {
+  const applyCoupon = async (code: string) => {
     const coupon = code.trim().toUpperCase();
     if (!coupon) {
       toast.error("Please enter a coupon code");
       return;
     }
-    if (coupon === "WELCOME10") {
-      setCouponCode(coupon);
-      setDiscount(100);
-      toast.success("Coupon applied — ₹100 off!");
-      return;
+    try {
+      const res = await fetch("/api/marketing/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: coupon, subtotal }),
+      });
+      const data = await res.json();
+      if (data.success && data.valid) {
+        setCouponCode(data.code);
+        setDiscount(data.discount);
+        toast.success(`Coupon applied — ₹${data.discount.toLocaleString("en-IN")} off!`);
+      } else {
+        setCouponCode("");
+        setDiscount(0);
+        toast.error(data.message || "Invalid coupon code");
+      }
+    } catch (error) {
+      console.error(error);
+      setCouponCode("");
+      setDiscount(0);
+      toast.error("Failed to validate coupon");
     }
-    setCouponCode("");
-    setDiscount(0);
-    toast.error("Invalid coupon code");
   };
 
   const handleCheckout = () => {
@@ -132,26 +146,26 @@ export default function CartPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white dark:bg-neutral-950">
+    <main className="min-h-screen bg-background">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-400 dark:text-neutral-500">
+            <p className="text-caption font-bold uppercase tracking-[0.25em] text-muted-foreground">
               ThriftX
             </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 sm:text-3xl">
+            <h1 className="mt-1 text-heading-2 font-bold tracking-tight text-foreground">
               Shopping Cart
             </h1>
             {cartItems.length > 0 && (
-              <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="mt-0.5 text-body-sm text-muted-foreground">
                 {cartItems.length} {cartItems.length === 1 ? "item" : "items"} in your cart
               </p>
             )}
           </div>
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-xs font-semibold text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-neutral-500"
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-small font-semibold text-foreground transition hover:border-muted-foreground hover:bg-muted"
           >
             <ArrowLeft size={14} />
             Continue Shopping
@@ -160,17 +174,17 @@ export default function CartPage() {
 
         {/* Cart items or empty state */}
         {cartItems.length === 0 && !loading ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-white py-24 dark:border-neutral-700 dark:bg-neutral-900">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-100 dark:bg-neutral-800">
-              <ShoppingBag size={28} className="text-neutral-400" />
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-24">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+              <ShoppingBag size={28} className="text-muted-foreground" />
             </div>
-            <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Your cart is empty</h2>
-            <p className="mt-1.5 max-w-sm text-center text-sm text-neutral-500 dark:text-neutral-400">
+            <h2 className="text-heading-4 font-bold text-foreground">Your cart is empty</h2>
+            <p className="mt-1.5 max-w-sm text-center text-body-sm text-muted-foreground">
               Your collection is waiting. Start with one exceptional piece.
             </p>
             <Link
               href="/shop"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-foreground px-6 py-3 text-body-sm font-semibold text-background transition hover:bg-muted-foreground"
             >
               Browse Collection
             </Link>
@@ -178,7 +192,7 @@ export default function CartPage() {
         ) : (
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px] xl:gap-8">
             {/* Items list */}
-            <section className="min-w-0">
+            <section className="min-w-0 space-y-4">
               <CartItems
                 items={cartItems}
                 loading={loading}
@@ -186,6 +200,17 @@ export default function CartPage() {
                 onDecrease={decreaseQuantity}
                 onRemove={removeItem}
               />
+              {cartItems.length > 0 && (
+                <CartOffers
+                  items={cartItems.map((item) => ({
+                    id: item.cartId,
+                    title: item.title,
+                    price: item.price,
+                    quantity: item.quantity,
+                    category: item.category,
+                  }))}
+                />
+              )}
             </section>
 
             {/* Order Summary */}

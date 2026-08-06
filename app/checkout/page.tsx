@@ -88,15 +88,15 @@ function formatDeliveryAddress(address: Address) {
 
 function CheckoutSkeleton() {
     return (
-        <main className="min-h-screen bg-neutral-50">
+        <main className="min-h-screen bg-subtle">
             <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-8">
                 <div className="space-y-4 sm:space-y-6">
-                    <div className="h-36 animate-pulse rounded-2xl bg-neutral-200 sm:h-44 sm:rounded-[32px]" />
+                    <div className="h-36 animate-pulse rounded-2xl bg-muted sm:h-44 sm:rounded-[32px]" />
                     <div className="hidden sm:flex gap-3">
                         {[1, 2, 3].map((i) => (
                             <div
                                 key={i}
-                                className="h-8 w-24 animate-pulse rounded-full bg-neutral-200"
+                                className="h-8 w-24 animate-pulse rounded-full bg-muted"
                             />
                         ))}
                     </div>
@@ -105,11 +105,11 @@ function CheckoutSkeleton() {
                             {[1, 2, 3].map((i) => (
                                 <div
                                     key={i}
-                                    className="h-28 animate-pulse rounded-2xl bg-neutral-200 sm:h-36 sm:rounded-3xl"
+                                    className="h-28 animate-pulse rounded-2xl bg-muted sm:h-36 sm:rounded-3xl"
                                 />
                             ))}
                         </div>
-                        <div className="hidden h-[500px] animate-pulse rounded-[28px] bg-neutral-200 xl:block" />
+                        <div className="hidden h-[500px] animate-pulse rounded-[28px] bg-muted xl:block" />
                     </div>
                 </div>
             </div>
@@ -121,7 +121,7 @@ function CheckoutSkeleton() {
 
 function EmptyCheckout() {
     return (
-        <main className="min-h-screen bg-neutral-50">
+        <main className="min-h-screen bg-subtle">
             <div className="mx-auto flex min-h-[70vh] max-w-7xl flex-col items-center justify-center px-4 py-16 text-center sm:px-6 lg:px-8">
                 <motion.div
                     initial={{ scale: 0 }}
@@ -131,16 +131,16 @@ function EmptyCheckout() {
                         stiffness: 260,
                         damping: 18,
                     }}
-                    className="rounded-full bg-neutral-100 p-5 sm:p-6"
+                    className="rounded-full bg-muted p-5 sm:p-6"
                 >
-                    <ShoppingBag className="h-8 w-8 text-neutral-400 sm:h-10 sm:w-10" />
+                    <ShoppingBag className="h-8 w-8 text-muted-foreground sm:h-10 sm:w-10" />
                 </motion.div>
 
                 <motion.h1
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="mt-5 text-2xl font-bold text-neutral-900 sm:mt-6 sm:text-3xl"
+                    className="mt-5 text-2xl font-bold text-foreground sm:mt-6 sm:text-3xl"
                 >
                     Nothing to checkout
                 </motion.h1>
@@ -149,7 +149,7 @@ function EmptyCheckout() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
-                    className="mt-3 max-w-md text-sm leading-6 text-neutral-500"
+                    className="mt-3 max-w-md text-sm leading-6 text-muted-foreground"
                 >
                     Your cart is empty. Add some curated thrift pieces before
                     completing your order.
@@ -162,7 +162,7 @@ function EmptyCheckout() {
                 >
                     <Link
                         href="/shop"
-                        className="mt-8 inline-flex h-12 items-center justify-center rounded-2xl bg-neutral-900 px-8 text-sm font-medium text-white shadow-lg shadow-neutral-900/20 transition hover:opacity-90"
+                        className="mt-8 inline-flex h-12 items-center justify-center rounded-2xl bg-foreground px-8 text-sm font-medium text-white shadow-lg shadow-foreground/20 transition hover:opacity-90"
                     >
                         Browse Shop
                         <ArrowRight className="ml-2 h-4 w-4" />
@@ -533,7 +533,7 @@ export default function CheckoutPage() {
     }
 
     return (
-        <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-neutral-50 pb-28 xl:pb-10">
+        <main className="min-h-screen bg-gradient-to-b from-subtle via-card to-subtle pb-28 xl:pb-10">
             <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-8">
                 <div className="grid gap-5 sm:gap-6 xl:grid-cols-[1fr_380px] xl:items-start">
                     {/* ── Left Column – Checkout Flow ──────────────────── */}
@@ -560,14 +560,14 @@ export default function CheckoutPage() {
                         {/* ── What to Expect ──────────────────────────── */}
                         <motion.section
                             layout
-                            className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm sm:rounded-[28px]"
+                            className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm sm:rounded-[28px]"
                         >
-                            <div className="flex items-center gap-2 border-b border-neutral-100 px-5 py-4 sm:px-6 sm:py-5">
+                            <div className="flex items-center gap-2 border-b border-border px-5 py-4 sm:px-6 sm:py-5">
                                 <Sparkles
                                     size={16}
-                                    className="text-neutral-400"
+                                    className="text-muted-foreground"
                                 />
-                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground sm:text-[11px]">
                                     Before You Place Order
                                 </p>
                             </div>
@@ -590,10 +590,10 @@ export default function CheckoutPage() {
                                                 <Icon className="h-3.5 w-3.5 text-emerald-600 sm:h-4 sm:w-4" />
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-bold text-neutral-900 sm:text-base">
+                                                <h4 className="text-sm font-bold text-foreground sm:text-base">
                                                     {note.title}
                                                 </h4>
-                                                <p className="mt-0.5 text-xs leading-6 text-neutral-500 sm:text-sm">
+                                                <p className="mt-0.5 text-xs leading-6 text-muted-foreground sm:text-sm">
                                                     {note.description}
                                                 </p>
                                             </div>
@@ -622,18 +622,18 @@ export default function CheckoutPage() {
                 <motion.div
                     initial={{ y: 100 }}
                     animate={{ y: 0 }}
-                    className="fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] xl:hidden sm:px-6 sm:py-4"
+                    className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-white/95 px-4 py-3 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] xl:hidden sm:px-6 sm:py-4"
                 >
                     <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
                                 Total
                             </p>
-                            <h3 className="text-xl font-bold text-neutral-900 sm:text-2xl">
+                            <h3 className="text-xl font-bold text-foreground sm:text-2xl">
                                 ₹{total.toLocaleString("en-IN")}
                             </h3>
                             {shippingCost > 0 && (
-                                <p className="text-[10px] text-neutral-400">
+                                <p className="text-[10px] text-muted-foreground">
                                     +₹{shippingCost.toLocaleString("en-IN")} shipping
                                 </p>
                             )}
@@ -665,7 +665,7 @@ export default function CheckoutPage() {
                                 disabled={!canPay}
                                 size="lg"
                                 leftIcon={<CreditCard className="h-5 w-5" />}
-                                className="rounded-xl px-5 shadow-lg shadow-neutral-900/20 sm:rounded-2xl sm:px-7"
+                                className="rounded-xl px-5 shadow-lg shadow-foreground/20 sm:rounded-2xl sm:px-7"
                             >
                                 {paymentLoading ? "Processing..." : "Pay"}
                             </Button>

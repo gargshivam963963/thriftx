@@ -88,13 +88,13 @@ export default function CheckoutHeader() {
             {/* Back Link */}
             <Link
                 href="/cart"
-                className="group mb-4 inline-flex items-center gap-2 text-xs font-medium text-neutral-400 transition-all hover:text-neutral-900 sm:text-sm"
+                className="group mb-4 inline-flex items-center gap-2 text-xs font-medium text-muted-foreground transition-all hover:text-foreground sm:text-sm"
             >
                 <motion.div
                     whileHover={{ x: -2 }}
                     className="flex items-center gap-2"
                 >
-                    <div className="rounded-full border border-neutral-200 bg-white p-1.5 shadow-sm transition group-hover:border-neutral-900 group-hover:bg-neutral-900 group-hover:text-white">
+                    <div className="rounded-full border border-border bg-white p-1.5 shadow-sm transition group-hover:border-foreground group-hover:bg-foreground group-hover:text-white">
                         <ArrowLeft size={14} />
                     </div>
                     Back to Cart
@@ -102,7 +102,7 @@ export default function CheckoutHeader() {
             </Link>
 
             {/* ─── Premium Header Card ───────────────────────────────────── */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 p-6 text-white shadow-2xl sm:rounded-[32px] sm:p-8 md:p-10">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-foreground via-muted-foreground to-foreground p-6 text-white shadow-2xl sm:rounded-[32px] sm:p-8 md:p-10">
                 {/* Decorative Glows */}
                 <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" />

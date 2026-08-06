@@ -19,7 +19,7 @@ export default function Accordion({ items, className, defaultOpen }: AccordionPr
     const [openIndex, setOpenIndex] = useState<number | null>(defaultOpen ?? null);
 
     return (
-        <div className={cn("divide-y divide-neutral-200 dark:divide-neutral-700", className)}>
+        <div className={cn("divide-y divide-border dark:divide-border", className)}>
             {items.map((item, index) => {
                 const isOpen = openIndex === index;
                 return (
@@ -27,7 +27,7 @@ export default function Accordion({ items, className, defaultOpen }: AccordionPr
                         <button
                             type="button"
                             onClick={() => setOpenIndex(isOpen ? null : index)}
-                            className="flex w-full items-center justify-between py-4 text-left text-sm font-medium transition hover:text-neutral-600 dark:text-neutral-200 dark:hover:text-neutral-400"
+                            className="flex w-full items-center justify-between py-4 text-left text-sm font-medium transition hover:text-muted-foreground dark:text-foreground dark:hover:text-muted-foreground"
                         >
                             {item.title}
                             <ChevronDown
@@ -39,7 +39,7 @@ export default function Accordion({ items, className, defaultOpen }: AccordionPr
                             />
                         </button>
                         {isOpen && (
-                            <div className="pb-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+                            <div className="pb-4 text-sm leading-relaxed text-muted-foreground">
                                 {item.content}
                             </div>
                         )}

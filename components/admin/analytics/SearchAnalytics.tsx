@@ -19,15 +19,15 @@ export default function SearchAnalytics({
 }) {
     if (loading) {
         return (
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
-                <div className="h-5 w-40 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700" />
+            <div className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground">
+                <div className="h-5 w-40 animate-pulse rounded bg-muted" />
                 <div className="mt-4 space-y-3">
                     {[1, 2, 3, 4, 5].map((i) => (
                         <div key={i} className="flex items-center gap-3">
-                            <div className="h-8 w-8 animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-800" />
+                            <div className="h-8 w-8 animate-pulse rounded-lg bg-muted" />
                             <div className="flex-1 space-y-1.5">
-                                <div className="h-4 w-3/4 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800" />
-                                <div className="h-3 w-1/2 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800" />
+                                <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                                <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
                             </div>
                         </div>
                     ))}
@@ -38,9 +38,9 @@ export default function SearchAnalytics({
 
     if (!data || data.length === 0) {
         return (
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 text-center dark:border-neutral-700 dark:bg-neutral-900">
-                <Search size={24} className="mx-auto text-neutral-300 dark:text-neutral-600" />
-                <p className="mt-2 text-sm text-neutral-500">No search data yet</p>
+            <div className="rounded-xl border border-border bg-white p-5 text-center dark:border-border dark:bg-foreground">
+                <Search size={24} className="mx-auto text-muted-foreground dark:text-muted-foreground" />
+                <p className="mt-2 text-sm text-muted-foreground">No search data yet</p>
             </div>
         );
     }
@@ -51,9 +51,9 @@ export default function SearchAnalytics({
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground"
         >
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Top Search Queries
             </h3>
 
@@ -81,18 +81,18 @@ export default function SearchAnalytics({
                 {data.map((item, i) => (
                     <div
                         key={item.query}
-                        className="flex items-center justify-between rounded-lg px-2 py-1.5 transition hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                        className="flex items-center justify-between rounded-lg px-2 py-1.5 transition hover:bg-subtle dark:hover:bg-card/50"
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[10px] font-bold text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground dark:bg-card dark:text-muted-foreground">
                                 {i + 1}
                             </span>
-                            <span className="truncate text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                            <span className="truncate text-sm font-medium text-foreground">
                                 {item.query}
                             </span>
                         </div>
                         <div className="flex shrink-0 items-center gap-3">
-                            <div className="flex items-center gap-1 text-xs text-neutral-500">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Hash size={11} />
                                 {item.count}
                             </div>

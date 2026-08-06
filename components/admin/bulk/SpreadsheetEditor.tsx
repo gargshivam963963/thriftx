@@ -113,7 +113,7 @@ export default function SpreadsheetEditor({
                     {Array.from({ length: 6 }).map((_, i) => (
                         <div
                             key={i}
-                            className="space-y-3 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700"
+                            className="space-y-3 rounded-2xl border border-border p-4 dark:border-border"
                         >
                             <div className="flex items-center justify-between">
                                 <Skeleton className="h-4 w-16" />
@@ -139,10 +139,10 @@ export default function SpreadsheetEditor({
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">
                             Bulk Upload
                         </h1>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                        <p className="text-sm text-muted-foreground">
                             Drop product photos and let AI do the heavy lifting.
                         </p>
                     </div>
@@ -220,10 +220,10 @@ export default function SpreadsheetEditor({
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-white py-16 dark:border-neutral-700 dark:bg-neutral-900"
+                        className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-white py-16 dark:border-border dark:bg-foreground"
                     >
-                        <Search size={20} className="text-neutral-300" />
-                        <p className="mt-2 text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                        <Search size={20} className="text-muted-foreground" />
+                        <p className="mt-2 text-sm font-medium text-muted-foreground">
                             No products match &quot;{searchQuery}&quot;
                         </p>
                         <Button
@@ -272,7 +272,7 @@ export default function SpreadsheetEditor({
             </AnimatePresence>
 
             {/* Footer */}
-            <div className="flex items-center justify-between border-t border-neutral-100 pt-3 text-[10px] text-neutral-400 dark:border-neutral-800 dark:text-neutral-500">
+            <div className="flex items-center justify-between border-t border-border pt-3 text-[10px] text-muted-foreground dark:border-border dark:text-muted-foreground">
                 <span>
                     Showing {filteredProducts.length} of {products.length} products
                 </span>

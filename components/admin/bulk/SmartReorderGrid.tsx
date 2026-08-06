@@ -60,12 +60,12 @@ export default function SmartReorderGrid({
 
     if (images.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 bg-neutral-50 py-12 dark:border-neutral-700 dark:bg-neutral-800/50">
-                <ImageIcon size={40} className="mb-3 text-neutral-300 dark:text-neutral-600" />
-                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-subtle py-12 dark:border-border dark:bg-card/50">
+                <ImageIcon size={40} className="mb-3 text-muted-foreground dark:text-muted-foreground" />
+                <p className="text-sm font-medium text-muted-foreground">
                     No images to reorder
                 </p>
-                <p className="text-xs text-neutral-400 dark:text-neutral-500">
+                <p className="text-xs text-muted-foreground">
                     Upload a folder with images to get started
                 </p>
             </div>
@@ -76,14 +76,14 @@ export default function SmartReorderGrid({
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                    <h3 className="text-sm font-semibold text-foreground">
                         Image Order
                     </h3>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    <p className="text-xs text-muted-foreground">
                         Drag to reorder &middot; Click label to change
                     </p>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-neutral-400 dark:text-neutral-500">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Check size={12} className="text-emerald-500" />
                     {images.length} of {maxImages}
                 </div>
@@ -107,7 +107,7 @@ export default function SmartReorderGrid({
                         <Reorder.Item
                             key={image.id}
                             value={image}
-                            className="group relative overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                            className="group relative overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md dark:border-border dark:bg-card"
                             onDragStart={() => setIsDragging(true)}
                             onDragEnd={() => setIsDragging(false)}
                         >
@@ -116,12 +116,12 @@ export default function SmartReorderGrid({
                                 className="flex items-center gap-3 p-2 pr-4"
                             >
                                 {/* Drag Handle */}
-                                <div className="flex cursor-grab touch-none items-center justify-center rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 active:cursor-grabbing dark:hover:bg-neutral-700 dark:hover:text-neutral-300">
+                                <div className="flex cursor-grab touch-none items-center justify-center rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-muted-foreground active:cursor-grabbing dark:hover:bg-muted dark:hover:text-muted-foreground">
                                     <GripVertical size={18} />
                                 </div>
 
                                 {/* Thumbnail */}
-                                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-700">
+                                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
                                     <Image
                                         src={image.url}
                                         alt={image.label}
@@ -138,7 +138,7 @@ export default function SmartReorderGrid({
 
                                 {/* File Info + Label */}
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                                    <p className="truncate text-sm font-medium text-foreground">
                                         {image.file.name}
                                     </p>
                                     <div className="mt-1.5">
@@ -150,8 +150,8 @@ export default function SmartReorderGrid({
                                                         type="button"
                                                         onClick={() => handleLabelChange(image.id, option)}
                                                         className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition-all ${image.label === option
-                                                            ? `${LABEL_COLORS[option] || "bg-neutral-900 text-white"} ring-2 ring-offset-1 ring-neutral-900/20 dark:ring-offset-neutral-800`
-                                                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600"
+                                                            ? `${LABEL_COLORS[option] || "bg-foreground text-white"} ring-2 ring-offset-1 ring-foreground/20 dark:ring-offset-background`
+                                                            : "bg-muted text-muted-foreground hover:bg-muted dark:text-muted-foreground dark:hover:bg-muted"
                                                             }`}
                                                     >
                                                         {option}
@@ -169,7 +169,7 @@ export default function SmartReorderGrid({
                                             <button
                                                 type="button"
                                                 onClick={() => setEditingLabel(image.id)}
-                                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition hover:opacity-80 ${LABEL_COLORS[image.label] || "bg-neutral-200 text-neutral-700 dark:bg-neutral-600 dark:text-neutral-200"
+                                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition hover:opacity-80 ${LABEL_COLORS[image.label] || "bg-muted text-muted-foreground dark:bg-muted dark:text-foreground"
                                                     }`}
                                             >
                                                 {image.label}
@@ -180,7 +180,7 @@ export default function SmartReorderGrid({
                                 </div>
 
                                 {/* File size */}
-                                <span className="hidden shrink-0 text-xs text-neutral-400 sm:block">
+                                <span className="hidden shrink-0 text-xs text-muted-foreground sm:block">
                                     {image.file.size > 1024 * 1024
                                         ? `${(image.file.size / (1024 * 1024)).toFixed(1)} MB`
                                         : `${(image.file.size / 1024).toFixed(0)} KB`}
@@ -192,19 +192,19 @@ export default function SmartReorderGrid({
             </Reorder.Group>
 
             {/* Legend */}
-            <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-neutral-50 px-3 py-2 dark:bg-neutral-800/50">
-                <span className="mr-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+            <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-subtle px-3 py-2 dark:bg-card/50">
+                <span className="mr-1 text-[10px] font-medium text-muted-foreground">
                     Auto-labels:
                 </span>
                 {LABEL_OPTIONS.map((label) => (
                     <span
                         key={label}
-                        className={`rounded px-2 py-0.5 text-[9px] font-semibold ${LABEL_COLORS[label] || "bg-neutral-200 text-neutral-600 dark:bg-neutral-600 dark:text-neutral-300"}`}
+                        className={`rounded px-2 py-0.5 text-badge font-semibold ${LABEL_COLORS[label] || "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"}`}
                     >
                         {label}
                     </span>
                 ))}
-                <span className="ml-auto text-[9px] text-neutral-400 dark:text-neutral-500">
+                <span className="ml-auto text-badge text-muted-foreground">
                     1st → 6th image order
                 </span>
             </div>

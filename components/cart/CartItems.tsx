@@ -1,9 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { ShoppingBag } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import CartItem from "./CartItem";
+import EmptyState from "@/components/ui/EmptyState";
 import type { CartProduct } from "@/lib/services/cartProducts";
 
 interface CartItemsProps {
@@ -21,7 +21,7 @@ export default function CartItems({ items, loading, onIncrease, onDecrease, onRe
         return (
             <div className="space-y-3">
                 {skeletons.map((_, i) => (
-                    <div key={i} className="h-[120px] animate-pulse rounded-xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900" />
+                    <div key={i} className="h-[120px] animate-pulse rounded-xl border border-border bg-card" />
                 ))}
             </div>
         );
@@ -29,25 +29,17 @@ export default function CartItems({ items, loading, onIncrease, onDecrease, onRe
 
     if (!items.length) {
         return (
-            <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-white py-20 dark:border-neutral-700 dark:bg-neutral-900"
+            <EmptyState
+                title="Your cart is empty"
+                description="Your collection is waiting. Start with one exceptional piece."
             >
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-100 dark:bg-neutral-800">
-                    <ShoppingBag size={28} className="text-neutral-400" />
-                </div>
-                <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Your cart is empty</h2>
-                <p className="mt-1.5 max-w-xs text-center text-sm text-neutral-500 dark:text-neutral-400">
-                    Your collection is waiting. Start with one exceptional piece.
-                </p>
                 <Link
                     href="/shop"
-                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-foreground px-6 py-3 text-body-sm font-semibold text-background transition hover:bg-muted-foreground"
                 >
                     Continue Shopping
                 </Link>
-            </motion.div>
+            </EmptyState>
         );
     }
 

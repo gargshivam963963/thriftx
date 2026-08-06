@@ -38,10 +38,10 @@ export default function PriceFilter() {
                         variant={active ? "primary" : "ghost"}
                         size="sm"
                         rounded="lg"
-                        className="px-4 py-2.5 text-left text-sm font-medium w-full justify-start"
+                        className="px-4 py-2.5 text-left text-body-sm font-medium w-full justify-start"
                     >
                         {range.label}
-                        {active && <span className="ml-auto text-[10px] font-bold">✓</span>}
+                        {active && <span className="ml-auto text-badge font-bold">✓</span>}
                     </Button>
                 );
             })}

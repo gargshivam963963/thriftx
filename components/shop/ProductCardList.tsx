@@ -111,10 +111,10 @@ export default function ProductCardList({
             className="group"
         >
             <Link href={`/product/${slug}`} className="block">
-                <Card className="overflow-hidden border-neutral-200/80 bg-white shadow-sm transition-all hover:shadow-md dark:border-neutral-700/60 dark:bg-neutral-900">
+                <Card className="overflow-hidden border-border bg-card shadow-card transition-all hover:shadow-md">
                     <div className="flex flex-col sm:flex-row">
                         {/* ── Image ──────────────────────────────────── */}
-                        <div className="relative h-[200px] w-full sm:h-[220px] sm:w-[240px] md:w-[260px] shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                        <div className="relative h-[200px] w-full sm:h-[220px] sm:w-[240px] md:w-[260px] shrink-0 overflow-hidden bg-muted">
                             <PremiumImage
                                 src={image || "/images/placeholder.jpg"}
                                 alt={title}
@@ -144,7 +144,7 @@ export default function ProductCardList({
                             >
                                 <Heart
                                     size={15}
-                                    className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-neutral-700"
+                                    className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground"
                                         }`}
                                 />
                             </button>
@@ -152,16 +152,16 @@ export default function ProductCardList({
 
                         {/* ── Content ────────────────────────────────── */}
                         <CardContent className="flex flex-1 flex-col p-5 sm:p-6">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
+                            <p className="text-badge font-bold uppercase tracking-widest text-muted-foreground">
                                 {brand}
                             </p>
 
-                            <h3 className="mt-1.5 text-lg font-bold leading-tight text-neutral-900 dark:text-neutral-100 sm:text-xl">
+                            <h3 className="mt-1.5 text-heading-4 font-bold leading-tight text-foreground">
                                 {title}
                             </h3>
 
                             {description && (
-                                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
+                                <p className="mt-2 line-clamp-2 text-body leading-relaxed text-muted-foreground">
                                     {description}
                                 </p>
                             )}
@@ -201,15 +201,15 @@ export default function ProductCardList({
                             {/* Price */}
                             <div className="mt-auto flex items-center justify-between gap-4 pt-4">
                                 <div>
-                                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">
+                                    <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                         Price
                                     </p>
                                     <div className="flex items-baseline gap-1.5">
-                                        <span className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                                        <span className="text-heading-3 font-bold tracking-tight text-foreground">
                                             ₹{Number(price || 0).toLocaleString("en-IN")}
                                         </span>
                                         {retailPrice && retailPrice > price && (
-                                            <span className="text-sm text-neutral-400 line-through">
+                                            <span className="text-body-sm text-muted-foreground line-through">
                                                 ₹{retailPrice.toLocaleString("en-IN")}
                                             </span>
                                         )}

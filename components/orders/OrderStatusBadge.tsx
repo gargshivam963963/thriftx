@@ -60,7 +60,7 @@ export function OrderStatusBadge({
         {
             label: status,
             className:
-                "border-neutral-200 bg-neutral-100 text-neutral-700",
+                "border-border bg-muted text-muted-foreground",
             icon: <Clock3 className="h-4 w-4" />,
         };
 

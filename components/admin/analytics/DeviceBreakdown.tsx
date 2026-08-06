@@ -36,11 +36,11 @@ export default function DeviceBreakdown({
 }) {
     if (loading) {
         return (
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
-                <div className="h-5 w-28 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700" />
+            <div className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground">
+                <div className="h-5 w-28 animate-pulse rounded bg-muted" />
                 <div className="mt-4 space-y-3">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-10 animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-800" />
+                        <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />
                     ))}
                 </div>
             </div>
@@ -49,9 +49,9 @@ export default function DeviceBreakdown({
 
     if (!data || data.length === 0) {
         return (
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 text-center dark:border-neutral-700 dark:bg-neutral-900">
-                <Smartphone size={24} className="mx-auto text-neutral-300 dark:text-neutral-600" />
-                <p className="mt-2 text-sm text-neutral-500">No device data yet</p>
+            <div className="rounded-xl border border-border bg-white p-5 text-center dark:border-border dark:bg-foreground">
+                <Smartphone size={24} className="mx-auto text-muted-foreground dark:text-muted-foreground" />
+                <p className="mt-2 text-sm text-muted-foreground">No device data yet</p>
             </div>
         );
     }
@@ -60,9 +60,9 @@ export default function DeviceBreakdown({
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground"
         >
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Device Breakdown
             </h3>
 
@@ -71,7 +71,7 @@ export default function DeviceBreakdown({
                     const config = DEVICE_CONFIG[device.type] || {
                         icon: <Monitor size={16} />,
                         label: device.type,
-                        color: "text-neutral-500",
+                        color: "text-muted-foreground",
                     };
 
                     return (
@@ -79,20 +79,20 @@ export default function DeviceBreakdown({
                             <div className="mb-1 flex items-center justify-between text-sm">
                                 <div className="flex items-center gap-2">
                                     <span className={config.color}>{config.icon}</span>
-                                    <span className="font-medium text-neutral-700 dark:text-neutral-300">
+                                    <span className="font-medium text-muted-foreground">
                                         {config.label}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-neutral-900 dark:text-white">
+                                    <span className="font-semibold text-foreground dark:text-white">
                                         {device.count.toLocaleString()}
                                     </span>
-                                    <span className="w-8 text-right text-xs text-neutral-400">
+                                    <span className="w-8 text-right text-xs text-muted-foreground">
                                         {device.percentage}%
                                     </span>
                                 </div>
                             </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+                            <div className="h-2 overflow-hidden rounded-full bg-muted">
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${device.percentage}%` }}

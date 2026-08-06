@@ -74,7 +74,7 @@ export default function StickyToolbar({
     ];
 
     return (
-        <div className="sticky top-0 z-40 -mx-4 -mt-4 border-b border-neutral-200 bg-white/95 px-4 pb-3 pt-3 backdrop-blur-xl dark:border-neutral-800 dark:bg-neutral-950/95 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="sticky top-0 z-40 -mx-4 -mt-4 border-b border-border bg-white/95 px-4 pb-3 pt-3 backdrop-blur-xl dark:border-border dark:bg-foreground/95 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
             <div className="flex flex-col gap-3">
                 {/* Row 1: Title + Actions */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -83,10 +83,10 @@ export default function StickyToolbar({
                             <Package size={15} />
                         </div>
                         <div>
-                            <h1 className="text-base font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                            <h1 className="text-base font-bold tracking-tight text-foreground">
                                 Bulk Upload
                             </h1>
-                            <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                            <p className="text-[10px] text-muted-foreground">
                                 AI-first bulk product uploads
                             </p>
                         </div>
@@ -141,7 +141,7 @@ export default function StickyToolbar({
                             return (
                                 <div
                                     key={s.key}
-                                    className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+                                    className="flex items-center gap-1.5 rounded-lg border border-border bg-white px-2.5 py-1 dark:border-border dark:bg-foreground"
                                 >
                                     <Icon
                                         size={12}
@@ -152,10 +152,10 @@ export default function StickyToolbar({
                                                 : "",
                                         )}
                                     />
-                                    <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                                    <span className="text-[10px] font-medium text-muted-foreground">
                                         {s.label}
                                     </span>
-                                    <span className="font-mono text-xs font-bold text-neutral-900 dark:text-neutral-100">
+                                    <span className="font-mono text-xs font-bold text-foreground">
                                         {s.value}
                                     </span>
                                 </div>
@@ -167,7 +167,7 @@ export default function StickyToolbar({
                     <div className="relative w-full lg:w-64">
                         <Search
                             size={13}
-                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400"
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                         />
                         <Input
                             type="text"

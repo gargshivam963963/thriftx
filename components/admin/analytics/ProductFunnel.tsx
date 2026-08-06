@@ -21,11 +21,11 @@ export default function ProductFunnel({
 }) {
     if (loading) {
         return (
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
-                <div className="h-5 w-36 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700" />
+            <div className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground">
+                <div className="h-5 w-36 animate-pulse rounded bg-muted" />
                 <div className="mt-4 space-y-3">
                     {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="h-14 animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-800" />
+                        <div key={i} className="h-14 animate-pulse rounded-lg bg-muted" />
                     ))}
                 </div>
             </div>
@@ -34,9 +34,9 @@ export default function ProductFunnel({
 
     if (!data || data.length === 0) {
         return (
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 text-center dark:border-neutral-700 dark:bg-neutral-900">
-                <Eye size={24} className="mx-auto text-neutral-300 dark:text-neutral-600" />
-                <p className="mt-2 text-sm text-neutral-500">No product funnel data yet</p>
+            <div className="rounded-xl border border-border bg-white p-5 text-center dark:border-border dark:bg-foreground">
+                <Eye size={24} className="mx-auto text-muted-foreground dark:text-muted-foreground" />
+                <p className="mt-2 text-sm text-muted-foreground">No product funnel data yet</p>
             </div>
         );
     }
@@ -47,17 +47,17 @@ export default function ProductFunnel({
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground"
         >
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Product Conversion Funnel
             </h3>
-            <p className="mt-0.5 text-[11px] text-neutral-400">
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
                 View → Cart → Purchase rates per product
             </p>
 
             <div className="mt-4 space-y-2">
-                <div className="grid grid-cols-[1fr_60px_60px_60px_60px] gap-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                <div className="grid grid-cols-[1fr_60px_60px_60px_60px] gap-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     <div>Product</div>
                     <div className="text-right">Views</div>
                     <div className="text-right">Cart</div>
@@ -69,11 +69,11 @@ export default function ProductFunnel({
                     {topProducts.map((product, i) => (
                         <div
                             key={product.productId}
-                            className="grid grid-cols-[1fr_60px_60px_60px_60px] items-center gap-2 rounded-lg px-2 py-2 transition hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                            className="grid grid-cols-[1fr_60px_60px_60px_60px] items-center gap-2 rounded-lg px-2 py-2 transition hover:bg-subtle dark:hover:bg-card/50"
                         >
                             {/* Product ID (truncated) */}
-                            <div className="truncate text-sm font-medium text-neutral-800 dark:text-neutral-200">
-                                <span className="mr-1.5 text-[10px] text-neutral-400">
+                            <div className="truncate text-sm font-medium text-foreground">
+                                <span className="mr-1.5 text-[10px] text-muted-foreground">
                                     #{i + 1}
                                 </span>
                                 {product.productId.length > 18
@@ -82,20 +82,20 @@ export default function ProductFunnel({
                             </div>
 
                             {/* Views */}
-                            <div className="flex items-center justify-end gap-1 text-xs text-neutral-600 dark:text-neutral-400">
-                                <Eye size={11} className="text-neutral-400" />
+                            <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
+                                <Eye size={11} className="text-muted-foreground" />
                                 {product.views}
                             </div>
 
                             {/* Cart Adds */}
-                            <div className="flex items-center justify-end gap-1 text-xs text-neutral-600 dark:text-neutral-400">
-                                <ShoppingCart size={11} className="text-neutral-400" />
+                            <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
+                                <ShoppingCart size={11} className="text-muted-foreground" />
                                 {product.cartAdds}
                             </div>
 
                             {/* Purchases */}
-                            <div className="flex items-center justify-end gap-1 text-xs text-neutral-600 dark:text-neutral-400">
-                                <CreditCard size={11} className="text-neutral-400" />
+                            <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
+                                <CreditCard size={11} className="text-muted-foreground" />
                                 {product.purchases}
                             </div>
 

@@ -22,23 +22,23 @@ export default function CouponCard({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
-            className="overflow-hidden rounded-[30px] border border-neutral-200 bg-white shadow-sm"
+            className="overflow-hidden rounded-[30px] border border-border bg-card shadow-card"
         >
-            <div className="border-b border-neutral-200 px-6 py-5">
+            <div className="border-b border-border px-6 py-5">
 
                 <div className="flex items-center gap-3">
 
-                    <div className="rounded-2xl bg-neutral-100 p-3">
+                    <div className="rounded-2xl bg-muted p-3">
                         <Tag className="h-5 w-5" />
                     </div>
 
                     <div>
 
-                        <h2 className="font-serif text-xl font-semibold">
+                        <h2 className="font-display text-heading-4 font-semibold text-foreground">
                             Coupon
                         </h2>
 
-                        <p className="mt-1 text-sm text-neutral-500">
+                        <p className="mt-1 text-body-sm text-muted-foreground">
                             Apply a discount code if you have one.
                         </p>
 
@@ -61,7 +61,7 @@ export default function CouponCard({
                                 e.target.value.toUpperCase()
                             )
                         }
-                        className="flex-1 rounded-2xl border border-neutral-300 px-5 py-4 outline-none transition focus:border-black"
+                        className="flex-1 rounded-2xl border border-border bg-card px-5 py-4 text-body-sm outline-none transition focus:border-foreground placeholder:text-muted"
                     />
 
                     <button
@@ -69,7 +69,7 @@ export default function CouponCard({
                         onClick={() =>
                             onApplyCoupon(coupon)
                         }
-                        className="rounded-2xl bg-black px-6 py-4 text-sm font-semibold text-white transition hover:opacity-90"
+                        className="rounded-2xl bg-foreground px-6 py-4 text-body-sm font-semibold text-background transition hover:bg-muted-foreground"
                     >
                         Apply
                     </button>
@@ -77,22 +77,22 @@ export default function CouponCard({
                 </div>
 
                 {appliedCoupon && (
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                    <div className="rounded-2xl border border-success-bg bg-success-bg p-5">
 
                         <div className="flex items-start gap-3">
 
                             <CheckCircle2
-                                className="mt-0.5 text-emerald-600"
+                                className="mt-0.5 text-success-foreground"
                                 size={20}
                             />
 
                             <div>
 
-                                <p className="font-semibold text-emerald-700">
+                                <p className="font-semibold text-success-foreground">
                                     {appliedCoupon} Applied
                                 </p>
 
-                                <p className="mt-1 text-sm text-emerald-700/80">
+                                <p className="mt-1 text-body-sm text-success-foreground/80">
                                     You saved ₹
                                     {discount.toLocaleString(
                                         'en-IN'

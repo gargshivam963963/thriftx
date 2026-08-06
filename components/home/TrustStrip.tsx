@@ -13,21 +13,21 @@ const features = [
 
 export default function TrustStrip() {
     return (
-        <section className="border-y border-neutral-100 bg-white dark:border-neutral-800 dark:bg-neutral-950">
+        <section className="border-y border-border bg-card">
             <Container>
                 <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 py-6 sm:py-8">
                     {features.map(({ icon: Icon, label, highlight }) => (
                         <div
                             key={label}
                             className={`inline-flex items-center gap-2.5 rounded-xl px-3 py-2 transition-colors ${highlight
-                                    ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
-                                    : "text-neutral-600 dark:text-neutral-400"
+                                ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                                : "text-muted-foreground"
                                 }`}
                         >
                             <Icon size={18} className="shrink-0" />
-                            <span className="text-sm font-semibold whitespace-nowrap">{label}</span>
+                            <span className="text-body font-semibold whitespace-nowrap">{label}</span>
                             {highlight && (
-                                <span className="ml-1 rounded-full bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400">
+                                <span className="ml-1 rounded-full bg-emerald-200 px-1.5 py-0.5 text-badge font-bold uppercase tracking-wider text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400">
                                     🏆
                                 </span>
                             )}

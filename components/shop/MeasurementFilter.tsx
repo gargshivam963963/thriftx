@@ -81,9 +81,9 @@ export default function MeasurementFilter() {
                             variant={active ? "primary" : "outline"}
                             size="xs"
                             rounded="lg"
-                            className="h-8 text-[10px] font-semibold tracking-tight"
+                            className="h-8 text-badge font-semibold tracking-tight"
                         >
-                            {active && <span className="mr-1 text-[9px]">✓</span>}
+                            {active && <span className="mr-1 text-badge">✓</span>}
                             {opt.label}
                         </Button>
                     );
@@ -95,7 +95,7 @@ export default function MeasurementFilter() {
                 <button
                     type="button"
                     onClick={() => setShowAdvanced(!showAdvanced)}
-                    className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 transition hover:text-neutral-600 dark:hover:text-neutral-300"
+                    className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-badge font-semibold uppercase tracking-wider text-muted-foreground transition hover:text-foreground"
                 >
                     <span className="flex items-center gap-1.5">
                         <Ruler size={11} />
@@ -115,10 +115,10 @@ export default function MeasurementFilter() {
                             {/* Chest */}
                             <div className="space-y-1.5">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                                    <label className="text-badge font-medium text-muted-foreground">
                                         <span className="text-blue-500">●</span> Chest
                                     </label>
-                                    <span className="text-[11px] font-semibold text-neutral-700 dark:text-neutral-300">
+                                    <span className="text-small font-semibold text-foreground">
                                         {chestLabel || `${CHEST_RANGE.min}″ – ${CHEST_RANGE.max}″`}
                                     </span>
                                 </div>
@@ -138,7 +138,7 @@ export default function MeasurementFilter() {
                                             setChestVal(v);
                                             applyCustomValue("chest", v);
                                         }}
-                                        className="range-slider flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-neutral-200 dark:bg-neutral-700 accent-neutral-900 dark:accent-neutral-100"
+                                        className="range-slider flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-muted accent-foreground"
                                     />
                                     <input
                                         type="number"
@@ -147,7 +147,7 @@ export default function MeasurementFilter() {
                                         onChange={(e) => setChestVal(e.target.value)}
                                         onBlur={() => chestVal && applyCustomValue("chest", chestVal)}
                                         onKeyDown={(e) => e.key === "Enter" && chestVal && applyCustomValue("chest", chestVal)}
-                                        className="h-8 w-14 rounded-lg border border-neutral-300 px-2 text-center text-[11px] font-medium outline-none focus:border-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+                                        className="h-8 w-14 rounded-lg border border-border px-2 text-center text-small font-medium outline-none focus:border-foreground dark:bg-muted dark:text-foreground"
                                     />
                                 </div>
                             </div>
@@ -155,10 +155,10 @@ export default function MeasurementFilter() {
                             {/* Waist */}
                             <div className="space-y-1.5">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                                    <label className="text-badge font-medium text-muted-foreground">
                                         <span className="text-emerald-500">●</span> Waist
                                     </label>
-                                    <span className="text-[11px] font-semibold text-neutral-700 dark:text-neutral-300">
+                                    <span className="text-small font-semibold text-foreground">
                                         {waistLabel || `${WAIST_RANGE.min}″ – ${WAIST_RANGE.max}″`}
                                     </span>
                                 </div>
@@ -178,7 +178,7 @@ export default function MeasurementFilter() {
                                             setWaistVal(v);
                                             applyCustomValue("waist", v);
                                         }}
-                                        className="range-slider flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-neutral-200 dark:bg-neutral-700 accent-neutral-900 dark:accent-neutral-100"
+                                        className="range-slider flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-muted accent-foreground"
                                     />
                                     <input
                                         type="number"
@@ -187,7 +187,7 @@ export default function MeasurementFilter() {
                                         onChange={(e) => setWaistVal(e.target.value)}
                                         onBlur={() => waistVal && applyCustomValue("waist", waistVal)}
                                         onKeyDown={(e) => e.key === "Enter" && waistVal && applyCustomValue("waist", waistVal)}
-                                        className="h-8 w-14 rounded-lg border border-neutral-300 px-2 text-center text-[11px] font-medium outline-none focus:border-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+                                        className="h-8 w-14 rounded-lg border border-border px-2 text-center text-small font-medium outline-none focus:border-foreground dark:bg-muted dark:text-foreground"
                                     />
                                 </div>
                             </div>
@@ -195,10 +195,10 @@ export default function MeasurementFilter() {
                             {/* Inseam — for lower / bottom wear (jeans, trousers, pants, cargo) */}
                             <div className="space-y-1.5">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                                    <label className="text-badge font-medium text-muted-foreground">
                                         <span className="text-amber-500">●</span> Inseam
                                     </label>
-                                    <span className="text-[11px] font-semibold text-neutral-700 dark:text-neutral-300">
+                                    <span className="text-small font-semibold text-foreground">
                                         {inseamLabel || `${INSEAM_RANGE.min}″ – ${INSEAM_RANGE.max}″`}
                                     </span>
                                 </div>
@@ -218,7 +218,7 @@ export default function MeasurementFilter() {
                                             setInseamVal(v);
                                             applyCustomValue("inseam", v);
                                         }}
-                                        className="range-slider flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-neutral-200 dark:bg-neutral-700 accent-neutral-900 dark:accent-neutral-100"
+                                        className="range-slider flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-muted accent-foreground"
                                     />
                                     <input
                                         type="number"
@@ -227,7 +227,7 @@ export default function MeasurementFilter() {
                                         onChange={(e) => setInseamVal(e.target.value)}
                                         onBlur={() => inseamVal && applyCustomValue("inseam", inseamVal)}
                                         onKeyDown={(e) => e.key === "Enter" && inseamVal && applyCustomValue("inseam", inseamVal)}
-                                        className="h-8 w-14 rounded-lg border border-neutral-300 px-2 text-center text-[11px] font-medium outline-none focus:border-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+                                        className="h-8 w-14 rounded-lg border border-border px-2 text-center text-small font-medium outline-none focus:border-foreground dark:bg-muted dark:text-foreground"
                                     />
                                 </div>
                             </div>
@@ -235,10 +235,10 @@ export default function MeasurementFilter() {
                             {/* Length */}
                             <div className="space-y-1.5">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                                    <label className="text-badge font-medium text-muted-foreground">
                                         <span className="text-violet-500">●</span> Length
                                     </label>
-                                    <span className="text-[11px] font-semibold text-neutral-700 dark:text-neutral-300">
+                                    <span className="text-small font-semibold text-foreground">
                                         {lengthLabel || `${LENGTH_RANGE.min}″ – ${LENGTH_RANGE.max}″`}
                                     </span>
                                 </div>
@@ -258,7 +258,7 @@ export default function MeasurementFilter() {
                                             setLengthVal(v);
                                             applyCustomValue("length", v);
                                         }}
-                                        className="range-slider flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-neutral-200 dark:bg-neutral-700 accent-neutral-900 dark:accent-neutral-100"
+                                        className="range-slider flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-muted accent-foreground"
                                     />
                                     <input
                                         type="number"
@@ -267,7 +267,7 @@ export default function MeasurementFilter() {
                                         onChange={(e) => setLengthVal(e.target.value)}
                                         onBlur={() => lengthVal && applyCustomValue("length", lengthVal)}
                                         onKeyDown={(e) => e.key === "Enter" && lengthVal && applyCustomValue("length", lengthVal)}
-                                        className="h-8 w-14 rounded-lg border border-neutral-300 px-2 text-center text-[11px] font-medium outline-none focus:border-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+                                        className="h-8 w-14 rounded-lg border border-border px-2 text-center text-small font-medium outline-none focus:border-foreground dark:bg-muted dark:text-foreground"
                                     />
                                 </div>
                             </div>

@@ -110,16 +110,16 @@ export default function AdminCustomersPage() {
                 className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             >
                 <div>
-                    <h1 className="font-serif text-2xl font-bold text-[var(--color-text)]">
+                    <h1 className="font-display text-2xl font-bold text-foreground">
                         Customers
                     </h1>
-                    <p className="text-sm text-[var(--color-text-secondary)]">
+                    <p className="text-sm text-muted-foreground">
                         {customers.length} total customers
                     </p>
                 </div>
                 <button
                     onClick={handleExportCSV}
-                    className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-all hover:bg-[var(--color-bg-muted)]"
+                    className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-all hover:bg-muted"
                 >
                     <Download size={16} />
                     Export CSV
@@ -130,14 +130,14 @@ export default function AdminCustomersPage() {
             <div className="relative max-w-md">
                 <Search
                     size={18}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]"
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                 />
                 <input
                     type="text"
                     placeholder="Search by name, email, phone or city..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] pl-10 pr-4 text-sm text-[var(--color-text)] outline-none transition-all focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]"
+                    className="h-11 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm text-foreground outline-none transition-all focus:border-accent focus:ring-1 focus:ring-accent"
                 />
             </div>
 
@@ -150,18 +150,18 @@ export default function AdminCustomersPage() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead>
-                            <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-muted)]">
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                            <tr className="border-b border-border bg-muted">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Customer
                                 </th>
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Contact
                                 </th>
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Location
                                 </th>
                                 <th
-                                    className="cursor-pointer px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]"
+                                    className="cursor-pointer px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground"
                                     onClick={() => toggleSort("totalOrders")}
                                 >
                                     <div className="flex items-center gap-1">
@@ -169,17 +169,17 @@ export default function AdminCustomersPage() {
                                     </div>
                                 </th>
                                 <th
-                                    className="cursor-pointer px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]"
+                                    className="cursor-pointer px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground"
                                     onClick={() => toggleSort("totalSpent")}
                                 >
                                     <div className="flex items-center gap-1">
                                         Total Spent <ArrowUpDown size={12} />
                                     </div>
                                 </th>
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Last Order
                                 </th>
-                                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                                <th className="px-4 py-3 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Joined
                                 </th>
                             </tr>
@@ -187,10 +187,10 @@ export default function AdminCustomersPage() {
                         <tbody>
                             {loading ? (
                                 Array.from({ length: 6 }).map((_, i) => (
-                                    <tr key={i} className="border-b border-[var(--color-border)]">
+                                    <tr key={i} className="border-b border-border">
                                         {Array.from({ length: 7 }).map((_, j) => (
                                             <td key={j} className="px-4 py-3">
-                                                <div className="h-4 w-full animate-pulse rounded bg-[var(--color-bg-muted)]" />
+                                                <div className="h-4 w-full animate-pulse rounded bg-muted" />
                                             </td>
                                         ))}
                                     </tr>
@@ -198,8 +198,8 @@ export default function AdminCustomersPage() {
                             ) : sortedCustomers.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="px-4 py-12 text-center">
-                                        <Users size={32} className="mx-auto mb-2 text-[var(--color-text-muted)]" />
-                                        <p className="text-sm text-[var(--color-text-muted)]">
+                                        <Users size={32} className="mx-auto mb-2 text-muted-foreground" />
+                                        <p className="text-sm text-muted-foreground">
                                             {search ? "No customers match your search" : "No customers found"}
                                         </p>
                                     </td>
@@ -209,8 +209,8 @@ export default function AdminCustomersPage() {
                                     <tr
                                         key={customer.$id}
                                         className={cn(
-                                            "border-b border-[var(--color-border)] transition-all hover:bg-[var(--color-bg-muted)] cursor-pointer",
-                                            i % 2 === 0 ? "bg-transparent" : "bg-[var(--color-bg-muted)]/30",
+                                            "border-b border-border transition-all hover:bg-muted cursor-pointer",
+                                            i % 2 === 0 ? "bg-transparent" : "bg-muted/30",
                                         )}
                                         onClick={() => setSelectedCustomer(customer)}
                                     >
@@ -219,40 +219,40 @@ export default function AdminCustomersPage() {
                                                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-zinc-500 to-zinc-700 text-xs font-bold text-white dark:from-zinc-300 dark:to-zinc-500 dark:text-black">
                                                     {customer.name.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="font-semibold text-[var(--color-text)]">
+                                                <span className="font-semibold text-foreground">
                                                     {customer.name}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="space-y-0.5">
-                                                <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                                     <Mail size={12} />
                                                     {customer.email || "—"}
                                                 </div>
-                                                <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                                     <Phone size={12} />
                                                     {customer.phone || "—"}
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                                 <MapPin size={12} />
                                                 {customer.city}
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className="font-semibold text-[var(--color-text)]">
+                                            <span className="font-semibold text-foreground">
                                                 {customer.totalOrders}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className="font-semibold text-[var(--color-text)]">
+                                            <span className="font-semibold text-foreground">
                                                 ₹{customer.totalSpent.toLocaleString("en-IN")}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-xs text-[var(--color-text-muted)]">
+                                        <td className="px-4 py-3 text-xs text-muted-foreground">
                                             {customer.lastOrderDate
                                                 ? new Date(customer.lastOrderDate).toLocaleDateString("en-IN", {
                                                     day: "numeric",
@@ -260,7 +260,7 @@ export default function AdminCustomersPage() {
                                                 })
                                                 : "—"}
                                         </td>
-                                        <td className="px-4 py-3 text-xs text-[var(--color-text-muted)]">
+                                        <td className="px-4 py-3 text-xs text-muted-foreground">
                                             {new Date(customer.joinedAt).toLocaleDateString("en-IN", {
                                                 day: "numeric",
                                                 month: "short",
@@ -276,7 +276,7 @@ export default function AdminCustomersPage() {
 
                 {/* Summary */}
                 {!loading && sortedCustomers.length > 0 && (
-                    <div className="border-t border-[var(--color-border)] px-4 py-3 text-xs text-[var(--color-text-muted)]">
+                    <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
                         Showing {sortedCustomers.length} of {customers.length} customers
                     </div>
                 )}
@@ -292,7 +292,7 @@ export default function AdminCustomersPage() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="relative w-full max-w-lg rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-2xl"
+                        className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="mb-6 flex items-center gap-4">
@@ -300,45 +300,45 @@ export default function AdminCustomersPage() {
                                 {selectedCustomer.name.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-[var(--color-text)]">
+                                <h3 className="text-lg font-bold text-foreground">
                                     {selectedCustomer.name}
                                 </h3>
-                                <p className="text-sm text-[var(--color-text-secondary)]">
+                                <p className="text-sm text-muted-foreground">
                                     {selectedCustomer.email}
                                 </p>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-3">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                            <div className="rounded-xl border border-border bg-muted p-3">
+                                <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Phone
                                 </p>
-                                <p className="mt-1 font-semibold text-[var(--color-text)]">
+                                <p className="mt-1 font-semibold text-foreground">
                                     {selectedCustomer.phone || "—"}
                                 </p>
                             </div>
-                            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-3">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                            <div className="rounded-xl border border-border bg-muted p-3">
+                                <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     City
                                 </p>
-                                <p className="mt-1 font-semibold text-[var(--color-text)]">
+                                <p className="mt-1 font-semibold text-foreground">
                                     {selectedCustomer.city}
                                 </p>
                             </div>
-                            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-3">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                            <div className="rounded-xl border border-border bg-muted p-3">
+                                <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Total Orders
                                 </p>
-                                <p className="mt-1 font-semibold text-[var(--color-text)]">
+                                <p className="mt-1 font-semibold text-foreground">
                                     {selectedCustomer.totalOrders}
                                 </p>
                             </div>
-                            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-3">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                            <div className="rounded-xl border border-border bg-muted p-3">
+                                <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     Total Spent
                                 </p>
-                                <p className="mt-1 font-semibold text-[var(--color-text)]">
+                                <p className="mt-1 font-semibold text-foreground">
                                     ₹{selectedCustomer.totalSpent.toLocaleString("en-IN")}
                                 </p>
                             </div>
@@ -347,7 +347,7 @@ export default function AdminCustomersPage() {
                         <div className="mt-4 flex justify-end">
                             <button
                                 onClick={() => setSelectedCustomer(null)}
-                                className="rounded-xl bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-black"
+                                className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-black"
                             >
                                 Close
                             </button>

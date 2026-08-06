@@ -102,13 +102,13 @@ function SectionCard({
     return (
         <motion.div
             variants={fadeUpItem}
-            className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm"
+            className="overflow-hidden rounded-2xl border border-border/80 bg-white shadow-sm"
         >
-            <div className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50/80 px-4 py-3 sm:px-5">
-                <div className="rounded-lg bg-neutral-900 p-1.5 text-white shadow-sm">
+            <div className="flex items-center gap-2 border-b border-border bg-subtle/80 px-4 py-3 sm:px-5">
+                <div className="rounded-lg bg-foreground p-1.5 text-white shadow-sm">
                     {icon}
                 </div>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-[11px]">
                     {label}
                 </span>
             </div>
@@ -248,10 +248,10 @@ export default function AddressForm({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.05 }}
             >
-                <h3 className="font-bold text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
+                <h3 className="font-bold text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                     {initialData ? "Edit Address" : "New Delivery Address"}
                 </h3>
-                <p className="mt-1.5 text-sm leading-6 text-neutral-500">
+                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
                     {initialData
                         ? "Update your delivery address details below."
                         : "Fill in the details below to add a new shipping address."}
@@ -386,14 +386,14 @@ export default function AddressForm({
                                         whileHover={{ y: -2, scale: 1.02 }}
                                         whileTap={{ scale: 0.97 }}
                                         className={`relative overflow-hidden rounded-2xl border-2 p-3 text-center transition-all duration-200 sm:p-4 ${isSelected
-                                            ? "border-neutral-900 bg-neutral-900 text-white shadow-lg"
-                                            : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400 hover:shadow-md"
+                                            ? "border-foreground bg-foreground text-white shadow-lg"
+                                            : "border-border bg-white text-muted-foreground hover:border-foreground hover:shadow-md"
                                             }`}
                                     >
                                         {isSelected && (
                                             <motion.div
                                                 layoutId="typeBg"
-                                                className="absolute inset-0 bg-neutral-900"
+                                                className="absolute inset-0 bg-foreground"
                                                 initial={false}
                                                 transition={{
                                                     type: "spring",
@@ -406,7 +406,7 @@ export default function AddressForm({
                                             <div
                                                 className={`rounded-xl p-1.5 transition-colors sm:p-2 ${isSelected
                                                     ? "bg-white/15"
-                                                    : "bg-neutral-100"
+                                                    : "bg-muted"
                                                     }`}
                                             >
                                                 <Icon
@@ -428,14 +428,14 @@ export default function AddressForm({
                         <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
-                            className="mt-3 flex items-center gap-2 rounded-xl bg-neutral-100 px-4 py-2.5"
+                            className="mt-3 flex items-center gap-2 rounded-xl bg-muted px-4 py-2.5"
                         >
                             <div
                                 className={`rounded-lg p-1 ${selectedOption.color}`}
                             >
                                 <selectedOption.icon size={14} />
                             </div>
-                            <span className="text-xs text-neutral-600 sm:text-sm">
+                            <span className="text-xs text-muted-foreground sm:text-sm">
                                 {selectedOption.desc}
                             </span>
                         </motion.div>
@@ -448,7 +448,7 @@ export default function AddressForm({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="flex items-center justify-between gap-3 border-t border-neutral-200 pt-6"
+                className="flex items-center justify-between gap-3 border-t border-border pt-6"
             >
                 <Button
                     type="button"
@@ -463,7 +463,7 @@ export default function AddressForm({
                 <Button
                     type="submit"
                     loading={isSubmitting}
-                    className="rounded-xl px-7 shadow-lg shadow-neutral-900/20"
+                    className="rounded-xl px-7 shadow-lg shadow-foreground/20"
                 >
                     {isSubmitting ? "Saving..." : "Save & Continue"}
                     <ArrowRight className="ml-1.5 h-4 w-4" />

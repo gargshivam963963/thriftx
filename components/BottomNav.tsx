@@ -23,55 +23,68 @@ export default function BottomNav() {
   // Hide bottom nav on admin routes
   if (pathname?.startsWith("/admin")) return null;
 
-  const navItems = [
-    {
-      href: "/",
-      icon: Home,
-      label: "Home",
-      tooltip: "Go to homepage",
-    },
-    {
-      href: "/shop",
-      icon: Grid,
-      label: "Shop",
-      tooltip: "Browse all products",
-    },
-    {
-      href: "/cart",
-      icon: ShoppingBag,
-      label: "Cart",
-      tooltip: "View shopping cart",
-      badge: true,
-    },
-    {
-      href: "/profile/wishlist",
-      icon: Heart,
-      label: "Wishlist",
-      tooltip: "View your wishlist",
-    },
-    user
-      ? {
-        onClick: logout,
-        icon: LogOut,
-        label: "Logout",
-        tooltip: "Sign out of your account",
-      }
-      : {
-        href: "/login",
-        icon: User,
-        label: "Profile",
-        tooltip: "Sign in to your account",
+  const navItems: Array<
+    | {
+      href: string;
+      icon: React.ElementType;
+      label: string;
+      tooltip: string;
+      badge?: boolean;
+    }
+    | {
+      onClick: () => void;
+      icon: React.ElementType;
+      label: string;
+      tooltip: string;
+    }
+  > = [
+      {
+        href: "/",
+        icon: Home,
+        label: "Home",
+        tooltip: "Go to homepage",
       },
-  ];
+      {
+        href: "/shop",
+        icon: Grid,
+        label: "Shop",
+        tooltip: "Browse all products",
+      },
+      {
+        href: "/cart",
+        icon: ShoppingBag,
+        label: "Cart",
+        tooltip: "View shopping cart",
+        badge: true,
+      },
+      {
+        href: "/profile/wishlist",
+        icon: Heart,
+        label: "Wishlist",
+        tooltip: "View your wishlist",
+      },
+      user
+        ? {
+          onClick: logout,
+          icon: LogOut,
+          label: "Logout",
+          tooltip: "Sign out of your account",
+        }
+        : {
+          href: "/login",
+          icon: User,
+          label: "Profile",
+          tooltip: "Sign in to your account",
+        },
+    ];
 
   return (
-    <nav className="md:hidden bg-white/80 backdrop-blur-xl fixed bottom-0 w-full z-50 rounded-t-2xl border-t border-[#e5e5e5] dark:border-neutral-800 dark:bg-neutral-900/80 flex justify-around items-center h-16 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+    <nav className="md:hidden bg-white/80 backdrop-blur-xl fixed bottom-0 w-full z-50 rounded-t-2xl border-t border-border dark:border-border dark:bg-foreground/80 flex justify-around items-center h-16 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
       {navItems.map((item) => {
-        // @ts-ignore
-        const isActive = item.href && pathname === item.href;
+        const isActive = "href" in item && pathname === item.href;
         const Icon = item.icon;
 
-        if (item.onClick) {
+        if ("onClick" in item) {
           return (
             <button
               key={item.label}
@@ -84,16 +97,16 @@ export default function BottomNav() {
                   "w-6 h-6 mb-1 transition-all duration-200",
                   isActive
                     ? "text-black scale-110 dark:text-white"
-                    : "text-[#616363] dark:text-neutral-400 group-hover:scale-110 group-hover:text-black dark:group-hover:text-white",
+                    : "text-muted-foreground group-hover:scale-110 group-hover:text-foreground",
                 )}
                 strokeWidth={isActive ? 2.5 : 2}
               />
               <span
                 className={cn(
-                  "text-[10px] font-semibold tracking-wide uppercase transition-colors",
+                  "text-badge font-semibold tracking-wide uppercase transition-colors",
                   isActive
-                    ? "text-black dark:text-white"
-                    : "text-[#616363] dark:text-neutral-400",
+                    ? "text-foreground"
+                    : "text-muted-foreground",
                 )}
               >
                 {item.label}
@@ -110,23 +123,23 @@ export default function BottomNav() {
             className="relative flex flex-col items-center group pt-1"
           >
             {item.badge && (
-              <div className="absolute top-0 right-1/4 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-neutral-900"></div>
+              <div className="absolute top-0 right-1/4 w-2 h-2 bg-error rounded-full border border-background"></div>
             )}
             <Icon
               className={cn(
                 "w-6 h-6 mb-1 transition-all duration-200",
                 isActive
                   ? "text-black scale-110 dark:text-white"
-                  : "text-[#616363] dark:text-neutral-400 group-hover:scale-110 group-hover:text-black dark:group-hover:text-white",
+                  : "text-muted-foreground group-hover:scale-110 group-hover:text-foreground",
               )}
               strokeWidth={isActive ? 2.5 : 2}
             />
             <span
               className={cn(
-                "text-[10px] font-semibold tracking-wide uppercase transition-colors",
+                "text-badge font-semibold tracking-wide uppercase transition-colors",
                 isActive
-                  ? "text-black dark:text-white"
-                  : "text-[#616363] dark:text-neutral-400",
+                  ? "text-foreground"
+                  : "text-muted-foreground",
               )}
             >
               {item.label}
@@ -142,11 +155,11 @@ export default function BottomNav() {
         className="relative flex flex-col items-center group pt-1"
       >
         {theme === "dark" ? (
-          <Sun className="w-6 h-6 mb-1 text-neutral-400 group-hover:scale-110 group-hover:text-white transition-all duration-200" strokeWidth={2} />
+          <Sun className="w-6 h-6 mb-1 text-muted-foreground group-hover:scale-110 group-hover:text-foreground transition-all duration-200" strokeWidth={2} />
         ) : (
-          <Moon className="w-6 h-6 mb-1 text-[#616363] group-hover:scale-110 group-hover:text-black transition-all duration-200" strokeWidth={2} />
+          <Moon className="w-6 h-6 mb-1 text-muted-foreground group-hover:scale-110 group-hover:text-foreground transition-all duration-200" strokeWidth={2} />
         )}
-        <span className="text-[10px] font-semibold tracking-wide uppercase text-[#616363] dark:text-neutral-400 transition-colors">
+        <span className="text-badge font-semibold tracking-wide uppercase text-muted-foreground transition-colors">
           {theme === "dark" ? "Light" : "Dark"}
         </span>
       </button>

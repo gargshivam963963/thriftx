@@ -37,7 +37,7 @@ function MethodIcon({ id }: { id: string }) {
         );
     }
     return (
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-600 sm:h-12 sm:w-12 sm:rounded-2xl">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground sm:h-12 sm:w-12 sm:rounded-2xl">
             <Truck size={18} className="sm:h-[20px] sm:w-[20px]" />
         </div>
     );
@@ -49,14 +49,14 @@ function ShippingSkeleton() {
             {[1, 2].map((i) => (
                 <div
                     key={i}
-                    className="flex animate-pulse items-center gap-4 rounded-2xl border border-neutral-100 p-4 sm:rounded-3xl sm:p-5"
+                    className="flex animate-pulse items-center gap-4 rounded-2xl border border-border p-4 sm:rounded-3xl sm:p-5"
                 >
-                    <div className="h-10 w-10 rounded-xl bg-neutral-200 sm:h-12 sm:w-12 sm:rounded-2xl" />
+                    <div className="h-10 w-10 rounded-xl bg-muted sm:h-12 sm:w-12 sm:rounded-2xl" />
                     <div className="flex-1 space-y-2">
-                        <div className="h-4 w-36 rounded bg-neutral-200 sm:w-48" />
-                        <div className="h-3 w-24 rounded bg-neutral-100" />
+                        <div className="h-4 w-36 rounded bg-muted sm:w-48" />
+                        <div className="h-3 w-24 rounded bg-muted" />
                     </div>
-                    <div className="h-6 w-16 rounded-lg bg-neutral-200" />
+                    <div className="h-6 w-16 rounded-lg bg-muted" />
                 </div>
             ))}
         </div>
@@ -70,13 +70,13 @@ function EmptyShipping() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-3 px-4 py-10 text-center sm:px-6"
         >
-            <div className="rounded-full bg-neutral-100 p-4">
-                <PackageOpen size={28} className="text-neutral-400" />
+            <div className="rounded-full bg-muted p-4">
+                <PackageOpen size={28} className="text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium text-neutral-600">
+            <p className="text-sm font-medium text-muted-foreground">
                 No shipping options available
             </p>
-            <p className="max-w-xs text-xs text-neutral-400">
+            <p className="max-w-xs text-xs text-muted-foreground">
                 We couldn&apos;t find courier services for this pincode. Please check your
                 delivery address.
             </p>
@@ -98,7 +98,7 @@ export default function ShippingSection({
         <motion.section
             layout
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className={`overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-3xl ${disabled ? "border-neutral-100 opacity-60" : "border-neutral-200"
+            className={`overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-3xl ${disabled ? "border-border opacity-60" : "border-border"
                 }`}
         >
             {/* ── Header ──────────────────────────────────────────────────────── */}
@@ -111,22 +111,22 @@ export default function ShippingSection({
                 <div className="flex items-center gap-3 sm:gap-4">
                     <div
                         className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 sm:h-12 sm:w-12 sm:rounded-2xl ${open
-                                ? "bg-neutral-900 text-white shadow-lg shadow-neutral-900/20"
-                                : "bg-neutral-100 text-neutral-600"
+                                ? "bg-foreground text-white shadow-lg shadow-foreground/20"
+                                : "bg-muted text-muted-foreground"
                             }`}
                     >
                         <Truck size={18} className="sm:h-[20px] sm:w-[20px]" />
                     </div>
                     <div className="text-left">
                         <div className="flex items-center gap-2">
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 text-[10px] font-bold text-white sm:h-6 sm:w-6 sm:text-xs">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-white sm:h-6 sm:w-6 sm:text-xs">
                                 2
                             </span>
-                            <h2 className="text-sm font-semibold text-neutral-900 sm:text-base sm:text-lg">
+                            <h2 className="text-sm font-semibold text-foreground sm:text-base sm:text-lg">
                                 Shipping
                             </h2>
                         </div>
-                        <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">
+                        <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
                             {disabled
                                 ? "Select an address first"
                                 : isLocalDelivery
@@ -140,11 +140,11 @@ export default function ShippingSection({
                     </div>
                 </div>
 
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
                     {open ? (
-                        <ChevronDown size={18} className="text-neutral-500" />
+                        <ChevronDown size={18} className="text-muted-foreground" />
                     ) : (
-                        <ChevronRight size={18} className="text-neutral-500" />
+                        <ChevronRight size={18} className="text-muted-foreground" />
                     )}
                 </div>
             </button>
@@ -158,7 +158,7 @@ export default function ShippingSection({
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden border-t border-neutral-100"
+                        className="overflow-hidden border-t border-border"
                     >
                         {loading ? (
                             <ShippingSkeleton />
@@ -179,8 +179,8 @@ export default function ShippingSection({
                                             type="button"
                                             onClick={() => onSelect(method)}
                                             className={`w-full overflow-hidden rounded-2xl border text-left transition-all sm:rounded-3xl ${selected
-                                                    ? "border-neutral-900 bg-neutral-900 text-white shadow-xl"
-                                                    : "border-neutral-200 bg-white hover:border-neutral-400 hover:shadow-md"
+                                                    ? "border-foreground bg-foreground text-white shadow-xl"
+                                                    : "border-border bg-white hover:border-foreground hover:shadow-md"
                                                 }`}
                                         >
                                             <div className="flex items-start justify-between p-4 sm:p-6">
@@ -205,7 +205,7 @@ export default function ShippingSection({
                                                         </div>
 
                                                         <p
-                                                            className={`mt-1 text-xs leading-5 sm:mt-1.5 sm:text-sm sm:leading-6 ${selected ? "text-neutral-300" : "text-neutral-500"
+                                                            className={`mt-1 text-xs leading-5 sm:mt-1.5 sm:text-sm sm:leading-6 ${selected ? "text-muted-foreground" : "text-muted-foreground"
                                                                 }`}
                                                         >
                                                             {method.subtitle}
@@ -215,8 +215,8 @@ export default function ShippingSection({
                                                         <div className="mt-2 flex items-center gap-3">
                                                             <span
                                                                 className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${selected
-                                                                        ? "bg-white/10 text-neutral-200"
-                                                                        : "bg-neutral-100 text-neutral-600"
+                                                                        ? "bg-white/10 text-muted-foreground"
+                                                                        : "bg-muted text-muted-foreground"
                                                                     }`}
                                                             >
                                                                 <Clock size={11} />
@@ -226,8 +226,8 @@ export default function ShippingSection({
                                                             {method.price > 0 && (
                                                                 <span
                                                                     className={`text-[11px] font-semibold ${selected
-                                                                            ? "text-neutral-300"
-                                                                            : "text-neutral-500"
+                                                                            ? "text-muted-foreground"
+                                                                            : "text-muted-foreground"
                                                                         }`}
                                                                 >
                                                                     ₹{method.price}
@@ -265,36 +265,36 @@ export default function ShippingSection({
                                     transition={{ delay: 0.15 }}
                                     className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3"
                                 >
-                                    <div className="rounded-xl border border-neutral-200 bg-white p-3 transition hover:border-neutral-300 hover:shadow-sm sm:rounded-2xl sm:p-4">
-                                        <div className="mb-2 inline-flex rounded-lg bg-neutral-100 p-2 sm:rounded-xl sm:p-2.5">
-                                            <ShieldCheck size={15} className="text-neutral-600" />
+                                    <div className="rounded-xl border border-border bg-white p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4">
+                                        <div className="mb-2 inline-flex rounded-lg bg-muted p-2 sm:rounded-xl sm:p-2.5">
+                                            <ShieldCheck size={15} className="text-muted-foreground" />
                                         </div>
-                                        <h4 className="text-xs font-semibold text-neutral-900 sm:text-sm">
+                                        <h4 className="text-xs font-semibold text-foreground sm:text-sm">
                                             Tracked Shipment
                                         </h4>
-                                        <p className="mt-0.5 text-[11px] text-neutral-500 sm:text-xs">
+                                        <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
                                             Real-time tracking
                                         </p>
                                     </div>
-                                    <div className="rounded-xl border border-neutral-200 bg-white p-3 transition hover:border-neutral-300 hover:shadow-sm sm:rounded-2xl sm:p-4">
-                                        <div className="mb-2 inline-flex rounded-lg bg-neutral-100 p-2 sm:rounded-xl sm:p-2.5">
-                                            <PackageCheck size={15} className="text-neutral-600" />
+                                    <div className="rounded-xl border border-border bg-white p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4">
+                                        <div className="mb-2 inline-flex rounded-lg bg-muted p-2 sm:rounded-xl sm:p-2.5">
+                                            <PackageCheck size={15} className="text-muted-foreground" />
                                         </div>
-                                        <h4 className="text-xs font-semibold text-neutral-900 sm:text-sm">
+                                        <h4 className="text-xs font-semibold text-foreground sm:text-sm">
                                             Secure Packing
                                         </h4>
-                                        <p className="mt-0.5 text-[11px] text-neutral-500 sm:text-xs">
+                                        <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
                                             Bubble-wrapped
                                         </p>
                                     </div>
-                                    <div className="rounded-xl border border-neutral-200 bg-white p-3 transition hover:border-neutral-300 hover:shadow-sm sm:rounded-2xl sm:p-4">
-                                        <div className="mb-2 inline-flex rounded-lg bg-neutral-100 p-2 sm:rounded-xl sm:p-2.5">
-                                            <Sparkles size={15} className="text-neutral-600" />
+                                    <div className="rounded-xl border border-border bg-white p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4">
+                                        <div className="mb-2 inline-flex rounded-lg bg-muted p-2 sm:rounded-xl sm:p-2.5">
+                                            <Sparkles size={15} className="text-muted-foreground" />
                                         </div>
-                                        <h4 className="text-xs font-semibold text-neutral-900 sm:text-sm">
+                                        <h4 className="text-xs font-semibold text-foreground sm:text-sm">
                                             Quality Check
                                         </h4>
-                                        <p className="mt-0.5 text-[11px] text-neutral-500 sm:text-xs">
+                                        <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
                                             Inspected before ship
                                         </p>
                                     </div>
@@ -307,7 +307,7 @@ export default function ShippingSection({
 
             {/* ── Collapsed State Summary ──────────────────────────────────────── */}
             {!open && !disabled && selectedMethod && (
-                <div className="border-t border-neutral-100 px-4 py-4 sm:px-6 sm:py-5">
+                <div className="border-t border-border px-4 py-4 sm:px-6 sm:py-5">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-start gap-3">
                             <div className="mt-0.5 rounded-full bg-emerald-100 p-1.5 text-emerald-600 sm:p-2">
@@ -317,10 +317,10 @@ export default function ShippingSection({
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 sm:text-[11px]">
                                     Shipping Method
                                 </p>
-                                <h4 className="mt-0.5 text-sm font-semibold text-neutral-900 sm:text-base">
+                                <h4 className="mt-0.5 text-sm font-semibold text-foreground sm:text-base">
                                     {selectedMethod.name}
                                 </h4>
-                                <p className="text-xs text-neutral-500 sm:text-sm">
+                                <p className="text-xs text-muted-foreground sm:text-sm">
                                     {selectedMethod.eta}
                                     {selectedMethod.price === 0
                                         ? " • Free"
@@ -334,7 +334,7 @@ export default function ShippingSection({
                             onClick={onOpen}
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
-                            className="shrink-0 rounded-xl border border-neutral-200 px-3 py-1.5 text-xs font-medium transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white sm:px-4 sm:py-2 sm:text-sm"
+                            className="shrink-0 rounded-xl border border-border px-3 py-1.5 text-xs font-medium transition hover:border-foreground hover:bg-foreground hover:text-white sm:px-4 sm:py-2 sm:text-sm"
                         >
                             Change
                         </motion.button>

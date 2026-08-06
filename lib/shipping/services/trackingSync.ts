@@ -4,7 +4,8 @@ import { updateShipment } from "@/lib/services/orderService";
 export async function syncTracking(orderId: string, awb: string) {
   const response = await getTracking(awb);
 
-  const latest = response.tracking_data?.shipment_track?.[0];
+  const track = response.tracking_data?.shipment_track ?? [];
+  const latest = track[0];
 
   if (!latest) {
     return null;
@@ -14,5 +15,6 @@ export async function syncTracking(orderId: string, awb: string) {
     shipmentStatus: latest.current_status,
   });
 
-  return latest;
+  // Return the full tracking array (newest first) so the UI can render a timeline.
+  return track;
 }

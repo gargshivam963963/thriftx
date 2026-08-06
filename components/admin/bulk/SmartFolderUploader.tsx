@@ -106,7 +106,7 @@ export default function SmartFolderUploader({
                         ? "border-emerald-300 bg-emerald-50/50 dark:border-emerald-700 dark:bg-emerald-900/10"
                         : error
                             ? "border-red-300 bg-red-50/50 dark:border-red-700 dark:bg-red-900/10"
-                            : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500"
+                            : "border-border hover:border-foreground dark:border-border dark:hover:border-border"
                     }`}
             >
                 <input
@@ -124,10 +124,10 @@ export default function SmartFolderUploader({
                             <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent dark:border-emerald-400" />
                         </div>
                         <div className="text-center">
-                            <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                            <p className="text-sm font-semibold text-muted-foreground">
                                 Processing images...
                             </p>
-                            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                            <p className="mt-0.5 text-xs text-muted-foreground">
                                 Sorting by capture time &amp; detecting labels
                             </p>
                         </div>
@@ -142,10 +142,10 @@ export default function SmartFolderUploader({
                                 />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                                <p className="text-sm font-semibold text-foreground">
                                     {products.length} product{products.length !== 1 ? "s" : ""} detected
                                 </p>
-                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                <p className="text-xs text-muted-foreground">
                                     {totalImages} images &middot; Drag to reorder if needed
                                 </p>
                             </div>
@@ -156,7 +156,7 @@ export default function SmartFolderUploader({
                                     e.stopPropagation();
                                     onClear();
                                 }}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-neutral-200 hover:text-neutral-600 dark:hover:bg-neutral-700 dark:hover:text-neutral-300"
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted dark:hover:text-muted-foreground"
                             >
                                 <X size={14} />
                             </button>
@@ -187,7 +187,7 @@ export default function SmartFolderUploader({
                             <button
                                 type="button"
                                 onClick={() => inputRef.current?.click()}
-                                className="flex items-center gap-1.5 rounded-lg bg-neutral-100 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                                className="flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted dark:bg-card dark:text-muted-foreground dark:hover:bg-muted"
                             >
                                 <Upload size={12} />
                                 Re-upload
@@ -200,10 +200,10 @@ export default function SmartFolderUploader({
                             <Sparkles size={24} className="text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div className="text-center">
-                            <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                            <p className="text-sm font-semibold text-muted-foreground">
                                 Smart Upload — Drop your product folders
                             </p>
-                            <p className="mt-0.5 max-w-sm text-xs text-neutral-500 dark:text-neutral-400">
+                            <p className="mt-0.5 max-w-sm text-xs text-muted-foreground">
                                 Each subfolder = 1 product. Images auto-sorted by capture time
                                 and labeled (Front, Back, Brand Tag, Size Tag, Fabric, Defect).
                             </p>
@@ -214,14 +214,14 @@ export default function SmartFolderUploader({
                                 {error}
                             </div>
                         )}
-                        <div className="flex flex-wrap justify-center gap-2 text-[10px] text-neutral-400 dark:text-neutral-500">
-                            <span className="rounded bg-neutral-100 px-2 py-1 dark:bg-neutral-800">
+                        <div className="flex flex-wrap justify-center gap-2 text-badge text-muted-foreground">
+                            <span className="rounded bg-muted px-2 py-1 dark:bg-card">
                                 JPG • PNG • WEBP
                             </span>
-                            <span className="rounded bg-neutral-100 px-2 py-1 dark:bg-neutral-800">
+                            <span className="rounded bg-muted px-2 py-1 dark:bg-card">
                                 iPhone/WhatsApp
                             </span>
-                            <span className="rounded bg-neutral-100 px-2 py-1 dark:bg-neutral-800">
+                            <span className="rounded bg-muted px-2 py-1 dark:bg-card">
                                 No renaming needed
                             </span>
                         </div>
@@ -241,24 +241,24 @@ export default function SmartFolderUploader({
 
             {/* Product List with per-product reorder grids */}
             {hasContent && (
-                <div className="rounded-2xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
+                <div className="rounded-2xl border border-border bg-white dark:border-border dark:bg-foreground">
                     <button
                         type="button"
                         onClick={() => setExpanded(!expanded)}
                         className="flex w-full items-center justify-between px-4 py-3 text-left"
                     >
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                            <span className="text-sm font-semibold text-foreground">
                                 Product Images
                             </span>
-                            <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground dark:bg-card dark:text-muted-foreground">
                                 {products.length}
                             </span>
                         </div>
                         {expanded ? (
-                            <ChevronUp size={16} className="text-neutral-400" />
+                            <ChevronUp size={16} className="text-muted-foreground" />
                         ) : (
-                            <ChevronDown size={16} className="text-neutral-400" />
+                            <ChevronDown size={16} className="text-muted-foreground" />
                         )}
                     </button>
 
@@ -268,9 +268,9 @@ export default function SmartFolderUploader({
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: "auto", opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className="overflow-hidden border-t border-neutral-100 dark:border-neutral-800"
+                                className="overflow-hidden border-t border-border"
                             >
-                                <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                                <div className="divide-y divide-border">
                                     {products.map((product) => {
                                         const reorderableImages: ReorderableImage[] =
                                             product.imageFiles.map((file, i) => ({
@@ -297,14 +297,14 @@ export default function SmartFolderUploader({
                                                     }
                                                     className="flex w-full items-center gap-3 text-left"
                                                 >
-                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-xs font-bold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-bold text-muted-foreground dark:bg-card dark:text-muted-foreground">
                                                         {product.imageFiles.length}
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                                                        <p className="text-sm font-semibold text-foreground">
                                                             {product.title || product.sku}
                                                         </p>
-                                                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                                        <p className="text-xs text-muted-foreground">
                                                             {reorderableImages.length} image
                                                             {reorderableImages.length !== 1 ? "s" : ""}
                                                             {hasErrors && (

@@ -28,6 +28,24 @@ const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID || "";
 const wishlistCollectionId =
   process.env.NEXT_PUBLIC_APPWRITE_WISHLIST_COLLECTION_ID || "";
 
+const couponsCollectionId =
+  process.env.NEXT_PUBLIC_APPWRITE_COUPONS_COLLECTION_ID || "";
+
+const offersCollectionId =
+  process.env.NEXT_PUBLIC_APPWRITE_OFFERS_COLLECTION_ID || "";
+
+const announcementsCollectionId =
+  process.env.NEXT_PUBLIC_APPWRITE_ANNOUNCEMENTS_COLLECTION_ID || "";
+
+const salesCollectionId =
+  process.env.NEXT_PUBLIC_APPWRITE_SALES_COLLECTION_ID || "";
+
+const referralsCollectionId =
+  process.env.NEXT_PUBLIC_APPWRITE_REFERRALS_COLLECTION_ID || "";
+
+const creditsCollectionId =
+  process.env.NEXT_PUBLIC_APPWRITE_CREDITS_COLLECTION_ID || "";
+
 const client = new Client();
 
 const appwriteEndpointConfigured = Boolean(endpoint && project);
@@ -85,3 +103,15 @@ export function getFileViewUrl(fileId: string) {
 }
 
 export const APPWRITE_WISHLIST_COLLECTION_ID = wishlistCollectionId;
+
+export const APPWRITE_COUPONS_COLLECTION_ID = couponsCollectionId;
+
+export const APPWRITE_OFFERS_COLLECTION_ID = offersCollectionId;
+
+export const APPWRITE_ANNOUNCEMENTS_COLLECTION_ID = announcementsCollectionId;
+
+export const APPWRITE_SALES_COLLECTION_ID = salesCollectionId;
+
+export const APPWRITE_REFERRALS_COLLECTION_ID = referralsCollectionId;
+
+export const APPWRITE_CREDITS_COLLECTION_ID = creditsCollectionId;

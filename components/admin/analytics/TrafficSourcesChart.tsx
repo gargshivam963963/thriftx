@@ -23,7 +23,7 @@ const SOURCE_ICONS: Record<string, React.ReactNode> = {
 };
 
 const SOURCE_COLORS: Record<string, string> = {
-    direct: "bg-neutral-500",
+    direct: "bg-muted",
     instagram: "bg-pink-500",
     google: "bg-blue-500",
     facebook: "bg-blue-600",
@@ -48,11 +48,11 @@ export default function TrafficSourcesChart({
 }) {
     if (loading) {
         return (
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
-                <div className="h-5 w-32 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700" />
+            <div className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground">
+                <div className="h-5 w-32 animate-pulse rounded bg-muted" />
                 <div className="mt-4 space-y-3">
                     {[1, 2, 3, 4, 5].map((i) => (
-                        <div key={i} className="h-8 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800" />
+                        <div key={i} className="h-8 animate-pulse rounded bg-muted" />
                     ))}
                 </div>
             </div>
@@ -61,9 +61,9 @@ export default function TrafficSourcesChart({
 
     if (!data || data.length === 0) {
         return (
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 text-center dark:border-neutral-700 dark:bg-neutral-900">
-                <Globe size={24} className="mx-auto text-neutral-300 dark:text-neutral-600" />
-                <p className="mt-2 text-sm text-neutral-500">No traffic data yet</p>
+            <div className="rounded-xl border border-border bg-white p-5 text-center dark:border-border dark:bg-foreground">
+                <Globe size={24} className="mx-auto text-muted-foreground dark:text-muted-foreground" />
+                <p className="mt-2 text-sm text-muted-foreground">No traffic data yet</p>
             </div>
         );
     }
@@ -74,9 +74,9 @@ export default function TrafficSourcesChart({
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground"
         >
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Traffic Sources
             </h3>
 
@@ -85,28 +85,28 @@ export default function TrafficSourcesChart({
                     <div key={source.source} className="group">
                         <div className="mb-1 flex items-center justify-between text-xs">
                             <div className="flex items-center gap-2">
-                                <span className="text-neutral-400">
+                                <span className="text-muted-foreground">
                                     {SOURCE_ICONS[source.source] || <Link2 size={14} />}
                                 </span>
-                                <span className="font-medium capitalize text-neutral-700 dark:text-neutral-300">
+                                <span className="font-medium capitalize text-muted-foreground">
                                     {source.source}
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="font-semibold text-neutral-900 dark:text-white">
+                                <span className="font-semibold text-foreground dark:text-white">
                                     {source.visits.toLocaleString()}
                                 </span>
-                                <span className="w-8 text-right text-neutral-400">
+                                <span className="w-8 text-right text-muted-foreground">
                                     {source.percentage}%
                                 </span>
                             </div>
                         </div>
-                        <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+                        <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                             <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${(source.visits / maxVisits) * 100}%` }}
                                 transition={{ duration: 0.6, ease: "easeOut" }}
-                                className={`h-full rounded-full ${SOURCE_COLORS[source.source] || "bg-neutral-400"}`}
+                                className={`h-full rounded-full ${SOURCE_COLORS[source.source] || "bg-muted-foreground"}`}
                             />
                         </div>
                     </div>

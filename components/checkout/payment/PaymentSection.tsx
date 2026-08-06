@@ -41,15 +41,15 @@ function TrustBadge({
     return (
         <motion.div
             whileHover={{ y: -2 }}
-            className="rounded-xl border border-neutral-200 bg-white p-3 transition hover:border-neutral-300 hover:shadow-sm sm:rounded-2xl sm:p-4"
+            className="rounded-xl border border-border bg-white p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4"
         >
-            <div className="mb-2 inline-flex rounded-lg bg-neutral-100 p-2 sm:rounded-xl sm:p-2.5">
+            <div className="mb-2 inline-flex rounded-lg bg-muted p-2 sm:rounded-xl sm:p-2.5">
                 {icon}
             </div>
-            <h4 className="text-xs font-semibold text-neutral-900 sm:text-sm">
+            <h4 className="text-xs font-semibold text-foreground sm:text-sm">
                 {title}
             </h4>
-            <p className="mt-0.5 text-[11px] text-neutral-500 sm:text-xs">
+            <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
                 {subtitle}
             </p>
         </motion.div>
@@ -61,7 +61,7 @@ function TrustBadge({
 function IconBox({ children, selected }: { children: React.ReactNode; selected: boolean }) {
     return (
         <div
-            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-14 sm:w-14 sm:rounded-2xl ${selected ? "bg-white/10" : "bg-neutral-100"
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-14 sm:w-14 sm:rounded-2xl ${selected ? "bg-white/10" : "bg-muted"
                 }`}
         >
             {children}
@@ -101,8 +101,8 @@ function PaymentOption({
             whileTap={{ scale: 0.99 }}
             onClick={canPay ? onClick : undefined}
             className={`w-full overflow-hidden rounded-2xl border text-left transition-all sm:rounded-3xl ${selected
-                ? "border-neutral-900 bg-neutral-900 text-white shadow-xl"
-                : "border-neutral-200 bg-white hover:border-neutral-400 hover:shadow-md"
+                ? "border-foreground bg-foreground text-white shadow-xl"
+                : "border-border bg-white hover:border-foreground hover:shadow-md"
                 } ${!canPay ? "opacity-50" : "cursor-pointer"}`}
         >
             <div className="flex items-start justify-between p-4 sm:p-6">
@@ -125,7 +125,7 @@ function PaymentOption({
                         </div>
 
                         <p
-                            className={`mt-1.5 text-xs leading-5 sm:mt-2 sm:text-sm sm:leading-6 ${selected ? "text-neutral-300" : "text-neutral-500"
+                            className={`mt-1.5 text-xs leading-5 sm:mt-2 sm:text-sm sm:leading-6 ${selected ? "text-muted-foreground" : "text-muted-foreground"
                                 }`}
                         >
                             {description}
@@ -136,7 +136,7 @@ function PaymentOption({
                             {features.map((feature, i) => (
                                 <span
                                     key={i}
-                                    className={`inline-flex items-center gap-1 text-[11px] sm:text-xs ${selected ? "text-neutral-300" : "text-neutral-500"
+                                    className={`inline-flex items-center gap-1 text-[11px] sm:text-xs ${selected ? "text-muted-foreground" : "text-muted-foreground"
                                         }`}
                                 >
                                     <CheckCircle2
@@ -193,7 +193,7 @@ function PaymentOption({
                                 <Lock className="h-4 w-4" />
                             )
                         }
-                        className="rounded-xl bg-white text-neutral-900 shadow-lg hover:bg-neutral-100 sm:rounded-2xl"
+                        className="rounded-xl bg-white text-foreground shadow-lg hover:bg-muted sm:rounded-2xl"
                     >
                         {title.includes("COD")
                             ? "Place Order (Pay on Delivery)"
@@ -218,7 +218,7 @@ export default function PaymentSection({
         <motion.section
             layout
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className={`overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-3xl ${disabled ? "border-neutral-100 opacity-60" : "border-neutral-200"
+            className={`overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-3xl ${disabled ? "border-border opacity-60" : "border-border"
                 }`}
         >
             <button
@@ -230,22 +230,22 @@ export default function PaymentSection({
                 <div className="flex items-center gap-3 sm:gap-4">
                     <div
                         className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 sm:h-12 sm:w-12 sm:rounded-2xl ${open
-                            ? "bg-neutral-900 text-white shadow-lg shadow-neutral-900/20"
-                            : "bg-neutral-100 text-neutral-600"
+                            ? "bg-foreground text-white shadow-lg shadow-foreground/20"
+                            : "bg-muted text-muted-foreground"
                             }`}
                     >
                         <CreditCard size={18} className="sm:h-[20px] sm:w-[20px]" />
                     </div>
                     <div className="text-left">
                         <div className="flex items-center gap-2">
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 text-[10px] font-bold text-white sm:h-6 sm:w-6 sm:text-xs">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-white sm:h-6 sm:w-6 sm:text-xs">
                                 3
                             </span>
-                            <h2 className="text-sm font-semibold text-neutral-900 sm:text-base sm:text-lg">
+                            <h2 className="text-sm font-semibold text-foreground sm:text-base sm:text-lg">
                                 Payment
                             </h2>
                         </div>
-                        <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">
+                        <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
                             {disabled
                                 ? "Select shipping first"
                                 : selectedMethod === "cod"
@@ -255,11 +255,11 @@ export default function PaymentSection({
                     </div>
                 </div>
 
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
                     {open ? (
-                        <ChevronDown size={18} className="text-neutral-500" />
+                        <ChevronDown size={18} className="text-muted-foreground" />
                     ) : (
-                        <ChevronRight size={18} className="text-neutral-500" />
+                        <ChevronRight size={18} className="text-muted-foreground" />
                     )}
                 </div>
             </button>
@@ -272,7 +272,7 @@ export default function PaymentSection({
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden border-t border-neutral-100"
+                        className="overflow-hidden border-t border-border"
                     >
                         <div className="space-y-4 p-4 sm:p-6">
                             {/* COD */}
@@ -342,9 +342,9 @@ export default function PaymentSection({
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.2 }}
-                                className="flex items-center gap-2.5 rounded-xl bg-neutral-50 px-4 py-3 text-xs text-neutral-500 sm:rounded-2xl sm:text-sm"
+                                className="flex items-center gap-2.5 rounded-xl bg-subtle px-4 py-3 text-xs text-muted-foreground sm:rounded-2xl sm:text-sm"
                             >
-                                <Lock size={14} className="shrink-0 text-neutral-400" />
+                                <Lock size={14} className="shrink-0 text-muted-foreground" />
                                 <span>
                                     Your payment info is encrypted and processed securely by
                                     Razorpay. We never store card details.
@@ -356,7 +356,7 @@ export default function PaymentSection({
             </AnimatePresence>
 
             {!open && !disabled && (
-                <div className="border-t border-neutral-100 px-4 py-4 sm:px-6 sm:py-5">
+                <div className="border-t border-border px-4 py-4 sm:px-6 sm:py-5">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-start gap-3">
                             <div className="mt-0.5 rounded-full bg-emerald-100 p-1.5 text-emerald-600 sm:p-2">
@@ -369,12 +369,12 @@ export default function PaymentSection({
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 sm:text-[11px]">
                                     Payment Method
                                 </p>
-                                <h4 className="mt-0.5 text-sm font-semibold text-neutral-900 sm:text-base">
+                                <h4 className="mt-0.5 text-sm font-semibold text-foreground sm:text-base">
                                     {selectedMethod === "cod"
                                         ? "Cash on Delivery"
                                         : "Online Payment (Razorpay)"}
                                 </h4>
-                                <p className="text-xs text-neutral-500 sm:text-sm">
+                                <p className="text-xs text-muted-foreground sm:text-sm">
                                     {selectedMethod === "cod"
                                         ? "Pay cash at your doorstep"
                                         : "UPI • Cards • Net Banking • Wallets"}
@@ -387,7 +387,7 @@ export default function PaymentSection({
                             onClick={onOpen}
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
-                            className="shrink-0 rounded-xl border border-neutral-200 px-3 py-1.5 text-xs font-medium transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white sm:px-4 sm:py-2 sm:text-sm"
+                            className="shrink-0 rounded-xl border border-border px-3 py-1.5 text-xs font-medium transition hover:border-foreground hover:bg-foreground hover:text-white sm:px-4 sm:py-2 sm:text-sm"
                         >
                             Change
                         </motion.button>

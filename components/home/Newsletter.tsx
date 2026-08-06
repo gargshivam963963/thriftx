@@ -10,7 +10,7 @@ import { FadeUp } from "@/components/animations";
 
 export default function Newsletter() {
     return (
-        <section className="relative overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-800 py-24 dark:from-black dark:via-neutral-950 dark:to-neutral-900">
+        <section className="relative overflow-hidden bg-gradient-to-br from-foreground via-foreground to-muted-foreground py-24 dark:from-black dark:via-muted-foreground dark:to-foreground">
             {/* Decorative elements */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -left-40 -top-40 h-[400px] w-[400px] rounded-full bg-white/5 blur-3xl" />
@@ -28,7 +28,7 @@ export default function Newsletter() {
                         <h2 className="mt-6 text-h2 font-bold text-white">
                             Never Miss A Drop
                         </h2>
-                        <p className="mt-4 text-body text-neutral-400">
+                        <p className="mt-4 text-body text-muted-foreground">
                             Get notified whenever new premium thrift collections arrive.
                         </p>
 
@@ -36,20 +36,20 @@ export default function Newsletter() {
                             <Input
                                 type="email"
                                 placeholder="Enter your email"
-                                className="h-12 flex-1 border-white/10 bg-white/10 text-white placeholder:text-neutral-500 focus-visible:border-white/30 focus-visible:ring-white/10"
+                                className="h-12 flex-1 border-white/10 bg-white/10 text-white placeholder:text-muted-foreground focus-visible:border-white/30 focus-visible:ring-white/10"
                             />
                             <Button type="submit" size="lg" rightIcon={<ArrowRight />}>
                                 Subscribe
                             </Button>
                         </form>
 
-                        <p className="mt-4 text-sm text-neutral-500">
+                        <p className="mt-4 text-small text-muted-foreground">
                             No spam. Unsubscribe anytime.
                         </p>
 
                         <div className="mt-8">
                             <Link href="/shop">
-                                <Button variant="ghost" className="text-neutral-400 hover:text-white">
+                                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
                                     Continue Shopping
                                 </Button>
                             </Link>

@@ -23,8 +23,13 @@ export interface Order {
   orderId: string;
   status: string;
 
+  email?: string;
+
   subtotal: number;
   shipping: number;
+  discount?: number;
+  couponCode?: string;
+  creditUsed?: number;
   total: number;
 
   firstName: string;
@@ -33,6 +38,7 @@ export interface Order {
 
   address: string;
   city: string;
+  state?: string;
   postalCode: string;
   country: string;
 

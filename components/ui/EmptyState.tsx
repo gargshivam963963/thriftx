@@ -13,6 +13,7 @@ interface EmptyStateProps {
     secondaryActionLabel?: string;
     onSecondaryAction?: () => void;
     className?: string;
+    children?: React.ReactNode;
 }
 
 export default function EmptyState({
@@ -24,6 +25,7 @@ export default function EmptyState({
     secondaryActionLabel,
     onSecondaryAction,
     className,
+    children,
 }: EmptyStateProps) {
     return (
         <motion.div
@@ -31,22 +33,22 @@ export default function EmptyState({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
             className={cn(
-                "flex flex-col items-center justify-center rounded-3xl border border-neutral-200 bg-white px-6 py-14 text-center",
+                "flex flex-col items-center justify-center rounded-3xl border border-border bg-card px-6 py-14 text-center shadow-card",
                 className
             )}
         >
             {icon && (
-                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 text-neutral-700">
+                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
                     {icon}
                 </div>
             )}
 
-            <h2 className="text-2xl font-semibold tracking-tight">
+            <h2 className="text-heading-4 font-semibold tracking-tight text-foreground">
                 {title}
             </h2>
 
             {description && (
-                <p className="mt-3 max-w-md text-sm leading-6 text-neutral-500">
+                <p className="mt-3 max-w-md text-body text-muted-foreground">
                     {description}
                 </p>
             )}
@@ -69,6 +71,8 @@ export default function EmptyState({
                     )}
                 </div>
             )}
+
+            {children}
         </motion.div>
     );
 }

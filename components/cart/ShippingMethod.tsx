@@ -53,23 +53,23 @@ export default function ShippingMethod({
             transition={{
                 duration: 0.25,
             }}
-            className="overflow-hidden rounded-[30px] border border-neutral-200 bg-white shadow-sm"
+            className="overflow-hidden rounded-[30px] border border-border bg-card shadow-card"
         >
-            <div className="border-b border-neutral-200 px-6 py-5">
+            <div className="border-b border-border px-6 py-5">
 
                 <div className="flex items-center gap-3">
 
-                    <div className="rounded-2xl bg-neutral-100 p-3">
+                    <div className="rounded-2xl bg-muted p-3">
                         <Truck className="h-5 w-5" />
                     </div>
 
                     <div>
 
-                        <h2 className="font-serif text-xl font-semibold">
+                        <h2 className="font-display text-heading-4 font-semibold text-foreground">
                             Delivery Method
                         </h2>
 
-                        <p className="mt-1 text-sm text-neutral-500">
+                        <p className="mt-1 text-body-sm text-muted-foreground">
                             Select your preferred shipping option.
                         </p>
 
@@ -95,8 +95,8 @@ export default function ShippingMethod({
                                 onChange(method.id)
                             }
                             className={`w-full rounded-2xl border p-5 text-left transition-all duration-200 ${selected
-                                ? 'border-black bg-black text-white'
-                                : 'border-neutral-200 hover:border-black'
+                                ? 'border-foreground bg-foreground text-background'
+                                : 'border-border hover:border-foreground'
                                 }`}
                         >
                             <div className="flex items-start justify-between">
@@ -105,8 +105,8 @@ export default function ShippingMethod({
 
                                     <div
                                         className={`rounded-2xl p-3 ${selected
-                                            ? 'bg-white text-black'
-                                            : 'bg-neutral-100'
+                                            ? 'bg-background text-foreground'
+                                            : 'bg-muted'
                                             }`}
                                     >
                                         <Icon size={20} />
@@ -114,14 +114,14 @@ export default function ShippingMethod({
 
                                     <div>
 
-                                        <h3 className="font-semibold">
+                                        <h3 className="font-semibold text-foreground">
                                             {method.title}
                                         </h3>
 
                                         <p
-                                            className={`mt-1 text-sm ${selected
-                                                ? 'text-white/70'
-                                                : 'text-neutral-500'
+                                            className={`mt-1 text-body-sm ${selected
+                                                ? 'text-background/70'
+                                                : 'text-muted-foreground'
                                                 }`}
                                         >
                                             {method.subtitle}
@@ -131,7 +131,7 @@ export default function ShippingMethod({
 
                                 </div>
 
-                                <span className="text-lg font-bold">
+                                <span className="text-body-lg font-bold text-foreground">
                                     {method.price}
                                 </span>
 
@@ -140,22 +140,22 @@ export default function ShippingMethod({
                     );
                 })}
 
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                <div className="rounded-2xl border border-warning-bg bg-warning-bg p-5">
 
                     <div className="flex items-start gap-3">
 
                         <Clock3
                             size={18}
-                            className="mt-0.5 text-amber-700"
+                            className="mt-0.5 text-warning-foreground"
                         />
 
                         <div>
 
-                            <p className="font-semibold text-amber-700">
+                            <p className="font-semibold text-warning-foreground">
                                 Estimated Delivery
                             </p>
 
-                            <p className="mt-1 text-sm leading-6 text-amber-700/80">
+                            <p className="mt-1 text-body-sm leading-6 text-warning-foreground/80">
                                 Delivery time depends on your city and courier availability.
                             </p>
 
@@ -165,22 +165,22 @@ export default function ShippingMethod({
 
                 </div>
 
-                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-5">
+                <div className="rounded-2xl border border-border bg-muted p-5">
 
                     <div className="flex items-start gap-3">
 
                         <MapPin
                             size={18}
-                            className="mt-0.5"
+                            className="mt-0.5 text-muted-foreground"
                         />
 
                         <div>
 
-                            <p className="font-semibold">
+                            <p className="font-semibold text-foreground">
                                 Shipping Address
                             </p>
 
-                            <p className="mt-1 text-sm leading-6 text-neutral-500">
+                            <p className="mt-1 text-body-sm leading-6 text-muted-foreground">
                                 Your selected delivery address will be used for this order.
                             </p>
 

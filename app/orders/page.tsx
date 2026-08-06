@@ -6,18 +6,16 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
     Package,
-    Search,
     ArrowRight,
     ShoppingBag,
-    Sparkles,
     AlertCircle,
-    RefreshCw,
     PackageOpen,
     Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import PremiumImage from "@/components/ui/PremiumImage";
+import EmptyState from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
 import { getUserOrders } from "@/lib/services/orderService";
@@ -44,46 +42,46 @@ function getStatusStyle(status: string) {
     > = {
         "Pending (COD)": {
             label: "Pending",
-            bg: "bg-amber-50",
-            text: "text-amber-700",
-            dot: "bg-amber-400",
+            bg: "bg-warning-bg",
+            text: "text-warning-foreground",
+            dot: "bg-warning",
         },
         Pending: {
             label: "Pending",
-            bg: "bg-amber-50",
-            text: "text-amber-700",
-            dot: "bg-amber-400",
+            bg: "bg-warning-bg",
+            text: "text-warning-foreground",
+            dot: "bg-warning",
         },
         Processing: {
             label: "Processing",
-            bg: "bg-blue-50",
-            text: "text-blue-700",
-            dot: "bg-blue-400",
+            bg: "bg-info-bg",
+            text: "text-info-foreground",
+            dot: "bg-info",
         },
         Shipped: {
             label: "Shipped",
-            bg: "bg-violet-50",
-            text: "text-violet-700",
-            dot: "bg-violet-400",
+            bg: "bg-info-bg",
+            text: "text-info-foreground",
+            dot: "bg-info",
         },
         Delivered: {
             label: "Delivered",
-            bg: "bg-emerald-50",
-            text: "text-emerald-700",
-            dot: "bg-emerald-400",
+            bg: "bg-success-bg",
+            text: "text-success-foreground",
+            dot: "bg-success",
         },
         Cancelled: {
             label: "Cancelled",
-            bg: "bg-red-50",
-            text: "text-red-700",
-            dot: "bg-red-400",
+            bg: "bg-error-bg",
+            text: "text-error-foreground",
+            dot: "bg-error",
         },
     };
     return styles[status] ?? {
         label: status,
-        bg: "bg-zinc-50",
-        text: "text-zinc-700",
-        dot: "bg-zinc-400",
+        bg: "bg-muted",
+        text: "text-muted-foreground",
+        dot: "bg-muted-foreground",
     };
 }
 
@@ -110,7 +108,7 @@ function OrdersSkeleton() {
             {[1, 2, 3].map((i) => (
                 <div
                     key={i}
-                    className="h-44 animate-pulse rounded-3xl bg-zinc-100 sm:h-48"
+                    className="h-44 animate-pulse rounded-3xl bg-muted sm:h-48"
                 />
             ))}
         </div>
@@ -121,21 +119,11 @@ function OrdersSkeleton() {
 
 function OrdersEmpty() {
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center rounded-3xl border border-dashed border-zinc-200 bg-zinc-50/50 p-12 text-center"
+        <EmptyState
+            icon={<PackageOpen size={28} className="text-muted-foreground" />}
+            title="No orders yet"
+            description="Your order history will appear here once you make your first purchase."
         >
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100">
-                <PackageOpen size={28} className="text-zinc-400" />
-            </div>
-            <h2 className="mt-5 font-serif text-xl font-semibold text-zinc-900">
-                No orders yet
-            </h2>
-            <p className="mt-2 max-w-sm text-sm leading-6 text-zinc-500">
-                Your order history will appear here once you make your first
-                purchase.
-            </p>
             <Link href="/shop">
                 <Button
                     className="mt-6 rounded-xl"
@@ -145,7 +133,7 @@ function OrdersEmpty() {
                     Start Shopping
                 </Button>
             </Link>
-        </motion.div>
+        </EmptyState>
     );
 }
 
@@ -153,25 +141,14 @@ function OrdersEmpty() {
 
 function OrdersError({ onRetry }: { onRetry: () => void }) {
     return (
-        <div className="flex flex-col items-center rounded-3xl border border-red-200 bg-red-50/50 p-12 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-                <AlertCircle size={28} className="text-red-400" />
-            </div>
-            <h2 className="mt-5 font-serif text-xl font-semibold text-red-900">
-                Failed to load orders
-            </h2>
-            <p className="mt-2 text-sm text-red-600">
-                Something went wrong. Please try again.
-            </p>
-            <Button
-                variant="outline"
-                className="mt-6 rounded-xl"
-                leftIcon={<RefreshCw size={16} />}
-                onClick={onRetry}
-            >
-                Try Again
-            </Button>
-        </div>
+        <EmptyState
+            className="border-error-bg bg-error-bg"
+            icon={<AlertCircle size={28} className="text-error" />}
+            title="Failed to load orders"
+            description="Something went wrong. Please try again."
+            actionLabel="Try Again"
+            onAction={onRetry}
+        />
     );
 }
 
@@ -210,7 +187,7 @@ export default function OrdersPage() {
     }, [authLoading, user, router]);
 
     return (
-        <main className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50">
+        <main className="min-h-screen bg-background">
             <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10 lg:py-12">
                 {/* Header */}
                 <motion.div
@@ -219,21 +196,21 @@ export default function OrdersPage() {
                     className="mb-6 sm:mb-8"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-white shadow-lg shadow-zinc-900/20">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-foreground text-background shadow-lg">
                             <Package size={22} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+                            <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                                 Your Orders
                             </p>
-                            <h1 className="font-serif text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+                            <h1 className="font-display text-heading-2 font-bold tracking-tight text-foreground">
                                 Order History
                             </h1>
                         </div>
                     </div>
 
                     {!loading && !error && orders.length > 0 && (
-                        <p className="mt-2 text-sm text-zinc-500">
+                        <p className="mt-2 text-body-sm text-muted-foreground">
                             {orders.length}{" "}
                             {orders.length === 1 ? "order" : "orders"} placed
                         </p>
@@ -263,22 +240,22 @@ export default function OrdersPage() {
                                         delay: index * 0.06,
                                         duration: 0.3,
                                     }}
-                                    className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-md"
+                                    className="overflow-hidden rounded-3xl border border-border bg-card shadow-card transition-all hover:shadow-modal"
                                 >
                                     {/* Header */}
-                                    <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4 sm:px-6">
+                                    <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
                                                 <Package
                                                     size={18}
-                                                    className="text-zinc-500"
+                                                    className="text-muted-foreground"
                                                 />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-400">
+                                                <p className="text-caption font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                                                     Order Placed
                                                 </p>
-                                                <p className="text-sm font-medium text-zinc-900">
+                                                <p className="text-body-sm font-medium text-foreground">
                                                     {formatDate(
                                                         order.$createdAt,
                                                     )}
@@ -287,7 +264,7 @@ export default function OrdersPage() {
                                         </div>
 
                                         <span
-                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${status.bg} ${status.text}`}
+                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-small font-medium ${status.bg} ${status.text}`}
                                         >
                                             <span
                                                 className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
@@ -301,7 +278,7 @@ export default function OrdersPage() {
                                         <div className="flex items-start gap-4">
                                             {/* Product thumbnail */}
                                             {firstProduct && (
-                                                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-zinc-100 sm:h-20 sm:w-20">
+                                                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted sm:h-20 sm:w-20">
                                                     <PremiumImage
                                                         src={firstProduct.image || "/images/placeholder.jpg"}
                                                         alt={firstProduct.title}
@@ -314,19 +291,19 @@ export default function OrdersPage() {
                                             )}
 
                                             <div className="min-w-0 flex-1">
-                                                <h3 className="line-clamp-1 text-sm font-semibold text-zinc-900 sm:text-base">
+                                                <h3 className="line-clamp-1 text-body-sm font-semibold text-foreground sm:text-body">
                                                     {firstProduct?.title ||
                                                         "Order items"}
                                                 </h3>
                                                 {firstProduct && (
-                                                    <p className="mt-0.5 text-xs text-zinc-500">
+                                                    <p className="mt-0.5 text-small text-muted-foreground">
                                                         Size {firstProduct.size}{" "}
                                                         • Qty{" "}
                                                         {firstProduct.quantity}
                                                     </p>
                                                 )}
                                                 {products.length > 1 && (
-                                                    <p className="mt-1 text-xs text-zinc-400">
+                                                    <p className="mt-1 text-small text-muted-foreground">
                                                         +{products.length - 1}{" "}
                                                         more{" "}
                                                         {products.length - 1 === 1
@@ -335,13 +312,13 @@ export default function OrdersPage() {
                                                     </p>
                                                 )}
                                                 <div className="mt-2 flex items-center gap-2">
-                                                    <span className="text-xs text-zinc-400">
+                                                    <span className="text-small text-muted-foreground">
                                                         {order.city}
                                                     </span>
-                                                    <span className="text-zinc-300">
+                                                    <span className="text-muted-foreground">
                                                         •
                                                     </span>
-                                                    <span className="font-serif text-base font-bold text-zinc-900">
+                                                    <span className="font-display text-body font-bold text-foreground">
                                                         {formatCurrency(
                                                             order.total,
                                                         )}
@@ -352,9 +329,9 @@ export default function OrdersPage() {
                                     </div>
 
                                     {/* Footer */}
-                                    <div className="border-t border-zinc-100 bg-zinc-50/50 px-5 py-3 sm:px-6">
+                                    <div className="border-t border-border bg-muted px-5 py-3 sm:px-6">
                                         <div className="flex items-center justify-between gap-3">
-                                            <div className="flex items-center gap-2 text-xs text-zinc-500">
+                                            <div className="flex items-center gap-2 text-small text-muted-foreground">
                                                 <Clock size={12} />
                                                 <span>
                                                     {order.paymentMethod ===
@@ -373,7 +350,7 @@ export default function OrdersPage() {
                                                     rightIcon={
                                                         <ArrowRight size={14} />
                                                     }
-                                                    className="rounded-xl text-xs"
+                                                    className="rounded-xl text-small"
                                                 >
                                                     Track Order
                                                 </Button>

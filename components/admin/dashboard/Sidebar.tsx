@@ -12,6 +12,10 @@ import {
     LogOut,
     ArrowLeft,
     CloudUpload,
+    Ticket,
+    Gift,
+    Megaphone,
+    Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
@@ -58,6 +62,31 @@ const NAV_ITEMS = [
             },
         ],
     },
+    {
+        section: "Marketing",
+        items: [
+            {
+                label: "Coupons",
+                href: "/admin/coupons",
+                icon: Ticket,
+            },
+            {
+                label: "Offers",
+                href: "/admin/offers",
+                icon: Gift,
+            },
+            {
+                label: "Announcements",
+                href: "/admin/announcements",
+                icon: Megaphone,
+            },
+            {
+                label: "Sales",
+                href: "/admin/sales",
+                icon: Clock,
+            },
+        ],
+    },
 ];
 
 export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
@@ -67,15 +96,15 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
     const sidebarContent = (
         <div className="flex h-full flex-col">
             {/* Logo */}
-            <div className="flex h-16 items-center gap-3 border-b border-[var(--color-border)] px-6">
+            <div className="flex h-16 items-center gap-3 border-b border-border px-6">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-900 to-zinc-700 text-sm font-bold text-white shadow-lg dark:from-white dark:to-zinc-300 dark:text-black">
                     T
                 </div>
                 <div>
-                    <h1 className="text-base font-bold tracking-tight text-[var(--color-text)]">
+                    <h1 className="text-base font-bold tracking-tight text-foreground">
                         THRIFTX
                     </h1>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                         Admin Panel
                     </p>
                 </div>
@@ -85,7 +114,7 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
             <nav className="flex-1 overflow-y-auto px-4 py-6">
                 {NAV_ITEMS.map((section) => (
                     <div key={section.section} className="mb-6">
-                        <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                        <p className="mb-2 px-2 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                             {section.section}
                         </p>
                         <div className="space-y-1">
@@ -101,8 +130,8 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                                         className={cn(
                                             "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                                             isActive
-                                                ? "bg-[var(--color-accent)] text-white shadow-md dark:bg-white dark:text-black"
-                                                : "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text)]",
+                                                ? "bg-accent text-white shadow-md dark:bg-white dark:text-black"
+                                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
                                         )}
                                     >
                                         <Icon size={18} />
@@ -122,14 +151,14 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
             </nav>
 
             {/* Bottom */}
-            <div className="border-t border-[var(--color-border)] p-4 space-y-2">
+            <div className="border-t border-border p-4 space-y-2">
                 <div className="flex items-center justify-between px-2">
                     <ThemeToggle size="sm" />
                 </div>
 
                 <Link
                     href="/"
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-all hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text)]"
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
                 >
                     <ArrowLeft size={18} />
                     <span>Back to Store</span>
@@ -152,14 +181,14 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
     return (
         <>
             {/* Desktop sidebar */}
-            <aside className="fixed left-0 top-0 z-50 hidden h-full w-[280px] border-r border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-xl lg:block">
+            <aside className="fixed left-0 top-0 z-50 hidden h-full w-[280px] border-r border-border bg-card shadow-xl lg:block">
                 {sidebarContent}
             </aside>
 
             {/* Mobile sidebar */}
             <aside
                 className={cn(
-                    "fixed left-0 top-0 z-50 h-full w-[280px] border-r border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xl transition-transform duration-300 lg:hidden",
+                    "fixed left-0 top-0 z-50 h-full w-[280px] border-r border-border bg-card shadow-2xl transition-transform duration-300 lg:hidden",
                     isOpen ? "translate-x-0" : "-translate-x-full",
                 )}
             >

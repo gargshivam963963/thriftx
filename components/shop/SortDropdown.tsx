@@ -1,7 +1,8 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { useState, useRef, useEffect } from "react";
+import { Button } from '@/components/ui/button';
+import { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ArrowUpDown, Check, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -80,9 +81,11 @@ export default function SortDropdown({ defaultValue }: { defaultValue: string })
                                         key={opt.value}
                                         role="option"
                                         aria-selected={active}
+                                        variant={active ? "primary" : "ghost"}
+                                        size="sm"
                                         onClick={() => handleSelect(opt.value)}
                                         className={cn(
-                                            "flex w-full items-center justify-between rounded-xl px-4 py-3 text-body-sm font-medium transition-all duration-150",
+                                            "flex w-full items-center justify-between px-4 py-3 text-body-sm font-medium transition-all duration-150",
                                             active
                                                 ? "bg-foreground text-background"
                                                 : "text-foreground hover:bg-muted",

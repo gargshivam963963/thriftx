@@ -20,21 +20,21 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 <select
                     ref={ref}
                     className={cn(
-                        // Base
+                        // Base — matches Input height (h-10) and tokens
                         "flex w-full appearance-none rounded-xl border border-border bg-card pr-10",
-                        "h-11 px-4 py-2.5",
+                        "h-10 px-3.5 py-2",
                         "text-sm font-medium text-foreground",
                         // Border
                         "border-border",
                         error && "border-red-400",
                         // Focus
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20 focus-visible:border-border",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/10 focus-visible:border-foreground",
                         // Disabled
                         "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-subtle",
                         // Dark mode
-                        "bg-foreground dark:border-border",
-                        "dark:focus-visible:ring-white/20 dark:focus-visible:border-foreground",
-                        "dark:disabled:bg-foreground",
+                        "dark:border-border dark:bg-card dark:text-foreground",
+                        "dark:focus-visible:ring-foreground/20 dark:focus-visible:border-foreground",
+                        "dark:disabled:bg-subtle",
                         // Allow className to override height & padding
                         className,
                     )}

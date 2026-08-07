@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import Image from "next/image";
+import { Button } from '@/components/ui/button'; import Image from "next/image";
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
 import { GripVertical, Trash2, Star, Expand } from "lucide-react";
@@ -50,6 +50,7 @@ export default function SortableImage({
             <Button
                 onClick={onPreview}
                 type="button"
+                variant="ghost"
                 className="relative block aspect-square w-full overflow-hidden rounded-t-xl"
             >
                 <Image
@@ -87,6 +88,8 @@ export default function SortableImage({
                         type="button"
                         {...listeners}
                         {...attributes}
+                        variant="ghost"
+                        size="iconSm"
                         className="cursor-grab touch-none rounded-md p-1 text-muted-foreground transition hover:bg-muted hover:text-muted-foreground active:cursor-grabbing dark:hover:bg-muted dark:hover:text-muted-foreground"
                         title="Drag to reorder"
                     >
@@ -97,6 +100,8 @@ export default function SortableImage({
                     <Button
                         type="button"
                         onClick={onDelete}
+                        variant="ghost"
+                        size="iconSm"
                         className="rounded-md p-1 text-red-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                         title="Delete image"
                     >

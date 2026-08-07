@@ -421,6 +421,7 @@ export default function ShopContent({
                                     )}
                                     <Button
                                         type="button"
+                                        variant="ghost"
                                         onClick={() => {
                                             setSearchInput("");
                                             window.location.href = baseUrl;
@@ -593,6 +594,7 @@ function Chip({ label, onClick }: { label: string; onClick: () => void }) {
     return (
         <Button
             type="button"
+            variant="outline"
             onClick={onClick}
             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-small font-medium text-foreground shadow-card transition hover:border-foreground"
         >

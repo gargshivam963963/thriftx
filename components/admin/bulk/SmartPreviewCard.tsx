@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { useState, useMemo } from "react";
+import { Button } from '@/components/ui/button'; import { useState, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -93,7 +93,7 @@ export default function SmartPreviewCard({
             transition={{ delay: index * 0.03 }}
             className={`overflow-hidden rounded-2xl border transition-all ${hasErrors
                 ? "border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950/10"
-                : "border-border bg-white dark:border-border dark:bg-foreground"
+                : "border-border bg-card dark:border-border"
                 }`}
         >
             {/* Header */}

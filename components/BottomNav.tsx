@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from '@/components/ui/button';import Link from "next/link";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home,
@@ -15,11 +15,12 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
+import { Button } from "@/components/ui/button";
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, mounted } = useTheme();
 
   // Hide bottom nav on admin routes
   if (pathname?.startsWith("/admin")) return null;
@@ -80,10 +81,21 @@ export default function BottomNav() {
     ];
 
   return (
-    <nav className="md:hidden bg-card/80 backdrop-blur-xl fixed bottom-0 w-full z-50 rounded-t-2xl border-t border-border dark:border-border dark:bg-card/80 flex justify-around items-center h-16 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+    <nav className="md:hidden bg-card/80 backdrop-blur-xl fixed bottom-0 w-full z-50 rounded-t-2xl border-t border-border dark:border-border dark:bg-card/80 flex items-center h-16 px-2 pb-[max(0.45rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
       {navItems.map((item) => {
         const isActive = "href" in item && pathname === item.href;
         const Icon = item.icon;
+
+        const iconClass = cn(
+          "h-5 w-5 mb-0.5 transition-all duration-200 shrink-0",
+          isActive
+            ? "text-foreground scale-110"
+            : "text-muted-foreground group-hover:scale-110 group-hover:text-foreground",
+        );
+        const labelClass = cn(
+          "text-badge font-semibold tracking-wide uppercase transition-colors whitespace-nowrap",
+          isActive ? "text-foreground" : "text-muted-foreground",
+        );
 
         if ("onClick" in item) {
           return (
@@ -91,27 +103,10 @@ export default function BottomNav() {
               key={item.label}
               onClick={item.onClick}
               title={item.tooltip}
-              className="relative flex flex-col items-center group pt-1"
+              className="group relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1"
             >
-              <Icon
-                className={cn(
-                  "w-6 h-6 mb-1 transition-all duration-200",
-                  isActive
-                    ? "text-black scale-110 dark:text-white"
-                    : "text-muted-foreground group-hover:scale-110 group-hover:text-foreground",
-                )}
-                strokeWidth={isActive ? 2.5 : 2}
-              />
-              <span
-                className={cn(
-                  "text-badge font-semibold tracking-wide uppercase transition-colors",
-                  isActive
-                    ? "text-foreground"
-                    : "text-muted-foreground",
-                )}
-              >
-                {item.label}
-              </span>
+              <Icon className={iconClass} strokeWidth={isActive ? 2.5 : 2} />
+              <span className={labelClass}>{item.label}</span>
             </Button>
           );
         }
@@ -121,50 +116,38 @@ export default function BottomNav() {
             key={item.label}
             href={item.href || "#"}
             title={item.tooltip}
-            className="relative flex flex-col items-center group pt-1"
+            className="group relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1"
           >
             {item.badge && (
-              <div className="absolute top-0 right-1/4 w-2 h-2 bg-error rounded-full border border-background"></div>
+              <div className="absolute top-1 right-[calc(50%-16px)] h-2 w-2 rounded-full bg-error border border-background" />
             )}
-            <Icon
-              className={cn(
-                "w-6 h-6 mb-1 transition-all duration-200",
-                isActive
-                  ? "text-black scale-110 dark:text-white"
-                  : "text-muted-foreground group-hover:scale-110 group-hover:text-foreground",
-              )}
-              strokeWidth={isActive ? 2.5 : 2}
-            />
-            <span
-              className={cn(
-                "text-badge font-semibold tracking-wide uppercase transition-colors",
-                isActive
-                  ? "text-foreground"
-                  : "text-muted-foreground",
-              )}
-            >
-              {item.label}
-            </span>
+            <Icon className={iconClass} strokeWidth={isActive ? 2.5 : 2} />
+            <span className={labelClass}>{item.label}</span>
           </Link>
         );
       })}
 
-      {/* Theme toggle as extra nav item */}
+      {/* Theme toggle as extra nav item — gated on mounted to avoid hydration mismatch */}
       <Button
         onClick={toggleTheme}
         title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-        className="relative flex flex-col items-center group pt-1"
+        className="group relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1"
       >
-        {theme === "dark" ? (
-          <Sun className="w-6 h-6 mb-1 text-muted-foreground group-hover:scale-110 group-hover:text-foreground transition-all duration-200" strokeWidth={2} />
+        {!mounted || theme === "light" ? (
+          <Moon
+            className="h-5 w-5 mb-0.5 text-muted-foreground group-hover:scale-110 group-hover:text-foreground transition-all duration-200 shrink-0"
+            strokeWidth={2}
+          />
         ) : (
-          <Moon className="w-6 h-6 mb-1 text-muted-foreground group-hover:scale-110 group-hover:text-foreground transition-all duration-200" strokeWidth={2} />
+          <Sun
+            className="h-5 w-5 mb-0.5 text-muted-foreground group-hover:scale-110 group-hover:text-foreground transition-all duration-200 shrink-0"
+            strokeWidth={2}
+          />
         )}
-        <span className="text-badge font-semibold tracking-wide uppercase text-muted-foreground transition-colors">
-          {theme === "dark" ? "Light" : "Dark"}
+        <span className="text-badge font-semibold tracking-wide uppercase text-muted-foreground transition-colors whitespace-nowrap">
+          {!mounted || theme === "light" ? "Dark" : "Light"}
         </span>
       </Button>
     </nav>
   );
 }
-

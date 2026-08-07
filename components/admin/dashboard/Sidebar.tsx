@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import Link from "next/link";
+import { Button } from '@/components/ui/button'; import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -98,7 +98,7 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex h-full flex-col">
             {/* Logo */}
             <div className="flex h-16 items-center gap-3 border-b border-border px-6">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-900 to-zinc-700 text-sm font-bold text-white shadow-lg dark:from-white dark:to-zinc-300 dark:text-black">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-sm font-bold text-accent-foreground shadow-lg">
                     T
                 </div>
                 <div>
@@ -131,7 +131,7 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                                         className={cn(
                                             "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                                             isActive
-                                                ? "bg-accent text-white shadow-md dark:bg-white dark:text-black"
+                                                ? "bg-accent text-accent-foreground shadow-md"
                                                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
                                         )}
                                     >

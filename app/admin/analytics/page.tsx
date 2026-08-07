@@ -111,7 +111,7 @@ export default function AdminAnalyticsPage() {
 
                 <div className="flex items-center gap-2">
                     {/* Range Selector */}
-                    <div className="flex rounded-xl border border-border bg-white p-0.5 shadow-sm dark:border-border dark:bg-foreground">
+                    <div className="flex rounded-xl border border-border bg-card p-0.5 shadow-sm dark:border-border">
                         {RANGE_OPTIONS.map((opt) => (
                             <Button
                                 key={opt.value}
@@ -162,7 +162,7 @@ export default function AdminAnalyticsPage() {
                     <motion.div
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground"
+                        className="rounded-xl border border-border bg-card p-5 dark:border-border"
                     >
                         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Top Pages
@@ -212,7 +212,7 @@ export default function AdminAnalyticsPage() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-white py-24 dark:border-border dark:bg-foreground"
+                        className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-24 dark:border-border"
                     >
                         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg">
                             <TrendingUp size={28} className="text-white" />
@@ -232,7 +232,7 @@ export default function AdminAnalyticsPage() {
             {/* ── Footer ─────────────────────────────────────── */}
             {
                 !loading && (overview || timeline) && (
-                    <div className="flex items-center justify-between rounded-xl border border-border bg-white/80 px-5 py-3 text-xs text-muted-foreground dark:border-border dark:bg-foreground/80">
+                    <div className="flex items-center justify-between rounded-xl border border-border bg-card/80 px-5 py-3 text-xs text-muted-foreground dark:border-border">
                         <span>
                             Showing data for the last{" "}
                             {range === "24h" ? "24 hours" : range === "7d" ? "7 days" : range === "30d" ? "30 days" : "90 days"}

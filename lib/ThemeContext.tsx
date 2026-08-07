@@ -14,12 +14,15 @@ interface ThemeContextType {
     theme: Theme;
     toggleTheme: () => void;
     setTheme: (theme: Theme) => void;
+    /** True only after the client has mounted and the actual theme is known. */
+    mounted: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
     theme: "light",
     toggleTheme: () => { },
     setTheme: () => { },
+    mounted: false,
 });
 
 const STORAGE_KEY = "thriftx_theme";
@@ -38,10 +41,13 @@ function getInitialTheme(): Theme {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+    const [theme, setThemeState] = useState<Theme>("light");
     const [mounted, setMounted] = useState(false);
 
-    if (!mounted) setMounted(true);
+    useEffect(() => {
+        setThemeState(getInitialTheme());
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         if (!mounted) return;
@@ -79,7 +85,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, mounted }}>
             {children}
         </ThemeContext.Provider>
     );

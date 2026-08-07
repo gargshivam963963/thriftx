@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { useState, useRef, useCallback } from "react";
+import { Button } from '@/components/ui/button'; import { useState, useRef, useCallback } from "react";
 import {
     FolderOpen,
     Upload,
@@ -242,7 +242,7 @@ export default function SmartFolderUploader({
 
             {/* Product List with per-product reorder grids */}
             {hasContent && (
-                <div className="rounded-2xl border border-border bg-white dark:border-border dark:bg-foreground">
+                <div className="rounded-2xl border border-border bg-card">
                     <Button
                         type="button"
                         onClick={() => setExpanded(!expanded)}

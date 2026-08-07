@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
@@ -84,23 +83,20 @@ function MenuRow({
     };
 
     return (
-        <Button
+        <button
             type="button"
-            variant={danger ? "ghost" : "ghost"}
-            size="md"
-            fullWidth
+            onClick={handleAction}
             className={cn(
-                "justify-between rounded-2xl border border-border bg-card p-4 text-left transition hover:shadow-card",
+                "flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-left transition hover:shadow-card",
                 danger
                     ? "hover:border-error-bg hover:bg-error-bg/50"
                     : "hover:border-border hover:bg-muted",
             )}
-            onClick={handleAction}
         >
             <div className="flex items-center gap-3">
                 <div
                     className={cn(
-                        "flex h-10 w-10 items-center justify-center rounded-xl",
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
                         danger
                             ? "bg-error-bg text-error"
                             : "bg-muted text-muted-foreground",
@@ -108,13 +104,13 @@ function MenuRow({
                 >
                     {icon}
                 </div>
-                <div>
+                <div className="min-w-0">
                     <p className={cn("text-body-sm font-semibold", danger ? "text-error" : "text-foreground")}>{label}</p>
                     {subtitle && <p className="text-small text-muted-foreground">{subtitle}</p>}
                 </div>
             </div>
-            <ChevronRight size={18} className={danger ? "text-error" : "text-muted-foreground"} />
-        </Button>
+            <ChevronRight size={18} className={cn("shrink-0", danger ? "text-error" : "text-muted-foreground")} />
+        </button>
     );
 }
 

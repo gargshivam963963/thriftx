@@ -41,13 +41,16 @@ export default function ConfirmDialog({
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="fixed inset-x-4 bottom-auto top-1/2 z-50 mx-auto max-w-md -translate-y-1/2"
                     >
-                        <div className="rounded-2xl border border-border bg-white p-6 shadow-xl dark:border-border dark:bg-foreground">
+                        <div className="rounded-2xl border border-border bg-card p-6 shadow-xl">
                             <div className="mb-4 flex items-start justify-between">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/30">
                                     <AlertTriangle size={20} className="text-red-600 dark:text-red-400" />
                                 </div>
                                 <Button
                                     onClick={onClose}
+                                    variant="ghost"
+                                    size="iconSm"
+                                    aria-label="Close dialog"
                                     className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted dark:hover:bg-card"
                                 >
                                     <X size={16} />

@@ -74,7 +74,7 @@ export default function StickyToolbar({
     ];
 
     return (
-        <div className="sticky top-0 z-40 -mx-4 -mt-4 border-b border-border bg-white/95 px-4 pb-3 pt-3 backdrop-blur-xl dark:border-border dark:bg-foreground/95 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="sticky top-0 z-40 -mx-4 -mt-4 border-b border-border bg-card/95 px-4 pb-3 pt-3 backdrop-blur-xl dark:border-border sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
             <div className="flex flex-col gap-3">
                 {/* Row 1: Title + Actions */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -141,7 +141,7 @@ export default function StickyToolbar({
                             return (
                                 <div
                                     key={s.key}
-                                    className="flex items-center gap-1.5 rounded-lg border border-border bg-white px-2.5 py-1 dark:border-border dark:bg-foreground"
+                                    className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1"
                                 >
                                     <Icon
                                         size={12}

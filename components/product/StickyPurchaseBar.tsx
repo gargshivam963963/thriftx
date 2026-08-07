@@ -56,7 +56,7 @@ export default function StickyPurchaseBar({
                         size="lg"
                         className="flex-1"
                         loading={buyNowLoading}
-                        loadingText="Opc..."
+                        loadingText="Processing..."
                         onClick={onBuyNow}
                     >
                         <Zap />

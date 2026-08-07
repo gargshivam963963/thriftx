@@ -36,7 +36,7 @@ export default function DeviceBreakdown({
 }) {
     if (loading) {
         return (
-            <div className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground">
+            <div className="rounded-xl border border-border bg-card p-5 dark:border-border">
                 <div className="h-5 w-28 animate-pulse rounded bg-muted" />
                 <div className="mt-4 space-y-3">
                     {[1, 2, 3].map((i) => (
@@ -49,7 +49,7 @@ export default function DeviceBreakdown({
 
     if (!data || data.length === 0) {
         return (
-            <div className="rounded-xl border border-border bg-white p-5 text-center dark:border-border dark:bg-foreground">
+            <div className="rounded-xl border border-border bg-card p-5 text-center dark:border-border">
                 <Smartphone size={24} className="mx-auto text-muted-foreground dark:text-muted-foreground" />
                 <p className="mt-2 text-sm text-muted-foreground">No device data yet</p>
             </div>
@@ -60,7 +60,7 @@ export default function DeviceBreakdown({
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-border bg-white p-5 dark:border-border dark:bg-foreground"
+            className="rounded-xl border border-border bg-card p-5 dark:border-border"
         >
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Device Breakdown

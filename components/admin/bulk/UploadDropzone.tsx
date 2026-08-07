@@ -68,7 +68,7 @@ export default function UploadDropzone({
                     "relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-all",
                     dragOver
                         ? "border-violet-400 bg-violet-50/60 dark:border-violet-500 dark:bg-violet-950/20"
-                        : "border-border bg-subtle/60 hover:border-foreground hover:bg-muted/60 dark:border-border dark:bg-foreground/50 dark:hover:border-border",
+                        : "border-border bg-subtle/60 hover:border-foreground hover:bg-muted/60 dark:border-border dark:bg-card/50 dark:hover:border-border",
                 )}
             >
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-600/20">
@@ -149,7 +149,7 @@ export default function UploadDropzone({
                     "relative flex flex-col items-center justify-center gap-5 rounded-3xl border-2 border-dashed px-6 py-16 text-center transition-all duration-300 sm:py-20",
                     dragOver
                         ? "border-violet-400 bg-violet-50/80 dark:border-violet-500 dark:bg-violet-950/20"
-                        : "border-border bg-white hover:border-foreground hover:bg-subtle/80 dark:border-border dark:bg-foreground dark:hover:border-border",
+                        : "border-border bg-card hover:border-foreground hover:bg-subtle/80 dark:border-border",
                 )}
             >
                 {/* Animated icon */}

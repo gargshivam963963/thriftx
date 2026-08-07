@@ -529,7 +529,7 @@ export default function AdminProductsPage() {
                             key={product.$id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white shadow-sm transition-all hover:shadow-md dark:border-border/60 dark:bg-foreground"
+                            className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-all hover:shadow-md dark:border-border/60"
                         >
                             {/* Image - clickable to preview */}
                             <Button
@@ -683,7 +683,7 @@ export default function AdminProductsPage() {
                             key={product.$id}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="flex items-center gap-4 rounded-2xl border border-border/80 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-border/60 dark:bg-foreground"
+                            className="flex items-center gap-4 rounded-2xl border border-border/80 bg-card p-4 shadow-sm transition hover:shadow-md dark:border-border/60"
                         >
                             <Button
                                 type="button"

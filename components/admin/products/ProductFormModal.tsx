@@ -500,7 +500,7 @@ export default function ProductFormModal({
                         transition={{ type: "spring", damping: 25, stiffness: 280 }}
                         className="fixed inset-x-4 bottom-4 top-4 z-50 mx-auto max-w-6xl"
                     >
-                        <div className="flex h-full flex-col rounded-2xl border border-border bg-white shadow-xl dark:border-border dark:bg-foreground">
+                        <div className="flex h-full flex-col rounded-2xl border border-border bg-card shadow-xl">
                             {/* Header */}
                             <div className="flex items-center justify-between border-b border-border px-5 py-4 dark:border-border">
                                 <div className="flex items-center gap-3">
@@ -516,6 +516,9 @@ export default function ProductFormModal({
                                 </div>
                                 <Button
                                     onClick={onClose}
+                                    variant="ghost"
+                                    size="iconSm"
+                                    aria-label="Close dialog"
                                     className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted dark:hover:bg-card"
                                 >
                                     <X size={18} />

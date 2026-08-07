@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { useEffect, useState, useMemo, useCallback } from "react";
+import { Button } from '@/components/ui/button'; import { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
     Search,
@@ -120,6 +120,7 @@ export default function AdminCustomersPage() {
                 </div>
                 <Button
                     onClick={handleExportCSV}
+                    variant="outline"
                     className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-all hover:bg-muted"
                 >
                     <Download size={16} />

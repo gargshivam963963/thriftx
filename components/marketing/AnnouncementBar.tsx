@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { useEffect, useState } from "react";
+import { Button } from '@/components/ui/button'; import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, Megaphone, X } from "lucide-react";
@@ -56,6 +56,8 @@ export default function AnnouncementBar() {
                 <div className="relative flex h-10 items-center justify-center gap-3 px-9">
                     <Button
                         type="button"
+                        variant="ghost"
+                        size="iconSm"
                         className="absolute left-0 top-1/2 -translate-y-1/2 text-background/50 transition hover:text-background dark:text-foreground/50 dark:hover:text-foreground"
                         onClick={() => setDismissed(true)}
                         aria-label="Dismiss announcement"

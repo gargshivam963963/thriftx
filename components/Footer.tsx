@@ -3,12 +3,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  ArrowRight,
   Check,
   Clock,
   Facebook,
   Instagram,
-  Loader2,
   Mail,
   MapPin,
   MessageCircle,
@@ -201,9 +199,7 @@ export default function Footer() {
                 >
                   {status === "success" ? (
                     <Check className="h-4 w-4" />
-                  ) : status === "loading" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
+                  ) : status === "loading" ? null : (
                     <Send className="h-4 w-4" />
                   )}
                 </Button>

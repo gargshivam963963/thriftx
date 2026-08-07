@@ -220,7 +220,7 @@ export default function SpreadsheetEditor({
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-white py-16 dark:border-border dark:bg-foreground"
+                        className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-16"
                     >
                         <Search size={20} className="text-muted-foreground" />
                         <p className="mt-2 text-sm font-medium text-muted-foreground">

@@ -261,6 +261,8 @@ function MobileMenu({
               </Link>
               <Button
                 type="button"
+                variant="ghost"
+                size="iconSm"
                 onClick={onClose}
                 aria-label="Close menu"
                 className="rounded-xl p-2.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"

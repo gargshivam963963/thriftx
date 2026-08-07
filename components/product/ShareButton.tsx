@@ -115,9 +115,11 @@ export default function ShareButton({ title, price }: ShareButtonProps) {
                                 </p>
                                 <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="iconSm"
                                     onClick={() => setOpen(false)}
                                     aria-label="Close share menu"
-                                    className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    className="text-muted-foreground hover:text-foreground"
                                 >
                                     <X className="h-4 w-4" />
                                 </Button>
@@ -126,6 +128,8 @@ export default function ShareButton({ title, price }: ShareButtonProps) {
                             <div className="mt-1 space-y-0.5">
                                 <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={handleCopy}
                                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-foreground transition hover:bg-muted"
                                 >
@@ -139,6 +143,8 @@ export default function ShareButton({ title, price }: ShareButtonProps) {
 
                                 <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={handleWhatsApp}
                                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-foreground transition hover:bg-muted"
                                 >
@@ -148,6 +154,8 @@ export default function ShareButton({ title, price }: ShareButtonProps) {
 
                                 <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={handleEmail}
                                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-foreground transition hover:bg-muted"
                                 >

@@ -116,7 +116,7 @@ export default function OverviewCards({
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.04 }}
-                        className="relative overflow-hidden rounded-xl border border-border bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-border dark:bg-foreground"
+                        className="relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md dark:border-border"
                     >
                         <div className="flex items-start justify-between">
                             <div

@@ -19,7 +19,7 @@ export default function ProductSkeleton({ view = "grid", count = 8 }: ProductSke
             {Array.from({ length: count }).map((_, i) => (
                 <div
                     key={i}
-                    className="animate-pulse rounded-2xl border border-border/70 bg-white p-0 dark:border-border/50 dark:bg-foreground"
+                    className="animate-pulse rounded-2xl border border-border/70 bg-card p-0 dark:border-border/50"
                 >
                     {view === "grid" ? (
                         <div className="space-y-3">

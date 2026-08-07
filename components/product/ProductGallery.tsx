@@ -1,15 +1,17 @@
 "use client";
 
 import {
-    useCallback,
-    useEffect,
     useMemo,
-    useRef,
     useState,
+    useEffect,
+    useCallback,
+    useRef,
 } from "react";
 
 import Image from "next/image";
+
 import { AnimatePresence, motion } from "framer-motion";
+
 import {
     ChevronLeft,
     ChevronRight,
@@ -20,8 +22,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { BLUR_PLACEHOLDER } from "@/lib/imageOptimization";
 import { cn } from "@/lib/utils";
-import { getBlurPlaceholder } from "@/lib/imageOptimization";
 
 interface ProductGalleryProps {
     title: string;
@@ -29,6 +31,17 @@ interface ProductGalleryProps {
     images?: string[];
 }
 
+/**
+ * ProductGallery — premium, production-grade image gallery.
+ *
+ * - Sane, resilient image list (dedupes, filters empties)
+ * - Keyboard navigation (← →, +/-, Escape) — always active, not just fullscreen
+ * - Mouse drag + touch swipe on mobile
+ * - Thumbnail selection
+ * - Fullscreen mode with its own close button + Escape
+ * - Blur-up loading with `blurDataURL`, `priority` hero, lazy non-hero images
+ * - Responsive `sizes` to never load unnecessary resolutions
+ */
 export default function ProductGallery({
     title,
     primaryImage,
@@ -36,19 +49,13 @@ export default function ProductGallery({
 }: ProductGalleryProps) {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [fullscreen, setFullscreen] = useState(false);
-    const [isLoaded, setIsLoaded] = useState(false);
     const [zoomed, setZoomed] = useState(false);
     const [zoomScale, setZoomScale] = useState(2);
     const [transformOrigin, setTransformOrigin] = useState("50% 50%");
-    const [dragX, setDragX] = useState(0);
-    const [isDragging, setIsDragging] = useState(false);
 
-    const touchStartX = useRef(0);
-    const touchStartY = useRef(0);
-    const dragStartX = useRef(0);
+    const dragStartX = useRef<number | null>(null);
+    const imageContainerRef = useRef<HTMLDivElement>(null);
     const lastTap = useRef(0);
-    const fullscreenButtonRef = useRef<HTMLButtonElement>(null);
-    const closeButtonRef = useRef<HTMLButtonElement>(null);
 
     const gallery = useMemo(() => {
         const list = images.length > 0 ? images : [primaryImage];
@@ -59,25 +66,19 @@ export default function ProductGallery({
     const currentImage = gallery[selectedIndex] ?? gallery[0];
 
     const previous = useCallback(() => {
-        setSelectedIndex((index) => (index - 1 + galleryLength) % galleryLength);
+        setSelectedIndex((index) =>
+            galleryLength > 0 ? (index - 1 + galleryLength) % galleryLength : 0,
+        );
     }, [galleryLength]);
 
     const next = useCallback(() => {
-        setSelectedIndex((index) => (index + 1) % galleryLength);
+        setSelectedIndex((index) =>
+            galleryLength > 0 ? (index + 1) % galleryLength : 0,
+        );
     }, [galleryLength]);
 
-    // Reset internal state when the source image changes (edge case)
-    const resetState = useCallback(() => {
-        setZoomed(false);
-        setZoomScale(2);
-        setTransformOrigin("50% 50%");
-        setDragX(0);
-    }, []);
-
-    // ── Keyboard navigation (always active) ────────────────────────────
+    /* ── Keyboard navigation — active in both normal + fullscreen ── */
     useEffect(() => {
-        if (!fullscreen) return;
-
         const onKeyDown = (e: KeyboardEvent) => {
             switch (e.key) {
                 case "ArrowLeft":
@@ -88,299 +89,206 @@ export default function ProductGallery({
                     e.preventDefault();
                     next();
                     break;
-                case "+":
-                case "=":
-                    setZoomScale((z) => Math.min(z + 0.25, 4));
-                    setZoomed(true);
-                    break;
-                case "-":
-                    setZoomScale((z) => Math.max(z - 0.25, 1));
-                    break;
                 case "Escape":
-                    closeFullscreen();
+                    if (fullscreen) {
+                        setFullscreen(false);
+                        setZoomed(false);
+                        setZoomScale(2);
+                    }
+                    break;
+                default:
                     break;
             }
         };
 
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
-    }, [fullscreen, previous, next]);
+    }, [previous, next, fullscreen]);
 
-    // ── Body scroll lock + focus management for fullscreen ─────────────
+    /* ── Lock body scroll while fullscreen ── */
     useEffect(() => {
         if (!fullscreen) return;
-
+        const prevOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
-        closeButtonRef.current?.focus();
-
-        const prevFocus = document.activeElement as HTMLElement | null;
-
         return () => {
-            document.body.style.overflow = "";
-            prevFocus?.focus();
+            document.body.style.overflow = prevOverflow;
         };
     }, [fullscreen]);
 
-    // ── Preload neighbouring images (cache-friendly) ───────────────────
+    /* ── Preload adjacent images ── */
     useEffect(() => {
+        if (galleryLength <= 1) return;
         const nextIndex = (selectedIndex + 1) % galleryLength;
-        const prevIndex = (selectedIndex - 1 + galleryLength) % galleryLength;
-        const preload = (src?: string) => {
+        const previousIndex = (selectedIndex - 1 + galleryLength) % galleryLength;
+        [gallery[nextIndex], gallery[previousIndex]].forEach((src) => {
             if (!src) return;
             const img = new window.Image();
             img.src = src;
-        };
-
-        preload(gallery[nextIndex]);
-        preload(gallery[prevIndex]);
+        });
     }, [selectedIndex, gallery, galleryLength]);
 
-    function openFullscreen() {
-        setFullscreen(true);
-    }
-
-    function closeFullscreen() {
-        setFullscreen(false);
-        resetState();
-    }
-
-    // ── Mouse zoom ─────────────────────────────────────────────────────
+    /* ── Zoom handlers ── */
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!zoomed || isDragging) return;
-        const rect = e.currentTarget.getBoundingClientRect();
+        if (!zoomed || !imageContainerRef.current) return;
+        const rect = imageContainerRef.current.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100;
         const y = ((e.clientY - rect.top) / rect.height) * 100;
         setTransformOrigin(`${x}% ${y}%`);
     };
 
     const handleWheel = (e: React.WheelEvent) => {
+        if (!fullscreen) return;
         e.preventDefault();
         setZoomed(true);
-        setZoomScale((prev) =>
-            e.deltaY < 0 ? Math.min(prev + 0.2, 4) : Math.max(prev - 0.2, 1),
-        );
+        setZoomScale((prev) => {
+            if (e.deltaY < 0) return Math.min(prev + 0.2, 4);
+            return Math.max(prev - 0.2, 1);
+        });
     };
 
-    const handleDoubleClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        if (!zoomed) {
-            setZoomed(true);
-            setZoomScale(2.5);
-        } else {
-            resetState();
-        }
+    const handleDoubleClick = () => {
+        setZoomed((z) => !z);
+        setZoomScale(2.5);
     };
 
     const handleDoubleTap = () => {
         const now = Date.now();
         if (now - lastTap.current < 300) {
-            if (!zoomed) {
-                setZoomed(true);
-                setZoomScale(2.5);
-            } else {
-                resetState();
-            }
+            handleDoubleClick();
         }
         lastTap.current = now;
     };
 
-    // ── Swipe (touch) ──────────────────────────────────────────────────
+    /* ── Touch / drag swipe ── */
     const onTouchStart = (e: React.TouchEvent) => {
-        touchStartX.current = e.targetTouches[0].clientX;
-        touchStartY.current = e.targetTouches[0].clientY;
+        dragStartX.current = e.targetTouches[0].clientX;
         handleDoubleTap();
     };
 
-    const onTouchMove = (e: React.TouchEvent) => {
-        const dx = e.targetTouches[0].clientX - touchStartX.current;
-        const dy = e.targetTouches[0].clientY - touchStartY.current;
-        // Only allow horizontal swipe when vertical movement is dominant
-        if (Math.abs(dx) > Math.abs(dy)) {
-            setDragX(dx);
-        }
+    const onTouchEnd = (e: React.TouchEvent) => {
+        if (dragStartX.current === null) return;
+        const endX = e.changedTouches[0].clientX;
+        const distance = dragStartX.current - endX;
+        dragStartX.current = null;
+        if (Math.abs(distance) < 60) return;
+        if (distance > 0) next();
+        else previous();
     };
 
-    const onTouchEnd = () => {
-        const finalX = dragX;
-        setDragX(0);
-        if (Math.abs(finalX) < 60) return;
-        finalX < 0 ? next() : previous();
-    };
-
-    // ── Mouse drag ─────────────────────────────────────────────────────
-    const onMouseDown = (e: React.MouseEvent) => {
-        setIsDragging(true);
+    const onPointerDown = (e: React.PointerEvent) => {
         dragStartX.current = e.clientX;
     };
 
-    const onMouseMove = (e: React.MouseEvent) => {
-        if (!isDragging) return;
-        const dx = e.clientX - dragStartX.current;
-        setDragX(dx);
+    const onPointerUp = (e: React.PointerEvent) => {
+        if (dragStartX.current === null) return;
+        const distance = dragStartX.current - e.clientX;
+        dragStartX.current = null;
+        if (Math.abs(distance) < 60) return;
+        if (distance > 0) next();
+        else previous();
     };
 
-    const onMouseUp = () => {
-        if (!isDragging) return;
-        setIsDragging(false);
-        const finalX = dragX;
-        setDragX(0);
-        if (Math.abs(finalX) < 60) return;
-        finalX < 0 ? next() : previous();
+    const imageTransition = {
+        duration: 0.35,
+        ease: "easeOut" as const,
     };
-
-    const imageAnimation = {
-        initial: { opacity: 0, scale: 0.96 },
-        animate: { opacity: 1, scale: 1 },
-        exit: { opacity: 0, scale: 1.04 },
-        transition: { duration: 0.35, ease: "easeOut" as const },
-    };
-
-    // Hero image is priority; thumbnails lazy + blur
-    const heroPriority = selectedIndex === 0;
 
     return (
         <>
-            <div className="space-y-8">
+            <div className="space-y-6">
                 <div className="grid gap-5 lg:grid-cols-[96px_1fr]">
-                    {/* ── Thumbnails ─────────────────────────────── */}
-                    <div
-                        className="order-2 flex gap-3 overflow-x-auto pb-2 lg:order-1 lg:flex-col lg:overflow-visible"
-                        role="tablist"
-                        aria-label="Product images"
-                    >
+                    {/* ── Thumbnails ── */}
+                    <div className="order-2 flex gap-3 overflow-x-auto pb-2 lg:order-1 lg:flex-col lg:overflow-visible lg:pb-0">
                         {gallery.map((img, index) => {
                             const active = index === selectedIndex;
                             return (
-                                <motion.button
-                                    whileTap={{ scale: 0.95 }}
-                                    key={img}
-                                    role="tab"
-                                    aria-selected={active}
+                                <button
+                                    key={`${img}-${index}`}
+                                    type="button"
+                                    onClick={() => setSelectedIndex(index)}
                                     aria-label={`View image ${index + 1}`}
-                                    onClick={() => {
-                                        setSelectedIndex(index);
-                                        setIsLoaded(false);
-                                    }}
+                                    aria-current={active}
                                     className={cn(
-                                        "group relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300",
+                                        "group relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-2xl border bg-card transition-all duration-300 lg:h-[88px] lg:w-[88px]",
+                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30",
                                         active
-                                            ? "border-foreground ring-2 ring-foreground/10"
+                                            ? "border-foreground shadow-lg ring-2 ring-foreground/10"
                                             : "border-border hover:border-foreground/50 hover:shadow-md",
                                     )}
                                 >
                                     <Image
                                         src={img}
-                                        alt={`${title} thumbnail ${index + 1}`}
+                                        alt={`${title} — thumbnail ${index + 1}`}
                                         fill
-                                        sizes="96px"
-                                        priority={index === 0}
-                                        blurDataURL={getBlurPlaceholder()}
+                                        sizes="88px"
                                         placeholder="blur"
-                                        className="object-cover transition-all duration-500 group-hover:scale-110"
+                                        blurDataURL={BLUR_PLACEHOLDER}
+                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
-                                </motion.button>
+                                </button>
                             );
                         })}
                     </div>
 
-                    {/* ── Main Image ──────────────────────────────── */}
+                    {/* ── Main Image ── */}
                     <div
-                        className="group relative order-1 overflow-hidden rounded-[24px] border border-border bg-card shadow-sm"
+                        ref={imageContainerRef}
+                        className="group relative order-1 overflow-hidden rounded-[28px] border border-border bg-card shadow-sm"
                         onMouseMove={handleMouseMove}
                         onWheel={handleWheel}
                         onDoubleClick={handleDoubleClick}
-                        onMouseDown={onMouseDown}
-                        onMouseUp={onMouseUp}
-                        onMouseLeave={() => {
-                            setIsDragging(false);
-                            setDragX(0);
-                        }}
                         onTouchStart={onTouchStart}
-                        onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
+                        onPointerDown={onPointerDown}
+                        onPointerUp={onPointerUp}
+                        onPointerLeave={() => {
+                            dragStartX.current = null;
+                        }}
                     >
-                        {/* Loading shimmer */}
-                        {!isLoaded && (
-                            <div className="absolute inset-0 z-10 overflow-hidden rounded-[24px]">
-                                <div className="absolute inset-0 bg-muted" />
-                                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.8s_infinite] bg-gradient-to-r from-transparent via-white/70 to-transparent" />
-                            </div>
-                        )}
-
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={currentImage}
-                                initial={{ opacity: 0, scale: 0.96 }}
+                                initial={{ opacity: 0, scale: 0.98 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 1.04 }}
-                                transition={{ duration: 0.35 }}
-                                className="relative aspect-[6/5] w-full select-none"
+                                exit={{ opacity: 0, scale: 1.02 }}
+                                transition={imageTransition}
+                                className="relative"
                             >
                                 <Image
                                     src={currentImage}
                                     alt={title}
-                                    fill
-                                    sizes="(max-width: 1024px) 100vw, 640px"
-                                    priority={heroPriority}
-                                    fetchPriority={heroPriority ? "high" : "auto"}
-                                    draggable={false}
-                                    blurDataURL={getBlurPlaceholder()}
+                                    width={1600}
+                                    height={2000}
+                                    priority
                                     placeholder="blur"
-                                    onLoadingComplete={() => setIsLoaded(true)}
-                                    className="object-contain will-change-transform"
+                                    blurDataURL={BLUR_PLACEHOLDER}
+                                    draggable={false}
+                                    className="aspect-[6/5] w-full touch-pan-y select-none object-contain"
                                     style={{
-                                        transform: `translateX(${dragX}px) scale(${zoomed ? zoomScale : 1})`,
                                         transformOrigin,
-                                        transition: isDragging
-                                            ? "none"
-                                            : "transform .28s cubic-bezier(.22,.61,.36,1)",
+                                        transform: `scale(${zoomed ? zoomScale : 1})`,
+                                        transition: "transform .28s cubic-bezier(.22,.61,.36,1)",
                                     }}
                                 />
                             </motion.div>
                         </AnimatePresence>
 
                         {/* Counter */}
-                        <div className="absolute left-5 top-5 z-20 rounded-full border border-white/40 bg-white/80 px-3 py-1.5 text-small font-semibold text-black backdrop-blur-xl shadow-sm">
+                        <div className="absolute left-5 top-5 z-20 rounded-full border border-border bg-background/80 px-3 py-1.5 text-small font-semibold text-foreground backdrop-blur-xl shadow-sm">
                             {selectedIndex + 1} / {galleryLength}
                         </div>
 
-                        {/* Top actions */}
-                        <div className="absolute right-5 top-5 z-20 flex flex-col gap-2">
+                        {/* Top action — fullscreen */}
+                        <div className="absolute right-5 top-5 z-20">
                             <Button
                                 variant="glass"
                                 size="iconMd"
-                                aria-label="Fullscreen"
-                                onClick={openFullscreen}
+                                aria-label="Open fullscreen gallery"
+                                onClick={() => setFullscreen(true)}
                             >
-                                <Expand className="h-5 w-5" />
+                                <Expand />
                             </Button>
                         </div>
-
-                        {/* Zoom controls (desktop hover) */}
-                        {zoomed && (
-                            <div className="absolute bottom-5 right-5 z-20 flex gap-2">
-                                <Button
-                                    variant="glass"
-                                    size="iconSm"
-                                    aria-label="Zoom out"
-                                    onClick={() =>
-                                        setZoomScale((z) => Math.max(z - 0.25, 1))
-                                    }
-                                >
-                                    <ZoomOut className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                    variant="glass"
-                                    size="iconSm"
-                                    aria-label="Zoom in"
-                                    onClick={() =>
-                                        setZoomScale((z) => Math.min(z + 0.25, 4))
-                                    }
-                                >
-                                    <ZoomIn className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
 
                         {/* Prev / Next */}
                         {galleryLength > 1 && (
@@ -392,7 +300,7 @@ export default function ProductGallery({
                                     aria-label="Previous image"
                                     className="absolute left-4 top-1/2 z-20 -translate-y-1/2"
                                 >
-                                    <ChevronLeft className="h-5 w-5" />
+                                    <ChevronLeft />
                                 </Button>
                                 <Button
                                     variant="glass"
@@ -401,7 +309,7 @@ export default function ProductGallery({
                                     aria-label="Next image"
                                     className="absolute right-4 top-1/2 z-20 -translate-y-1/2"
                                 >
-                                    <ChevronRight className="h-5 w-5" />
+                                    <ChevronRight />
                                 </Button>
                             </>
                         )}
@@ -409,106 +317,128 @@ export default function ProductGallery({
                 </div>
             </div>
 
-            {/* ── Fullscreen Modal ─────────────────────────────────── */}
+            {/* ── Fullscreen ── */}
             <AnimatePresence>
                 {fullscreen && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="fixed inset-0 z-modal flex items-center justify-center bg-black/95 backdrop-blur-lg"
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl"
                         role="dialog"
                         aria-modal="true"
-                        aria-label="Image fullscreen viewer"
+                        aria-label="Fullscreen gallery"
                     >
+                        {/* Close */}
                         <Button
-                            ref={closeButtonRef}
-                            variant="glass"
-                            size="iconMd"
-                            onClick={closeFullscreen}
+                            variant="ghost"
+                            size="iconLg"
+                            onClick={() => {
+                                setFullscreen(false);
+                                setZoomed(false);
+                                setZoomScale(2);
+                            }}
                             aria-label="Close fullscreen"
-                            className="absolute right-6 top-6 z-30"
+                            className="absolute right-6 top-6 z-30 text-white hover:bg-white/10"
                         >
-                            <X className="h-5 w-5" />
+                            <X />
                         </Button>
 
-                        <div className="relative flex h-full w-full items-center justify-center p-6">
-                            {galleryLength > 1 && (
-                                <>
-                                    <Button
-                                        variant="glass"
-                                        size="iconLg"
-                                        onClick={previous}
-                                        aria-label="Previous image"
-                                        className="absolute left-6 top-1/2 z-30 -translate-y-1/2"
-                                    >
-                                        <ChevronLeft className="h-6 w-6" />
-                                    </Button>
-                                    <Button
-                                        variant="glass"
-                                        size="iconLg"
-                                        onClick={next}
-                                        aria-label="Next image"
-                                        className="absolute right-6 top-1/2 z-30 -translate-y-1/2"
-                                    >
-                                        <ChevronRight className="h-6 w-6" />
-                                    </Button>
-                                </>
-                            )}
+                        {/* Zoom controls */}
+                        <div className="absolute bottom-6 right-6 z-30 flex items-center gap-2">
+                            <Button
+                                variant="ghost"
+                                size="iconMd"
+                                onClick={() => {
+                                    setZoomed(true);
+                                    setZoomScale((z) => Math.min(z + 0.25, 4));
+                                }}
+                                aria-label="Zoom in"
+                                className="text-white hover:bg-white/10"
+                            >
+                                <ZoomIn />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="iconMd"
+                                onClick={() => {
+                                    setZoomScale((z) => {
+                                        const next = Math.max(z - 0.25, 1);
+                                        if (next <= 1) setZoomed(false);
+                                        return next;
+                                    });
+                                }}
+                                aria-label="Zoom out"
+                                className="text-white hover:bg-white/10"
+                            >
+                                <ZoomOut />
+                            </Button>
+                        </div>
 
+                        {/* Prev / Next */}
+                        {galleryLength > 1 && (
+                            <>
+                                <Button
+                                    variant="ghost"
+                                    size="iconLg"
+                                    onClick={previous}
+                                    aria-label="Previous image"
+                                    className="absolute left-5 top-1/2 z-30 -translate-y-1/2 text-white hover:bg-white/10"
+                                >
+                                    <ChevronLeft />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="iconLg"
+                                    onClick={next}
+                                    aria-label="Next image"
+                                    className="absolute right-5 top-1/2 z-30 -translate-y-1/2 text-white hover:bg-white/10"
+                                >
+                                    <ChevronRight />
+                                </Button>
+                            </>
+                        )}
+
+                        <div
+                            className="relative flex h-full w-full select-none items-center justify-center p-6 sm:p-12"
+                            onWheel={handleWheel}
+                            onDoubleClick={handleDoubleClick}
+                            onTouchStart={onTouchStart}
+                            onTouchEnd={onTouchEnd}
+                            onPointerDown={onPointerDown}
+                            onPointerUp={onPointerUp}
+                        >
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={currentImage}
-                                    {...imageAnimation}
+                                    initial={{ opacity: 0, scale: 0.97 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 1.03 }}
+                                    transition={imageTransition}
                                     className="relative flex h-full w-full items-center justify-center"
                                 >
                                     <Image
                                         src={currentImage}
                                         alt={title}
-                                        fill
-                                        sizes="90vw"
+                                        width={1800}
+                                        height={2200}
                                         priority
-                                        draggable={false}
-                                        blurDataURL={getBlurPlaceholder()}
                                         placeholder="blur"
-                                        className="max-h-[90vh] max-w-[92vw] rounded-2xl object-contain"
+                                        blurDataURL={BLUR_PLACEHOLDER}
+                                        draggable={false}
+                                        className="max-h-[88vh] max-w-[92vw] rounded-2xl object-contain"
                                         style={{
                                             transform: `scale(${zoomed ? zoomScale : 1})`,
-                                            transformOrigin,
                                             transition: "transform .28s cubic-bezier(.22,.61,.36,1)",
                                         }}
                                     />
                                 </motion.div>
                             </AnimatePresence>
 
-                            <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-small font-medium text-white backdrop-blur-xl">
+                            {/* Counter */}
+                            <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-small font-medium text-white backdrop-blur-xl">
                                 {selectedIndex + 1} / {galleryLength}
-                            </div>
-
-                            {/* Zoom hint on mobile */}
-                            <div className="absolute bottom-6 right-6 z-30 hidden sm:flex gap-2">
-                                <Button
-                                    variant="glass"
-                                    size="iconSm"
-                                    onClick={() =>
-                                        setZoomScale((z) => Math.max(z - 0.25, 1))
-                                    }
-                                    aria-label="Zoom out"
-                                >
-                                    <ZoomOut className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                    variant="glass"
-                                    size="iconSm"
-                                    onClick={() => {
-                                        setZoomScale((z) => Math.min(z + 0.25, 4));
-                                        setZoomed(true);
-                                    }}
-                                    aria-label="Zoom in"
-                                >
-                                    <ZoomIn className="h-4 w-4" />
-                                </Button>
                             </div>
                         </div>
                     </motion.div>

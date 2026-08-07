@@ -39,11 +39,10 @@ export const buttonVariants = cva(
     "disabled:pointer-events-none",
     "disabled:opacity-50",
 
-    // SVG children
+    // SVG children — pointer-events only; sizing is left to the caller so
+    // explicit icon sizes (e.g. w-6 h-6, size-4) are respected, not overridden.
     "[&_svg]:pointer-events-none",
     "[&_svg]:shrink-0",
-    "[&_svg]:h-[1.125em]",
-    "[&_svg]:w-[1.125em]",
 
     // Cursor
     "cursor-pointer",

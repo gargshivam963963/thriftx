@@ -372,7 +372,7 @@ export default function BulkProductCard({
         <>
             <Card
                 className={cn(
-                    "group/card relative overflow-hidden rounded-2xl border bg-white transition-all duration-300",
+                    "group/card relative overflow-hidden rounded-2xl border bg-card transition-all duration-300",
                     hasErrors
                         ? "border-red-200 shadow-sm dark:border-red-800/50"
                         : "border-border shadow-sm hover:shadow-xl hover:-translate-y-0.5 dark:border-border/60",

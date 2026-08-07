@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { useState, useRef, useEffect, useCallback } from "react";
+import { Button } from '@/components/ui/button'; import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -231,6 +231,8 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                             />
                             <Button
                                 type="button"
+                                variant="ghost"
+                                size="iconMd"
                                 onClick={onClose}
                                 title="Close search (Esc)"
                                 className="absolute right-4 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition hover:bg-muted hover:text-foreground dark:hover:bg-card dark:hover:text-muted-foreground"
@@ -267,6 +269,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                         </span>
                                         <Button
                                             type="button"
+                                            variant="ghost"
                                             onClick={handleViewAllResults}
                                             title="View all search results"
                                             className="flex items-center gap-1 text-xs font-semibold text-foreground transition hover:opacity-70 dark:text-foreground"
@@ -357,6 +360,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                             <Button
                                                 key={s}
                                                 type="button"
+                                                variant="outline"
                                                 onClick={() => handleSuggestionClick(s)}
                                                 className="rounded-full border border-border px-3.5 py-1.5 text-xs font-semibold text-muted-foreground transition hover:border-foreground hover:bg-foreground hover:text-white dark:border-border dark:text-muted-foreground dark:hover:border-border dark:hover:bg-muted dark:hover:text-foreground"
                                             >
@@ -379,6 +383,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                                 </span>
                                                 <Button
                                                     type="button"
+                                                    variant="ghost"
                                                     onClick={() => {
                                                         clearRecentSearches();
                                                         setRecentSearches([]);
@@ -394,6 +399,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                                     <Button
                                                         key={s}
                                                         type="button"
+                                                        variant="outline"
                                                         onClick={() => {
                                                             setQuery(s);
                                                             inputRef.current?.focus();
@@ -421,6 +427,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                                 <Button
                                                     key={s}
                                                     type="button"
+                                                    variant="outline"
                                                     onClick={() => handleSuggestionClick(s)}
                                                     className="flex items-center gap-1.5 rounded-full border border-border px-3.5 py-2 text-xs font-medium text-muted-foreground transition hover:border-foreground hover:bg-foreground hover:text-white dark:border-border dark:text-muted-foreground dark:hover:border-border dark:hover:bg-muted dark:hover:text-foreground"
                                                 >
@@ -449,6 +456,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                                 <Button
                                                     key={cat.label}
                                                     type="button"
+                                                    variant="outline"
                                                     onClick={() => {
                                                         saveRecentSearch(cat.label);
                                                         onClose();

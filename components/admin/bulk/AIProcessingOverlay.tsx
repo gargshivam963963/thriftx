@@ -84,7 +84,7 @@ export default function AIProcessingOverlay({
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="fixed left-1/2 top-1/2 z-[81] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2"
                     >
-                        <div className="overflow-hidden rounded-3xl border border-border bg-white shadow-2xl dark:border-border dark:bg-foreground">
+                        <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-2xl">
                             {/* Header */}
                             <div className="flex items-center gap-3 border-b border-border bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 px-6 py-5 text-white dark:border-border">
                                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 backdrop-blur">

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+
+import { Button } from '@/components/ui/button';import { useEffect, useState, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import AdminSidebar from "@/components/admin/dashboard/Sidebar";
@@ -72,12 +73,12 @@ export default function AdminLayout({
             <div className="flex flex-1 flex-col lg:pl-[280px]">
                 {/* Mobile header */}
                 <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card px-4 lg:hidden">
-                    <button
+                    <Button
                         onClick={() => setSidebarOpen(true)}
                         className="flex h-10 w-10 items-center justify-center rounded-xl border border-border text-foreground hover:bg-muted"
                     >
                         {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-                    </button>
+                    </Button>
                     <div className="flex items-center gap-2">
                         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-black text-[10px] font-bold text-white dark:bg-white dark:text-black">
                             T

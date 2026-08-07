@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
           );
 
           const sessions = sessionsResponse.documents.filter(
-            (s: any) =>
+            (s) =>
               (s.sessionStart || 0) >= startTimestamp &&
               (s.sessionStart || 0) <= endTimestamp,
           );

@@ -102,7 +102,7 @@ function SectionCard({
     return (
         <motion.div
             variants={fadeUpItem}
-            className="overflow-hidden rounded-2xl border border-border/80 bg-white shadow-sm"
+            className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm"
         >
             <div className="flex items-center gap-2 border-b border-border bg-subtle/80 px-4 py-3 sm:px-5">
                 <div className="rounded-lg bg-foreground p-1.5 text-white shadow-sm">
@@ -387,7 +387,7 @@ export default function AddressForm({
                                         whileTap={{ scale: 0.97 }}
                                         className={`relative overflow-hidden rounded-2xl border-2 p-3 text-center transition-all duration-200 sm:p-4 ${isSelected
                                             ? "border-foreground bg-foreground text-white shadow-lg"
-                                            : "border-border bg-white text-muted-foreground hover:border-foreground hover:shadow-md"
+                                            : "border-border bg-card text-muted-foreground hover:border-foreground hover:shadow-md"
                                             }`}
                                     >
                                         {isSelected && (
@@ -405,7 +405,7 @@ export default function AddressForm({
                                         <div className="relative z-10 flex flex-col items-center gap-1.5 sm:gap-2">
                                             <div
                                                 className={`rounded-xl p-1.5 transition-colors sm:p-2 ${isSelected
-                                                    ? "bg-white/15"
+                                                    ? "bg-card/15"
                                                     : "bg-muted"
                                                     }`}
                                             >

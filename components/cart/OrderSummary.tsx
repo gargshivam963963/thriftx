@@ -210,7 +210,7 @@ export default function OrderSummary({
                                     const isFree = qualifiesForFreeShipping || rate.amount === 0;
 
                                     return (
-                                        <button
+                                        <Button
                                             key={rate.courierId}
                                             type="button"
                                             onClick={() => handleMethodSelect(rate.method)}
@@ -241,7 +241,7 @@ export default function OrderSummary({
                                                     {isFree ? "FREE" : `₹${rate.amount}`}
                                                 </span>
                                             </div>
-                                        </button>
+                                        </Button>
                                     );
                                 })}
                             </div>
@@ -307,13 +307,13 @@ export default function OrderSummary({
                             placeholder="Enter code"
                             className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-small font-medium outline-none transition focus:border-foreground focus:ring-1 focus:ring-foreground placeholder:text-muted"
                         />
-                        <button
+                        <Button
                             type="button"
                             onClick={handleApplyCoupon}
                             className="rounded-lg bg-foreground px-4 py-2 text-small font-semibold text-background transition hover:bg-muted-foreground"
                         >
                             Apply
-                        </button>
+                        </Button>
                     </div>
                     {couponError && (
                         <p className="mt-1.5 text-badge font-medium text-error">{couponError}</p>

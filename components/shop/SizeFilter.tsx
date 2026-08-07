@@ -1,11 +1,14 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import FilterOptionList from "./FilterOptionList";
 
-const sizes = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"];
+interface SizeFilterProps {
+    /** Only sizes that exist among loaded products are shown. */
+    sizes: string[];
+}
 
-export default function SizeFilter() {
+export default function SizeFilter({ sizes }: SizeFilterProps) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -21,24 +24,21 @@ export default function SizeFilter() {
         router.push(`${pathname}?${params.toString()}`);
     }
 
+    if (sizes.length === 0) {
+        return (
+            <p className="py-2 text-center text-small text-muted-foreground">
+                No sizes available
+            </p>
+        );
+    }
+
     return (
-        <div className="grid grid-cols-4 gap-2">
-            {sizes.map((size) => {
-                const active = selectedSize === size;
-                return (
-                    <Button
-                        key={size}
-                        type="button"
-                        onClick={() => toggleSize(size)}
-                        variant={active ? "primary" : "outline"}
-                        size="sm"
-                        rounded="lg"
-                        className="h-10 text-small font-semibold"
-                    >
-                        {size}
-                    </Button>
-                );
-            })}
-        </div>
+        <FilterOptionList
+            options={sizes}
+            selected={selectedSize}
+            onSelect={toggleSize}
+            chips
+            visibleLimit={12}
+        />
     );
 }

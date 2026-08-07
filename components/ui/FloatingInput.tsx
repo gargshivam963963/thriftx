@@ -18,19 +18,19 @@ const FloatingInput = forwardRef<HTMLInputElement, Props>(
                     ref={ref}
                     placeholder=" "
                     className={cn(
-                        "peer h-14 w-full rounded-2xl border bg-white px-4 pt-5 pb-2 outline-none transition-all",
+                        "peer h-14 w-full rounded-2xl border bg-card px-4 pt-5 pb-2 outline-none transition-all",
                         "focus:ring-4",
                         error
                             ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-                            : "border-zinc-300 focus:border-zinc-900 focus:ring-zinc-900/5",
-                        aiFilled && "border-emerald-400 bg-emerald-50/50",
+                            : "border-border focus:border-foreground focus:ring-foreground/10",
+                        aiFilled && "border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30",
                         className
                     )}
                 />
 
                 <label
                     className={cn(
-                        "pointer-events-none absolute left-4 top-4 bg-white px-1 text-muted-foreground transition-all",
+                        "pointer-events-none absolute left-4 top-4 bg-card px-1 text-muted-foreground transition-all",
                         "peer-placeholder-shown:top-4 peer-placeholder-shown:text-base",
                         "peer-focus:-top-2 peer-focus:text-xs",
                         "peer-[:not(:placeholder-shown)]:-top-2 peer-[:not(:placeholder-shown)]:text-xs",
@@ -52,7 +52,7 @@ const FloatingInput = forwardRef<HTMLInputElement, Props>(
                 )}
 
                 {aiFilled && !error && (
-                    <span className="absolute right-3 top-3 rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700">
+                    <span className="absolute right-3 top-3 rounded-full bg-emerald-100 px-2 py-1 text-badge font-semibold text-emerald-700">
                         AI
                     </span>
                 )}

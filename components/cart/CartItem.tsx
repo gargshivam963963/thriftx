@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import type { CartProduct } from "@/lib/services/cartProducts";
 import ConfirmPopover from "@/components/ui/ConfirmPopover";
+import { Button } from "@/components/ui/button";
 import { isWishlisted, toggleWishlist } from "@/lib/services/wishlist";
 
 interface CartItemProps {
@@ -77,25 +78,33 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }: Car
                             </div>
 
                             <div className="flex items-center gap-1 shrink-0">
-                                <button
+                                <Button
                                     type="button"
                                     onClick={handleWishlistToggle}
                                     disabled={wishlistLoading}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-error hover:bg-error-bg hover:text-error"
+                                    variant="ghost"
+                                    size="iconMd"
+                                    rounded="lg"
+                                    className="border border-border text-muted-foreground transition hover:border-error hover:bg-error-bg hover:text-error"
+                                    aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
                                 >
                                     <Heart
                                         size={13}
-                                        className={`transition-all duration-200 ${wishlisted ? "fill-error text-error" : ""
-                                            }`}
+                                        className={`transition-all duration-200 ${wishlisted ? "fill-error text-error" : ""}`}
                                     />
-                                </button>
-                                <button
+                                </Button>
+
+                                <Button
                                     type="button"
                                     onClick={() => setDeleteOpen(true)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-error hover:bg-error-bg hover:text-error"
+                                    variant="ghost"
+                                    size="iconMd"
+                                    rounded="lg"
+                                    className="border border-border text-muted-foreground transition hover:border-error hover:bg-error-bg hover:text-error"
+                                    aria-label="Remove item"
                                 >
                                     <Trash2 size={13} />
-                                </button>
+                                </Button>
                             </div>
                         </div>
 
@@ -116,23 +125,31 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }: Car
                             </span>
 
                             <div className="flex items-center rounded-lg border border-border bg-muted p-0.5">
-                                <button
+                                <Button
                                     type="button"
                                     onClick={() => onDecrease(item.cartId, item.quantity)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-md transition hover:bg-card active:scale-90"
+                                    variant="ghost"
+                                    size="iconMd"
+                                    rounded="md"
+                                    className="transition hover:bg-card active:scale-90"
+                                    aria-label="Decrease quantity"
                                 >
                                     <Minus size={13} />
-                                </button>
+                                </Button>
                                 <span className="min-w-[32px] text-center text-small font-semibold text-foreground">
                                     {item.quantity}
                                 </span>
-                                <button
+                                <Button
                                     type="button"
                                     onClick={() => onIncrease(item.cartId)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-md transition hover:bg-card active:scale-90"
+                                    variant="ghost"
+                                    size="iconMd"
+                                    rounded="md"
+                                    className="transition hover:bg-card active:scale-90"
+                                    aria-label="Increase quantity"
                                 >
                                     <Plus size={13} />
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>

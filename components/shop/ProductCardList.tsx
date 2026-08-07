@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+
+import { Button } from '@/components/ui/button';import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -130,16 +131,16 @@ export default function ProductCardList({
                             )}
 
                             {discount && discount > 0 && (
-                                <Badge variant="error" size="xs" rounded="md" className="absolute left-3 top-3 z-10 bg-white/90 text-red-600 dark:bg-white/90">
+                                <Badge variant="error" size="xs" rounded="md" className="absolute left-3 top-3 z-10 bg-red-600/90 text-white">
                                     -{discount}%
                                 </Badge>
                             )}
 
-                            <button
+                            <Button
                                 type="button"
                                 onClick={handleWishlist}
                                 disabled={wishlistLoading}
-                                className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur-xl shadow-lg transition-colors hover:bg-white"
+                                className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-card/90 backdrop-blur-xl shadow-lg transition-colors hover:bg-card"
                                 aria-label="Wishlist"
                             >
                                 <Heart
@@ -147,7 +148,7 @@ export default function ProductCardList({
                                     className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground"
                                         }`}
                                 />
-                            </button>
+                            </Button>
                         </div>
 
                         {/* ── Content ────────────────────────────────── */}

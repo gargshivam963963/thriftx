@@ -175,7 +175,7 @@ export default function AdminDashboardPage() {
                     loading={loading}
                 />
                 <RecentOrders
-                    orders={orders as any}
+                    orders={orders}
                     loading={loading}
                 />
             </div>

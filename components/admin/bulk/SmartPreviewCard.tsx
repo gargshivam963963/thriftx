@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+
+import { Button } from '@/components/ui/button';import { useState, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -96,7 +97,7 @@ export default function SmartPreviewCard({
                 }`}
         >
             {/* Header */}
-            <button
+            <Button
                 type="button"
                 onClick={() => setExpanded(!expanded)}
                 className="flex w-full items-center gap-4 p-4 text-left"
@@ -160,7 +161,7 @@ export default function SmartPreviewCard({
                         <ChevronDown size={16} className="text-muted-foreground" />
                     )}
                 </div>
-            </button>
+            </Button>
 
             {/* Expanded content */}
             <AnimatePresence>
@@ -236,7 +237,7 @@ export default function SmartPreviewCard({
                                                         />
                                                     </div>
                                                 ) : (
-                                                    <button
+                                                    <Button
                                                         type="button"
                                                         onClick={() =>
                                                             startEdit(field.key, value)
@@ -253,7 +254,7 @@ export default function SmartPreviewCard({
                                                                 </span>
                                                             )}
                                                         </p>
-                                                    </button>
+                                                    </Button>
                                                 )}
                                             </div>
                                         );
@@ -280,7 +281,7 @@ export default function SmartPreviewCard({
 
                             {/* Actions */}
                             <div className="flex flex-wrap items-center gap-2 pt-1">
-                                <button
+                                <Button
                                     type="button"
                                     onClick={() => onAiFill(product.sku)}
                                     disabled={aiLoading || imageCount === 0}
@@ -297,7 +298,7 @@ export default function SmartPreviewCard({
                                             AI Fill Details
                                         </>
                                     )}
-                                </button>
+                                </Button>
                                 <span className="text-badge text-muted-foreground">
                                     Auto-fills brand, category, size, material, color from images
                                 </span>

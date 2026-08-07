@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+
+import { Button } from '@/components/ui/button';import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -124,23 +125,23 @@ export default function ProductCardGrid({
                         )}
 
                         {discount && discount > 0 && (
-                            <Badge variant="error" size="xs" rounded="md" className="absolute left-2 top-2 z-10 bg-white/90 text-red-600 dark:bg-white/90">
+                            <Badge variant="error" size="xs" rounded="md" className="absolute left-2 top-2 z-10 bg-red-600/90 text-white">
                                 -{discount}%
                             </Badge>
                         )}
 
-                        <button
+                        <Button
                             type="button"
                             onClick={handleWishlist}
                             disabled={wishlistLoading}
-                            className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm transition-all hover:bg-white hover:scale-110 active:scale-90"
+                            className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card/90 backdrop-blur-sm shadow-sm transition-all hover:bg-card hover:scale-110 active:scale-90"
                         >
                             <Heart
                                 size={13}
                                 className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground"
                                     }`}
                             />
-                        </button>
+                        </Button>
                     </div>
 
                     {/* ── Info — using shadcn CardContent ──────────── */}

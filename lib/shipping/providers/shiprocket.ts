@@ -15,6 +15,38 @@ import { getAvailableCouriers } from "./couriers";
 /**
  * Map Shiprocket shipment status strings to our internal ShipmentStatus.
  */
+
+interface ShiprocketShipmentResponse {
+  shipment_id?: string | number;
+  order_id?: string | number;
+  awb_code?: string;
+  courier_name?: string;
+  courier_company_id?: string | number;
+  tracking_url?: string;
+  label_url?: string;
+  invoice_url?: string;
+  estimated_delivery_date?: string;
+}
+
+interface ShiprocketPickupResponse {
+  pickup_id?: string | number;
+}
+
+interface ShiprocketTrackingEventResponse {
+  current_status?: string;
+  activity?: string;
+  location?: string;
+  date?: string;
+}
+
+interface ShiprocketTrackingResponse {
+  tracking_data?: ShiprocketTrackingEventResponse[];
+}
+
+interface ShiprocketLabelResponse {
+  label_url?: string;
+}
+
 function mapShiprocketStatus(status: string): ShipmentStatus {
   const normalized = (status || "").toLowerCase();
 
@@ -61,50 +93,53 @@ export class ShiprocketProvider implements ShippingProvider {
               },
             ];
 
-      const response = await shiprocketFetch<any>("/orders/create/adhoc", {
-        method: "POST",
-        body: JSON.stringify({
-          order_id: payload.orderId,
-          order_date: new Date().toISOString().slice(0, 10),
+      const response = await shiprocketFetch<ShiprocketShipmentResponse>(
+        "/orders/create/adhoc",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            order_id: payload.orderId,
+            order_date: new Date().toISOString().slice(0, 10),
 
-          pickup_location: PICKUP_ADDRESS.name,
-          pickup_customer_name: "ThriftX",
-          pickup_address: PICKUP_ADDRESS.address,
-          pickup_city: PICKUP_ADDRESS.city,
-          pickup_state: PICKUP_ADDRESS.state,
-          pickup_country: PICKUP_ADDRESS.country,
-          pickup_pincode: PICKUP_ADDRESS.pincode,
-          pickup_email: PICKUP_ADDRESS.email,
-          pickup_phone: PICKUP_ADDRESS.phone,
+            pickup_location: PICKUP_ADDRESS.name,
+            pickup_customer_name: "ThriftX",
+            pickup_address: PICKUP_ADDRESS.address,
+            pickup_city: PICKUP_ADDRESS.city,
+            pickup_state: PICKUP_ADDRESS.state,
+            pickup_country: PICKUP_ADDRESS.country,
+            pickup_pincode: PICKUP_ADDRESS.pincode,
+            pickup_email: PICKUP_ADDRESS.email,
+            pickup_phone: PICKUP_ADDRESS.phone,
 
-          billing_customer_name: payload.customerName,
-          billing_last_name: "",
+            billing_customer_name: payload.customerName,
+            billing_last_name: "",
 
-          billing_address: payload.address,
-          billing_city: payload.city,
-          billing_pincode: payload.pincode,
-          billing_state: payload.state,
-          billing_country: payload.country,
+            billing_address: payload.address,
+            billing_city: payload.city,
+            billing_pincode: payload.pincode,
+            billing_state: payload.state,
+            billing_country: payload.country,
 
-          billing_email: payload.email ?? "",
+            billing_email: payload.email ?? "",
 
-          billing_phone: payload.phone,
+            billing_phone: payload.phone,
 
-          shipping_is_billing: true,
+            shipping_is_billing: true,
 
-          order_items: orderItems,
+            order_items: orderItems,
 
-          payment_method: payload.cod ? "COD" : "Prepaid",
+            payment_method: payload.cod ? "COD" : "Prepaid",
 
-          sub_total: payload.amount,
+            sub_total: payload.amount,
 
-          length: payload.length,
-          breadth: payload.width,
-          height: payload.height,
+            length: payload.length,
+            breadth: payload.width,
+            height: payload.height,
 
-          weight: payload.weight,
-        }),
-      });
+            weight: payload.weight,
+          }),
+        },
+      );
 
       return {
         success: true,
@@ -117,7 +152,9 @@ export class ShiprocketProvider implements ShippingProvider {
 
         courierName: response.courier_name ?? "",
 
-        courierCompanyId: response.courier_company_id,
+        courierCompanyId: response.courier_company_id
+          ? Number(response.courier_company_id)
+          : undefined,
 
         trackingNumber: response.awb_code ?? String(response.shipment_id ?? ""),
 
@@ -135,7 +172,7 @@ export class ShiprocketProvider implements ShippingProvider {
           provider: "shiprocket",
 
           courier: {
-            id: response.courier_company_id ?? "",
+            id: String(response.courier_company_id ?? ""),
 
             name: response.courier_name ?? "",
 
@@ -184,17 +221,20 @@ export class ShiprocketProvider implements ShippingProvider {
 
   async schedulePickup(shipmentId: string): Promise<PickupResult> {
     try {
-      const response = await shiprocketFetch<any>(`/courier/generate/pickup`, {
-        method: "POST",
-        body: JSON.stringify({
-          shipment_id: [parseInt(shipmentId, 10)],
-        }),
-      });
+      const response = await shiprocketFetch<ShiprocketPickupResponse>(
+        `/courier/generate/pickup`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            shipment_id: [parseInt(shipmentId, 10)],
+          }),
+        },
+      );
 
       return {
         success: true,
         pickup: {
-          pickupId: response.pickup_id ?? String(Date.now()),
+          pickupId: String(response.pickup_id ?? ""),
           scheduledAt: new Date().toISOString(),
           status: "scheduled",
         },
@@ -211,14 +251,14 @@ export class ShiprocketProvider implements ShippingProvider {
 
   async getTracking(trackingNumber: string): Promise<TrackingResult> {
     try {
-      const response = await shiprocketFetch<any>(
+      const response = await shiprocketFetch<ShiprocketTrackingResponse>(
         `/tracking?shipment_id=${trackingNumber}`,
       );
 
       const trackingData = response?.tracking_data ?? response;
 
       const events = Array.isArray(trackingData)
-        ? trackingData.map((event: any) => ({
+        ? trackingData.map((event) => ({
             status:
               mapShiprocketStatus(event.current_status ?? "") ?? "in_transit",
             description: event.activity ?? "In transit",
@@ -247,12 +287,15 @@ export class ShiprocketProvider implements ShippingProvider {
 
   async generateLabel(shipmentId: string): Promise<string | null> {
     try {
-      const response = await shiprocketFetch<any>(`/courier/generate/label`, {
-        method: "POST",
-        body: JSON.stringify({
-          shipment_id: [parseInt(shipmentId, 10)],
-        }),
-      });
+      const response = await shiprocketFetch<ShiprocketLabelResponse>(
+        `/courier/generate/label`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            shipment_id: [parseInt(shipmentId, 10)],
+          }),
+        },
+      );
 
       return response.label_url ?? null;
     } catch (error) {

@@ -1,31 +1,48 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
-import PremiumImage from "@/components/ui/PremiumImage";
 import {
     FadeUp,
     StaggerContainer,
     StaggerItem,
 } from "@/components/animations";
+import { cn } from "@/lib/utils";
 
-const brands = [
-    { name: "Nike", image: "/images/brands/nike.webp" },
-    { name: "Adidas", image: "/images/brands/adidas.webp" },
-    { name: "Zara", image: "/images/brands/zara.webp" },
-    { name: "Levi's", image: "/images/brands/levis.webp" },
-    { name: "H&M", image: "/images/brands/hm.webp" },
-    { name: "Tommy Hilfiger", image: "/images/brands/tommy.webp" },
+interface Brand {
+    name: string;
+    /** Optional overrides for the wordmark styling. */
+    className?: string;
+}
+
+const brands: Brand[] = [
+    { name: "Nike", className: "font-black italic tracking-tight" },
+    { name: "Adidas", className: "font-bold tracking-widest" },
+    { name: "Puma", className: "font-black italic tracking-wide" },
+    { name: "Zara", className: "font-bold tracking-[0.35em]" },
+    { name: "H&M", className: "font-black tracking-[0.2em]" },
+    { name: "Levi's", className: "font-bold tracking-tight" },
+    {
+        name: "Tommy Hilfiger",
+        className: "font-bold tracking-wide",
+    },
+    {
+        name: "Ralph Lauren",
+        className: "font-bold tracking-wide italic",
+    },
+    { name: "Uniqlo", className: "font-black lowercase tracking-[0.15em]" },
+    { name: "Lacoste", className: "font-black tracking-[0.25em]" },
 ];
 
 export default function BrandSection() {
     return (
-        <section className="bg-card py-24">
+        <section className="bg-muted py-24">
             <Container>
                 <FadeUp>
                     <div className="mb-14 text-center">
@@ -36,35 +53,37 @@ export default function BrandSection() {
                             Shop Your Favourite Brands
                         </h2>
                         <p className="mx-auto mt-4 max-w-xl text-body text-muted-foreground">
-                            Discover authentic branded fashion at a fraction of retail prices.
+                            Authentic, quality-checked pieces from the world&apos;s most
+                            coveted fashion labels — at a fraction of retail.
                         </p>
                     </div>
                 </FadeUp>
 
-                <StaggerContainer className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+                <StaggerContainer className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {brands.map((brand) => (
                         <StaggerItem key={brand.name}>
-                            <Link
-                                href={`/shop?brand=${encodeURIComponent(brand.name)}`}
-                                className="group block h-full"
+                            <motion.div
+                                whileHover={{ y: -4 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
                             >
-                                <Card className="flex h-full flex-col items-center justify-center border-border p-6 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/30 hover:shadow-lg">
-                                    <div className="relative mx-auto h-20 w-20 overflow-hidden rounded-xl">
-                                        <PremiumImage
-                                            src={brand.image}
-                                            alt={brand.name}
-                                            fill
-                                            rounded={false}
-                                            fallbackSrc="/images/brands/placeholder.webp"
-                                            sizes="80px"
-                                            className="object-contain p-1 transition-all duration-500 group-hover:scale-110"
-                                        />
-                                    </div>
-                                    <p className="mt-4 text-center text-body font-semibold text-foreground">
-                                        {brand.name}
-                                    </p>
-                                </Card>
-                            </Link>
+                                <Link
+                                    href={`/shop?brand=${encodeURIComponent(brand.name)}`}
+                                    aria-label={`Shop ${brand.name}`}
+                                    className="group block h-full"
+                                >
+                                    <Card className="flex h-28 flex-col items-center justify-center border-border bg-card p-4 transition-all duration-300 hover:border-foreground/40 hover:shadow-lg">
+                                        <span
+                                            className={cn(
+                                                "select-none text-center text-title text-foreground transition-all duration-300 group-hover:text-foreground",
+                                                brand.className,
+                                            )}
+                                        >
+                                            {brand.name}
+                                        </span>
+                                        <span className="mt-2 h-px w-0 bg-foreground transition-all duration-300 group-hover:w-8" />
+                                    </Card>
+                                </Link>
+                            </motion.div>
                         </StaggerItem>
                     ))}
                 </StaggerContainer>
@@ -82,4 +101,3 @@ export default function BrandSection() {
         </section>
     );
 }
-

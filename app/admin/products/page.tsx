@@ -422,7 +422,7 @@ export default function AdminProductsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 rounded-xl border border-border bg-white p-0.5 dark:border-border dark:bg-card">
-                        <button
+                        <Button
                             type="button"
                             onClick={() => setViewMode("grid")}
                             className={cn(
@@ -433,8 +433,8 @@ export default function AdminProductsPage() {
                             )}
                         >
                             <Grid3X3 size={14} />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="button"
                             onClick={() => setViewMode("list")}
                             className={cn(
@@ -445,14 +445,14 @@ export default function AdminProductsPage() {
                             )}
                         >
                             <List size={14} />
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
 
             {/* Category filter chips */}
             <div className="mb-5 flex flex-wrap items-center gap-2">
-                <button
+                <Button
                     type="button"
                     onClick={() => setCategoryFilter("all")}
                     className={cn(
@@ -463,9 +463,9 @@ export default function AdminProductsPage() {
                     )}
                 >
                     All
-                </button>
+                </Button>
                 {categories.map((cat) => (
-                    <button
+                    <Button
                         key={cat}
                         type="button"
                         onClick={() => setCategoryFilter(cat)}
@@ -477,7 +477,7 @@ export default function AdminProductsPage() {
                         )}
                     >
                         {cat}
-                    </button>
+                    </Button>
                 ))}
             </div>
 
@@ -532,7 +532,7 @@ export default function AdminProductsPage() {
                             className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white shadow-sm transition-all hover:shadow-md dark:border-border/60 dark:bg-foreground"
                         >
                             {/* Image - clickable to preview */}
-                            <button
+                            <Button
                                 type="button"
                                 onClick={() => {
                                     setPreviewProduct(product);
@@ -577,7 +577,7 @@ export default function AdminProductsPage() {
                                         </span>
                                     )}
                                 </div>
-                            </button>
+                            </Button>
 
                             {/* Info */}
                             <div className="p-4">
@@ -685,7 +685,7 @@ export default function AdminProductsPage() {
                             animate={{ opacity: 1 }}
                             className="flex items-center gap-4 rounded-2xl border border-border/80 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-border/60 dark:bg-foreground"
                         >
-                            <button
+                            <Button
                                 type="button"
                                 onClick={() => {
                                     setPreviewProduct(product);
@@ -706,7 +706,7 @@ export default function AdminProductsPage() {
                                         <Package size={18} className="text-muted-foreground" />
                                     </div>
                                 )}
-                            </button>
+                            </Button>
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-bold text-foreground">
                                     {product.title}
@@ -852,7 +852,7 @@ export default function AdminProductsPage() {
                                 className="fixed inset-0 z-[60] flex items-center justify-center"
                             >
                                 {/* Close button */}
-                                <button
+                                <Button
                                     onClick={() => {
                                         setPreviewProduct(null);
                                         setPreviewIndex(0);
@@ -860,7 +860,7 @@ export default function AdminProductsPage() {
                                     className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
                                 >
                                     <X size={20} />
-                                </button>
+                                </Button>
 
                                 {/* Image counter */}
                                 <div className="absolute left-1/2 top-4 z-10 -translate-x-1/2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
@@ -877,7 +877,7 @@ export default function AdminProductsPage() {
 
                                 {/* Previous button */}
                                 {allImages.length > 1 && (
-                                    <button
+                                    <Button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setPreviewIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
@@ -885,7 +885,7 @@ export default function AdminProductsPage() {
                                         className="absolute left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
                                     >
                                         <ChevronLeft size={22} />
-                                    </button>
+                                    </Button>
                                 )}
 
                                 {/* Image */}
@@ -918,7 +918,7 @@ export default function AdminProductsPage() {
 
                                 {/* Next button */}
                                 {allImages.length > 1 && (
-                                    <button
+                                    <Button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setPreviewIndex((prev) => (prev + 1) % allImages.length);
@@ -926,7 +926,7 @@ export default function AdminProductsPage() {
                                         className="absolute right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
                                     >
                                         <ChevronRight size={22} />
-                                    </button>
+                                    </Button>
                                 )}
                             </motion.div>
                         </>

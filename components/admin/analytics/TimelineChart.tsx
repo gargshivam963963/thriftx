@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+
+import { Button } from '@/components/ui/button';import { useState } from "react";
 import { motion } from "framer-motion";
 import { Eye, ShoppingCart, CreditCard, TrendingUp } from "lucide-react";
 
@@ -74,7 +75,7 @@ export default function TimelineChart({
                 {/* Metric selector */}
                 <div className="flex gap-1 rounded-lg bg-muted p-0.5 dark:bg-card">
                     {METRICS.map((m) => (
-                        <button
+                        <Button
                             key={m.key}
                             onClick={() => setSelectedMetric(m.key)}
                             className={`rounded-md px-2.5 py-1 text-[10px] font-semibold transition ${selectedMetric === m.key
@@ -83,7 +84,7 @@ export default function TimelineChart({
                                 }`}
                         >
                             {m.label === "Page Views" ? "Views" : m.label === "Product Views" ? "Products" : m.label === "Add to Cart" ? "Cart" : "Buy"}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             </div>

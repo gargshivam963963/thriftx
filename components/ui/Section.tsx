@@ -22,7 +22,7 @@ export default function Section({
                 className={cn(
                     fluid
                         ? "w-full px-4 xl:px-8 2xl:px-10 sm:px-6 lg:px-8"
-                        : "mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8",
+                        : "mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8",
                     containerClassName
                 )}
             >

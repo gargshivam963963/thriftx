@@ -81,7 +81,7 @@ export default function FeaturedCategories() {
                                                     variant="secondary"
                                                     size="sm"
                                                     rounded="full"
-                                                    className="bg-white/90 text-foreground backdrop-blur-sm dark:bg-foreground/90 dark:text-foreground"
+                                                    className="bg-card/90 text-foreground backdrop-blur-sm dark:bg-card/90 dark:text-foreground"
                                                 >
                                                     {category.badge}
                                                 </Badge>

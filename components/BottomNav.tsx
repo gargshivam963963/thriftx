@@ -1,5 +1,6 @@
 "use client";
-import Link from "next/link";
+
+import { Button } from '@/components/ui/button';import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home,
@@ -79,14 +80,14 @@ export default function BottomNav() {
     ];
 
   return (
-    <nav className="md:hidden bg-white/80 backdrop-blur-xl fixed bottom-0 w-full z-50 rounded-t-2xl border-t border-border dark:border-border dark:bg-foreground/80 flex justify-around items-center h-16 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+    <nav className="md:hidden bg-card/80 backdrop-blur-xl fixed bottom-0 w-full z-50 rounded-t-2xl border-t border-border dark:border-border dark:bg-card/80 flex justify-around items-center h-16 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
       {navItems.map((item) => {
         const isActive = "href" in item && pathname === item.href;
         const Icon = item.icon;
 
         if ("onClick" in item) {
           return (
-            <button
+            <Button
               key={item.label}
               onClick={item.onClick}
               title={item.tooltip}
@@ -111,7 +112,7 @@ export default function BottomNav() {
               >
                 {item.label}
               </span>
-            </button>
+            </Button>
           );
         }
 
@@ -149,7 +150,7 @@ export default function BottomNav() {
       })}
 
       {/* Theme toggle as extra nav item */}
-      <button
+      <Button
         onClick={toggleTheme}
         title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
         className="relative flex flex-col items-center group pt-1"
@@ -162,7 +163,7 @@ export default function BottomNav() {
         <span className="text-badge font-semibold tracking-wide uppercase text-muted-foreground transition-colors">
           {theme === "dark" ? "Light" : "Dark"}
         </span>
-      </button>
+      </Button>
     </nav>
   );
 }

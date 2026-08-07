@@ -1,20 +1,38 @@
-'use client';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+"use client";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   ArrowRight,
   Check,
+  Clock,
   Facebook,
   Instagram,
+  Loader2,
   Mail,
   MapPin,
-  Phone,
+  MessageCircle,
   ShieldCheck,
   Truck,
   RotateCcw,
   Lock,
-} from 'lucide-react';
+  Send,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+
+// ── Business info ────────────────────────────────────────────────────────────
+const BUSINESS_EMAIL = "support@thriftx.in";
+const WHATSAPP_NUMBER = "919876543210";
+const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
+
+const companyLinks = [
+  { label: "About Us", href: "/about" },
+  { label: "Contact", href: "/contact" },
+  { label: "FAQs", href: "/faqs" },
+  { label: "Careers", href: "/careers" },
+];
 
 const shopLinks = [
   { label: "Men", href: "/shop/men" },
@@ -24,29 +42,35 @@ const shopLinks = [
   { label: "All Products", href: "/shop" },
 ];
 
-const helpLinks = [
-  { label: "Sustainability", href: "#" },
-  { label: "Shipping & Delivery", href: "#" },
-  { label: "Returns & Exchanges", href: "#" },
-  { label: "Contact Us", href: "#" },
-  { label: "Terms & Privacy", href: "#" },
+const supportLinks = [
+  { label: "Shipping Policy", href: "/shipping" },
+  { label: "Refund Policy", href: "/returns" },
+  { label: "Track My Order", href: "/profile/orders" },
+  { label: "Help Center", href: "/faqs" },
 ];
 
-const accountLinks = [
-  { label: "My Account", href: "/profile" },
-  { label: "My Orders", href: "/profile/orders" },
-  { label: "Wishlist", href: "/profile/wishlist" },
-  { label: "Addresses", href: "/profile/addresses" },
+const legalLinks = [
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms of Service", href: "/terms" },
 ];
 
 const socialLinks = [
-  { label: "Instagram", href: "https://instagram.com/thriftx", icon: Instagram },
-  { label: "Facebook", href: "https://facebook.com/thriftx", icon: Facebook },
-  { label: "Mail", href: "mailto:hello@thriftx.in", icon: Mail },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/thriftxpanipat/",
+    icon: Instagram,
+  },
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/profile.php?id=100009105021343",
+    icon: Facebook,
+  },
+  { label: "Email", href: `mailto:${BUSINESS_EMAIL}`, icon: Mail },
+  { label: "WhatsApp", href: WHATSAPP_LINK, icon: MessageCircle },
 ];
 
 const trustBadges = [
-  { icon: Truck, label: "Same-Day Delivery" },
+  { icon: Truck, label: "Fast Shipping" },
   { icon: ShieldCheck, label: "Quality Checked" },
   { icon: RotateCcw, label: "Easy Returns" },
   { icon: Lock, label: "Secure Checkout" },
@@ -56,26 +80,47 @@ const paymentMethods = ["VISA", "MC", "UPI", "PayPal", "RuPay"];
 
 export default function Footer() {
   const pathname = usePathname();
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   // Hide footer on admin routes
-  if (pathname?.startsWith('/admin')) return null;
+  if (pathname?.startsWith("/admin")) return null;
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
-    setSubscribed(true);
-    setEmail('');
-    setTimeout(() => setSubscribed(false), 4000);
+    const value = email.trim();
+    if (!value) {
+      setStatus("error");
+      toast.error("Please enter your email address.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      setStatus("error");
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    setStatus("loading");
+    // Simulate a subscribe request.
+    setTimeout(() => {
+      setStatus("success");
+      setEmail("");
+      toast.success("You're subscribed! Check your inbox for a welcome note.");
+      setTimeout(() => setStatus("idle"), 4000);
+    }, 900);
   };
+
+  const inputIdle =
+    "border-border bg-muted focus:border-muted-foreground focus:ring-border";
+  const inputSuccess =
+    "border-success bg-success-bg/40 focus:border-success focus:ring-success/20";
+  const inputError =
+    "border-error bg-error-bg/40 focus:border-error focus:ring-error/20";
 
   return (
     <footer className="relative w-full overflow-hidden border-t border-border bg-card">
-      {/* Subtle top accent */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-      <div className="mx-auto w-full max-w-7xl px-5 py-14 sm:px-8 lg:px-12 lg:py-20">
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-14 sm:px-6 lg:px-8 xl:px-12 lg:py-20">
         {/* ── Trust Strip ─────────────────────────────────────── */}
         <div className="mb-14 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {trustBadges.map(({ icon: Icon, label }) => (
@@ -96,9 +141,9 @@ export default function Footer() {
         {/* ── Main Grid ───────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4 lg:grid-cols-12">
           {/* Brand + Newsletter */}
-          <div className="col-span-2 md:col-span-2 lg:col-span-5">
+          <div className="col-span-2 md:col-span-2 lg:col-span-4">
             <Link href="/" className="group inline-flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-foreground via-muted-foreground to-muted-foreground text-body-lg font-bold text-white shadow-popover transition-all group-hover:scale-105 dark:from-white dark:via-muted dark:to-muted-foreground dark:text-black">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-foreground text-body-lg font-bold text-background shadow-popover transition-all group-hover:scale-105 dark:bg-muted dark:text-foreground">
                 T
               </div>
               <div>
@@ -113,14 +158,13 @@ export default function Footer() {
 
             <p className="mt-6 max-w-sm text-body-sm leading-relaxed text-muted-foreground">
               Handpicked branded fashion that combines luxury, sustainability, and
-              affordability. Every piece is quality checked before it reaches your wardrobe.
+              affordability. Every piece is quality checked before it reaches your
+              wardrobe.
             </p>
 
             {/* Newsletter */}
             <div className="mt-8">
-              <h4 className="text-caption text-foreground">
-                Get First Dibs
-              </h4>
+              <h4 className="text-caption text-foreground">Get First Dibs</h4>
               <p className="mt-1.5 text-body-sm text-muted-foreground">
                 Be the first to know about new drops and exclusive deals.
               </p>
@@ -129,45 +173,111 @@ export default function Footer() {
                   <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="email"
-                    required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (status !== "idle") setStatus("idle");
+                    }}
                     placeholder="Your email address"
-                    className="h-12 w-full rounded-xl border border-border bg-muted pl-10 pr-4 text-body-sm text-foreground outline-none transition focus:border-muted-foreground focus:ring-2 focus:ring-border"
+                    aria-label="Email address"
+                    aria-invalid={status === "error"}
+                    className={`h-12 w-full rounded-xl border pl-10 pr-4 text-body-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-2 ${status === "success"
+                      ? inputSuccess
+                      : status === "error"
+                        ? inputError
+                        : inputIdle
+                      }`}
                   />
                 </div>
-                <button
+                <Button
                   type="submit"
-                  className={`flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-xl px-5 text-body-sm font-bold text-white transition-all ${subscribed
-                    ? "bg-success"
-                    : "bg-foreground text-background hover:bg-muted-foreground"
-                    }`}
+                  size="lg"
+                  loading={status === "loading"}
+                  loadingText=""
+                  success={status === "success"}
+                  successText=""
+                  aria-label="Subscribe to newsletter"
+                  className="h-12 shrink-0 rounded-xl px-5"
                 >
-                  {subscribed ? (
-                    <>
-                      <Check className="h-4 w-4" /> Done
-                    </>
+                  {status === "success" ? (
+                    <Check className="h-4 w-4" />
+                  ) : status === "loading" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <>
-                      Subscribe <ArrowRight className="h-4 w-4" />
-                    </>
+                    <Send className="h-4 w-4" />
                   )}
-                </button>
+                </Button>
               </form>
+              {status === "success" && (
+                <p className="mt-2.5 flex items-center gap-1.5 text-small font-medium text-success-foreground">
+                  <Check size={13} /> You&apos;re in! Watch your inbox.
+                </p>
+              )}
+              {status === "error" && (
+                <p className="mt-2.5 text-small font-medium text-error">
+                  Please enter a valid email.
+                </p>
+              )}
               <p className="mt-2.5 text-small text-muted-foreground">
                 No spam. Unsubscribe anytime.
               </p>
             </div>
           </div>
 
-          {/* Shop Links */}
+          {/* Company */}
           <div className="lg:col-span-2">
-            <h4 className="text-caption text-foreground">
-              Shop
-            </h4>
+            <h4 className="text-caption text-foreground">Company</h4>
+            <ul className="mt-5 space-y-3">
+              {companyLinks.map((link) => (
+                <li key={link.href + link.label}>
+                  <Link
+                    href={link.href}
+                    className="group inline-flex items-center gap-1.5 text-body-sm text-muted-foreground transition hover:text-foreground"
+                  >
+                    <span className="h-px w-0 bg-foreground transition-all duration-300 group-hover:w-3" />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <h4 className="mt-8 text-caption text-foreground">Legal</h4>
+            <ul className="mt-5 space-y-3">
+              {legalLinks.map((link) => (
+                <li key={link.href + link.label}>
+                  <Link
+                    href={link.href}
+                    className="group inline-flex items-center gap-1.5 text-body-sm text-muted-foreground transition hover:text-foreground"
+                  >
+                    <span className="h-px w-0 bg-foreground transition-all duration-300 group-hover:w-3" />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Shop + Support */}
+          <div className="lg:col-span-3">
+            <h4 className="text-caption text-foreground">Shop</h4>
             <ul className="mt-5 space-y-3">
               {shopLinks.map((link) => (
-                <li key={link.href}>
+                <li key={link.href + link.label}>
+                  <Link
+                    href={link.href}
+                    className="group inline-flex items-center gap-1.5 text-body-sm text-muted-foreground transition hover:text-foreground"
+                  >
+                    <span className="h-px w-0 bg-foreground transition-all duration-300 group-hover:w-3" />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <h4 className="mt-8 text-caption text-foreground">Support</h4>
+            <ul className="mt-5 space-y-3">
+              {supportLinks.map((link) => (
+                <li key={link.href + link.label}>
                   <Link
                     href={link.href}
                     className="group inline-flex items-center gap-1.5 text-body-sm text-muted-foreground transition hover:text-foreground"
@@ -180,60 +290,41 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Help Links */}
-          <div className="lg:col-span-2">
-            <h4 className="text-caption text-foreground">
-              Help
-            </h4>
-            <ul className="mt-5 space-y-3">
-              {helpLinks.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="group inline-flex items-center gap-1.5 text-body-sm text-muted-foreground transition hover:text-foreground"
-                  >
-                    <span className="h-px w-0 bg-foreground transition-all duration-300 group-hover:w-3" />
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-
-            {/* Contact */}
-            <div className="mt-8 space-y-3">
+          {/* Contact + Social + Hours */}
+          <div className="col-span-2 md:col-span-1 lg:col-span-3">
+            <h4 className="text-caption text-foreground">Customer Support</h4>
+            <div className="mt-5 space-y-3">
+              <a
+                href={`mailto:${BUSINESS_EMAIL}`}
+                className="flex items-center gap-2.5 text-body-sm text-muted-foreground transition hover:text-foreground"
+              >
+                <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+                {BUSINESS_EMAIL}
+              </a>
+              <a
+                href={WHATSAPP_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2.5 text-body-sm text-muted-foreground transition hover:text-foreground"
+              >
+                <MessageCircle className="h-4 w-4 shrink-0 text-muted-foreground" />
+                WhatsApp Support
+              </a>
               <div className="flex items-center gap-2.5 text-body-sm text-muted-foreground">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                +91 98765 43210
+                <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                Panipat, Haryana, India
               </div>
-              <div className="flex items-center gap-2.5 text-body-sm text-muted-foreground">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                Panipat, Haryana
+              <div className="flex items-start gap-2.5 text-body-sm text-muted-foreground">
+                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <span>
+                  WhatsApp Support Only
+                  <br />
+                  Mon&ndash;Sat, 10 AM &ndash; 7 PM IST
+                </span>
               </div>
             </div>
-          </div>
 
-          {/* Account + Social */}
-          <div className="col-span-2 md:col-span-2 lg:col-span-3">
-            <h4 className="text-caption text-foreground">
-              Account
-            </h4>
-            <ul className="mt-5 space-y-3">
-              {accountLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="group inline-flex items-center gap-1.5 text-body-sm text-muted-foreground transition hover:text-foreground"
-                  >
-                    <span className="h-px w-0 bg-foreground transition-all duration-300 group-hover:w-3" />
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-
-            <h4 className="mt-8 text-caption text-foreground">
-              Follow Us
-            </h4>
+            <h4 className="mt-8 text-caption text-foreground">Follow Us</h4>
             <div className="mt-4 flex items-center gap-3">
               {socialLinks.map(({ label, href, icon: Icon }) => (
                 <Link
@@ -251,14 +342,14 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ── Divider ─────────────────────────────────────────── */}
+        {/* ── Bottom bar ───────────────────────────────────────── */}
         <div className="mt-14 border-t border-border pt-8">
           <div className="flex flex-col items-center justify-between gap-6 lg:flex-row">
             <p className="text-center text-body-sm text-muted-foreground lg:text-left">
               © {new Date().getFullYear()} THRIFTX. Sustainable luxury, redefined.
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               {paymentMethods.map((method) => (
                 <span
                   key={method}
@@ -274,4 +365,3 @@ export default function Footer() {
     </footer>
   );
 }
-

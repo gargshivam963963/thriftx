@@ -40,7 +40,7 @@ export function OrderCard({
             whileHover={{
                 y: -4,
             }}
-            className="overflow-hidden rounded-3xl border border-border bg-white shadow-sm transition-shadow duration-300 hover:shadow-xl"
+            className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm transition-shadow duration-300 hover:shadow-xl"
         >
             {/* Header */}
 

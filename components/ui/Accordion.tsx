@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+
+import { Button } from '@/components/ui/button';import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +25,7 @@ export default function Accordion({ items, className, defaultOpen }: AccordionPr
                 const isOpen = openIndex === index;
                 return (
                     <div key={index}>
-                        <button
+                        <Button
                             type="button"
                             onClick={() => setOpenIndex(isOpen ? null : index)}
                             className="flex w-full items-center justify-between py-4 text-left text-sm font-medium transition hover:text-muted-foreground dark:text-foreground dark:hover:text-muted-foreground"
@@ -37,7 +38,7 @@ export default function Accordion({ items, className, defaultOpen }: AccordionPr
                                     isOpen && "rotate-180",
                                 )}
                             />
-                        </button>
+                        </Button>
                         {isOpen && (
                             <div className="pb-4 text-sm leading-relaxed text-muted-foreground">
                                 {item.content}

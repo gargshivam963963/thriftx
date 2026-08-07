@@ -29,7 +29,7 @@ export async function getCategories(): Promise<Category[]> {
     [AppwriteQuery.equal("active", true), AppwriteQuery.orderAsc("order")],
   );
 
-  return response.documents.map((doc: any) => {
+  return response.documents.map((doc) => {
     const { $id, $collection, $database, ...data } = doc;
     return { id: $id, ...(data as Omit<Category, "id">) } as Category;
   });

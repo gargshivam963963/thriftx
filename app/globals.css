@@ -272,6 +272,7 @@
 
   --sidebar-width: 280px;
   --header-height: 64px;
+  --header-height-desktop: 64px;
 
   /* Radii — subtle, not oval */
   --radius-xs: 0.1875rem;
@@ -1040,6 +1041,17 @@ body {
 }
 .shadow-float {
   box-shadow: var(--shadow-xl);
+}
+
+/* ─── DESIGN SYSTEM: HEADER HEIGHT UTILITIES ────────────────────────────── */
+.h-header {
+  height: var(--header-height);
+}
+.h-header-desktop {
+  height: var(--header-height-desktop);
+}
+.md\:h-header-desktop {
+  height: var(--header-height-desktop);
 }
 
 /* ─── DESIGN SYSTEM: Z-INDEX UTILITIES ──────────────────────────────────── */

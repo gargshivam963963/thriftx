@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+
+import { Button } from '@/components/ui/button';import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -164,7 +165,7 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                     <span>Back to Store</span>
                 </Link>
 
-                <button
+                <Button
                     onClick={async () => {
                         await logout();
                         window.location.href = "/";
@@ -173,7 +174,7 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                 >
                     <LogOut size={18} />
                     <span>Sign Out</span>
-                </button>
+                </Button>
             </div>
         </div>
     );

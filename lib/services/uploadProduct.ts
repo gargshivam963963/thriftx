@@ -9,6 +9,7 @@ import {
 } from "@/lib/appwrite";
 
 import { uploadImages, UploadedImage } from "./storage";
+import { compressImages } from "./imageCompression";
 
 export interface UploadProductInput {
   form: Record<string, string>;
@@ -37,8 +38,14 @@ export async function uploadProduct({
     throw new Error("Please upload at least one image.");
   }
 
+  // Compress images on the client before upload (max 1024px, q0.8, WebP).
+  const compressed = await compressImages(images);
+  const compressedFiles = compressed.map(
+    (c) => new File([c.file], "product-image", { type: c.mimeType }),
+  );
+
   // Upload images
-  const uploadedImages: UploadedImage[] = await uploadImages(images);
+  const uploadedImages: UploadedImage[] = await uploadImages(compressedFiles);
 
   const imageUrls = uploadedImages.map((image) => image.url);
 

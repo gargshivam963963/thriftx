@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+
+import { Button } from '@/components/ui/button';import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { motion, Reorder, AnimatePresence } from "framer-motion";
 import { GripVertical, ImageIcon, Check, AlertCircle } from "lucide-react";
@@ -145,7 +146,7 @@ export default function SmartReorderGrid({
                                         {editingLabel === image.id ? (
                                             <div className="flex flex-wrap gap-1">
                                                 {LABEL_OPTIONS.map((option) => (
-                                                    <button
+                                                    <Button
                                                         key={option}
                                                         type="button"
                                                         onClick={() => handleLabelChange(image.id, option)}
@@ -155,18 +156,18 @@ export default function SmartReorderGrid({
                                                             }`}
                                                     >
                                                         {option}
-                                                    </button>
+                                                    </Button>
                                                 ))}
-                                                <button
+                                                <Button
                                                     type="button"
                                                     onClick={() => setEditingLabel(null)}
                                                     className="rounded-full bg-red-100 px-2.5 py-0.5 text-[10px] font-semibold text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400"
                                                 >
                                                     Cancel
-                                                </button>
+                                                </Button>
                                             </div>
                                         ) : (
-                                            <button
+                                            <Button
                                                 type="button"
                                                 onClick={() => setEditingLabel(image.id)}
                                                 className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition hover:opacity-80 ${LABEL_COLORS[image.label] || "bg-muted text-muted-foreground dark:bg-muted dark:text-foreground"
@@ -174,7 +175,7 @@ export default function SmartReorderGrid({
                                             >
                                                 {image.label}
                                                 <span className="text-white/70">&#9998;</span>
-                                            </button>
+                                            </Button>
                                         )}
                                     </div>
                                 </div>

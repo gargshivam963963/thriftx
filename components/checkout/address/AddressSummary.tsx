@@ -99,7 +99,7 @@ export default function AddressSummary({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25 }}
-            className="overflow-hidden rounded-2xl border border-border bg-white sm:rounded-3xl"
+            className="overflow-hidden rounded-2xl border border-border bg-card sm:rounded-3xl"
         >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-subtle/80 to-card px-5 py-4 sm:px-6 sm:py-5">

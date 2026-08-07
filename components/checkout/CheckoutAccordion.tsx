@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { Button } from '@/components/ui/button';import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Truck, CreditCard, Check } from "lucide-react";
 
@@ -159,7 +160,7 @@ function StepIndicator({
 
                     return (
                         <div key={step.key} className="flex items-center gap-3">
-                            <button
+                            <Button
                                 type="button"
                                 onClick={() => {
                                     if (status === "complete") {
@@ -210,7 +211,7 @@ function StepIndicator({
                                 >
                                     {step.label}
                                 </span>
-                            </button>
+                            </Button>
 
                             {index < steps.length - 1 && (
                                 <motion.div

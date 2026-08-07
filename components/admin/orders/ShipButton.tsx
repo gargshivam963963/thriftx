@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+
+import { Button } from '@/components/ui/button';import { useState } from "react";
 import { shipOrder } from "@/lib/shipping/admin";
 
 interface Props {
@@ -29,11 +30,11 @@ export default function ShipButton({
     }
 
     return (
-        <button
+        <Button
             disabled={loading}
             onClick={handleShip}
         >
             {loading ? "Creating..." : "Create Shipment"}
-        </button>
+        </Button>
     );
 }

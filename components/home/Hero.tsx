@@ -45,7 +45,7 @@ export default function Hero() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.5 }}
                                 >
-                                    <Badge variant="outline" size="lg" rounded="full" className="border-border bg-card/70 px-4 py-2 text-small font-semibold tracking-wide dark:border-border dark:bg-foreground/70">
+                                    <Badge variant="outline" size="lg" rounded="full" className="border-border bg-card/70 px-4 py-2 text-small font-semibold tracking-wide dark:border-border dark:bg-card/70">
                                         ✨ Curated Premium Thrift Fashion
                                     </Badge>
                                 </motion.div>
@@ -139,7 +139,7 @@ export default function Hero() {
                                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 transition={{ delay: 0.4, duration: 0.5 }}
-                                className="absolute -bottom-6 -left-4 hidden max-w-[240px] rounded-2xl border border-border/80 bg-white/90 p-5 shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-foreground/90 lg:block"
+                                className="absolute -bottom-6 -left-4 hidden max-w-[240px] rounded-2xl border border-border/80 bg-card/90 p-5 shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-card/90 lg:block"
                             >
                                 <p className="text-caption text-muted-foreground">
                                     Featured Collection
@@ -157,7 +157,7 @@ export default function Hero() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.5, duration: 0.5 }}
-                                className="absolute -right-8 top-12 hidden max-w-[220px] space-y-3 rounded-2xl border border-border/80 bg-white/90 p-5 shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-foreground/90 xl:block"
+                                className="absolute -right-8 top-12 hidden max-w-[220px] space-y-3 rounded-2xl border border-border/80 bg-card/90 p-5 shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-card/90 xl:block"
                             >
                                 <p className="text-caption text-muted-foreground">
                                     Why THRIFTX

@@ -7,80 +7,34 @@ import {
     SlidersHorizontal,
     X,
     RotateCcw,
-    ChevronDown,
     Tags,
     Building2,
     Ruler,
     Banknote,
+    Palette,
+    Layers,
+    BadgeCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+import FilterCard from "./FilterCard";
 import BrandFilter from "./BrandFilter";
 import SizeFilter from "./SizeFilter";
 import PriceFilter from "./PriceFilter";
 import MeasurementFilter from "./MeasurementFilter";
+import ColorFilter from "./ColorFilter";
+import MaterialFilter from "./MaterialFilter";
+import ConditionFilter from "./ConditionFilter";
+import type { ShopFacets } from "@/hooks/useShopFacets";
 
 interface FilterDrawerProps {
     genders: { id: string; slug: string; name: string }[];
     categories: { id: string; slug: string; name: string; gender: string }[];
-    brands: string[];
+    facets: ShopFacets;
 }
 
-function AccordionSection({
-    icon,
-    title,
-    defaultOpen = false,
-    children,
-}: {
-    icon: React.ReactNode;
-    title: string;
-    defaultOpen?: boolean;
-    children: React.ReactNode;
-}) {
-    const [open, setOpen] = useState(defaultOpen);
-
-    return (
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-            <button
-                type="button"
-                onClick={() => setOpen(!open)}
-                className="flex w-full items-center justify-between px-4 py-3 text-body-sm font-semibold text-foreground transition hover:bg-muted"
-            >
-                <span className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-muted">
-                        {icon}
-                    </span>
-                    {title}
-                </span>
-                <motion.span
-                    animate={{ rotate: open ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                >
-                    <ChevronDown size={14} className="text-muted-foreground" />
-                </motion.span>
-            </button>
-            <AnimatePresence initial={false}>
-                {open && (
-                    <motion.div
-                        key="content"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                    >
-                        <div className="px-4 pb-4 pt-1">
-                            {children}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-}
-
-export default function FilterDrawer({ genders, categories, brands }: FilterDrawerProps) {
+export default function FilterDrawer({ genders, categories, facets }: FilterDrawerProps) {
     const [open, setOpen] = useState(false);
     const [expandedGender, setExpandedGender] = useState<string | null>(null);
     const pathname = usePathname();
@@ -93,6 +47,9 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
         searchParams.get("size"),
         searchParams.get("price"),
         searchParams.get("measurement"),
+        searchParams.get("color"),
+        searchParams.get("material"),
+        searchParams.get("condition"),
     ].filter(Boolean).length;
 
     useEffect(() => {
@@ -121,7 +78,6 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
             <AnimatePresence>
                 {open && (
                     <>
-                        {/* Backdrop overlay */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -130,7 +86,6 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
                             onClick={() => setOpen(false)}
                         />
 
-                        {/* Drawer panel */}
                         <motion.div
                             initial={{ y: "100%" }}
                             animate={{ y: 0 }}
@@ -138,10 +93,8 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
                             transition={{ type: "spring", damping: 30, stiffness: 300 }}
                             className="fixed inset-x-0 bottom-0 z-[90] max-h-[90vh] overflow-y-auto rounded-t-3xl border-t border-border bg-background pb-8 shadow-float"
                         >
-                            {/* Sticky header */}
                             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 px-5 py-4 backdrop-blur-xl">
                                 <div className="flex items-center gap-3">
-                                    <div className="mx-auto h-1.5 w-12 rounded-full bg-muted-foreground/30" />
                                     <h2 className="font-bold text-foreground">Filters</h2>
                                     {activeCount > 0 && (
                                         <span className="rounded-full bg-foreground px-2 py-0.5 text-badge font-bold text-background">
@@ -170,13 +123,11 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
                                 </div>
                             </div>
 
-                            {/* Filter content with accordions */}
                             <div className="space-y-3 p-5">
-                                {/* Category — default open */}
-                                <AccordionSection
-                                    icon={<Tags size={13} className="text-muted-foreground" />}
+                                <FilterCard
+                                    icon={<Tags size={14} />}
                                     title="Category"
-                                    defaultOpen={true}
+                                    defaultOpen
                                 >
                                     <div className="flex flex-col gap-1">
                                         <Link
@@ -192,20 +143,14 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
                                             const isExpanded = expandedGender === g.slug;
                                             return (
                                                 <div key={g.id} className="flex flex-col">
-                                                    <button
+                                                    <Button
                                                         type="button"
-                                                        onClick={() =>
-                                                            setExpandedGender(isExpanded ? null : g.slug)
-                                                        }
+                                                        onClick={() => setExpandedGender(isExpanded ? null : g.slug)}
                                                         className="flex items-center justify-between rounded-xl border border-border bg-card px-3.5 py-2 text-body-sm font-medium text-muted-foreground transition hover:border-foreground hover:bg-muted"
                                                     >
                                                         <span>{g.name}</span>
-                                                        <ChevronDown
-                                                            size={14}
-                                                            className={`text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""
-                                                                }`}
-                                                        />
-                                                    </button>
+                                                        <span className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}>›</span>
+                                                    </Button>
                                                     {isExpanded && genderCategories.length > 0 && (
                                                         <div className="ml-3 mt-1 flex flex-col gap-0.5 border-l border-border pl-3">
                                                             {genderCategories.map((c) => (
@@ -223,58 +168,51 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
                                             );
                                         })}
                                     </div>
-                                </AccordionSection>
+                                </FilterCard>
 
-                                {/* Brand */}
-                                <AccordionSection
-                                    icon={<Building2 size={13} className="text-muted-foreground" />}
-                                    title="Brand"
-                                >
-                                    <BrandFilter brands={brands} />
-                                </AccordionSection>
+                                <FilterCard icon={<Building2 size={14} />} title="Brand">
+                                    <BrandFilter brands={facets.brands} />
+                                </FilterCard>
 
-                                {/* Size */}
-                                <AccordionSection
-                                    icon={<Ruler size={13} className="text-muted-foreground" />}
-                                    title="Size"
-                                >
-                                    <SizeFilter />
-                                </AccordionSection>
+                                <FilterCard icon={<Ruler size={14} />} title="Size">
+                                    <SizeFilter sizes={facets.sizes} />
+                                </FilterCard>
 
-                                {/* Price */}
-                                <AccordionSection
-                                    icon={<Banknote size={13} className="text-muted-foreground" />}
-                                    title="Price"
-                                >
+                                <FilterCard icon={<Banknote size={14} />} title="Price">
                                     <PriceFilter />
-                                </AccordionSection>
+                                </FilterCard>
 
-                                {/* Measurements */}
-                                <AccordionSection
-                                    icon={<Ruler size={13} className="text-muted-foreground" />}
-                                    title="Measurements"
-                                >
+                                <FilterCard icon={<Palette size={14} />} title="Color">
+                                    <ColorFilter colors={facets.colors} />
+                                </FilterCard>
+
+                                <FilterCard icon={<Layers size={14} />} title="Material">
+                                    <MaterialFilter materials={facets.materials} />
+                                </FilterCard>
+
+                                <FilterCard icon={<BadgeCheck size={14} />} title="Condition">
+                                    <ConditionFilter conditions={facets.conditions} />
+                                </FilterCard>
+
+                                <FilterCard icon={<Ruler size={14} />} title="Measurements">
                                     <MeasurementFilter />
-                                </AccordionSection>
+                                </FilterCard>
 
-                                {/* Apply button */}
-                                <div className="pt-2">
-                                    <Button
-                                        type="button"
-                                        onClick={() => setOpen(false)}
-                                        variant="primary"
-                                        size="lg"
-                                        rounded="xl"
-                                        fullWidth
-                                    >
-                                        Apply Filters
-                                        {activeCount > 0 && (
-                                            <span className="ml-2 rounded-full bg-background/20 px-2 py-0.5 text-small dark:bg-background/10">
-                                                {activeCount}
-                                            </span>
-                                        )}
-                                    </Button>
-                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={() => setOpen(false)}
+                                    variant="primary"
+                                    size="lg"
+                                    rounded="xl"
+                                    fullWidth
+                                >
+                                    Apply Filters
+                                    {activeCount > 0 && (
+                                        <span className="ml-2 rounded-full bg-background/20 px-2 py-0.5 text-small dark:bg-background/10">
+                                            {activeCount}
+                                        </span>
+                                    )}
+                                </Button>
                             </div>
                         </motion.div>
                     </>
@@ -283,4 +221,3 @@ export default function FilterDrawer({ genders, categories, brands }: FilterDraw
         </>
     );
 }
-

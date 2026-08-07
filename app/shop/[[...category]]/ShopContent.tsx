@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -14,7 +14,10 @@ import {
     Ruler,
     Banknote,
     X,
-    Star,
+    Search,
+    Palette,
+    Layers,
+    BadgeCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -22,16 +25,20 @@ import type { Product } from "@/lib/services/products";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Card } from "@/components/ui/Card";
 import ProductCardGrid from "@/components/shop/ProductCardGrid";
 import ProductCardList from "@/components/shop/ProductCardList";
 import ProductCardSkeleton from "@/components/shop/ProductCardSkeleton";
+import FilterCard from "@/components/shop/FilterCard";
 import BrandFilter from "@/components/shop/BrandFilter";
 import SizeFilter from "@/components/shop/SizeFilter";
 import PriceFilter from "@/components/shop/PriceFilter";
 import MeasurementFilter from "@/components/shop/MeasurementFilter";
+import ColorFilter from "@/components/shop/ColorFilter";
+import MaterialFilter from "@/components/shop/MaterialFilter";
+import ConditionFilter from "@/components/shop/ConditionFilter";
 import FilterDrawer from "@/components/shop/FilterDrawer";
 import SortDropdown from "@/components/shop/SortDropdown";
+import { useShopFacets } from "@/hooks/useShopFacets";
 
 interface ShopContentProps {
     products: Product[];
@@ -52,68 +59,10 @@ interface ShopContentProps {
 
 const ITEMS_PER_PAGE = 12;
 
-// ─── Accordion Section (shadcn-like using Card) ─────────────────────────────
-
-function SidebarAccordion({
-    icon,
-    title,
-    defaultOpen = false,
-    children,
-}: {
-    icon: React.ReactNode;
-    title: string;
-    defaultOpen?: boolean;
-    children: React.ReactNode;
-}) {
-    const [open, setOpen] = useState(defaultOpen);
-
-    return (
-        <Card className="overflow-hidden border-border">
-            <button
-                type="button"
-                className="flex w-full items-center justify-between px-4 py-3 text-body-sm font-semibold text-foreground transition hover:bg-muted"
-                onClick={() => setOpen(!open)}
-            >
-                <span className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-muted">
-                        {icon}
-                    </span>
-                    {title}
-                </span>
-                <motion.span
-                    animate={{ rotate: open ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                >
-                    <ChevronDown size={14} className="text-muted-foreground" />
-                </motion.span>
-            </button>
-            <AnimatePresence initial={false}>
-                {open && (
-                    <motion.div
-                        key="content"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                    >
-                        <div className="px-4 pb-4 pt-1">
-                            {children}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </Card>
-    );
-}
-
-// ─── Main Component ────────────────────────────────────────────────────────────
-
 export default function ShopContent({
     products: initialProducts,
     genders,
     categories,
-    brands,
     gender,
     clothingCategory,
     categoryTitle,
@@ -133,44 +82,68 @@ export default function ShopContent({
     const [offset, setOffset] = useState(ITEMS_PER_PAGE);
     const [hasMore, setHasMore] = useState(true);
     const [totalCount, setTotalCount] = useState(initialProducts.length);
+    const [searchInput, setSearchInput] = useState(initialSearch ?? "");
+    const loaderRef = useRef<HTMLDivElement>(null);
 
     const baseUrl = gender
         ? `/shop/${gender}${clothingCategory ? `/${clothingCategory}` : ""}`
         : "/shop";
 
-    const hasActiveFilters =
-        initialBrand || initialSize || initialPrice || initialMeasurement || initialSearch;
+    const facets = useShopFacets(products);
 
-    /**
-     * Parse measurement query param: "chest-24", "waist-30", "length-28", "inseam-28"
-     * Returns { type, value } or null
-     */
-    const parsedMeasurement = useMemo(() => {
-        if (!initialMeasurement) return null;
-        const match = initialMeasurement.match(/^(chest|waist|length|inseam)-(\d+)(?:-plus)?$/);
-        if (!match) return null;
-        return { type: match[1] as "chest" | "waist" | "length" | "inseam", value: parseInt(match[2], 10) };
-    }, [initialMeasurement]);
+    const activeFilters = useMemo(() => {
+        const count = [
+            initialBrand,
+            initialSize,
+            initialPrice,
+            initialMeasurement,
+            searchParams.get("color"),
+            searchParams.get("material"),
+            searchParams.get("condition"),
+        ].filter(Boolean).length;
+        return count;
+    }, [initialBrand, initialSize, initialPrice, initialMeasurement, searchParams]);
 
+    const hasActiveFilters = activeFilters > 0;
+
+    // Sync products when the route (filters) change from the server page.
     useEffect(() => {
-        setOffset(ITEMS_PER_PAGE);
-        setHasMore(true);
         setProducts(initialProducts);
+        setOffset(ITEMS_PER_PAGE);
+        setHasMore(initialProducts.length >= ITEMS_PER_PAGE);
         setTotalCount(initialProducts.length);
     }, [initialProducts, searchParams]);
 
-    // ── Load More Handler ──
+    // ── Instant search with debounce (client-side for accuracy) ──
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            const q = searchInput.trim().toLowerCase();
+            if (q) {
+                const filtered = products.filter(
+                    (p) =>
+                        p.title?.toLowerCase().includes(q) ||
+                        p.brand?.toLowerCase().includes(q) ||
+                        p.description?.toLowerCase().includes(q),
+                );
+                setProducts(filtered);
+            } else {
+                setProducts(initialProducts);
+            }
+        }, 300);
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchInput]);
+
+    // ── Load More with infinite scroll ──
     const handleLoadMore = useCallback(async () => {
+        if (loadingMore || !hasMore) return;
         setLoadingMore(true);
         try {
-            const params = new URLSearchParams();
-            if (gender) params.set("gender", gender);
-            if (clothingCategory) params.set("category", clothingCategory);
-            if (initialBrand) params.set("brand", initialBrand);
-            if (initialSize) params.set("size", initialSize);
-            if (initialPrice) params.set("price", initialPrice);
-            if (initialMeasurement) params.set("measurement", initialMeasurement);
-            if (initialSearch) params.set("search", initialSearch);
+            const params = new URLSearchParams(searchParams.toString());
             params.set("sort", initialSort);
             params.set("limit", String(ITEMS_PER_PAGE));
             params.set("offset", String(offset));
@@ -179,279 +152,302 @@ export default function ShopContent({
             const data = await res.json();
 
             if (data.success) {
-                setProducts((prev) => [...prev, ...data.products]);
+                setProducts((prev) => {
+                    const existing = new Set(prev.map((p) => p.id));
+                    const next = [...prev, ...data.products.filter((p: Product) => !existing.has(p.id))];
+                    return next;
+                });
                 setOffset((prev) => prev + ITEMS_PER_PAGE);
                 setHasMore(data.hasMore);
                 setTotalCount((prev) => prev + data.products.length);
             }
-        } catch (err) {
-            console.error("Failed to load more products:", err);
+        } catch {
+            setHasMore(false);
         } finally {
             setLoadingMore(false);
         }
-    }, [offset, gender, clothingCategory, initialBrand, initialSize, initialPrice, initialMeasurement, initialSearch, initialSort]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [offset, loadingMore, hasMore, initialSort, searchParams]);
 
-    // Client-side measurement & search filter for initial products
-    const filteredProducts = useMemo(() => {
-        let results = products;
-
-        if (initialSearch) {
-            const q = initialSearch.toLowerCase().trim();
-            results = results.filter(
-                (p) =>
-                    p.title?.toLowerCase().includes(q) ||
-                    p.brand?.toLowerCase().includes(q) ||
-                    p.description?.toLowerCase().includes(q)
-            );
-        }
-
-        if (parsedMeasurement) {
-            const { type, value } = parsedMeasurement;
-            results = results.filter((p) => {
-                const fieldValue = p[type];
-                if (!fieldValue) return false;
-                const numVal = parseInt(fieldValue.toString().replace(/[^\d]/g, ""), 10);
-                if (isNaN(numVal)) return false;
-                if (initialMeasurement?.endsWith("-plus")) {
-                    return numVal >= value;
+    // Intersection observer for infinite scroll.
+    useEffect(() => {
+        const el = loaderRef.current;
+        if (!el) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    handleLoadMore();
                 }
-                return Math.abs(numVal - value) <= 2;
-            });
-        }
+            },
+            { rootMargin: "300px" },
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [handleLoadMore]);
 
-        return results;
-    }, [products, initialSearch, parsedMeasurement, initialMeasurement]);
+    // ── Filter chip removal helpers ──
+    function removeParam(key: string) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete(key);
+        const qs = params.toString();
+        routerPusher(qs);
+    }
+
+    function routerPusher(qs: string) {
+        const url = qs ? `${baseUrl}?${qs}` : baseUrl;
+        window.location.href = url;
+    }
+
+    const gridClasses =
+        "grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4";
 
     return (
-        <div className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8 2xl:px-10">
-            <div className="flex flex-col gap-10 lg:flex-row lg:gap-14">
-                {/* ── SIDEBAR (Desktop) ─────────────────────────────── */}
-                <aside className="hidden lg:sticky lg:top-24 lg:flex lg:w-[260px] xl:w-[280px] lg:shrink-0 lg:self-start lg:flex-col lg:gap-5">
-                    <div className="space-y-5">
-                        <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-heading-3 font-bold text-foreground">Filters</h2>
-                            {hasActiveFilters && (
+        <div className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+            {/* ── Page header ─────────────────────────────────────────── */}
+            <div className="mb-8 flex flex-col gap-2">
+                <nav className="text-badge font-semibold uppercase tracking-widest text-muted-foreground">
+                    <Link href="/" className="transition hover:text-foreground">Home</Link>
+                    <span className="mx-2">/</span>
+                    <span className="text-foreground">Shop</span>
+                    {categoryTitle !== "All Items" && (
+                        <>
+                            <span className="mx-2">/</span>
+                            <span className="text-foreground">{categoryTitle}</span>
+                        </>
+                    )}
+                </nav>
+                <h1 className="text-heading-2 font-bold tracking-tight text-foreground">
+                    {categoryTitle}
+                </h1>
+                <p className="text-body text-muted-foreground">
+                    {totalCount} products — authentic, quality-checked thrift fashion.
+                </p>
+            </div>
+
+            <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
+                {/* ── SIDEBAR (Desktop) ─────────────────────────────────── */}
+                <aside className="hidden lg:sticky lg:top-24 lg:flex lg:w-[264px] lg:shrink-0 lg:self-start lg:flex-col lg:gap-4">
+                    <div className="mb-1 flex items-center justify-between">
+                        <h2 className="text-heading-4 font-bold text-foreground">Filters</h2>
+                        {hasActiveFilters && (
+                            <Link
+                                href={baseUrl}
+                                className="flex items-center gap-1 text-badge font-semibold uppercase tracking-wider text-muted-foreground transition hover:text-foreground"
+                            >
+                                <RotateCcw size={11} /> Reset
+                            </Link>
+                        )}
+                    </div>
+
+                    <div className="space-y-3">
+                        <FilterCard icon={<Tags size={14} />} title="Category" defaultOpen>
+                            <div className="flex flex-col gap-0.5">
                                 <Link
-                                    href={baseUrl}
-                                    className="flex items-center gap-1 text-badge font-semibold uppercase tracking-wider text-muted-foreground transition hover:text-foreground"
+                                    href="/shop"
+                                    className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-body-sm font-medium transition-all ${!gender ? "bg-foreground text-background shadow-card" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                                 >
-                                    <RotateCcw size={11} /> Reset
+                                    All Items
                                 </Link>
-                            )}
-                        </div>
+                                {genders.map((g) => (
+                                    <div key={g.id}>
+                                        <Link
+                                            href={`/shop/${g.slug}`}
+                                            className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-body-sm font-medium transition-all ${gender === g.slug && !clothingCategory ? "bg-foreground text-background shadow-card" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                                        >
+                                            {g.name}
+                                        </Link>
+                                        {gender === g.slug && (
+                                            <div className="ml-3 mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
+                                                {categories
+                                                    .filter((c) => c.gender.toLowerCase() === g.name.toLowerCase())
+                                                    .map((c) => (
+                                                        <Link
+                                                            key={c.id}
+                                                            href={`/shop/${g.slug}/${c.slug}`}
+                                                            className={`rounded-lg px-3 py-1.5 text-body-sm font-medium transition-all ${clothingCategory === c.slug ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                                                        >
+                                                            {c.name}
+                                                        </Link>
+                                                    ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </FilterCard>
 
-                        <div className="space-y-3">
-                            {/* Category - default open */}
-                            <SidebarAccordion
-                                icon={<Tags size={13} className="text-muted-foreground" />}
-                                title="Category"
-                                defaultOpen={true}
-                            >
-                                <div className="flex flex-col gap-0.5">
-                                    <Link
-                                        href="/shop"
-                                        className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-body-sm font-medium transition-all ${!gender ? "bg-foreground text-background shadow-card" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                                    >
-                                        <span className={`flex h-5 w-5 items-center justify-center rounded-md text-badge font-bold ${!gender ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"}`}>
-                                            <Star size={9} />
-                                        </span>
-                                        All Items
-                                    </Link>
-                                    {genders.map((g) => (
-                                        <div key={g.id}>
-                                            <Link
-                                                href={`/shop/${g.slug}`}
-                                                className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-body-sm font-medium transition-all ${gender === g.slug && !clothingCategory ? "bg-foreground text-background shadow-card" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                                            >
-                                                <span className={`flex h-5 w-5 items-center justify-center rounded-md text-badge font-bold ${gender === g.slug && !clothingCategory ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"}`}>
-                                                    {g.name.charAt(0)}
-                                                </span>
-                                                {g.name}
-                                            </Link>
-                                            {gender === g.slug && (
-                                                <div className="ml-3 mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
-                                                    {categories
-                                                        .filter((c) => c.gender.toLowerCase() === g.name.toLowerCase())
-                                                        .map((c) => (
-                                                            <Link
-                                                                key={c.id}
-                                                                href={`/shop/${g.slug}/${c.slug}`}
-                                                                className={`rounded-lg px-3 py-1.5 text-body-sm font-medium transition-all ${clothingCategory === c.slug ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                                                            >
-                                                                {c.name}
-                                                            </Link>
-                                                        ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </SidebarAccordion>
+                        <FilterCard icon={<Building2 size={14} />} title="Brand">
+                            <BrandFilter brands={facets.brands} />
+                        </FilterCard>
 
-                            {/* Brand */}
-                            <SidebarAccordion
-                                icon={<Building2 size={13} className="text-muted-foreground" />}
-                                title="Brand"
-                            >
-                                <BrandFilter brands={brands} />
-                            </SidebarAccordion>
+                        <FilterCard icon={<Ruler size={14} />} title="Size">
+                            <SizeFilter sizes={facets.sizes} />
+                        </FilterCard>
 
-                            {/* Size */}
-                            <SidebarAccordion
-                                icon={<Ruler size={13} className="text-muted-foreground" />}
-                                title="Size"
-                            >
-                                <SizeFilter />
-                            </SidebarAccordion>
+                        <FilterCard icon={<Banknote size={14} />} title="Price">
+                            <PriceFilter />
+                        </FilterCard>
 
-                            {/* Price */}
-                            <SidebarAccordion
-                                icon={<Banknote size={13} className="text-muted-foreground" />}
-                                title="Price"
-                            >
-                                <PriceFilter />
-                            </SidebarAccordion>
+                        <FilterCard icon={<Palette size={14} />} title="Color">
+                            <ColorFilter colors={facets.colors} />
+                        </FilterCard>
 
-                            {/* Measurements */}
-                            <SidebarAccordion
-                                icon={<Ruler size={13} className="text-muted-foreground" />}
-                                title="Measurements"
-                            >
-                                <MeasurementFilter />
-                            </SidebarAccordion>
-                        </div>
+                        <FilterCard icon={<Layers size={14} />} title="Material">
+                            <MaterialFilter materials={facets.materials} />
+                        </FilterCard>
+
+                        <FilterCard icon={<BadgeCheck size={14} />} title="Condition">
+                            <ConditionFilter conditions={facets.conditions} />
+                        </FilterCard>
+
+                        <FilterCard icon={<Ruler size={14} />} title="Measurements">
+                            <MeasurementFilter />
+                        </FilterCard>
                     </div>
                 </aside>
 
-                {/* ── MAIN CONTENT ─────────────────────────────── */}
-                <div className="min-w-0 flex-1 pl-2 xl:pl-4">
+                {/* ── MAIN CONTENT ─────────────────────────────────────── */}
+                <div className="min-w-0 flex-1">
                     {/* Toolbar */}
-                    <div className="mb-10 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                    <div className="mb-6 flex flex-col gap-4">
+                        {/* Search + controls row */}
+                        <div className="flex items-center gap-3">
                             {/* Mobile Filter Drawer */}
                             <div className="lg:hidden">
                                 <FilterDrawer
                                     genders={genders}
                                     categories={categories}
-                                    brands={brands}
+                                    facets={facets}
                                 />
                             </div>
 
                             {/* View Toggle */}
-                            <div className="hidden items-center rounded-xl border border-border bg-card p-0.5 sm:flex">
+                            <div className="hidden items-center rounded-2xl border border-border bg-card p-0.5 sm:flex">
                                 <Button
                                     type="button"
                                     onClick={() => setViewMode("grid")}
                                     variant={viewMode === "grid" ? "primary" : "ghost"}
                                     size="iconSm"
-                                    rounded="md"
+                                    rounded="lg"
                                 >
-                                    <LayoutGrid size={14} />
+                                    <LayoutGrid size={15} />
                                 </Button>
                                 <Button
                                     type="button"
                                     onClick={() => setViewMode("list")}
                                     variant={viewMode === "list" ? "primary" : "ghost"}
                                     size="iconSm"
-                                    rounded="md"
+                                    rounded="lg"
                                 >
-                                    <List size={14} />
+                                    <List size={15} />
                                 </Button>
                             </div>
 
-                            {/* Active filter chips - using shadcn Badge */}
-                            {hasActiveFilters && (
-                                <div className="hidden items-center gap-1.5 sm:flex">
-                                    {initialBrand && (
-                                        <Link
-                                            href={`${baseUrl}?${new URLSearchParams(
-                                                Object.fromEntries(
-                                                    Array.from(searchParams.entries()).filter(
-                                                        ([k]) => k !== "brand"
-                                                    )
-                                                )
-                                            ).toString()}`}
-                                        >
-                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-muted">
-                                                {initialBrand}
-                                                <X size={10} className="ml-1" />
-                                            </Badge>
-                                        </Link>
-                                    )}
-                                    {initialSize && (
-                                        <Link
-                                            href={`${baseUrl}?${new URLSearchParams(
-                                                Object.fromEntries(
-                                                    Array.from(searchParams.entries()).filter(
-                                                        ([k]) => k !== "size"
-                                                    )
-                                                )
-                                            ).toString()}`}
-                                        >
-                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-muted">
-                                                Size {initialSize}
-                                                <X size={10} className="ml-1" />
-                                            </Badge>
-                                        </Link>
-                                    )}
-                                    {initialPrice && (
-                                        <Link
-                                            href={`${baseUrl}?${new URLSearchParams(
-                                                Object.fromEntries(
-                                                    Array.from(searchParams.entries()).filter(
-                                                        ([k]) => k !== "price"
-                                                    )
-                                                )
-                                            ).toString()}`}
-                                        >
-                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-muted">
-                                                {initialPrice}
-                                                <X size={10} className="ml-1" />
-                                            </Badge>
-                                        </Link>
-                                    )}
-                                    {initialMeasurement && (
-                                        <Link
-                                            href={`${baseUrl}?${new URLSearchParams(
-                                                Object.fromEntries(
-                                                    Array.from(searchParams.entries()).filter(
-                                                        ([k]) => k !== "measurement"
-                                                    )
-                                                )
-                                            ).toString()}`}
-                                        >
-                                            <Badge variant="secondary" size="sm" rounded="full" className="cursor-pointer hover:bg-muted">
-                                                {initialMeasurement
-                                                    .replace(/^chest-/i, "Chest ")
-                                                    .replace(/^waist-/i, "Waist ")
-                                                    .replace(/^length-/i, "Length ")
-                                                    .replace(/^inseam-/i, "Inseam ")
-                                                    .replace(/-plus/g, "+")
-                                                    .replace(/-/g, "–")}
-                                                <X size={10} className="ml-1" />
-                                            </Badge>
-                                        </Link>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <div className="flex-1 text-center">
-                                <p className="text-body-sm font-medium text-muted-foreground">
-                                    Showing {filteredProducts.length} Products
-                                </p>
+                            {/* Instant search */}
+                            <div className="relative min-w-0 flex-1">
+                                <Search
+                                    size={16}
+                                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                />
+                                <input
+                                    type="search"
+                                    value={searchInput}
+                                    onChange={(e) => setSearchInput(e.target.value)}
+                                    placeholder="Search products, brands…"
+                                    aria-label="Search products"
+                                    className="h-11 w-full rounded-2xl border border-border bg-card pl-10 pr-4 text-body-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-foreground focus:ring-2 focus:ring-foreground/10"
+                                />
                             </div>
+
                             <SortDropdown defaultValue={initialSort} />
                         </div>
+
+                        {/* Active filter chips */}
+                        <AnimatePresence>
+                            {(hasActiveFilters || searchInput) && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="flex flex-wrap items-center gap-2"
+                                >
+                                    {initialBrand && (
+                                        <Chip
+                                            label={initialBrand}
+                                            onClick={() => removeParam("brand")}
+                                        />
+                                    )}
+                                    {initialSize && (
+                                        <Chip
+                                            label={`Size ${initialSize}`}
+                                            onClick={() => removeParam("size")}
+                                        />
+                                    )}
+                                    {initialPrice && (
+                                        <Chip
+                                            label={priceLabel(initialPrice)}
+                                            onClick={() => removeParam("price")}
+                                        />
+                                    )}
+                                    {initialMeasurement && (
+                                        <Chip
+                                            label={measurementLabel(initialMeasurement)}
+                                            onClick={() => removeParam("measurement")}
+                                        />
+                                    )}
+                                    {searchParams.get("color") && (
+                                        <Chip
+                                            label={searchParams.get("color")!}
+                                            onClick={() => removeParam("color")}
+                                        />
+                                    )}
+                                    {searchParams.get("material") && (
+                                        <Chip
+                                            label={searchParams.get("material")!}
+                                            onClick={() => removeParam("material")}
+                                        />
+                                    )}
+                                    {searchParams.get("condition") && (
+                                        <Chip
+                                            label={searchParams.get("condition")!}
+                                            onClick={() => removeParam("condition")}
+                                        />
+                                    )}
+                                    {searchInput && (
+                                        <Chip
+                                            label={`"${searchInput}"`}
+                                            onClick={() => setSearchInput("")}
+                                        />
+                                    )}
+                                    <Button
+                                        type="button"
+                                        onClick={() => {
+                                            setSearchInput("");
+                                            window.location.href = baseUrl;
+                                        }}
+                                        className="inline-flex items-center gap-1 text-badge font-semibold uppercase tracking-wider text-muted-foreground transition hover:text-foreground"
+                                    >
+                                        <RotateCcw size={11} /> Clear all
+                                    </Button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
-                    {/* Product Grid / List */}
+                    {/* Summary line */}
+                    <div className="mb-6 flex items-center justify-between">
+                        <p className="text-body-sm font-medium text-muted-foreground">
+                            Showing <span className="font-semibold text-foreground">{products.length}</span>{" "}
+                            {products.length === 1 ? "product" : "products"}
+                        </p>
+                    </div>
+
+                    {/* Products */}
                     {loading ? (
                         <div
                             className={
                                 viewMode === "grid"
-                                    ? "grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4"
+                                    ? gridClasses
                                     : "flex flex-col gap-5"
                             }
                         >
@@ -459,11 +455,11 @@ export default function ShopContent({
                                 <ProductCardSkeleton key={i} list={viewMode === "list"} />
                             ))}
                         </div>
-                    ) : filteredProducts.length === 0 ? (
+                    ) : products.length === 0 ? (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="flex flex-col items-center justify-center py-20 text-center"
+                            className="flex flex-col items-center justify-center py-24 text-center"
                         >
                             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
                                 <AlertCircle size={28} className="text-muted-foreground" />
@@ -472,14 +468,12 @@ export default function ShopContent({
                             <p className="mt-1.5 max-w-sm text-body-sm text-muted-foreground">
                                 Try adjusting your filters or check back later for new arrivals.
                             </p>
-                            {hasActiveFilters && (
-                                <Link
-                                    href={baseUrl}
-                                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-body-sm font-semibold text-background transition hover:opacity-90"
-                                >
-                                    <RotateCcw size={14} /> Reset Filters
-                                </Link>
-                            )}
+                            <Link
+                                href={baseUrl}
+                                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-body-sm font-semibold text-background transition hover:opacity-90"
+                            >
+                                <RotateCcw size={14} /> Reset Filters
+                            </Link>
                         </motion.div>
                     ) : (
                         <>
@@ -488,9 +482,9 @@ export default function ShopContent({
                                     key="grid"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4"
+                                    className={gridClasses}
                                 >
-                                    {filteredProducts.map((product) => (
+                                    {products.map((product) => (
                                         <ProductCardGrid
                                             key={product.id}
                                             id={product.id}
@@ -515,7 +509,7 @@ export default function ShopContent({
                                     animate={{ opacity: 1 }}
                                     className="flex flex-col gap-5"
                                 >
-                                    {filteredProducts.map((product) => (
+                                    {products.map((product) => (
                                         <ProductCardList
                                             key={product.id}
                                             id={product.id}
@@ -537,29 +531,29 @@ export default function ShopContent({
                                 </motion.div>
                             )}
 
-                            {/* Load More / Pagination - using shadcn Progress and Button */}
-                            {hasMore && (
-                                <div className="mt-10 flex flex-col items-center gap-3">
-                                    {/* Progress bar - shadcn Progress component */}
+                            {/* Infinite scroll loader */}
+                            {hasMore && products.length >= ITEMS_PER_PAGE && (
+                                <div ref={loaderRef} className="mt-10 flex flex-col items-center gap-3">
                                     <div className="flex w-full max-w-xs items-center gap-3">
                                         <Progress
-                                            value={Math.min((filteredProducts.length / (totalCount || filteredProducts.length + ITEMS_PER_PAGE)) * 100, 100)}
+                                            value={Math.min(
+                                                (products.length / (totalCount || products.length + ITEMS_PER_PAGE)) * 100,
+                                                100,
+                                            )}
                                             className="h-1 bg-muted"
                                         />
                                         <span className="shrink-0 text-badge font-semibold text-muted-foreground">
-                                            {filteredProducts.length}+
+                                            {products.length}+
                                         </span>
                                     </div>
-
                                     <Button
                                         type="button"
                                         onClick={handleLoadMore}
                                         loading={loadingMore}
-                                        loadingText="Loading..."
+                                        loadingText="Loading…"
                                         variant="outline"
                                         size="lg"
                                         rounded="xl"
-                                        fullWidth
                                         className="max-w-xs shadow-sm"
                                     >
                                         <ChevronDown size={16} />
@@ -568,10 +562,10 @@ export default function ShopContent({
                                 </div>
                             )}
 
-                            {!hasMore && filteredProducts.length > 0 && (
+                            {!hasMore && products.length > 0 && (
                                 <div className="mt-10 flex flex-col items-center gap-2">
                                     <Badge variant="secondary" size="md" rounded="full">
-                                        Showing all {filteredProducts.length} items
+                                        Showing all {products.length} items
                                     </Badge>
                                     <Button
                                         type="button"
@@ -593,3 +587,37 @@ export default function ShopContent({
     );
 }
 
+// ── Small helper components ────────────────────────────────────────────────
+
+function Chip({ label, onClick }: { label: string; onClick: () => void }) {
+    return (
+        <Button
+            type="button"
+            onClick={onClick}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-small font-medium text-foreground shadow-card transition hover:border-foreground"
+        >
+            {label}
+            <X size={12} className="text-muted-foreground" />
+        </Button>
+    );
+}
+
+function priceLabel(value: string): string {
+    const map: Record<string, string> = {
+        "0-499": "Under ₹499",
+        "500-999": "₹500 – ₹999",
+        "1000-1499": "₹1000 – ₹1499",
+        "1500+": "₹1500+",
+    };
+    return map[value] ?? value;
+}
+
+function measurementLabel(value: string): string {
+    return value
+        .replace(/^chest-/i, "Chest ")
+        .replace(/^waist-/i, "Waist ")
+        .replace(/^length-/i, "Length ")
+        .replace(/^inseam-/i, "Inseam ")
+        .replace(/-plus/g, "+")
+        .replace(/-/g, "–");
+}

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';import { useState } from 'react';
 import { CheckCircle2, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -64,7 +65,7 @@ export default function CouponCard({
                         className="flex-1 rounded-2xl border border-border bg-card px-5 py-4 text-body-sm outline-none transition focus:border-foreground placeholder:text-muted"
                     />
 
-                    <button
+                    <Button
                         type="button"
                         onClick={() =>
                             onApplyCoupon(coupon)
@@ -72,7 +73,7 @@ export default function CouponCard({
                         className="rounded-2xl bg-foreground px-6 py-4 text-body-sm font-semibold text-background transition hover:bg-muted-foreground"
                     >
                         Apply
-                    </button>
+                    </Button>
 
                 </div>
 

@@ -123,9 +123,9 @@ export default function AddressSection({
         <motion.section
             layout
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm sm:rounded-3xl"
+            className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm sm:rounded-3xl"
         >
-            <button
+            <Button
                 type="button"
                 onClick={onOpen}
                 className="flex w-full items-center justify-between px-4 py-4 sm:px-6 sm:py-5"
@@ -163,7 +163,7 @@ export default function AddressSection({
                         <ChevronRight size={18} className="text-muted-foreground" />
                     )}
                 </div>
-            </button>
+            </Button>
 
             <AnimatePresence initial={false}>
                 {open && (
@@ -268,7 +268,7 @@ export default function AddressSection({
 
             {!open && !selectedAddress && addresses.length === 0 && (
                 <div className="border-t border-border px-4 py-4 sm:px-6 sm:py-5">
-                    <button
+                    <Button
                         type="button"
                         onClick={() => {
                             onOpen();
@@ -278,7 +278,7 @@ export default function AddressSection({
                     >
                         <Plus size={16} />
                         Add Address
-                    </button>
+                    </Button>
                 </div>
             )}
 
@@ -301,7 +301,7 @@ export default function AddressSection({
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Decorative */}
-                            <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+                            <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-card/10 blur-3xl" />
                             <div className="pointer-events-none absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-emerald-300/20 blur-2xl" />
 
                             <div className="relative z-10 px-6 pb-6 pt-10 text-center sm:px-8 sm:pb-8 sm:pt-14">
@@ -309,7 +309,7 @@ export default function AddressSection({
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
-                                    className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white/20 sm:h-24 sm:w-24"
+                                    className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-card/20 sm:h-24 sm:w-24"
                                 >
                                     <PartyPopper size={40} className="text-white sm:h-[48px] sm:w-[48px]" />
                                 </motion.div>
@@ -345,8 +345,8 @@ export default function AddressSection({
                                         { icon: Clock, text: "Lightning-fast dispatch", },
                                         { icon: Gift, text: "Exclusive Panipat offers & perks" },
                                     ].map((perk, i) => (
-                                        <div key={i} className="flex items-center gap-3 rounded-xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
+                                        <div key={i} className="flex items-center gap-3 rounded-xl bg-card/10 px-4 py-3 backdrop-blur-sm">
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-card/20">
                                                 <perk.icon size={16} className="text-white" />
                                             </div>
                                             <span className="text-sm font-medium text-white">{perk.text}</span>
@@ -359,14 +359,14 @@ export default function AddressSection({
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.4 }}
                                 >
-                                    <button
+                                    <Button
                                         type="button"
                                         onClick={() => setShowPanipatModal(false)}
-                                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3 text-sm font-semibold text-emerald-700 shadow-lg transition hover:bg-emerald-50 sm:mt-7"
+                                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-card px-8 py-3 text-sm font-semibold text-emerald-700 shadow-lg transition hover:bg-emerald-50 sm:mt-7"
                                     >
                                         <Sparkles size={16} />
                                         Awesome! Let&apos;s Go
-                                    </button>
+                                    </Button>
                                 </motion.div>
                             </div>
                         </motion.div>

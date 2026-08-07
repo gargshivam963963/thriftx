@@ -43,6 +43,13 @@ export interface ButtonProps
   fullWidth?: boolean;
 
   /**
+   * Render children as a different element (e.g., Next `Link`) while preserving
+   * button styles. When true, `Button` uses Radix `Slot` so the immediate child
+   * element receives the button's className and attributes.
+   */
+  asChild?: boolean;
+
+  /**
    * Optional icon displayed before the button text.
    */
   leftIcon?: ReactNode;

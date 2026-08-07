@@ -113,7 +113,7 @@ export default function AdminAnalyticsPage() {
                     {/* Range Selector */}
                     <div className="flex rounded-xl border border-border bg-white p-0.5 shadow-sm dark:border-border dark:bg-foreground">
                         {RANGE_OPTIONS.map((opt) => (
-                            <button
+                            <Button
                                 key={opt.value}
                                 onClick={() => setRange(opt.value)}
                                 className={`rounded-lg px-3.5 py-1.5 text-[11px] font-semibold transition ${range === opt.value
@@ -122,7 +122,7 @@ export default function AdminAnalyticsPage() {
                                     }`}
                             >
                                 {opt.label}
-                            </button>
+                            </Button>
                         ))}
                     </div>
 
@@ -237,7 +237,7 @@ export default function AdminAnalyticsPage() {
                             Showing data for the last{" "}
                             {range === "24h" ? "24 hours" : range === "7d" ? "7 days" : range === "30d" ? "30 days" : "90 days"}
                         </span>
-                        <button
+                        <Button
                             onClick={() => {
                                 const csvData = [
                                     ["Metric", "Value"],
@@ -264,7 +264,7 @@ export default function AdminAnalyticsPage() {
                         >
                             <Download size={13} />
                             Export CSV
-                        </button>
+                        </Button>
                     </div>
                 )
             }

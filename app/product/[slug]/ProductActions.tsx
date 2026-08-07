@@ -1,67 +1,48 @@
 'use client';
 
-import { useState } from 'react';
-import { ShoppingBag, Heart, BrainCircuit } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { Product } from '@/lib/services/products';
-import { addToCart } from '@/lib/services/cart';
+import { ShoppingBag, Zap } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import { useAnalytics } from '@/lib/analytics/AnalyticsContext';
 
+export type BusyAction = 'add' | 'buy' | null;
+
+interface ProductActionsProps {
+  busy: BusyAction;
+  onAddToCart: () => void;
+  onBuyNow: () => void;
+}
+
+/**
+ * ProductActions — desktop Add to Cart / Buy Now buttons.
+ * Presentational; logic lives in ProductPurchasePanel.
+ */
 export default function ProductActions({
-  product,
-}: {
-  product: Product;
-}) {
-  const [isTryOnOpen, setIsTryOnOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { trackAddToCart } = useAnalytics();
-
-  const router = useRouter();
-
-  async function handleAddToCart() {
-    try {
-      setLoading(true);
-
-      await addToCart(product.id, 1);
-
-      // Track add-to-cart event
-      trackAddToCart(product.id, {
-        title: product.title,
-        brand: product.brand || '',
-        category: product.category || '',
-        price: product.price,
-        slug: product.slug,
-      });
-
-      router.push('/cart');
-    } catch (error) {
-      console.error(error);
-      alert('Unable to add product to cart.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  busy,
+  onAddToCart,
+  onBuyNow,
+}: ProductActionsProps) {
   return (
-    <div className="flex gap-3">
+    <div className="hidden grid-cols-1 gap-3 sm:grid-cols-2 lg:grid">
       <Button
-        variant="primary"
+        variant="outline"
         size="lg"
-        className="h-14 flex-1"
-        loading={loading}
+        className="h-14"
+        loading={busy === 'add'}
         loadingText="Adding..."
         leftIcon={<ShoppingBag />}
-        onClick={handleAddToCart}
+        onClick={onAddToCart}
       >
         Add to Cart
       </Button>
 
       <Button
-        variant="secondary"
+        variant="primary"
         size="lg"
-        className="h-14 flex-1"
-        leftIcon={<Heart />}
+        className="h-14"
+        loading={busy === 'buy'}
+        loadingText="Redirecting..."
+        leftIcon={<Zap />}
+        onClick={onBuyNow}
       >
         Buy Now
       </Button>

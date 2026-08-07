@@ -17,12 +17,6 @@ export default function ThemeToggle({
 }: ThemeToggleProps) {
     const { theme, toggleTheme } = useTheme();
 
-    const sizeClasses = {
-        sm: "h-8 w-8",
-        md: "h-10 w-10",
-        lg: "h-12 w-12",
-    };
-
     const iconSizes = {
         sm: 16,
         md: 18,
@@ -35,36 +29,39 @@ export default function ThemeToggle({
             variant="ghost"
             size={size === "sm" ? "iconSm" : size === "lg" ? "iconLg" : "iconMd"}
             rounded="full"
-            className={cn("shrink-0", className)}
+            className={cn(
+                "shrink-0 text-muted-foreground hover:text-foreground",
+                "dark:text-muted-foreground dark:hover:text-foreground",
+                className,
+            )}
             aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
             title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
         >
             <AnimatePresence mode="wait" initial={false}>
                 {theme === "light" ? (
                     <motion.span
-                        key="sun"
+                        key="moon"
                         initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
                         animate={{ opacity: 1, rotate: 0, scale: 1 }}
                         exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
                         transition={{ duration: 0.2, ease: "easeInOut" }}
                         className="flex items-center justify-center"
                     >
-                        <Moon size={iconSizes[size]} />
+                        <Moon size={iconSizes[size]} strokeWidth={2} />
                     </motion.span>
                 ) : (
                     <motion.span
-                        key="moon"
+                        key="sun"
                         initial={{ opacity: 0, rotate: 90, scale: 0.5 }}
                         animate={{ opacity: 1, rotate: 0, scale: 1 }}
                         exit={{ opacity: 0, rotate: -90, scale: 0.5 }}
                         transition={{ duration: 0.2, ease: "easeInOut" }}
                         className="flex items-center justify-center"
                     >
-                        <Sun size={iconSizes[size]} />
+                        <Sun size={iconSizes[size]} strokeWidth={2} />
                     </motion.span>
                 )}
             </AnimatePresence>
         </Button>
     );
 }
-

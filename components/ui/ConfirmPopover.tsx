@@ -55,10 +55,10 @@ export default function ConfirmPopover({
                         transition={{
                             duration: 0.2,
                         }}
-                        className="fixed left-1/2 top-1/2 z-[60] w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[28px] border border-border bg-white p-7 shadow-2xl"
+                        className="fixed left-1/2 top-1/2 z-[60] w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[28px] border border-border bg-card p-7 shadow-2xl"
                     >
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-                            <AlertTriangle className="text-red-600" />
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-error-bg">
+                            <AlertTriangle className="text-error" />
                         </div>
 
                         <h3 className="mt-5 text-2xl font-semibold">

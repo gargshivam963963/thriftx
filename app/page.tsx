@@ -1,3 +1,4 @@
+import dynamic from "next/dynamic";
 import {
   BestProducts,
   BrandSection,
@@ -5,11 +6,25 @@ import {
   Hero,
   InstagramFeed,
   TrustStrip,
+  WeekendSale,
   WhyThriftX,
 } from "@/components/home";
 import { getProducts } from "@/lib/services/products";
 import RecentlyViewedSection from "@/components/product/RecentlyViewedSection";
-import SalesCountdown from "@/components/marketing/SalesCountdown";
+
+// Lazy-loaded below-fold sections to reduce initial bundle & network requests.
+const BrandSectionLazy = dynamic(
+  () => import("@/components/home/BrandSection").then((m) => m.default),
+  { loading: () => <div className="h-64 animate-pulse bg-muted" aria-hidden /> },
+);
+const WhyThriftXLazy = dynamic(
+  () => import("@/components/home/WhyThriftX").then((m) => m.default),
+  { loading: () => <div className="h-64 animate-pulse bg-muted" aria-hidden /> },
+);
+const InstagramFeedLazy = dynamic(
+  () => import("@/components/home/InstagramFeed").then((m) => m.default),
+  { loading: () => <div className="h-64 animate-pulse bg-muted" aria-hidden /> },
+);
 
 export default async function HomePage() {
   const products = await getProducts({
@@ -20,14 +35,13 @@ export default async function HomePage() {
     <main className="overflow-x-hidden">
       <Hero />
       <TrustStrip />
-      <SalesCountdown />
+      <WeekendSale />
       <FeaturedCategories />
       <BestProducts products={products} />
       <RecentlyViewedSection />
-      <BrandSection />
-      <WhyThriftX />
-      <InstagramFeed />
+      <BrandSectionLazy />
+      <WhyThriftXLazy />
+      <InstagramFeedLazy />
     </main>
   );
 }
-

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+
+import { Button } from '@/components/ui/button';import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 
 interface RevenueChartProps {
@@ -9,6 +10,22 @@ interface RevenueChartProps {
 }
 
 type Period = "7d" | "30d";
+
+interface ChartPoint {
+    x: number;
+    y: number;
+    revenue: number;
+    orders: number;
+    date: string;
+    label: string;
+}
+
+interface ChartData {
+    points: ChartPoint[];
+    pathD: string;
+    areaPath: string;
+    maxRevenue: number;
+}
 
 export default function RevenueChart({ data, loading = false }: RevenueChartProps) {
     const [period, setPeriod] = useState<Period>("30d");
@@ -19,8 +36,8 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
         return data.slice(-days);
     }, [data, period]);
 
-    const chartData = useMemo(() => {
-        if (!filteredData.length) return null as any;
+    const chartData = useMemo<ChartData | null>(() => {
+        if (!filteredData.length) return null;
 
         const maxRevenue = Math.max(...filteredData.map((d) => d.revenue), 1);
         const padding = 0.1;
@@ -79,6 +96,16 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
         );
     }
 
+    if (!chartData) {
+        return (
+            <div className="admin-card p-6">
+                <p className="text-center text-sm text-muted-foreground">
+                    No revenue data available yet
+                </p>
+            </div>
+        );
+    }
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -100,7 +127,7 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
                 </div>
                 <div className="flex gap-1 rounded-xl border border-border bg-muted p-1">
                     {(["7d", "30d"] as Period[]).map((p) => (
-                        <button
+                        <Button
                             key={p}
                             onClick={() => setPeriod(p)}
                             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${period === p
@@ -109,7 +136,7 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
                                 }`}
                         >
                             {p}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             </div>

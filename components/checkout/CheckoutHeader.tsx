@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+
+import { Button } from '@/components/ui/button';import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -59,8 +60,8 @@ interface InfoBadgeProps {
 
 function InfoBadge({ icon, title, subtitle }: InfoBadgeProps) {
     return (
-        <div className="flex flex-1 items-start gap-2.5 rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm">
-            <div className="shrink-0 rounded-xl bg-white/10 p-2">{icon}</div>
+        <div className="flex flex-1 items-start gap-2.5 rounded-2xl border border-white/10 bg-card/5 p-3 backdrop-blur-sm">
+            <div className="shrink-0 rounded-xl bg-card/10 p-2">{icon}</div>
             <div>
                 <h4 className="text-xs font-bold text-white sm:text-sm">
                     {title}
@@ -94,7 +95,7 @@ export default function CheckoutHeader() {
                     whileHover={{ x: -2 }}
                     className="flex items-center gap-2"
                 >
-                    <div className="rounded-full border border-border bg-white p-1.5 shadow-sm transition group-hover:border-foreground group-hover:bg-foreground group-hover:text-white">
+                    <div className="rounded-full border border-border bg-card p-1.5 shadow-sm transition group-hover:border-foreground group-hover:bg-foreground group-hover:text-white">
                         <ArrowLeft size={14} />
                     </div>
                     Back to Cart
@@ -104,7 +105,7 @@ export default function CheckoutHeader() {
             {/* ─── Premium Header Card ───────────────────────────────────── */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-foreground via-muted-foreground to-foreground p-6 text-white shadow-2xl sm:rounded-[32px] sm:p-8 md:p-10">
                 {/* Decorative Glows */}
-                <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
+                <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-card/5 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" />
                 <div className="pointer-events-none absolute right-1/4 top-1/3 h-px w-32 rotate-45 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                 <div className="pointer-events-none absolute bottom-1/4 right-10 h-24 w-24 rounded-full bg-amber-500/5 blur-2xl" />
@@ -118,7 +119,7 @@ export default function CheckoutHeader() {
                             transition={{ delay: 0.1, duration: 0.4 }}
                             className="flex flex-wrap items-center gap-2 sm:gap-3"
                         >
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/80 backdrop-blur-sm sm:text-[11px]">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-card/10 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/80 backdrop-blur-sm sm:text-[11px]">
                                 <Gem size={12} />
                                 Checkout
                             </span>
@@ -182,7 +183,7 @@ export default function CheckoutHeader() {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.2, duration: 0.45 }}
-                        className="hidden min-w-[340px] grid-cols-3 gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl xl:min-w-[380px] xl:p-5 lg:grid"
+                        className="hidden min-w-[340px] grid-cols-3 gap-3 rounded-2xl border border-white/10 bg-card/5 p-4 backdrop-blur-xl xl:min-w-[380px] xl:p-5 lg:grid"
                     >
                         <Stat title="Dispatch" value="24 Hours" Icon={Package} />
                         <Stat title="Delivery" value="2–5 Days" Icon={Truck} />
@@ -191,10 +192,10 @@ export default function CheckoutHeader() {
 
                     {/* ── Mobile Stats Toggle ────────────────────────── */}
                     <div className="mt-4 lg:hidden">
-                        <button
+                        <Button
                             type="button"
                             onClick={() => setStatsOpen(!statsOpen)}
-                            className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-white/80 backdrop-blur-sm"
+                            className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-card/5 px-4 py-3 text-left text-white/80 backdrop-blur-sm"
                         >
                             <div className="flex items-center gap-2">
                                 <Sparkles size={16} className="text-white/60" />
@@ -208,7 +209,7 @@ export default function CheckoutHeader() {
                             >
                                 <ChevronDown size={18} className="text-white/60" />
                             </motion.div>
-                        </button>
+                        </Button>
 
                         <AnimatePresence>
                             {statsOpen && (
@@ -219,7 +220,7 @@ export default function CheckoutHeader() {
                                     transition={{ duration: 0.25, ease: "easeInOut" }}
                                     className="overflow-hidden"
                                 >
-                                    <div className="mt-3 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm">
+                                    <div className="mt-3 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-card/5 p-3 backdrop-blur-sm">
                                         <Stat
                                             title="Dispatch"
                                             value="24h"
@@ -246,21 +247,21 @@ export default function CheckoutHeader() {
 
                     {/* ── Mobile Compact Stats (always visible) ──────── */}
                     <div className="mt-3 grid grid-cols-3 gap-2 sm:hidden">
-                        <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-center backdrop-blur-sm">
+                        <div className="rounded-xl border border-white/10 bg-card/5 p-2.5 text-center backdrop-blur-sm">
                             <Clock size={12} className="mx-auto text-white/50" />
                             <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-white/50">
                                 Dispatch
                             </p>
                             <p className="text-sm font-bold text-white">24h</p>
                         </div>
-                        <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-center backdrop-blur-sm">
+                        <div className="rounded-xl border border-white/10 bg-card/5 p-2.5 text-center backdrop-blur-sm">
                             <Truck size={12} className="mx-auto text-white/50" />
                             <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-white/50">
                                 Delivery
                             </p>
                             <p className="text-sm font-bold text-white">2–5d</p>
                         </div>
-                        <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-center backdrop-blur-sm">
+                        <div className="rounded-xl border border-white/10 bg-card/5 p-2.5 text-center backdrop-blur-sm">
                             <ShieldCheck size={12} className="mx-auto text-white/50" />
                             <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-white/50">
                                 Pay

@@ -218,7 +218,7 @@ function Field({
                 <span className="text-sm font-medium text-muted-foreground">
                     {field.label}
                 </span>
-                <button
+                <Button
                     type="button"
                     onClick={() => onChange(!value)}
                     className={cn(
@@ -232,7 +232,7 @@ function Field({
                             value ? "left-[22px]" : "left-0.5",
                         )}
                     />
-                </button>
+                </Button>
             </label>
         );
     }
@@ -445,12 +445,12 @@ export default function AdminMarketingManager({
                         <h2 className="text-lg font-bold text-foreground">
                             {editing ? "Edit" : "New"} {config.type}
                         </h2>
-                        <button
+                        <Button
                             onClick={() => setShowForm(false)}
                             className="text-sm text-muted-foreground hover:text-foreground"
                         >
                             Cancel
-                        </button>
+                        </Button>
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {config.fields.map((field) => (
@@ -510,18 +510,18 @@ export default function AdminMarketingManager({
                                 </div>
                             </div>
                             <div className="flex shrink-0 items-center gap-1">
-                                <button
+                                <Button
                                     onClick={() => openEdit(item)}
                                     className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
                                 >
                                     <Pencil size={16} />
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     onClick={() => handleDelete(item.id)}
                                     className="flex h-9 w-9 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-50 dark:hover:bg-red-950/30"
                                 >
                                     <Trash2 size={16} />
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     ))}

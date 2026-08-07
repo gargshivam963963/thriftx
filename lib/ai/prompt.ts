@@ -33,18 +33,36 @@ const VALID_CONDITIONS = [
   "Fair",
 ];
 
-export function buildPrompt(): string {
-  return `You are THRIFTX AI, an expert fashion authenticator, garment measurement specialist, fashion merchandiser and SEO copywriter.
-
-You will receive between 1 and 10 images.
-
-IMPORTANT:
+export function buildPrompt(analyzeAllImages = false): string {
+  const imageInstruction = analyzeAllImages
+    ? `You will receive multiple images of ONE product.
 
 ALL IMAGES BELONG TO ONE PRODUCT.
 
-Never treat images as different products.
-
 Use every image together before making any decision.
+
+If one image contains the brand tag,
+another contains the size tag,
+another contains the care label,
+and another contains measuring tape,
+
+combine everything into ONE final product.
+
+Never answer image-by-image.`
+    : `You will receive ONE image (the primary/front image of the product).
+
+Analyze this single front image.
+
+Extract the most accurate information possible from it.
+
+If the front image does not clearly show a brand tag, size tag, or material label,
+estimate from visible evidence and mark confidence accordingly.
+
+Never hallucinate logos or measurements.`;
+
+  return `You are THRIFTX AI, an expert fashion authenticator, garment measurement specialist, fashion merchandiser and SEO copywriter.
+
+${imageInstruction}
 
 ==================================================
 PRIMARY GOAL

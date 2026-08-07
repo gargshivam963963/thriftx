@@ -21,7 +21,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                     ref={ref}
                     className={cn(
                         // Base
-                        "flex w-full appearance-none rounded-xl border bg-white pr-10",
+                        "flex w-full appearance-none rounded-xl border border-border bg-card pr-10",
                         "h-11 px-4 py-2.5",
                         "text-sm font-medium text-foreground",
                         // Border

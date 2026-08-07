@@ -83,7 +83,9 @@ export interface ProductFilters {
   size?: string[];
   condition?: string[];
   price?: string;
-  sort?: "newest" | "price-low" | "price-high" | "name";
+  color?: string;
+  material?: string;
+  sort?: "newest" | "price-low" | "price-high" | "name" | "popular";
   limit?: number;
   offset?: number;
 }
@@ -287,6 +289,14 @@ export async function getProducts(
     queries.push(AppwriteQuery.equal("size", filters.size));
   }
 
+  if (filters.color) {
+    queries.push(AppwriteQuery.equal("color", filters.color));
+  }
+
+  if (filters.material) {
+    queries.push(AppwriteQuery.equal("material", filters.material));
+  }
+
   if (filters.price) {
     switch (filters.price) {
       case "0-499":
@@ -311,6 +321,7 @@ export async function getProducts(
 
   switch (filters.sort) {
     case "newest":
+    case "popular":
       queries.push(AppwriteQuery.orderDesc("$createdAt"));
       break;
 

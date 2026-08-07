@@ -22,7 +22,7 @@ export function Tooltip({
             <div
                 role="tooltip"
                 className={cn(
-                    "pointer-events-none absolute z-[999] whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 dark:bg-muted dark:text-foreground",
+                    "pointer-events-none absolute z-tooltip whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-small font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 dark:bg-muted dark:text-foreground",
                     side === "top" && "bottom-full left-1/2 mb-1.5 -translate-x-1/2",
                     side === "bottom" && "top-full left-1/2 mt-1.5 -translate-x-1/2",
                     side === "left" && "right-full top-1/2 mr-1.5 -translate-y-1/2",

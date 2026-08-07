@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+
+import { Button } from '@/components/ui/button';import { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
     Search,
@@ -176,7 +177,7 @@ export default function AdminOrdersPage() {
                         {orders.filter((o) => o.status === "Delivered").length} delivered
                     </p>
                 </div>
-                <button
+                <Button
                     onClick={async () => {
                         setLoading(true);
                         try {
@@ -192,7 +193,7 @@ export default function AdminOrdersPage() {
                 >
                     <RefreshCw size={16} />
                     Refresh
-                </button>
+                </Button>
             </motion.div>
 
             {/* Filters */}
@@ -212,7 +213,7 @@ export default function AdminOrdersPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {["all", ...ORDER_STATUSES].map((status) => (
-                        <button
+                        <Button
                             key={status}
                             onClick={() => setStatusFilter(status)}
                             className={cn(
@@ -223,7 +224,7 @@ export default function AdminOrdersPage() {
                             )}
                         >
                             {status === "all" ? "All" : status}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             </div>
@@ -343,7 +344,7 @@ export default function AdminOrdersPage() {
                                                 </select>
 
                                                 {!order.awbNumber ? (
-                                                    <button
+                                                    <Button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             handleShipOrder(order);
@@ -358,7 +359,7 @@ export default function AdminOrdersPage() {
                                                             <Rocket size={12} />
                                                         )}
                                                         Ship
-                                                    </button>
+                                                    </Button>
                                                 ) : (
                                                     <a
                                                         href={order.trackingUrl || "#"}
@@ -373,7 +374,7 @@ export default function AdminOrdersPage() {
                                                     </a>
                                                 )}
 
-                                                <button
+                                                <Button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleDeleteOrder(order.$id);
@@ -381,7 +382,7 @@ export default function AdminOrdersPage() {
                                                     className="rounded-lg p-1.5 text-red-400 transition-all hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
                                                 >
                                                     <Trash2 size={14} />
-                                                </button>
+                                                </Button>
                                             </div>
                                         </td>
                                     </tr>
@@ -511,12 +512,12 @@ export default function AdminOrdersPage() {
                         </div>
 
                         <div className="mt-4 flex justify-end">
-                            <button
+                            <Button
                                 onClick={() => setSelectedOrder(null)}
                                 className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-black"
                             >
                                 Close
-                            </button>
+                            </Button>
                         </div>
                     </motion.div>
                 </div>

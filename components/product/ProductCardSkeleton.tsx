@@ -5,10 +5,10 @@ export default function ProductCardSkeleton() {
         <div
             className="
         overflow-hidden
-        rounded-[24px]
+rounded-[24px]
         border
         border-border
-        bg-white
+        bg-card
         shadow-sm
       "
         >

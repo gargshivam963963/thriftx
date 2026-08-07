@@ -5,4 +5,4 @@ export { default as BestProducts } from "./BestProducts";
 export { default as BrandSection } from "./BrandSection";
 export { default as WhyThriftX } from "./WhyThriftX";
 export { default as InstagramFeed } from "./InstagramFeed";
-export { default as Newsletter } from "./Newsletter";
+export { default as WeekendSale } from "./WeekendSale";

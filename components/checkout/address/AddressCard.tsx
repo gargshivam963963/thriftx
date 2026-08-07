@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+
+import { Button } from '@/components/ui/button';import { useState } from "react";
 import { motion } from "framer-motion";
 import {
     CheckCircle2,
@@ -150,23 +151,23 @@ export default function AddressCard({
                             </motion.div>
                         )}
 
-                        <button
+                        <Button
                             type="button"
                             onClick={handleEditClick}
                             className="rounded-xl border border-border p-2 text-muted-foreground transition hover:border-foreground hover:bg-foreground hover:text-background"
                             aria-label="Edit address"
                         >
                             <Pencil size={14} className="sm:h-[15px] sm:w-[15px]" />
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
                             type="button"
                             onClick={handleDeleteClick}
                             className="rounded-xl border border-red-200 p-2 text-red-500 transition hover:bg-red-600 hover:text-white dark:border-red-900/60 dark:text-red-400"
                             aria-label="Delete address"
                         >
                             <Trash2 size={14} className="sm:h-[15px] sm:w-[15px]" />
-                        </button>
+                        </Button>
                     </div>
                 </div>
 

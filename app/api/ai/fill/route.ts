@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { ai } from "@/lib/ai/gemini";
 import { buildPrompt } from "@/lib/ai/prompt";
 import { parseAIResponse } from "@/lib/ai/parser";
+import type {
+  AIFillRequest,
+  AIProductResponse,
+  AIFillErrorCode,
+} from "@/lib/ai/types";
+
+/**
+ * THRIFTX — AI Fill API
+ *
+ * Production architecture:
+ *   Client compresses images → uploads to Appwrite Storage
+ *   → sends ONLY Appwrite public URLs here.
+ *
+ * This endpoint NEVER receives Base64 image data.
+ * It fetches image bytes server-side and calls Gemini.
+ */
 
 // Models to try in order of preference (v1beta-compatible)
 const MODELS = [
@@ -11,6 +27,82 @@ const MODELS = [
   "gemini-2.5-pro",
 ];
 
+/** Max images allowed. */
+const MAX_IMAGES = 10;
+
+/** Max bytes per fetched image (e.g. 8MB). */
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
+/** Valid image MIME types for Gemini inline data. */
+const VALID_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+];
+
+/**
+ * Validate the request payload.
+ * Returns a friendly error message or null when valid.
+ */
+function validatePayload(body: AIFillRequest): string | null {
+  if (!body || typeof body !== "object") {
+    return "Invalid request payload.";
+  }
+
+  const { imageUrls } = body;
+
+  if (!Array.isArray(imageUrls) || imageUrls.length === 0) {
+    return "No image URLs provided.";
+  }
+
+  if (imageUrls.length > MAX_IMAGES) {
+    return `Maximum ${MAX_IMAGES} images per request.`;
+  }
+
+  for (const url of imageUrls) {
+    if (typeof url !== "string" || !url.startsWith("http")) {
+      return "Invalid image URL provided.";
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Fetch an image from a public/signed URL and return
+ * a Gemini-compatible inlineData part.
+ */
+async function urlToInlineData(
+  url: string,
+): Promise<{ mimeType: string; data: string }> {
+  const response = await fetch(url, {
+    headers: { "User-Agent": "ThriftX-AI/1.0" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image (status ${response.status}).`);
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  const mimeType = contentType.split(";")[0].trim() || "image/jpeg";
+
+  if (!VALID_MIME_TYPES.includes(mimeType)) {
+    throw new Error(`Unsupported image type: ${mimeType}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+
+  if (arrayBuffer.byteLength > MAX_IMAGE_BYTES) {
+    throw new Error("An image exceeded the maximum allowed size.");
+  }
+
+  const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+  return { mimeType, data: base64 };
+}
+
 /**
  * Attempt AI generation with automatic model fallback.
  * If one model hits rate limit, tries the next.
@@ -18,7 +110,7 @@ const MODELS = [
 async function generateWithFallback(
   prompt: string,
   parts: { inlineData: { mimeType: string; data: string } }[],
-): Promise<string> {
+): Promise<{ text: string; model: string }> {
   let lastError: Error | null = null;
 
   for (const model of MODELS) {
@@ -174,7 +266,7 @@ async function generateWithFallback(
       });
 
       const text = response.text ?? "";
-      if (text) return text;
+      if (text) return { text, model };
 
       lastError = new Error(`Empty response from ${model}`);
     } catch (err) {
@@ -205,40 +297,76 @@ async function generateWithFallback(
   throw lastError ?? new Error("All AI models exhausted their quotas.");
 }
 
+/** Build a user-safe error response. Never exposes raw internals. */
+function errorResponse(
+  message: string,
+  code: AIFillErrorCode,
+  status: number,
+  isQuotaError = false,
+) {
+  return NextResponse.json(
+    { success: false, message, code, isQuotaError },
+    { status },
+  );
+}
+
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
+
   try {
-    const body = await req.json();
+    let body: AIFillRequest;
+    try {
+      body = (await req.json()) as AIFillRequest;
+    } catch {
+      return errorResponse("Invalid JSON payload.", "VALIDATION", 400);
+    }
 
-    const { images }: { images: string[] } = body;
-
-    if (!images?.length) {
+    const validationError = validatePayload(body);
+    if (validationError) {
       return NextResponse.json(
-        { success: false, message: "No images provided." },
+        { success: false, message: validationError, code: "VALIDATION" },
         { status: 400 },
       );
     }
 
-    const prompt = buildPrompt();
+    const { imageUrls, analyzeAllImages = false, productId } = body;
 
-    // Send ALL images together as ONE product
-    const imageParts = images.map((image) => ({
-      inlineData: {
-        mimeType: "image/jpeg",
-        data: image,
-      },
-    }));
+    const prompt = buildPrompt(analyzeAllImages);
 
-    const text = await generateWithFallback(prompt, imageParts);
+    // Fetch images server-side (never trust client base64).
+    const imageParts: { inlineData: { mimeType: string; data: string } }[] = [];
+    for (const url of imageUrls) {
+      const part = await urlToInlineData(url);
+      imageParts.push({ inlineData: part });
+    }
 
-    const parsed = parseAIResponse(text);
+    const { text, model } = await generateWithFallback(prompt, imageParts);
+
+    const parsed: AIProductResponse = parseAIResponse(text);
+
+    const durationMs = Date.now() - startedAt;
+
+    // Structured logging — never log Base64 or sensitive info.
+    console.info("[api/ai/fill] success", {
+      productId: productId ?? null,
+      imageCount: imageUrls.length,
+      analyzeAllImages,
+      durationMs,
+      model,
+    });
 
     return NextResponse.json({
       success: true,
       data: parsed,
+      meta: {
+        durationMs,
+        imageCount: imageUrls.length,
+        retryCount: 0,
+        model,
+      },
     });
   } catch (error) {
-    console.error("AI ERROR:", error);
-
+    const durationMs = Date.now() - startedAt;
     const msg =
       error instanceof Error ? error.message : "AI generation failed.";
 
@@ -248,15 +376,31 @@ export async function POST(req: NextRequest) {
       msg.toLowerCase().includes("429") ||
       msg.toLowerCase().includes("rate limit");
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: isQuotaError
-          ? "AI service is temporarily unavailable due to rate limits. Please try again in a few minutes."
-          : msg,
-        isQuotaError,
-      },
-      { status: isQuotaError ? 429 : 500 },
+    console.error("[api/ai/fill] error", {
+      durationMs,
+      isQuotaError,
+      code: isQuotaError
+        ? "RATE_LIMITED"
+        : msg.includes("fetch")
+          ? "NETWORK_ERROR"
+          : "AI_ERROR",
+      // Log only a sanitized, non-sensitive message prefix.
+      hint: msg.split(".")[0].slice(0, 120),
+    });
+
+    if (isQuotaError) {
+      return errorResponse(
+        "AI service is temporarily unavailable due to rate limits. Please try again in a few minutes.",
+        "RATE_LIMITED",
+        429,
+        true,
+      );
+    }
+
+    return errorResponse(
+      "AI processing failed. Please try again.",
+      "AI_ERROR",
+      500,
     );
   }
 }

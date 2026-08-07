@@ -35,18 +35,18 @@ export async function GET() {
           AppwriteQuery.limit(100),
         ],
       );
-      referrals = res.documents.map((d: any) => ({
+      referrals = res.documents.map((d) => ({
         id: d.$id,
-        referrerUserId: d.referrerUserId,
-        referrerName: d.referrerName || "",
-        code: d.code,
-        referredEmail: d.referredEmail || "",
-        referredUserId: d.referredUserId || "",
-        orderId: d.orderId || "",
+        referrerUserId: (d.referrerUserId as string) || "",
+        referrerName: (d.referrerName as string) || "",
+        code: (d.code as string) || "",
+        referredEmail: (d.referredEmail as string) || "",
+        referredUserId: (d.referredUserId as string) || "",
+        orderId: (d.orderId as string) || "",
         rewardAmount: Number(d.rewardAmount || 100),
-        status: d.status || "pending",
-        $createdAt: d.$createdAt,
-        completedAt: d.completedAt || "",
+        status: (d.status as Referral["status"]) || "pending",
+        $createdAt: (d.$createdAt as string) || "",
+        completedAt: (d.completedAt as string) || "",
       }));
     } catch {
       referrals = [];

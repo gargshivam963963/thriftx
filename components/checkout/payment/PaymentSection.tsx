@@ -41,7 +41,7 @@ function TrustBadge({
     return (
         <motion.div
             whileHover={{ y: -2 }}
-            className="rounded-xl border border-border bg-white p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4"
+            className="rounded-xl border border-border bg-card p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4"
         >
             <div className="mb-2 inline-flex rounded-lg bg-muted p-2 sm:rounded-xl sm:p-2.5">
                 {icon}
@@ -61,7 +61,7 @@ function TrustBadge({
 function IconBox({ children, selected }: { children: React.ReactNode; selected: boolean }) {
     return (
         <div
-            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-14 sm:w-14 sm:rounded-2xl ${selected ? "bg-white/10" : "bg-muted"
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-14 sm:w-14 sm:rounded-2xl ${selected ? "bg-card/10" : "bg-muted"
                 }`}
         >
             {children}
@@ -102,7 +102,7 @@ function PaymentOption({
             onClick={canPay ? onClick : undefined}
             className={`w-full overflow-hidden rounded-2xl border text-left transition-all sm:rounded-3xl ${selected
                 ? "border-foreground bg-foreground text-white shadow-xl"
-                : "border-border bg-white hover:border-foreground hover:shadow-md"
+                : "border-border bg-card hover:border-foreground hover:shadow-md"
                 } ${!canPay ? "opacity-50" : "cursor-pointer"}`}
         >
             <div className="flex items-start justify-between p-4 sm:p-6">
@@ -116,7 +116,7 @@ function PaymentOption({
                             </h3>
                             <span
                                 className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${selected
-                                    ? "bg-white/20 text-white"
+                                    ? "bg-card/20 text-white"
                                     : badgeColor
                                     }`}
                             >
@@ -177,7 +177,7 @@ function PaymentOption({
                 <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
-                    className="border-t border-white/10 bg-white/[0.03] px-4 py-4 sm:px-6 sm:py-5"
+                    className="border-t border-white/10 bg-card/[0.03] px-4 py-4 sm:px-6 sm:py-5"
                 >
                     <Button
                         type="button"
@@ -193,7 +193,7 @@ function PaymentOption({
                                 <Lock className="h-4 w-4" />
                             )
                         }
-                        className="rounded-xl bg-white text-foreground shadow-lg hover:bg-muted sm:rounded-2xl"
+                        className="rounded-xl bg-card text-foreground shadow-lg hover:bg-muted sm:rounded-2xl"
                     >
                         {title.includes("COD")
                             ? "Place Order (Pay on Delivery)"
@@ -218,10 +218,10 @@ export default function PaymentSection({
         <motion.section
             layout
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className={`overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-3xl ${disabled ? "border-border opacity-60" : "border-border"
+            className={`overflow-hidden rounded-2xl border bg-card shadow-sm sm:rounded-3xl ${disabled ? "border-border opacity-60" : "border-border"
                 }`}
         >
-            <button
+            <Button
                 type="button"
                 onClick={disabled ? undefined : onOpen}
                 disabled={disabled}
@@ -262,7 +262,7 @@ export default function PaymentSection({
                         <ChevronRight size={18} className="text-muted-foreground" />
                     )}
                 </div>
-            </button>
+            </Button>
 
             <AnimatePresence initial={false}>
                 {open && !disabled && (

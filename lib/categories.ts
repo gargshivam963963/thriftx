@@ -263,10 +263,10 @@ export async function getGenders(): Promise<Gender[]> {
     [AppwriteQuery.equal("active", true), AppwriteQuery.orderAsc("order")],
   );
 
-  return response.documents.map((doc: any) => ({
+  return response.documents.map<Gender>((doc) => ({
     id: doc.$id,
-    slug: doc.slug,
-    name: doc.name,
+    slug: (doc.slug as string) || "",
+    name: (doc.name as string) || "",
   }));
 }
 
@@ -281,14 +281,14 @@ export async function getCategories(): Promise<Category[]> {
     [AppwriteQuery.equal("active", true), AppwriteQuery.orderAsc("order")],
   );
 
-  const dbCategories: Category[] = response.documents.map((doc: any) => ({
+  const dbCategories: Category[] = response.documents.map<Category>((doc) => ({
     id: doc.$id,
-    slug: doc.slug,
-    name: doc.name,
-    gender: doc.gender as Category["gender"],
-    order: doc.order,
-    active: doc.active,
-    image: doc.image ?? "",
+    slug: (doc.slug as string) || "",
+    name: (doc.name as string) || "",
+    gender: (doc.gender as Category["gender"]) || "Unisex",
+    order: Number(doc.order) || 0,
+    active: doc.active !== false,
+    image: (doc.image as string) ?? "",
   }));
 
   // Merge in any missing fallback categories (e.g. "Lower" for Men if not in DB yet)

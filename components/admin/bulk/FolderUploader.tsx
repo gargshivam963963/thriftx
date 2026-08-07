@@ -121,7 +121,7 @@ export default function FolderUploader({
                     </div>
                 )}
 
-                <button
+                <Button
                     type="button"
                     disabled={loading}
                     onClick={() => inputRef.current?.click()}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+
+import { Button } from '@/components/ui/button';import { useState, useRef, useCallback } from "react";
 import {
     FolderOpen,
     Upload,
@@ -150,7 +151,7 @@ export default function SmartFolderUploader({
                                 </p>
                             </div>
                             <CheckCircle2 size={20} className="shrink-0 text-emerald-500" />
-                            <button
+                            <Button
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -159,7 +160,7 @@ export default function SmartFolderUploader({
                                 className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted dark:hover:text-muted-foreground"
                             >
                                 <X size={14} />
-                            </button>
+                            </Button>
                         </div>
 
                         {/* Stats chips */}
@@ -184,14 +185,14 @@ export default function SmartFolderUploader({
                                     {issueCount} need attention
                                 </div>
                             )}
-                            <button
+                            <Button
                                 type="button"
                                 onClick={() => inputRef.current?.click()}
                                 className="flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted dark:bg-card dark:text-muted-foreground dark:hover:bg-muted"
                             >
                                 <Upload size={12} />
                                 Re-upload
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 ) : (
@@ -229,7 +230,7 @@ export default function SmartFolderUploader({
                 )}
 
                 {!hasContent && !processing && (
-                    <button
+                    <Button
                         type="button"
                         disabled={loading}
                         onClick={() => inputRef.current?.click()}
@@ -242,7 +243,7 @@ export default function SmartFolderUploader({
             {/* Product List with per-product reorder grids */}
             {hasContent && (
                 <div className="rounded-2xl border border-border bg-white dark:border-border dark:bg-foreground">
-                    <button
+                    <Button
                         type="button"
                         onClick={() => setExpanded(!expanded)}
                         className="flex w-full items-center justify-between px-4 py-3 text-left"
@@ -260,7 +261,7 @@ export default function SmartFolderUploader({
                         ) : (
                             <ChevronDown size={16} className="text-muted-foreground" />
                         )}
-                    </button>
+                    </Button>
 
                     <AnimatePresence>
                         {expanded && (
@@ -288,7 +289,7 @@ export default function SmartFolderUploader({
 
                                         return (
                                             <div key={product.sku} className="px-4 py-3">
-                                                <button
+                                                <Button
                                                     type="button"
                                                     onClick={() =>
                                                         setSelectedProduct(
@@ -326,7 +327,7 @@ export default function SmartFolderUploader({
                                                             className="shrink-0 text-emerald-500"
                                                         />
                                                     )}
-                                                </button>
+                                                </Button>
 
                                                 <AnimatePresence>
                                                     {isSelected && (

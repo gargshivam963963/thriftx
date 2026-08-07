@@ -12,6 +12,7 @@ import { uploadProducts } from "@/app/lib/bulk/uploader";
 import { processSmartFolders } from "@/app/lib/bulk/smart-processor";
 import { sortByFilename } from "@/app/lib/bulk/image-sorter";
 import { mapAIResponseToProduct } from "@/lib/ai/parser";
+import { runAiFill } from "@/lib/services/aiFill";
 import {
     loadDraft,
     saveDraft,
@@ -163,30 +164,15 @@ export default function BulkUploadPage() {
 
             setAiLoadingSku(product.sku);
             try {
-                const base64Images = await Promise.all(
-                    product.imageFiles.map(
-                        (file) =>
-                            new Promise<string>((resolve, reject) => {
-                                const reader = new FileReader();
-                                reader.onload = () => {
-                                    const result = reader.result as string;
-                                    resolve(result.split(",")[1]);
-                                };
-                                reader.onerror = reject;
-                                reader.readAsDataURL(file);
-                            }),
-                    ),
-                );
-
-                const response = await fetch("/api/ai/fill", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ images: base64Images }),
+                const result = await runAiFill(product.imageFiles, {
+                    key: product.sku,
+                    productId: undefined,
+                    analyzeAllImages: true,
+                    onProgress: () => { },
                 });
 
-                const result = await response.json();
-                if (!result.success) {
-                    if (result.isQuotaError || response.status === 429) {
+                if (!result.success || !result.data) {
+                    if (result.code === "RATE_LIMITED") {
                         showToast({
                             type: "warning",
                             title: "AI quota exceeded",
@@ -200,8 +186,7 @@ export default function BulkUploadPage() {
                         type: "error",
                         title: "AI Fill failed",
                         message:
-                            result.message ||
-                            "Could not extract details.",
+                            result.message || "Could not extract details.",
                     });
                     return;
                 }
@@ -210,19 +195,15 @@ export default function BulkUploadPage() {
                     mapAIResponseToProduct(result.data);
 
                 const aiConfidence: Record<string, number> = {};
-                if (result.data) {
-                    for (const [field, extracted] of Object.entries(
-                        result.data,
-                    )) {
-                        if (
-                            extracted &&
-                            typeof extracted === "object" &&
-                            "confidence" in extracted
-                        ) {
-                            aiConfidence[field] = (
-                                extracted as { confidence: number }
-                            ).confidence;
-                        }
+                for (const [field, extracted] of Object.entries(result.data)) {
+                    if (
+                        extracted &&
+                        typeof extracted === "object" &&
+                        "confidence" in extracted
+                    ) {
+                        aiConfidence[field] = (
+                            extracted as { confidence: number }
+                        ).confidence;
                     }
                 }
 
@@ -259,7 +240,7 @@ export default function BulkUploadPage() {
                     type: "error",
                     title: "AI Fill failed",
                     message:
-                        "An error occurred. Check your Gemini API key and quota.",
+                        "An error occurred while processing the images.",
                 });
             } finally {
                 setAiLoadingSku(null);
@@ -429,43 +410,15 @@ export default function BulkUploadPage() {
             });
 
             try {
-                const base64Images = await Promise.all(
-                    product.imageFiles.map(
-                        (file) =>
-                            new Promise<string>((resolve, reject) => {
-                                const reader = new FileReader();
-                                reader.onload = () => {
-                                    const result = reader.result as string;
-                                    resolve(result.split(",")[1]);
-                                };
-                                reader.onerror = reject;
-                                reader.readAsDataURL(file);
-                            }),
-                    ),
-                );
-
-                const response = await fetch("/api/ai/fill", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        images: base64Images,
-                        selectedFields: [
-                            "title",
-                            "brand",
-                            "gender",
-                            "category",
-                            "size",
-                            "color",
-                            "material",
-                            "description",
-                        ],
-                    }),
+                const result = await runAiFill(product.imageFiles, {
+                    key: product.sku,
+                    productId: undefined,
+                    analyzeAllImages: true,
+                    onProgress: () => { },
                 });
 
-                const result = await response.json();
-
-                if (!result.success) {
-                    if (result.isQuotaError || response.status === 429) {
+                if (!result.success || !result.data) {
+                    if (result.code === "RATE_LIMITED") {
                         quotaExceeded = true;
                         showToast({
                             type: "warning",
@@ -479,17 +432,17 @@ export default function BulkUploadPage() {
                     continue;
                 }
 
-                const aiData = result.data || {};
+                const aiData = result.data;
                 const updates: Partial<BulkProduct> = {};
-                if (aiData.title) updates.title = aiData.title;
-                if (aiData.brand) updates.brand = aiData.brand;
-                if (aiData.gender) updates.gender = aiData.gender;
-                if (aiData.category) updates.category = aiData.category;
-                if (aiData.size) updates.size = aiData.size;
-                if (aiData.color) updates.color = aiData.color;
-                if (aiData.material) updates.material = aiData.material;
-                if (aiData.description)
-                    updates.description = aiData.description;
+                if (aiData.seoTitle?.value) updates.title = aiData.seoTitle.value;
+                if (aiData.brand?.value) updates.brand = aiData.brand.value;
+                if (aiData.gender?.value) updates.gender = aiData.gender.value as BulkProduct["gender"];
+                if (aiData.category?.value) updates.category = aiData.category.value;
+                if (aiData.size?.value) updates.size = aiData.size.value;
+                if (aiData.color?.value) updates.color = aiData.color.value;
+                if (aiData.material?.value) updates.material = aiData.material.value;
+                if (aiData.seoDescription?.value)
+                    updates.description = aiData.seoDescription.value;
 
                 handleProductUpdate(product.sku, updates);
                 successCount++;

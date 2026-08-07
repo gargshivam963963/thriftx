@@ -2,6 +2,7 @@
 
 import { forwardRef } from "react";
 import { motion } from "framer-motion";
+import { Slot } from "@radix-ui/react-slot";
 import { Check, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             whileHover,
             whileTap,
             transition,
+            asChild = false,
 
             ...props
         },
@@ -44,28 +46,33 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         const isDisabled = disabled || loading;
         const isIconOnly =
             typeof size === "string" && size.startsWith("icon");
+        const Comp: any = asChild ? motion(Slot as any) : motion.button;
+
+        const elementProps: any = {
+            ref,
+            ...(asChild ? {} : { type }),
+            ...(asChild ? {} : { disabled: isDisabled }),
+            'aria-disabled': isDisabled,
+            'aria-busy': loading,
+        };
 
         return (
-            <motion.button
-                ref={ref}
-                type={type}
-                disabled={isDisabled}
-                aria-disabled={isDisabled}
-                aria-busy={loading}
+            <Comp
+                {...elementProps}
                 whileHover={
                     whileHover ?? {
-                        scale: 1.02,
-                        y: -1,
+                        scale: 1.03,
+                        y: -2,
                     }
                 }
                 whileTap={
                     whileTap ?? {
-                        scale: 0.97,
+                        scale: 0.975,
                     }
                 }
                 transition={
                     transition ?? {
-                        duration: 0.18,
+                        duration: 0.16,
                         ease: "easeOut",
                     }
                 }
@@ -143,7 +150,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                         )}
                     </>
                 )}
-            </motion.button>
+            </Comp>
         );
     }
 );

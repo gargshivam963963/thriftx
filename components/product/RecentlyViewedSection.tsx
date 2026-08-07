@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, RefreshCcw } from "lucide-react";
 import ProductCardGrid from "@/components/shop/ProductCardGrid";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants, Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getRecentlyViewedProducts, clearRecentlyViewedProducts, type RecentlyViewedProduct } from "@/lib/recentlyViewed";
 
@@ -47,18 +47,23 @@ export default function RecentlyViewedSection({ excludeSlug }: RecentlyViewedSec
                     </h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <button
+                    <Button
                         type="button"
                         onClick={handleClear}
-                        className={cn(buttonVariants({ variant: "ghost", size: "sm", rounded: "lg" }), "inline-flex items-center gap-2")}
+                        variant="ghost"
+                        size="sm"
+                        rounded="lg"
+                        className="inline-flex items-center gap-2"
                     >
                         <RefreshCcw size={14} />
                         Clear History
-                    </button>
-                    <Link href="/shop" className={cn(buttonVariants({ variant: "outline", size: "sm", rounded: "lg" }), "inline-flex items-center gap-2")}>
+                    </Button>
+                    <Button asChild variant="outline" size="sm" rounded="lg" className={"inline-flex items-center gap-2"}>
+  <Link href="/shop">
                         Continue Browsing
                         <ArrowRight size={14} />
                     </Link>
+</Button>
                 </div>
             </div>
 

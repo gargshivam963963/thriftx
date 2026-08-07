@@ -9,10 +9,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Sparkles,
-    Wand2,
-    CheckCircle2,
     RotateCcw,
-    Check,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -32,6 +29,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PRODUCT_FIELDS } from "@/lib/productFields";
 import { deleteImageFromStorage } from "@/lib/services/storage";
+import { runAiFill } from "@/lib/services/aiFill";
+import { showToast } from "@/components/admin/toast/Toast";
+import { BLUR_PLACEHOLDER } from "@/lib/imageOptimization";
+import { cn } from "@/lib/utils";
 import SortableImage from "@/components/SortableImage";
 
 export interface ProductFormData {
@@ -125,16 +126,6 @@ function getMeasurementsForCategory(category: string): MeasurementField[] {
     ];
 }
 
-const AI_FEATURES = [
-    "Brand Detection",
-    "Product Description",
-    "Category Prediction",
-    "Material & Color",
-    "Measurement Extraction",
-];
-
-const AI_FIELD_NAMES = PRODUCT_FIELDS.filter((f) => f.ai).map((f) => f.name);
-
 const defaultForm: ProductFormData = {
     title: "",
     brand: "",
@@ -173,7 +164,8 @@ export default function ProductFormModal({
     const [previewIndex, setPreviewIndex] = useState<number | null>(null);
     const [isDeletingImage, setIsDeletingImage] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [selectedAiFields, setSelectedAiFields] = useState<string[]>(AI_FIELD_NAMES);
+    const [analyzeAllImages, setAnalyzeAllImages] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const aiTriggeredRef = useRef(false);
@@ -302,18 +294,6 @@ export default function ProductFormModal({
 
     // ── AI Fill ──
 
-    async function fileToBase64(file: File): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const result = reader.result as string;
-                resolve(result.split(",")[1]);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    }
-
     /** Maps AI response keys to form field names */
     const AI_TO_FORM_MAP: Record<string, string> = {
         seoTitle: "title",
@@ -347,78 +327,95 @@ export default function ProductFormModal({
         return flatData;
     }
 
-    async function handleAIFillWithFiles(files: File[]) {
+    /** Shared AI fill runner using the centralized service. */
+    async function runAiPipeline(files: File[], opts: { auto?: boolean } = {}) {
         if (!files.length) return;
-        try {
-            setIsGenerating(true);
-            const base64Images = await Promise.all(files.map(fileToBase64));
 
-            const response = await fetch("/api/ai/fill", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    images: base64Images,
-                    selectedFields: selectedAiFields,
-                }),
+        setIsGenerating(true);
+        setUploadProgress(0);
+
+        try {
+            const result = await runAiFill(files, {
+                key: isEditing ? editProduct?.id : "new-product",
+                productId: editProduct?.id,
+                analyzeAllImages,
+                onProgress: (p) => setUploadProgress(p.percent),
             });
 
-            const result = await response.json();
             if (!result.success) {
-                console.warn("Auto AI fill:", result.message);
+                if (result.code === "VALIDATION") {
+                    showToast({
+                        type: "warning",
+                        title: "Validation failed",
+                        message: result.message,
+                    });
+                    return;
+                }
+                showToast({
+                    type: "error",
+                    title: "AI Fill failed",
+                    message: result.message,
+                });
                 return;
             }
 
-            const flatData = extractAiData(result.data);
+            if (!result.data) {
+                showToast({ type: "error", title: "AI Fill failed", message: "No data returned." });
+                return;
+            }
+
+            const flatData = extractAiData(result.data as unknown as Record<string, unknown>);
             if (Object.keys(flatData).length > 0) {
                 setForm((prev) => ({ ...prev, ...flatData }));
+                showToast({
+                    type: "success",
+                    title: "AI Fill complete",
+                    message: `${Object.keys(flatData).length} fields extracted.`,
+                });
+            } else {
+                showToast({
+                    type: "info",
+                    title: "AI Fill complete",
+                    message: "No new fields could be extracted.",
+                });
             }
         } catch (error) {
-            console.error("Auto AI fill failed:", error);
+            console.error("AI fill failed:", error);
+            showToast({
+                type: "error",
+                title: "AI Fill failed",
+                message: "An unexpected error occurred. Please try again.",
+            });
         } finally {
             setIsGenerating(false);
+            setUploadProgress(null);
         }
+    }
+
+    async function handleAIFillWithFiles(files: File[]) {
+        await runAiPipeline(files, { auto: true });
     }
 
     async function handleAIFill() {
         const allFiles = images.filter((img) => img.file).map((img) => img.file!);
         if (!allFiles.length) {
             if (isEditing) {
-                alert("For AI fill, please re-upload the images you want to analyze.");
+                showToast({
+                    type: "warning",
+                    title: "No image files",
+                    message: "For AI fill, please re-upload the images you want to analyze.",
+                });
                 return;
             }
-            alert("Please upload at least one image first.");
+            showToast({
+                type: "warning",
+                title: "No images",
+                message: "Please upload at least one image first.",
+            });
             return;
         }
 
-        try {
-            setIsGenerating(true);
-            const base64Images = await Promise.all(allFiles.map(fileToBase64));
-
-            const response = await fetch("/api/ai/fill", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    images: base64Images,
-                    selectedFields: selectedAiFields,
-                }),
-            });
-
-            const result = await response.json();
-            if (!result.success) {
-                alert(result.message || "AI generation failed.");
-                return;
-            }
-
-            const flatData = extractAiData(result.data);
-            if (Object.keys(flatData).length > 0) {
-                setForm((prev) => ({ ...prev, ...flatData }));
-            }
-        } catch (error) {
-            console.error("AI fill failed:", error);
-            alert("AI generation failed. Please try again.");
-        } finally {
-            setIsGenerating(false);
-        }
+        await runAiPipeline(allFiles);
     }
 
     // ── Preview Modal ──
@@ -427,21 +424,21 @@ export default function ProductFormModal({
         setPreviewIndex(index);
     }
 
-    function closePreview() {
+    const closePreview = useCallback(() => {
         setPreviewIndex(null);
-    }
+    }, []);
 
-    function prevPreview() {
+    const prevPreview = useCallback(() => {
         setPreviewIndex((prev) =>
             prev !== null ? (prev - 1 + images.length) % images.length : null
         );
-    }
+    }, [images.length]);
 
-    function nextPreview() {
+    const nextPreview = useCallback(() => {
         setPreviewIndex((prev) =>
             prev !== null ? (prev + 1) % images.length : null
         );
-    }
+    }, [images.length]);
 
     useEffect(() => {
         function handleKeyDown(e: KeyboardEvent) {
@@ -452,23 +449,7 @@ export default function ProductFormModal({
         }
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [previewIndex, images.length]);
-
-    // ── AI Field Selector ──
-
-    function toggleAiField(name: string) {
-        setSelectedAiFields((prev) =>
-            prev.includes(name) ? prev.filter((f) => f !== name) : [...prev, name]
-        );
-    }
-
-    function selectAllAiFields() {
-        setSelectedAiFields(AI_FIELD_NAMES);
-    }
-
-    function clearAiFields() {
-        setSelectedAiFields([]);
-    }
+    }, [previewIndex, closePreview, prevPreview, nextPreview]);
 
     // ── Validation & Submit ──
 
@@ -497,8 +478,6 @@ export default function ProductFormModal({
     }
 
     // ── Render ──
-
-    const aiFieldsList = PRODUCT_FIELDS.filter((f) => f.ai);
 
     return (
         <AnimatePresence>
@@ -535,12 +514,12 @@ export default function ProductFormModal({
                                         </span>
                                     )}
                                 </div>
-                                <button
+                                <Button
                                     onClick={onClose}
                                     className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted dark:hover:bg-card"
                                 >
                                     <X size={18} />
-                                </button>
+                                </Button>
                             </div>
 
                             {/* 3-Column Body */}
@@ -797,7 +776,7 @@ export default function ProductFormModal({
                                                         ))}
 
                                                         {/* Upload button */}
-                                                        <button
+                                                        <Button
                                                             type="button"
                                                             onClick={() => fileRef.current?.click()}
                                                             className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border bg-subtle transition hover:border-foreground hover:bg-muted dark:border-border dark:bg-card/50 dark:hover:border-border dark:hover:bg-card"
@@ -806,7 +785,7 @@ export default function ProductFormModal({
                                                             <span className="text-[10px] font-semibold text-muted-foreground">
                                                                 {images.length === 0 ? "Add Images" : "Add More"}
                                                             </span>
-                                                        </button>
+                                                        </Button>
                                                     </div>
                                                 </SortableContext>
                                             </DndContext>
@@ -824,6 +803,87 @@ export default function ProductFormModal({
                                                 Supported formats: JPEG, PNG, WebP. First image is automatically set as the
                                                 product cover. Drag to reorder.
                                             </p>
+                                        </div>
+
+                                        {/* ── AI Fill Controls ── */}
+                                        <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-3.5 dark:border-violet-900/30 dark:bg-violet-950/10">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Sparkles size={15} className="text-violet-500" />
+                                                    <span className="text-xs font-bold text-violet-700 dark:text-violet-400">
+                                                        AI Fill
+                                                    </span>
+                                                </div>
+                                                {isGenerating && uploadProgress !== null && (
+                                                    <span className="font-mono text-[10px] font-semibold text-violet-600 dark:text-violet-400">
+                                                        {Math.round(uploadProgress)}%
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Analyze all images toggle */}
+                                            <label className="mt-3 flex cursor-pointer items-center gap-2">
+                                                <Button
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked={analyzeAllImages}
+                                                    onClick={() => setAnalyzeAllImages((v) => !v)}
+                                                    disabled={isGenerating}
+                                                    className={cn(
+                                                        "relative h-5 w-9 rounded-full transition-colors disabled:opacity-50",
+                                                        analyzeAllImages
+                                                            ? "bg-violet-500"
+                                                            : "bg-muted"
+                                                    )}
+                                                >
+                                                    <span
+                                                        className={cn(
+                                                            "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
+                                                            analyzeAllImages ? "translate-x-4" : "translate-x-0.5"
+                                                        )}
+                                                    />
+                                                </Button>
+                                                <span className="text-[11px] font-medium text-muted-foreground">
+                                                    Analyze all images
+                                                </span>
+                                            </label>
+
+                                            {/* Progress bar */}
+                                            {isGenerating && (
+                                                <div className="mt-3 space-y-1">
+                                                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-violet-100 dark:bg-violet-900/30">
+                                                        <div
+                                                            className="h-full rounded-full bg-violet-500 transition-all duration-300"
+                                                            style={{
+                                                                width: `${uploadProgress ?? 0}%`,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <p className="text-[10px] text-muted-foreground">
+                                                        {isGenerating
+                                                            ? "Compressing, uploading, and analyzing images..."
+                                                            : ""}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <Button
+                                                type="button"
+                                                onClick={handleAIFill}
+                                                disabled={isGenerating || images.length === 0}
+                                                variant="secondary"
+                                                size="sm"
+                                                className="mt-3 w-full rounded-xl bg-violet-100 text-violet-700 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400"
+                                                leftIcon={
+                                                    isGenerating ? (
+                                                        <RotateCcw size={13} className="animate-spin" />
+                                                    ) : (
+                                                        <Sparkles size={13} />
+                                                    )
+                                                }
+                                            >
+                                                {isGenerating ? "Generating..." : "Generate with AI"}
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
@@ -867,22 +927,22 @@ export default function ProductFormModal({
                                     transition={{ duration: 0.25, ease: "easeOut" }}
                                     className="fixed inset-0 z-[60] flex items-center justify-center"
                                 >
-                                    <button
+                                    <Button
                                         onClick={closePreview}
                                         className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
                                     >
                                         <X size={20} />
-                                    </button>
+                                    </Button>
                                     <div className="absolute left-1/2 top-4 z-10 -translate-x-1/2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
                                         {previewIndex + 1} / {images.length}
                                     </div>
                                     {images.length > 1 && (
-                                        <button
+                                        <Button
                                             onClick={(e) => { e.stopPropagation(); prevPreview(); }}
                                             className="absolute left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
                                         >
                                             <ChevronLeft size={22} />
-                                        </button>
+                                        </Button>
                                     )}
                                     <div
                                         className="relative flex h-full w-full items-center justify-center p-4 sm:p-8"
@@ -901,19 +961,20 @@ export default function ProductFormModal({
                                                 src={images[previewIndex].url}
                                                 alt={`Product image ${previewIndex + 1}`}
                                                 fill
-                                                unoptimized
+                                                placeholder="blur"
+                                                blurDataURL={BLUR_PLACEHOLDER}
                                                 className="object-contain"
                                                 sizes="90vw"
                                             />
                                         </motion.div>
                                     </div>
                                     {images.length > 1 && (
-                                        <button
+                                        <Button
                                             onClick={(e) => { e.stopPropagation(); nextPreview(); }}
                                             className="absolute right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
                                         >
                                             <ChevronRight size={22} />
-                                        </button>
+                                        </Button>
                                     )}
                                 </motion.div>
                             </>

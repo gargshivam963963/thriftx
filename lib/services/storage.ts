@@ -15,6 +15,10 @@ export interface UploadedImage {
   url: string;
 }
 
+/**
+ * Upload image Files to Appwrite Storage.
+ * Images should be compressed (see `imageCompression.ts`) before calling.
+ */
 export async function uploadImages(images: File[]): Promise<UploadedImage[]> {
   const uploaded: UploadedImage[] = [];
 
@@ -28,6 +32,23 @@ export async function uploadImages(images: File[]): Promise<UploadedImage[]> {
   }
 
   return uploaded;
+}
+
+/**
+ * Upload an array of compressed Blobs to Appwrite Storage.
+ * Assumes the caller has already compressed/resized the images.
+ */
+export async function uploadBlobs(
+  blobs: Blob[],
+  mimeType = "image/jpeg",
+): Promise<UploadedImage[]> {
+  const files = blobs.map(
+    (blob, i) =>
+      new File([blob], `image-${i + 1}.${mimeType.split("/")[1] || "jpg"}`, {
+        type: blob.type || mimeType,
+      }),
+  );
+  return uploadImages(files);
 }
 
 /**

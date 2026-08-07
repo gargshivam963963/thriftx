@@ -10,12 +10,16 @@ export async function GET(req: NextRequest) {
     const brand = searchParams.get("brand") || undefined;
     const size = searchParams.get("size") || undefined;
     const price = searchParams.get("price") || undefined;
+    const color = searchParams.get("color") || undefined;
+    const material = searchParams.get("material") || undefined;
+    const condition = searchParams.get("condition") || undefined;
     const sort =
       (searchParams.get("sort") as
         | "newest"
         | "price-low"
         | "price-high"
-        | "name") || "newest";
+        | "name"
+        | "popular") || "newest";
     const search = searchParams.get("search") || undefined;
     const limit = parseInt(searchParams.get("limit") || "12", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
@@ -28,6 +32,9 @@ export async function GET(req: NextRequest) {
       brand: brand ? [brand] : undefined,
       size: size ? [size] : undefined,
       price,
+      color,
+      material,
+      condition: condition ? [condition] : undefined,
       sort,
       limit,
       offset,

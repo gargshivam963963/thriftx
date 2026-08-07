@@ -3,6 +3,9 @@ import { cva } from "class-variance-authority";
 /**
  * THRIFTX Design System
  * Button Variants — Premium, Modern, Production-Grade
+ *
+ * Uses the design-token type scale (text-label / text-button) instead of
+ * arbitrary Tailwind font sizes so every button stays consistent & responsive.
  */
 
 export const buttonVariants = cva(
@@ -20,6 +23,7 @@ export const buttonVariants = cva(
 
     // Animation
     "transition-all duration-200 ease-out",
+    "transition-shadow",
 
     // Interaction
     "active:scale-[0.97]",
@@ -117,14 +121,14 @@ export const buttonVariants = cva(
       },
 
       /**
-       * Size presets
+       * Size presets — consistent heights with token-based type scale
        */
       size: {
-        xs: "h-7 px-2.5 text-[0.6875rem] gap-1.5",
-        sm: "h-9 px-3.5 text-[0.8125rem] gap-1.5",
-        md: "h-11 px-5 text-[0.9375rem]",
-        lg: "h-12 px-6 text-base",
-        xl: "h-14 px-8 text-[1.0625rem]",
+        xs: "h-7 px-2.5 text-badge gap-1.5",
+        sm: "h-9 px-3.5 text-label gap-1.5",
+        md: "h-11 px-5 text-button",
+        lg: "h-12 px-6 text-body",
+        xl: "h-14 px-8 text-body-lg",
 
         // Icon-only sizes
         iconXs: "h-7 w-7 p-0",

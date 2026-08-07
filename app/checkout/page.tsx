@@ -560,7 +560,7 @@ export default function CheckoutPage() {
                         {/* ── What to Expect ──────────────────────────── */}
                         <motion.section
                             layout
-                            className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm sm:rounded-[28px]"
+                            className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm sm:rounded-[28px]"
                         >
                             <div className="flex items-center gap-2 border-b border-border px-5 py-4 sm:px-6 sm:py-5">
                                 <Sparkles
@@ -622,7 +622,7 @@ export default function CheckoutPage() {
                 <motion.div
                     initial={{ y: 100 }}
                     animate={{ y: 0 }}
-                    className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-white/95 px-4 py-3 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] xl:hidden sm:px-6 sm:py-4"
+                    className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] xl:hidden sm:px-6 sm:py-4"
                 >
                     <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
                         <div>

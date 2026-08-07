@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+
+import { Button } from '@/components/ui/button';import { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ArrowUpDown, Check, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const sortOptions = [
     { value: "newest", label: "Newest First" },
-    { value: "name", label: "Alphabetical" },
+    { value: "popular", label: "Best Selling" },
     { value: "price-low", label: "Price: Low to High" },
     { value: "price-high", label: "Price: High to Low" },
+    { value: "name", label: "Alphabetical" },
 ];
 
 export default function SortDropdown({ defaultValue }: { defaultValue: string }) {
@@ -21,7 +24,6 @@ export default function SortDropdown({ defaultValue }: { defaultValue: string })
 
     const currentLabel = sortOptions.find((o) => o.value === defaultValue)?.label ?? "Sort";
 
-    // Close on outside click
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -41,23 +43,29 @@ export default function SortDropdown({ defaultValue }: { defaultValue: string })
 
     return (
         <div ref={ref} className="relative">
-            <button
+            <Button
                 type="button"
                 onClick={() => setOpen((p) => !p)}
-                className="flex h-11 items-center gap-2.5 rounded-2xl border border-border bg-card px-4 py-2.5 text-body-sm font-medium text-foreground shadow-card transition-all hover:border-foreground hover:shadow-md"
+                aria-haspopup="listbox"
+                aria-expanded={open}
+                className="flex h-11 items-center gap-2.5 rounded-2xl border border-border bg-card px-4 py-2.5 text-body-sm font-medium text-foreground shadow-card transition-all hover:border-foreground hover:shadow-md focus-visible:ring-2 focus-visible:ring-foreground/20"
             >
                 <ArrowUpDown size={14} className="shrink-0 text-muted-foreground" />
                 <span className="hidden sm:inline">{currentLabel}</span>
                 <span className="sm:hidden">Sort</span>
                 <ChevronDown
                     size={14}
-                    className={`shrink-0 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+                    className={cn(
+                        "shrink-0 text-muted-foreground transition-transform duration-200",
+                        open && "rotate-180",
+                    )}
                 />
-            </button>
+            </Button>
 
             <AnimatePresence>
                 {open && (
                     <motion.div
+                        role="listbox"
                         initial={{ opacity: 0, y: -6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
@@ -68,23 +76,21 @@ export default function SortDropdown({ defaultValue }: { defaultValue: string })
                             {sortOptions.map((opt) => {
                                 const active = defaultValue === opt.value;
                                 return (
-                                    <button
+                                    <Button
                                         key={opt.value}
+                                        role="option"
+                                        aria-selected={active}
                                         onClick={() => handleSelect(opt.value)}
-                                        className={`
-                                            flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium
-                                            transition-all duration-150
-                                            ${active
-                                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                                                : "text-foreground hover:bg-muted"
-                                            }
-                                        `}
+                                        className={cn(
+                                            "flex w-full items-center justify-between rounded-xl px-4 py-3 text-body-sm font-medium transition-all duration-150",
+                                            active
+                                                ? "bg-foreground text-background"
+                                                : "text-foreground hover:bg-muted",
+                                        )}
                                     >
                                         <span>{opt.label}</span>
-                                        {active && (
-                                            <Check size={15} strokeWidth={3} className="text-emerald-600 dark:text-emerald-400" />
-                                        )}
-                                    </button>
+                                        {active && <Check size={15} strokeWidth={3} />}
+                                    </Button>
                                 );
                             })}
                         </div>
@@ -94,4 +100,3 @@ export default function SortDropdown({ defaultValue }: { defaultValue: string })
         </div>
     );
 }
-

@@ -468,7 +468,7 @@ export default function BulkProductCard({
                             )}
                         >
                             {imageCount === 0 ? (
-                                <button
+                                <Button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
                                     className="flex w-full flex-col items-center justify-center gap-1.5 py-8 text-center"
@@ -479,12 +479,12 @@ export default function BulkProductCard({
                                     <p className="text-[11px] font-medium text-muted-foreground">
                                         Add images (first = cover)
                                     </p>
-                                </button>
+                                </Button>
                             ) : (
                                 <div className="space-y-2">
                                     {/* Cover image */}
                                     <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-muted">
-                                        <button
+                                        <Button
                                             type="button"
                                             onClick={() => openPreview(0)}
                                             className="group/cover relative h-full w-full"
@@ -503,7 +503,7 @@ export default function BulkProductCard({
                                                     Preview
                                                 </span>
                                             </div>
-                                        </button>
+                                        </Button>
 
                                         {/* +N badge */}
                                         {imageCount > 1 && (
@@ -540,7 +540,7 @@ export default function BulkProductCard({
                                                     i === 0 && "ring-1 ring-amber-400",
                                                 )}
                                             >
-                                                <button
+                                                <Button
                                                     type="button"
                                                     onClick={() => openPreview(i)}
                                                     className="relative h-full w-full"
@@ -553,35 +553,35 @@ export default function BulkProductCard({
                                                         className="object-cover transition group-hover/thumb:scale-110"
                                                         sizes="44px"
                                                     />
-                                                </button>
+                                                </Button>
 
                                                 {/* Hover actions */}
                                                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 bg-black/60 p-0.5 opacity-0 backdrop-blur-sm transition group-hover/thumb:opacity-100">
-                                                    <button
+                                                    <Button
                                                         type="button"
                                                         onClick={() => openPreview(i)}
                                                         className="rounded p-0.5 text-white hover:bg-white/20"
                                                         title="Preview"
                                                     >
                                                         <Eye size={8} />
-                                                    </button>
-                                                    <button
+                                                    </Button>
+                                                    <Button
                                                         type="button"
                                                         onClick={() => removeImage(i)}
                                                         className="rounded p-0.5 text-red-300 hover:bg-red-500/30"
                                                         title="Delete"
                                                     >
                                                         <Trash2 size={8} />
-                                                    </button>
+                                                    </Button>
                                                     {i !== 0 && (
-                                                        <button
+                                                        <Button
                                                             type="button"
                                                             onClick={() => setCover(i)}
                                                             className="rounded p-0.5 text-amber-300 hover:bg-amber-500/30"
                                                             title="Set cover"
                                                         >
                                                             <Star size={8} />
-                                                        </button>
+                                                        </Button>
                                                     )}
                                                 </div>
 
@@ -591,13 +591,13 @@ export default function BulkProductCard({
                                             </div>
                                         ))}
 
-                                        <button
+                                        <Button
                                             type="button"
                                             onClick={() => fileInputRef.current?.click()}
                                             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border-2 border-dashed border-border text-muted-foreground transition hover:border-violet-400 hover:text-violet-400 dark:border-border"
                                         >
                                             <Plus size={13} />
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             )}

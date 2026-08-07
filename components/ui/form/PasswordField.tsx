@@ -1,6 +1,7 @@
 "use client";
 
-import * as React from "react";
+
+import { Button } from '@/components/ui/button';import * as React from "react";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input, type InputProps } from "./Input";
@@ -40,7 +41,7 @@ const PasswordField = React.forwardRef<HTMLInputElement, PasswordFieldProps>(
                     {...props}
                 />
 
-                <button
+                <Button
                     type="button"
                     onClick={() => setVisible((v) => !v)}
                     aria-label={visible ? "Hide password" : "Show password"}
@@ -52,7 +53,7 @@ const PasswordField = React.forwardRef<HTMLInputElement, PasswordFieldProps>(
                     ) : (
                         <Eye className="h-4 w-4" />
                     )}
-                </button>
+                </Button>
             </div>
         );
     },

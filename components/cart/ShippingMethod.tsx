@@ -1,6 +1,7 @@
 'use client';
 
-import {
+
+import { Button } from '@/components/ui/button';import {
     Clock3,
     MapPin,
     Truck,
@@ -88,7 +89,7 @@ export default function ShippingMethod({
                         value === method.id;
 
                     return (
-                        <button
+                        <Button
                             key={method.id}
                             type="button"
                             onClick={() =>
@@ -136,7 +137,7 @@ export default function ShippingMethod({
                                 </span>
 
                             </div>
-                        </button>
+                        </Button>
                     );
                 })}
 

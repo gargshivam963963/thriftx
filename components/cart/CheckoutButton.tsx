@@ -1,6 +1,7 @@
 'use client';
 
 import { CreditCard, Loader2, Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface CheckoutButtonProps {
     loading: boolean;
@@ -42,11 +43,14 @@ export default function CheckoutButton({
 
             </div>
 
-            <button
+            <Button
                 type="button"
-                disabled={loading || disabled}
                 onClick={onCheckout}
-                className="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl bg-foreground px-6 py-5 text-body-lg font-semibold text-background transition-all duration-300 hover:bg-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={loading || disabled}
+                fullWidth
+                variant="primary"
+                size="lg"
+                className="mt-6"
             >
                 {loading ? (
                     <>
@@ -59,7 +63,7 @@ export default function CheckoutButton({
                         <Lock className="h-5 w-5" />
                     </>
                 )}
-            </button>
+            </Button>
 
             <div className="mt-6 space-y-3 text-body-sm text-muted-foreground">
 

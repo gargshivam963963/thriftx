@@ -66,6 +66,42 @@ export interface OrderAnalytics {
   statusDistribution: { status: string; count: number }[];
 }
 
+export interface AdminProduct {
+  $id: string;
+  $createdAt: string;
+  title: string;
+  brand: string;
+  slug: string;
+  category: string;
+  gender: string;
+  price: number;
+  retailPrice?: number;
+  condition: string;
+  size: string;
+  chest?: string;
+  waist?: string;
+  length?: string;
+  inseam?: string;
+  color: string;
+  material: string;
+  description: string;
+  shippingInfo?: string;
+  primaryImage: string;
+  images: string[];
+  status: string;
+  isActive: boolean;
+}
+
+/** Raw Appwrite document shape (union of the fields we map below). */
+type OrderDocument = Record<string, unknown> & {
+  $id: string;
+  $createdAt: string;
+};
+type ProductDocument = Record<string, unknown> & {
+  $id: string;
+  $createdAt: string;
+};
+
 // ─── Mock Data Helpers (for demo when Appwrite is not configured) ───────────
 
 function generateMockStats(): DashboardStats {
@@ -169,7 +205,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       [AppwriteQuery.limit(5000)],
     );
 
-    const orders = ordersResponse.documents;
+    const orders = ordersResponse.documents as OrderDocument[];
 
     // Fetch products
     const productsResponse = await databases.listDocuments(
@@ -178,25 +214,23 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       [AppwriteQuery.limit(5000)],
     );
 
-    const products = productsResponse.documents;
+    const products = productsResponse.documents as ProductDocument[];
 
     // Calculate stats
     const totalOrders = orders.length;
     const totalRevenue = orders.reduce(
-      (sum: number, o: any) => sum + (Number(o.total) || 0),
+      (sum: number, o) => sum + (Number(o.total) || 0),
       0,
     );
     const totalProducts = products.length;
-    const activeProducts = products.filter(
-      (p: any) => p.isActive === true,
-    ).length;
+    const activeProducts = products.filter((p) => p.isActive === true).length;
     const averageOrderValue =
       totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
     // Orders by status
     const ordersByStatus: Record<string, number> = {};
-    orders.forEach((o: any) => {
-      const status = o.status || "Unknown";
+    orders.forEach((o) => {
+      const status = (o.status as string) || "Unknown";
       ordersByStatus[status] = (ordersByStatus[status] || 0) + 1;
     });
 
@@ -226,7 +260,7 @@ export async function getSalesAnalytics(): Promise<OrderAnalytics> {
       [AppwriteQuery.limit(5000), AppwriteQuery.orderDesc("$createdAt")],
     );
 
-    const orders = ordersResponse.documents;
+    const orders = ordersResponse.documents as OrderDocument[];
 
     // Daily sales for last 30 days
     const dailyMap = new Map<string, { revenue: number; orders: number }>();
@@ -238,7 +272,7 @@ export async function getSalesAnalytics(): Promise<OrderAnalytics> {
       dailyMap.set(key, { revenue: 0, orders: 0 });
     }
 
-    orders.forEach((o: any) => {
+    orders.forEach((o) => {
       const date = new Date(o.$createdAt).toISOString().split("T")[0];
       if (dailyMap.has(date)) {
         const existing = dailyMap.get(date)!;
@@ -260,17 +294,21 @@ export async function getSalesAnalytics(): Promise<OrderAnalytics> {
       string,
       { count: number; revenue: number }
     >();
-    orders.forEach((o: any) => {
-      let products: any[] = [];
+    orders.forEach((o) => {
+      let products: {
+        id?: string;
+        productId?: string;
+        quantity?: number;
+        price?: number;
+      }[] = [];
       try {
-        products =
-          typeof o.products === "string"
-            ? JSON.parse(o.products)
-            : o.products || [];
+        const raw =
+          typeof o.products === "string" ? JSON.parse(o.products) : o.products;
+        products = Array.isArray(raw) ? raw : [];
       } catch {
         products = [];
       }
-      products.forEach((p: any) => {
+      products.forEach((p) => {
         const id = p.id || p.productId || "unknown";
         const existing = productSalesMap.get(id) || { count: 0, revenue: 0 };
         existing.count += p.quantity || 1;
@@ -281,8 +319,8 @@ export async function getSalesAnalytics(): Promise<OrderAnalytics> {
 
     // Status distribution
     const statusMap = new Map<string, number>();
-    orders.forEach((o: any) => {
-      const status = o.status || "Unknown";
+    orders.forEach((o) => {
+      const status = (o.status as string) || "Unknown";
       statusMap.set(status, (statusMap.get(status) || 0) + 1);
     });
 
@@ -294,8 +332,8 @@ export async function getSalesAnalytics(): Promise<OrderAnalytics> {
     );
 
     const categoryMap = new Map<string, { count: number; revenue: number }>();
-    productsResponse.documents.forEach((p: any) => {
-      const cat = p.category || "Uncategorized";
+    productsResponse.documents.forEach((p) => {
+      const cat = (p.category as string) || "Uncategorized";
       const existing = categoryMap.get(cat) || { count: 0, revenue: 0 };
       existing.count += 1;
       existing.revenue += Number(p.price) || 0;
@@ -352,51 +390,51 @@ export async function getAllOrders(): Promise<Order[]> {
       [AppwriteQuery.orderDesc("$createdAt"), AppwriteQuery.limit(5000)],
     );
 
-    return response.documents.map((doc: any) => ({
+    return response.documents.map((doc) => ({
       $id: doc.$id,
       $createdAt: doc.$createdAt,
-      orderId: doc.orderId || doc.$id,
-      status: doc.status || "Pending",
+      orderId: (doc.orderId as string) || doc.$id,
+      status: (doc.status as string) || "Pending",
       subtotal: Number(doc.subtotal) || 0,
       shipping: Number(doc.shipping) || 0,
       total: Number(doc.total) || 0,
-      firstName: doc.firstName || "",
-      lastName: doc.lastName || "",
-      phone: doc.phone || "",
-      address: doc.address || "",
-      city: doc.city || "",
-      postalCode: doc.postalCode || "",
-      country: doc.country || "India",
-      paymentMethod: doc.paymentMethod || "cod",
-      paymentId: doc.paymentId,
-      signature: doc.signature,
-      deliveryMethod: doc.deliveryMethod || "courier",
-      products: doc.products || "[]",
+      firstName: (doc.firstName as string) || "",
+      lastName: (doc.lastName as string) || "",
+      phone: (doc.phone as string) || "",
+      address: (doc.address as string) || "",
+      city: (doc.city as string) || "",
+      postalCode: (doc.postalCode as string) || "",
+      country: (doc.country as string) || "India",
+      paymentMethod: (doc.paymentMethod as "razorpay" | "cod") || "cod",
+      paymentId: (doc.paymentId as string) || "",
+      signature: (doc.signature as string) || "",
+      deliveryMethod: (doc.deliveryMethod as string) || "courier",
+      products: (doc.products as string) || "[]",
 
       // Shipping / fulfillment fields
-      shippingProvider: doc.shippingProvider || "",
-      shipmentStatus: doc.shipmentStatus || "",
-      pickupStatus: doc.pickupStatus || "",
-      shipmentId: doc.shipmentId || "",
-      trackingNumber: doc.trackingNumber || "",
-      awbNumber: doc.awbNumber || "",
-      courier: doc.courier || "",
-      courierId: doc.courierId || "",
-      estimatedDelivery: doc.estimatedDelivery || "",
-      labelUrl: doc.labelUrl || "",
-      invoiceUrl: doc.invoiceUrl || "",
-      trackingUrl: doc.trackingUrl || "",
-      pickupId: doc.pickupId || "",
-      shippedAt: doc.shippedAt || "",
-      deliveredAt: doc.deliveredAt || "",
-    }));
+      shippingProvider: (doc.shippingProvider as string) || "",
+      shipmentStatus: (doc.shipmentStatus as string) || "",
+      pickupStatus: (doc.pickupStatus as string) || "",
+      shipmentId: (doc.shipmentId as string) || "",
+      trackingNumber: (doc.trackingNumber as string) || "",
+      awbNumber: (doc.awbNumber as string) || "",
+      courier: (doc.courier as string) || "",
+      courierId: (doc.courierId as string) || "",
+      estimatedDelivery: (doc.estimatedDelivery as string) || "",
+      labelUrl: (doc.labelUrl as string) || "",
+      invoiceUrl: (doc.invoiceUrl as string) || "",
+      trackingUrl: (doc.trackingUrl as string) || "",
+      pickupId: (doc.pickupId as string) || "",
+      shippedAt: (doc.shippedAt as string) || "",
+      deliveredAt: (doc.deliveredAt as string) || "",
+    })) as Order[];
   } catch (error) {
     console.error("getAllOrders error:", error);
     return [];
   }
 }
 
-export async function getAllProducts(): Promise<any[]> {
+export async function getAllProducts(): Promise<AdminProduct[]> {
   try {
     const response = await databases.listDocuments(
       APPWRITE_DATABASE_ID,
@@ -404,40 +442,38 @@ export async function getAllProducts(): Promise<any[]> {
       [AppwriteQuery.limit(5000)],
     );
 
-    return response.documents.map((doc: any) => ({
+    return response.documents.map((doc) => ({
       $id: doc.$id,
       $createdAt: doc.$createdAt,
 
-      title: doc.title || "",
-      brand: doc.brand || "",
-      slug: doc.slug || "",
+      title: (doc.title as string) || "",
+      brand: (doc.brand as string) || "",
+      slug: (doc.slug as string) || "",
 
-      category: doc.category || "",
-      gender: doc.gender || "Unisex",
+      category: (doc.category as string) || "",
+      gender: (doc.gender as string) || "Unisex",
 
       price: Number(doc.price) || 0,
       retailPrice: doc.retailPrice ? Number(doc.retailPrice) : undefined,
 
-      condition: doc.condition || "",
+      condition: (doc.condition as string) || "",
+      size: (doc.size as string) || "",
 
-      size: doc.size || "",
+      chest: (doc.chest as string) ?? "",
+      waist: (doc.waist as string) ?? "",
+      length: (doc.length as string) ?? "",
+      inseam: (doc.inseam as string) ?? "",
 
-      // ✅ ADD THESE
-      chest: doc.chest ?? "",
-      waist: doc.waist ?? "",
-      length: doc.length ?? "",
-      inseam: doc.inseam ?? "",
+      color: (doc.color as string) || "",
+      material: (doc.material as string) || "",
 
-      color: doc.color || "",
-      material: doc.material || "",
+      description: (doc.description as string) || "",
+      shippingInfo: (doc.shippingInfo as string) ?? "",
 
-      description: doc.description || "",
-      shippingInfo: doc.shippingInfo ?? "",
+      primaryImage: (doc.primaryImage as string) || "",
+      images: Array.isArray(doc.images) ? (doc.images as string[]) : [],
 
-      primaryImage: doc.primaryImage || "",
-      images: doc.images || [],
-
-      status: doc.status || "active",
+      status: (doc.status as string) || "active",
       isActive: doc.isActive !== false,
     }));
   } catch (error) {
@@ -455,9 +491,10 @@ export async function getCustomers(): Promise<CustomerData[]> {
     );
 
     // Group orders by user
-    const userOrdersMap = new Map<string, any[]>();
-    ordersResponse.documents.forEach((doc: any) => {
-      const userId = doc.userId || doc.email || "unknown";
+    const userOrdersMap = new Map<string, OrderDocument[]>();
+    ordersResponse.documents.forEach((doc) => {
+      const userId =
+        (doc.userId as string) || (doc.email as string) || "unknown";
       if (!userOrdersMap.has(userId)) {
         userOrdersMap.set(userId, []);
       }
@@ -470,7 +507,7 @@ export async function getCustomers(): Promise<CustomerData[]> {
           (sum, o) => sum + (Number(o.total) || 0),
           0,
         );
-        const sorted = userOrders.sort(
+        const sorted = [...userOrders].sort(
           (a, b) =>
             new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime(),
         );
@@ -481,13 +518,13 @@ export async function getCustomers(): Promise<CustomerData[]> {
           name: userOrders[0]?.firstName
             ? `${userOrders[0].firstName} ${userOrders[0].lastName || ""}`
             : "Guest User",
-          email: userOrders[0]?.email || "",
-          phone: userOrders[0]?.phone || "",
+          email: (userOrders[0]?.email as string) || "",
+          phone: (userOrders[0]?.phone as string) || "",
           totalOrders: userOrders.length,
           totalSpent,
           lastOrderDate: sorted[0]?.$createdAt || null,
           joinedAt: firstOrder?.$createdAt || new Date().toISOString(),
-          city: userOrders[0]?.city || "Unknown",
+          city: (userOrders[0]?.city as string) || "Unknown",
           wishlistCount: 0,
         };
       },

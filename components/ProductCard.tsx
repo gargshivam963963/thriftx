@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -39,7 +39,7 @@ interface ProductCardProps {
   onlyOneLeft?: boolean;
 }
 
-export default function ProductCard({
+function ProductCard({
   id,
   slug,
   brand,
@@ -137,7 +137,7 @@ export default function ProductCard({
 
           {/* ── Info — Minimal ────────────────────────────────────── */}
           <CardContent className="mt-2.5 flex-1 space-y-1.5 px-3 pb-4 pt-0">
-            <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-caption font-semibold uppercase tracking-widest text-muted-foreground">
               {brand}
             </p>
 
@@ -167,4 +167,6 @@ export default function ProductCard({
     </motion.div>
   );
 }
+
+export default memo(ProductCard);
 

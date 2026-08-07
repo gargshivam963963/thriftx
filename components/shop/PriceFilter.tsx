@@ -1,7 +1,8 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
+
+import { Button } from '@/components/ui/button';import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const priceRanges = [
     { label: "Under ₹499", value: "0-499" },
@@ -27,7 +28,7 @@ export default function PriceFilter() {
     }
 
     return (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1">
             {priceRanges.map((range) => {
                 const active = selectedPrice === range.value;
                 return (
@@ -35,13 +36,27 @@ export default function PriceFilter() {
                         key={range.value}
                         type="button"
                         onClick={() => togglePrice(range.value)}
-                        variant={active ? "primary" : "ghost"}
-                        size="sm"
-                        rounded="lg"
-                        className="px-4 py-2.5 text-left text-body-sm font-medium w-full justify-start"
+                        aria-pressed={active}
+                        className={cn(
+                            "flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-body-sm font-medium transition-colors",
+                            active
+                                ? "bg-foreground text-background"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
                     >
-                        {range.label}
-                        {active && <span className="ml-auto text-badge font-bold">✓</span>}
+                        <span
+                            className={cn(
+                                "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors",
+                                active
+                                    ? "border-background"
+                                    : "border-border bg-card",
+                            )}
+                        >
+                            {active && (
+                                <span className="h-2 w-2 rounded-full bg-background" />
+                            )}
+                        </span>
+                        <span className="truncate">{range.label}</span>
                     </Button>
                 );
             })}

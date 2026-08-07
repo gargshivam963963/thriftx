@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+
+import { Button } from '@/components/ui/button';import { AnimatePresence, motion } from "framer-motion";
 import {
     ChevronDown,
     ChevronRight,
@@ -98,11 +99,11 @@ export default function ShippingSection({
         <motion.section
             layout
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className={`overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-3xl ${disabled ? "border-border opacity-60" : "border-border"
+            className={`overflow-hidden rounded-2xl border bg-card shadow-sm sm:rounded-3xl ${disabled ? "border-border opacity-60" : "border-border"
                 }`}
         >
             {/* ── Header ──────────────────────────────────────────────────────── */}
-            <button
+            <Button
                 type="button"
                 onClick={disabled ? undefined : onOpen}
                 disabled={disabled}
@@ -147,7 +148,7 @@ export default function ShippingSection({
                         <ChevronRight size={18} className="text-muted-foreground" />
                     )}
                 </div>
-            </button>
+            </Button>
 
             {/* ── Body ────────────────────────────────────────────────────────── */}
             <AnimatePresence initial={false}>
@@ -180,7 +181,7 @@ export default function ShippingSection({
                                             onClick={() => onSelect(method)}
                                             className={`w-full overflow-hidden rounded-2xl border text-left transition-all sm:rounded-3xl ${selected
                                                     ? "border-foreground bg-foreground text-white shadow-xl"
-                                                    : "border-border bg-white hover:border-foreground hover:shadow-md"
+                                                    : "border-border bg-card hover:border-foreground hover:shadow-md"
                                                 }`}
                                         >
                                             <div className="flex items-start justify-between p-4 sm:p-6">
@@ -215,7 +216,7 @@ export default function ShippingSection({
                                                         <div className="mt-2 flex items-center gap-3">
                                                             <span
                                                                 className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${selected
-                                                                        ? "bg-white/10 text-muted-foreground"
+                                                                        ? "bg-card/10 text-muted-foreground"
                                                                         : "bg-muted text-muted-foreground"
                                                                     }`}
                                                             >
@@ -265,7 +266,7 @@ export default function ShippingSection({
                                     transition={{ delay: 0.15 }}
                                     className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3"
                                 >
-                                    <div className="rounded-xl border border-border bg-white p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4">
+                                    <div className="rounded-xl border border-border bg-card p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4">
                                         <div className="mb-2 inline-flex rounded-lg bg-muted p-2 sm:rounded-xl sm:p-2.5">
                                             <ShieldCheck size={15} className="text-muted-foreground" />
                                         </div>
@@ -276,7 +277,7 @@ export default function ShippingSection({
                                             Real-time tracking
                                         </p>
                                     </div>
-                                    <div className="rounded-xl border border-border bg-white p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4">
+                                    <div className="rounded-xl border border-border bg-card p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4">
                                         <div className="mb-2 inline-flex rounded-lg bg-muted p-2 sm:rounded-xl sm:p-2.5">
                                             <PackageCheck size={15} className="text-muted-foreground" />
                                         </div>
@@ -287,7 +288,7 @@ export default function ShippingSection({
                                             Bubble-wrapped
                                         </p>
                                     </div>
-                                    <div className="rounded-xl border border-border bg-white p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4">
+                                    <div className="rounded-xl border border-border bg-card p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4">
                                         <div className="mb-2 inline-flex rounded-lg bg-muted p-2 sm:rounded-xl sm:p-2.5">
                                             <Sparkles size={15} className="text-muted-foreground" />
                                         </div>

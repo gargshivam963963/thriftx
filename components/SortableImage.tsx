@@ -1,6 +1,7 @@
 "use client";
 
-import Image from "next/image";
+
+import { Button } from '@/components/ui/button';import Image from "next/image";
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
 import { GripVertical, Trash2, Star, Expand } from "lucide-react";
@@ -46,7 +47,7 @@ export default function SortableImage({
             )}
         >
             {/* Image preview */}
-            <button
+            <Button
                 onClick={onPreview}
                 type="button"
                 className="relative block aspect-square w-full overflow-hidden rounded-t-xl"
@@ -63,7 +64,7 @@ export default function SortableImage({
                 <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
                     <Expand size={20} className="text-white opacity-0 transition-opacity group-hover:opacity-100" />
                 </div>
-            </button>
+            </Button>
 
             {/* Bottom bar */}
             <div className="flex items-center justify-between gap-1 border-t border-border px-2 py-1.5 dark:border-border">
@@ -82,7 +83,7 @@ export default function SortableImage({
 
                 <div className="flex items-center gap-0.5">
                     {/* Drag handle */}
-                    <button
+                    <Button
                         type="button"
                         {...listeners}
                         {...attributes}
@@ -90,17 +91,17 @@ export default function SortableImage({
                         title="Drag to reorder"
                     >
                         <GripVertical size={14} />
-                    </button>
+                    </Button>
 
                     {/* Delete button */}
-                    <button
+                    <Button
                         type="button"
                         onClick={onDelete}
                         className="rounded-md p-1 text-red-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                         title="Delete image"
                     >
                         <Trash2 size={14} />
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

@@ -208,7 +208,7 @@ export default function UploadDropzone({
 
                 {/* Clear button when dragging */}
                 {dragOver && (
-                    <button
+                    <Button
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -217,7 +217,7 @@ export default function UploadDropzone({
                         className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-muted-foreground transition hover:bg-white hover:text-muted-foreground"
                     >
                         <X size={14} />
-                    </button>
+                    </Button>
                 )}
 
                 <input

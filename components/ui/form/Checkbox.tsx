@@ -31,7 +31,9 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         const boxSize = size === "sm" ? "h-4 w-4" : "h-5 w-5";
         const labelSize = size === "sm" ? "text-small" : "text-body-sm";
 
-        const inputId = id ?? React.useId();
+        // Always call hooks unconditionally (rules of hooks).
+        const generatedId = React.useId();
+        const inputId = id ?? generatedId;
 
         return (
             <label

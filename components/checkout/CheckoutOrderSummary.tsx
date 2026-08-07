@@ -68,7 +68,7 @@ export default function CheckoutOrderSummary({
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35 }}
-                className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm sm:rounded-[28px]"
+                className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm sm:rounded-[28px]"
             >
                 {/* Header */}
                 <div className="border-b border-border p-4 sm:p-6">

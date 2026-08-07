@@ -103,7 +103,7 @@ export default function ExcelUploader({
                     </div>
                 )}
 
-                <button
+                <Button
                     type="button"
                     disabled={loading}
                     onClick={() => inputRef.current?.click()}

@@ -46,12 +46,12 @@ export default function ConfirmDialog({
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/30">
                                     <AlertTriangle size={20} className="text-red-600 dark:text-red-400" />
                                 </div>
-                                <button
+                                <Button
                                     onClick={onClose}
                                     className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted dark:hover:bg-card"
                                 >
                                     <X size={16} />
-                                </button>
+                                </Button>
                             </div>
                             <h3 className="text-lg font-bold text-foreground">{title}</h3>
                             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{message}</p>

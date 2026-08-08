@@ -11,7 +11,7 @@ import { cva } from "class-variance-authority";
 export const buttonVariants = cva(
   [
     // Layout
-    "group inline-flex items-center justify-center gap-2",
+    "group inline-flex items-center justify-center gap-2.5",
 
     // Typography
     "font-medium leading-none",
@@ -39,10 +39,12 @@ export const buttonVariants = cva(
     "disabled:pointer-events-none",
     "disabled:opacity-50",
 
-    // SVG children — pointer-events only; sizing is left to the caller so
-    // explicit icon sizes (e.g. w-6 h-6, size-4) are respected, not overridden.
+    // SVG children
     "[&_svg]:pointer-events-none",
     "[&_svg]:shrink-0",
+    "[&_svg]:text-current",
+    "[&_svg]:stroke-current",
+    "[&_svg]:fill-none",
 
     // Cursor
     "cursor-pointer",
@@ -52,70 +54,172 @@ export const buttonVariants = cva(
       /**
        * Visual variants
        */
+
       variant: {
-        // ── Solid Primary ───────────────────────────
+        /**
+         * Primary Action
+         */
         primary: [
-          "bg-foreground text-background",
-          "hover:bg-foreground/90",
-          "shadow-sm hover:shadow-md",
-          "dark:bg-foreground dark:text-background",
-          "dark:hover:bg-foreground/90",
+          // Semantic theme-aware colors
+          "bg-[color:var(--foreground)]",
+          "text-[color:var(--background)]",
+
+          // Prevent global button styles from overriding the design system
+          "!text-[color:var(--background)]",
+
+          "border border-transparent",
+
+          // Hover / active
+          "hover:bg-[color:color-mix(in_srgb,var(--foreground)_90%,transparent)]",
+          "active:bg-[color:color-mix(in_srgb,var(--foreground)_95%,transparent)]",
+
+          // Focus
+          "focus-visible:ring-ring",
+
+          // Disabled
+          "disabled:bg-[color:color-mix(in_srgb,var(--foreground)_60%,transparent)]",
+          "disabled:!text-[color:var(--background)]",
         ],
 
-        // ── Subtle Secondary ────────────────────────
+        /**
+         * Secondary Surface
+         */
         secondary: [
-          "bg-muted text-foreground",
-          "hover:bg-muted-foreground/20",
-          "dark:bg-card dark:text-foreground",
-          "dark:hover:bg-muted",
+          "bg-secondary",
+          "text-secondary-foreground",
+          "border border-transparent",
+
+          "hover:bg-secondary/80",
+          "active:bg-secondary/90",
+
+          "focus-visible:ring-ring",
         ],
 
-        // ── Bordered Outline ────────────────────────
+        /**
+         * Outline
+         */
         outline: [
-          "border border-border bg-transparent text-foreground",
+          "border",
+          "border-border",
+
+          "bg-background",
+          "text-foreground",
+
           "hover:bg-muted",
-          "dark:border-border dark:text-foreground",
-          "dark:hover:bg-card",
+          "hover:text-foreground",
+
+          "active:bg-muted/80",
+
+          "focus-visible:ring-ring",
         ],
 
-        // ── Ghost (no background) ───────────────────
+        /**
+         * Ghost
+         */
         ghost: [
-          "bg-transparent text-foreground",
+          "bg-transparent",
+
+          "text-muted-foreground",
+
           "hover:bg-muted",
-          "dark:text-foreground",
-          "dark:hover:bg-card",
+          "hover:text-foreground",
+
+          "active:bg-muted/80",
+
+          "focus-visible:ring-ring",
         ],
 
-        // ── Glass morphism ──────────────────────────
+        /**
+         * Glass
+         */
         glass: [
-          "border border-white/30 bg-white/70 text-foreground",
-          "backdrop-blur-xl shadow-lg",
-          "hover:bg-white/80 hover:shadow-xl",
-          "dark:border-border dark:bg-card/70 dark:text-foreground",
-          "dark:hover:bg-card",
+          "border border-border/50",
+
+          "bg-card/70",
+
+          "backdrop-blur-xl",
+
+          "text-foreground",
+
+          "hover:bg-card",
+
+          "shadow-lg",
         ],
 
-        // ── Danger / Destructive ────────────────────
-        danger: [
-          "bg-red-600 text-white",
-          "hover:bg-red-700",
-          "shadow-sm hover:shadow-md",
-          "dark:bg-red-700 dark:hover:bg-red-600",
-        ],
-
-        // ── Success / Confirm ───────────────────────
+        /**
+         * Success
+         */
         success: [
-          "bg-emerald-600 text-white",
-          "hover:bg-emerald-700",
-          "shadow-sm hover:shadow-md",
-          "dark:bg-emerald-700 dark:hover:bg-emerald-600",
+          "bg-success",
+          "text-success-foreground",
+
+          "hover:opacity-90",
+
+          "focus-visible:ring-success",
         ],
 
-        // ── Link (looks like an anchor) ─────────────
+        /**
+         * Danger
+         */
+        danger: [
+          "bg-destructive",
+          "text-destructive-foreground",
+
+          "hover:opacity-90",
+
+          "focus-visible:ring-destructive",
+        ],
+
+        /**
+         * Link
+         */
         link: [
-          "bg-transparent text-foreground underline-offset-4",
+          "bg-transparent",
+
+          "text-foreground",
+
+          "underline-offset-4",
+
           "hover:underline",
+
+          "p-0",
+          "h-auto",
+        ],
+
+        /**
+         * Dark Surface
+         */
+        dark: [
+          "bg-neutral-900",
+
+          "text-white",
+
+          "hover:bg-neutral-800",
+
+          "dark:bg-white",
+
+          "dark:text-black",
+
+          "dark:hover:bg-neutral-100",
+        ],
+
+        /**
+         * Light Surface
+         */
+        light: [
+          "bg-white",
+
+          "text-black",
+
+          "border border-border",
+
+          "hover:bg-muted",
+
+          "dark:bg-card",
+
           "dark:text-foreground",
+
+          "dark:hover:bg-muted",
         ],
       },
 
@@ -124,10 +228,10 @@ export const buttonVariants = cva(
        */
       size: {
         xs: "h-7 px-2.5 text-badge gap-1.5",
-        sm: "h-9 px-3.5 text-label gap-1.5",
-        md: "h-11 px-5 text-button",
-        lg: "h-12 px-6 text-body",
-        xl: "h-14 px-8 text-body-lg",
+        sm: "h-9 px-3.5 text-label gap-2",
+        md: "h-11 px-5 text-button gap-2",
+        lg: "h-12 px-6 text-body gap-2.5",
+        xl: "h-14 px-8 text-body-lg gap-3",
 
         // Icon-only sizes
         iconXs: "h-7 w-7 p-0",

@@ -1,10 +1,15 @@
 "use client";
 
-
-import { Button } from '@/components/ui/button';import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+    controlHeight,
+    controlRadius,
+    controlFocusRing,
+    controlTransition,
+} from "@/components/ui/control.styles";
 
 interface FilterOptionListProps {
     options: string[];
@@ -22,6 +27,10 @@ interface FilterOptionListProps {
 /**
  * Reusable option list for checkbox-like filters (brand, color, material,
  * condition). Supports optional search, "show more/less", and chip layout.
+ *
+ * All controls (search field, list rows, chips, "show more") use the SAME
+ * control tokens (height, radius, focus ring, transition, theme) so they read
+ * as one design system.
  */
 export default function FilterOptionList({
     options,
@@ -49,8 +58,8 @@ export default function FilterOptionList({
             {searchable && (
                 <div className="relative">
                     <Search
-                        size={14}
-                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        size={16}
+                        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                     />
                     <input
                         type="search"
@@ -61,7 +70,15 @@ export default function FilterOptionList({
                         }}
                         placeholder="Search brands"
                         aria-label="Search brands"
-                        className="h-9 w-full rounded-xl border border-border bg-muted/50 pl-9 pr-3 text-small outline-none transition placeholder:text-muted-foreground focus:border-foreground focus:ring-2 focus:ring-foreground/10"
+                        className={cn(
+                            controlHeight,
+                            controlRadius,
+                            controlTransition,
+                            controlFocusRing,
+                            "w-full border border-border bg-muted/50 pl-9 pr-3 text-sm text-foreground",
+                            "placeholder:text-muted-foreground focus:border-foreground/60",
+                            "dark:border-border dark:bg-muted/40 dark:text-foreground",
+                        )}
                     />
                 </div>
             )}
@@ -75,21 +92,25 @@ export default function FilterOptionList({
                     {visible.map((option) => {
                         const active = selected === option;
                         return (
-                            <Button
+                            <button
                                 key={option}
                                 type="button"
                                 onClick={() => onSelect(option)}
                                 aria-pressed={active}
                                 className={cn(
-                                    "inline-flex items-center rounded-full border px-3 py-1.5 text-body-sm font-medium transition-all duration-150",
+                                    controlTransition,
+                                    controlFocusRing,
+                                    "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm font-medium",
                                     active
                                         ? "border-foreground bg-foreground text-background shadow-card"
-                                        : "border-border bg-card text-foreground hover:border-foreground/50 hover:bg-muted",
+                                        : "border-border bg-card text-foreground hover:border-foreground/50 hover:bg-muted dark:bg-card dark:hover:bg-muted",
                                 )}
                             >
-                                {active && <span className="mr-1.5 text-badge">✓</span>}
-                                {option}
-                            </Button>
+                                {active && (
+                                    <Check size={12} strokeWidth={3} className="h-3 w-3" />
+                                )}
+                                <span className="truncate">{option}</span>
+                            </button>
                         );
                     })}
                 </div>
@@ -98,16 +119,18 @@ export default function FilterOptionList({
                     {visible.map((option) => {
                         const active = selected === option;
                         return (
-                            <Button
+                            <button
                                 key={option}
                                 type="button"
                                 onClick={() => onSelect(option)}
                                 aria-pressed={active}
                                 className={cn(
-                                    "flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-body-sm font-medium transition-colors",
+                                    controlTransition,
+                                    controlFocusRing,
+                                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium",
                                     active
                                         ? "bg-foreground text-background"
-                                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-card",
                                 )}
                             >
                                 <span
@@ -129,20 +152,24 @@ export default function FilterOptionList({
                                     )}
                                 </span>
                                 <span className="truncate">{option}</span>
-                            </Button>
+                            </button>
                         );
                     })}
                 </div>
             )}
 
             {searchable && hasMore && (
-                <Button
+                <button
                     type="button"
                     onClick={() => setShowAll((s) => !s)}
-                    className="w-full text-center text-small font-semibold text-muted-foreground transition hover:text-foreground"
+                    className={cn(
+                        controlTransition,
+                        controlFocusRing,
+                        "w-full rounded-lg py-2 text-center text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-card",
+                    )}
                 >
                     {showAll ? "Show less" : `+ ${filtered.length - visibleLimit} more`}
-                </Button>
+                </button>
             )}
         </div>
     );

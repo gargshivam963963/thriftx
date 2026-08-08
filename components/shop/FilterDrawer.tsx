@@ -17,8 +17,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import FilterAccordion from "@/components/ui/FilterAccordion";
 
-import FilterCard from "./FilterCard";
 import BrandFilter from "./BrandFilter";
 import SizeFilter from "./SizeFilter";
 import PriceFilter from "./PriceFilter";
@@ -34,13 +34,19 @@ interface FilterDrawerProps {
     facets: ShopFacets;
 }
 
-export default function FilterDrawer({ genders, categories, facets }: FilterDrawerProps) {
+export default function FilterDrawer({
+    genders,
+    categories,
+    facets,
+}: FilterDrawerProps) {
     const [open, setOpen] = useState(false);
     const [expandedGender, setExpandedGender] = useState<string | null>(null);
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    useEffect(() => { setOpen(false); }, [pathname, searchParams]);
+    useEffect(() => {
+        setOpen(false);
+    }, [pathname, searchParams]);
 
     const activeCount = [
         searchParams.get("brand"),
@@ -54,7 +60,9 @@ export default function FilterDrawer({ genders, categories, facets }: FilterDraw
 
     useEffect(() => {
         document.body.style.overflow = open ? "hidden" : "";
-        return () => { document.body.style.overflow = ""; };
+        return () => {
+            document.body.style.overflow = "";
+        };
     }, [open]);
 
     return (
@@ -66,7 +74,7 @@ export default function FilterDrawer({ genders, categories, facets }: FilterDraw
                 size="md"
                 rounded="lg"
             >
-                <SlidersHorizontal size={15} />
+                <SlidersHorizontal size={16} />
                 <span>Filters</span>
                 {activeCount > 0 && (
                     <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-foreground px-1.5 text-badge font-bold text-background">
@@ -91,11 +99,13 @@ export default function FilterDrawer({ genders, categories, facets }: FilterDraw
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                            className="fixed inset-x-0 bottom-0 z-[90] max-h-[90vh] overflow-y-auto rounded-t-3xl border-t border-border bg-background pb-8 shadow-float"
+                            className="fixed inset-x-0 bottom-0 z-[90] max-h-[90vh] overflow-y-auto rounded-t-2xl border-t border-border bg-background pb-8 shadow-float"
                         >
                             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 px-5 py-4 backdrop-blur-xl">
                                 <div className="flex items-center gap-3">
-                                    <h2 className="font-bold text-foreground">Filters</h2>
+                                    <h2 className="text-sm font-semibold text-foreground">
+                                        Filters
+                                    </h2>
                                     {activeCount > 0 && (
                                         <span className="rounded-full bg-foreground px-2 py-0.5 text-badge font-bold text-background">
                                             {activeCount}
@@ -104,12 +114,15 @@ export default function FilterDrawer({ genders, categories, facets }: FilterDraw
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {activeCount > 0 && (
-                                        <Link
-                                            href={pathname}
-                                            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-small font-semibold text-muted-foreground transition hover:bg-muted"
+                                        <Button
+                                            asChild
+                                            variant="ghost"
+                                            size="sm"
+                                            rounded="lg"
+                                            leftIcon={<RotateCcw size={14} />}
                                         >
-                                            <RotateCcw size={13} /> Reset
-                                        </Link>
+                                            <Link href={pathname}>Reset</Link>
+                                        </Button>
                                     )}
                                     <Button
                                         type="button"
@@ -124,40 +137,43 @@ export default function FilterDrawer({ genders, categories, facets }: FilterDraw
                             </div>
 
                             <div className="space-y-3 p-5">
-                                <FilterCard
-                                    icon={<Tags size={14} />}
+                                <FilterAccordion
+                                    icon={<Tags size={16} />}
                                     title="Category"
                                     defaultOpen
                                 >
                                     <div className="flex flex-col gap-1">
                                         <Link
                                             href="/shop"
-                                            className="rounded-xl border border-border bg-card px-3.5 py-2 text-body-sm font-medium text-muted-foreground transition hover:border-foreground hover:bg-muted"
+                                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-card"
                                         >
                                             All Items
                                         </Link>
                                         {genders.map((g) => {
                                             const genderCategories = categories.filter(
-                                                (c) => c.gender.toLowerCase() === g.name.toLowerCase()
+                                                (c) =>
+                                                    c.gender.toLowerCase() === g.name.toLowerCase()
                                             );
                                             const isExpanded = expandedGender === g.slug;
                                             return (
                                                 <div key={g.id} className="flex flex-col">
-                                                    <Button
+                                                    <button
                                                         type="button"
-                                                        onClick={() => setExpandedGender(isExpanded ? null : g.slug)}
-                                                        className="flex items-center justify-between rounded-xl border border-border bg-card px-3.5 py-2 text-body-sm font-medium text-muted-foreground transition hover:border-foreground hover:bg-muted"
+                                                        onClick={() =>
+                                                            setExpandedGender(isExpanded ? null : g.slug)
+                                                        }
+                                                        className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-card"
                                                     >
-                                                        <span>{g.name}</span>
-                                                        <span className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}>›</span>
-                                                    </Button>
+                                                        <span className="truncate">{g.name}</span>
+                                                        <ChevronR />
+                                                    </button>
                                                     {isExpanded && genderCategories.length > 0 && (
                                                         <div className="ml-3 mt-1 flex flex-col gap-0.5 border-l border-border pl-3">
                                                             {genderCategories.map((c) => (
                                                                 <Link
                                                                     key={c.id}
                                                                     href={`/shop/${g.slug}/${c.slug}`}
-                                                                    className="rounded-lg px-3 py-1.5 text-body-sm font-medium text-muted-foreground transition hover:text-foreground"
+                                                                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                                                                 >
                                                                     {c.name}
                                                                 </Link>
@@ -168,35 +184,38 @@ export default function FilterDrawer({ genders, categories, facets }: FilterDraw
                                             );
                                         })}
                                     </div>
-                                </FilterCard>
+                                </FilterAccordion>
 
-                                <FilterCard icon={<Building2 size={14} />} title="Brand">
+                                <FilterAccordion icon={<Building2 size={16} />} title="Brand">
                                     <BrandFilter brands={facets.brands} />
-                                </FilterCard>
+                                </FilterAccordion>
 
-                                <FilterCard icon={<Ruler size={14} />} title="Size">
+                                <FilterAccordion icon={<Ruler size={16} />} title="Size">
                                     <SizeFilter sizes={facets.sizes} />
-                                </FilterCard>
+                                </FilterAccordion>
 
-                                <FilterCard icon={<Banknote size={14} />} title="Price">
+                                <FilterAccordion icon={<Banknote size={16} />} title="Price">
                                     <PriceFilter />
-                                </FilterCard>
+                                </FilterAccordion>
 
-                                <FilterCard icon={<Palette size={14} />} title="Color">
+                                <FilterAccordion icon={<Palette size={16} />} title="Color">
                                     <ColorFilter colors={facets.colors} />
-                                </FilterCard>
+                                </FilterAccordion>
 
-                                <FilterCard icon={<Layers size={14} />} title="Material">
+                                <FilterAccordion icon={<Layers size={16} />} title="Material">
                                     <MaterialFilter materials={facets.materials} />
-                                </FilterCard>
+                                </FilterAccordion>
 
-                                <FilterCard icon={<BadgeCheck size={14} />} title="Condition">
+                                <FilterAccordion
+                                    icon={<BadgeCheck size={16} />}
+                                    title="Condition"
+                                >
                                     <ConditionFilter conditions={facets.conditions} />
-                                </FilterCard>
+                                </FilterAccordion>
 
-                                <FilterCard icon={<Ruler size={14} />} title="Measurements">
+                                <FilterAccordion icon={<Ruler size={16} />} title="Measurements">
                                     <MeasurementFilter />
-                                </FilterCard>
+                                </FilterAccordion>
 
                                 <Button
                                     type="button"
@@ -219,5 +238,26 @@ export default function FilterDrawer({ genders, categories, facets }: FilterDraw
                 )}
             </AnimatePresence>
         </>
+    );
+}
+
+function ChevronR() {
+    return (
+        <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            aria-hidden="true"
+            className="shrink-0 text-muted-foreground"
+        >
+            <path
+                d="M5 3L10 7L5 11"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
     );
 }

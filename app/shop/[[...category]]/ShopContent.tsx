@@ -13,8 +13,6 @@ import {
     Building2,
     Ruler,
     Banknote,
-    X,
-    Search,
     Palette,
     Layers,
     BadgeCheck,
@@ -25,10 +23,13 @@ import type { Product } from "@/lib/services/products";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import FilterAccordion from "@/components/ui/FilterAccordion";
+import FilterChip from "@/components/ui/FilterChip";
+import SegmentedControl from "@/components/ui/SegmentedControl";
+import ToolbarSearch from "@/components/ui/ToolbarSearch";
 import ProductCardGrid from "@/components/shop/ProductCardGrid";
 import ProductCardList from "@/components/shop/ProductCardList";
 import ProductCardSkeleton from "@/components/shop/ProductCardSkeleton";
-import FilterCard from "@/components/shop/FilterCard";
 import BrandFilter from "@/components/shop/BrandFilter";
 import SizeFilter from "@/components/shop/SizeFilter";
 import PriceFilter from "@/components/shop/PriceFilter";
@@ -125,7 +126,7 @@ export default function ShopContent({
                     (p) =>
                         p.title?.toLowerCase().includes(q) ||
                         p.brand?.toLowerCase().includes(q) ||
-                        p.description?.toLowerCase().includes(q),
+                        p.description?.toLowerCase().includes(q)
                 );
                 setProducts(filtered);
             } else {
@@ -136,7 +137,7 @@ export default function ShopContent({
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchInput]);
+    }, [searchInput, initialProducts]);
 
     // ── Load More with infinite scroll ──
     const handleLoadMore = useCallback(async () => {
@@ -154,7 +155,10 @@ export default function ShopContent({
             if (data.success) {
                 setProducts((prev) => {
                     const existing = new Set(prev.map((p) => p.id));
-                    const next = [...prev, ...data.products.filter((p: Product) => !existing.has(p.id))];
+                    const next = [
+                        ...prev,
+                        ...data.products.filter((p: Product) => !existing.has(p.id)),
+                    ];
                     return next;
                 });
                 setOffset((prev) => prev + ITEMS_PER_PAGE);
@@ -166,7 +170,6 @@ export default function ShopContent({
         } finally {
             setLoadingMore(false);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [offset, loadingMore, hasMore, initialSort, searchParams]);
 
     // Intersection observer for infinite scroll.
@@ -179,7 +182,7 @@ export default function ShopContent({
                     handleLoadMore();
                 }
             },
-            { rootMargin: "300px" },
+            { rootMargin: "300px" }
         );
         observer.observe(el);
         return () => observer.disconnect();
@@ -206,7 +209,9 @@ export default function ShopContent({
             {/* ── Page header ─────────────────────────────────────────── */}
             <div className="mb-8 flex flex-col gap-2">
                 <nav className="text-badge font-semibold uppercase tracking-widest text-muted-foreground">
-                    <Link href="/" className="transition hover:text-foreground">Home</Link>
+                    <Link href="/" className="transition-colors hover:text-foreground">
+                        Home
+                    </Link>
                     <span className="mx-2">/</span>
                     <span className="text-foreground">Shop</span>
                     {categoryTitle !== "All Items" && (
@@ -227,24 +232,32 @@ export default function ShopContent({
             <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
                 {/* ── SIDEBAR (Desktop) ─────────────────────────────────── */}
                 <aside className="hidden lg:sticky lg:top-24 lg:flex lg:w-[264px] lg:shrink-0 lg:self-start lg:flex-col lg:gap-4">
-                    <div className="mb-1 flex items-center justify-between">
-                        <h2 className="text-heading-4 font-bold text-foreground">Filters</h2>
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-semibold text-foreground">Filters</h2>
                         {hasActiveFilters && (
                             <Link
                                 href={baseUrl}
-                                className="flex items-center gap-1 text-badge font-semibold uppercase tracking-wider text-muted-foreground transition hover:text-foreground"
+                                className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-card"
                             >
-                                <RotateCcw size={11} /> Reset
+                                <RotateCcw size={14} className="h-4 w-4" />
+                                Reset
                             </Link>
                         )}
                     </div>
 
                     <div className="space-y-3">
-                        <FilterCard icon={<Tags size={14} />} title="Category" defaultOpen>
+                        <FilterAccordion
+                            icon={<Tags size={16} />}
+                            title="Category"
+                            defaultOpen
+                        >
                             <div className="flex flex-col gap-0.5">
                                 <Link
                                     href="/shop"
-                                    className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-body-sm font-medium transition-all ${!gender ? "bg-foreground text-background shadow-card" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                                    className={`mb-1 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${!gender
+                                        ? "bg-foreground text-background"
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-card"
+                                        }`}
                                 >
                                     All Items
                                 </Link>
@@ -252,19 +265,28 @@ export default function ShopContent({
                                     <div key={g.id}>
                                         <Link
                                             href={`/shop/${g.slug}`}
-                                            className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-body-sm font-medium transition-all ${gender === g.slug && !clothingCategory ? "bg-foreground text-background shadow-card" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                                            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${gender === g.slug && !clothingCategory
+                                                ? "bg-foreground text-background"
+                                                : "text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-card"
+                                                }`}
                                         >
                                             {g.name}
                                         </Link>
                                         {gender === g.slug && (
                                             <div className="ml-3 mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
                                                 {categories
-                                                    .filter((c) => c.gender.toLowerCase() === g.name.toLowerCase())
+                                                    .filter(
+                                                        (c) =>
+                                                            c.gender.toLowerCase() === g.name.toLowerCase()
+                                                    )
                                                     .map((c) => (
                                                         <Link
                                                             key={c.id}
                                                             href={`/shop/${g.slug}/${c.slug}`}
-                                                            className={`rounded-lg px-3 py-1.5 text-body-sm font-medium transition-all ${clothingCategory === c.slug ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                                                            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${clothingCategory === c.slug
+                                                                ? "bg-muted text-foreground"
+                                                                : "text-muted-foreground hover:text-foreground"
+                                                                }`}
                                                         >
                                                             {c.name}
                                                         </Link>
@@ -274,35 +296,35 @@ export default function ShopContent({
                                     </div>
                                 ))}
                             </div>
-                        </FilterCard>
+                        </FilterAccordion>
 
-                        <FilterCard icon={<Building2 size={14} />} title="Brand">
+                        <FilterAccordion icon={<Building2 size={16} />} title="Brand">
                             <BrandFilter brands={facets.brands} />
-                        </FilterCard>
+                        </FilterAccordion>
 
-                        <FilterCard icon={<Ruler size={14} />} title="Size">
+                        <FilterAccordion icon={<Ruler size={16} />} title="Size">
                             <SizeFilter sizes={facets.sizes} />
-                        </FilterCard>
+                        </FilterAccordion>
 
-                        <FilterCard icon={<Banknote size={14} />} title="Price">
+                        <FilterAccordion icon={<Banknote size={16} />} title="Price">
                             <PriceFilter />
-                        </FilterCard>
+                        </FilterAccordion>
 
-                        <FilterCard icon={<Palette size={14} />} title="Color">
+                        <FilterAccordion icon={<Palette size={16} />} title="Color">
                             <ColorFilter colors={facets.colors} />
-                        </FilterCard>
+                        </FilterAccordion>
 
-                        <FilterCard icon={<Layers size={14} />} title="Material">
+                        <FilterAccordion icon={<Layers size={16} />} title="Material">
                             <MaterialFilter materials={facets.materials} />
-                        </FilterCard>
+                        </FilterAccordion>
 
-                        <FilterCard icon={<BadgeCheck size={14} />} title="Condition">
+                        <FilterAccordion icon={<BadgeCheck size={16} />} title="Condition">
                             <ConditionFilter conditions={facets.conditions} />
-                        </FilterCard>
+                        </FilterAccordion>
 
-                        <FilterCard icon={<Ruler size={14} />} title="Measurements">
+                        <FilterAccordion icon={<Ruler size={16} />} title="Measurements">
                             <MeasurementFilter />
-                        </FilterCard>
+                        </FilterAccordion>
                     </div>
                 </aside>
 
@@ -321,43 +343,32 @@ export default function ShopContent({
                                 />
                             </div>
 
-                            {/* View Toggle */}
-                            <div className="hidden items-center rounded-2xl border border-border bg-card p-0.5 sm:flex">
-                                <Button
-                                    type="button"
-                                    onClick={() => setViewMode("grid")}
-                                    variant={viewMode === "grid" ? "primary" : "ghost"}
-                                    size="iconSm"
-                                    rounded="lg"
-                                >
-                                    <LayoutGrid size={15} />
-                                </Button>
-                                <Button
-                                    type="button"
-                                    onClick={() => setViewMode("list")}
-                                    variant={viewMode === "list" ? "primary" : "ghost"}
-                                    size="iconSm"
-                                    rounded="lg"
-                                >
-                                    <List size={15} />
-                                </Button>
-                            </div>
+                            {/* View Toggle — segmented control */}
+                            <SegmentedControl
+                                value={viewMode}
+                                onChange={setViewMode}
+                                options={[
+                                    {
+                                        value: "grid",
+                                        ariaLabel: "Grid view",
+                                        icon: <LayoutGrid size={16} />,
+                                    },
+                                    {
+                                        value: "list",
+                                        ariaLabel: "List view",
+                                        icon: <List size={16} />,
+                                    },
+                                ]}
+                                className="hidden sm:inline-flex"
+                            />
 
                             {/* Instant search */}
-                            <div className="relative min-w-0 flex-1">
-                                <Search
-                                    size={16}
-                                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                />
-                                <input
-                                    type="search"
-                                    value={searchInput}
-                                    onChange={(e) => setSearchInput(e.target.value)}
-                                    placeholder="Search products, brands…"
-                                    aria-label="Search products"
-                                    className="h-11 w-full rounded-2xl border border-border bg-card pl-10 pr-4 text-body-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-foreground focus:ring-2 focus:ring-foreground/10"
-                                />
-                            </div>
+                            <ToolbarSearch
+                                value={searchInput}
+                                onChange={setSearchInput}
+                                placeholder="Search products, brands…"
+                                ariaLabel="Search products"
+                            />
 
                             <SortDropdown defaultValue={initialSort} />
                         </div>
@@ -372,63 +383,65 @@ export default function ShopContent({
                                     className="flex flex-wrap items-center gap-2"
                                 >
                                     {initialBrand && (
-                                        <Chip
+                                        <FilterChip
                                             label={initialBrand}
-                                            onClick={() => removeParam("brand")}
+                                            onRemove={() => removeParam("brand")}
                                         />
                                     )}
                                     {initialSize && (
-                                        <Chip
+                                        <FilterChip
                                             label={`Size ${initialSize}`}
-                                            onClick={() => removeParam("size")}
+                                            onRemove={() => removeParam("size")}
                                         />
                                     )}
                                     {initialPrice && (
-                                        <Chip
+                                        <FilterChip
                                             label={priceLabel(initialPrice)}
-                                            onClick={() => removeParam("price")}
+                                            onRemove={() => removeParam("price")}
                                         />
                                     )}
                                     {initialMeasurement && (
-                                        <Chip
+                                        <FilterChip
                                             label={measurementLabel(initialMeasurement)}
-                                            onClick={() => removeParam("measurement")}
+                                            onRemove={() => removeParam("measurement")}
                                         />
                                     )}
                                     {searchParams.get("color") && (
-                                        <Chip
+                                        <FilterChip
                                             label={searchParams.get("color")!}
-                                            onClick={() => removeParam("color")}
+                                            onRemove={() => removeParam("color")}
                                         />
                                     )}
                                     {searchParams.get("material") && (
-                                        <Chip
+                                        <FilterChip
                                             label={searchParams.get("material")!}
-                                            onClick={() => removeParam("material")}
+                                            onRemove={() => removeParam("material")}
                                         />
                                     )}
                                     {searchParams.get("condition") && (
-                                        <Chip
+                                        <FilterChip
                                             label={searchParams.get("condition")!}
-                                            onClick={() => removeParam("condition")}
+                                            onRemove={() => removeParam("condition")}
                                         />
                                     )}
                                     {searchInput && (
-                                        <Chip
+                                        <FilterChip
                                             label={`"${searchInput}"`}
-                                            onClick={() => setSearchInput("")}
+                                            onRemove={() => setSearchInput("")}
                                         />
                                     )}
                                     <Button
                                         type="button"
                                         variant="ghost"
+                                        size="sm"
                                         onClick={() => {
                                             setSearchInput("");
                                             window.location.href = baseUrl;
                                         }}
-                                        className="inline-flex items-center gap-1 text-badge font-semibold uppercase tracking-wider text-muted-foreground transition hover:text-foreground"
+                                        className="h-8 rounded-full text-sm font-medium normal-case tracking-normal"
                                     >
-                                        <RotateCcw size={11} /> Clear all
+                                        <RotateCcw size={14} className="h-4 w-4" />
+                                        Clear all
                                     </Button>
                                 </motion.div>
                             )}
@@ -438,7 +451,10 @@ export default function ShopContent({
                     {/* Summary line */}
                     <div className="mb-6 flex items-center justify-between">
                         <p className="text-body-sm font-medium text-muted-foreground">
-                            Showing <span className="font-semibold text-foreground">{products.length}</span>{" "}
+                            Showing{" "}
+                            <span className="font-semibold text-foreground">
+                                {products.length}
+                            </span>{" "}
                             {products.length === 1 ? "product" : "products"}
                         </p>
                     </div>
@@ -447,9 +463,7 @@ export default function ShopContent({
                     {loading ? (
                         <div
                             className={
-                                viewMode === "grid"
-                                    ? gridClasses
-                                    : "flex flex-col gap-5"
+                                viewMode === "grid" ? gridClasses : "flex flex-col gap-5"
                             }
                         >
                             {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
@@ -465,15 +479,18 @@ export default function ShopContent({
                             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
                                 <AlertCircle size={28} className="text-muted-foreground" />
                             </div>
-                            <h3 className="text-heading-4 font-bold text-foreground">No items found</h3>
+                            <h3 className="text-heading-4 font-bold text-foreground">
+                                No items found
+                            </h3>
                             <p className="mt-1.5 max-w-sm text-body-sm text-muted-foreground">
                                 Try adjusting your filters or check back later for new arrivals.
                             </p>
                             <Link
                                 href={baseUrl}
-                                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-body-sm font-semibold text-background transition hover:opacity-90"
+                                className="mt-6 inline-flex h-10 items-center gap-2 rounded-xl bg-foreground px-5 text-sm font-semibold text-background transition-all hover:opacity-90 dark:bg-foreground dark:text-background"
                             >
-                                <RotateCcw size={14} /> Reset Filters
+                                <RotateCcw size={14} className="h-4 w-4" />
+                                Reset Filters
                             </Link>
                         </motion.div>
                     ) : (
@@ -534,12 +551,17 @@ export default function ShopContent({
 
                             {/* Infinite scroll loader */}
                             {hasMore && products.length >= ITEMS_PER_PAGE && (
-                                <div ref={loaderRef} className="mt-10 flex flex-col items-center gap-3">
+                                <div
+                                    ref={loaderRef}
+                                    className="mt-10 flex flex-col items-center gap-3"
+                                >
                                     <div className="flex w-full max-w-xs items-center gap-3">
                                         <Progress
                                             value={Math.min(
-                                                (products.length / (totalCount || products.length + ITEMS_PER_PAGE)) * 100,
+                                                (products.length /
+                                                    (totalCount || products.length + ITEMS_PER_PAGE)) *
                                                 100,
+                                                100
                                             )}
                                             className="h-1 bg-muted"
                                         />
@@ -570,7 +592,9 @@ export default function ShopContent({
                                     </Badge>
                                     <Button
                                         type="button"
-                                        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                                        onClick={() =>
+                                            window.scrollTo({ top: 0, behavior: "smooth" })
+                                        }
                                         variant="ghost"
                                         size="sm"
                                         rounded="lg"
@@ -588,21 +612,7 @@ export default function ShopContent({
     );
 }
 
-// ── Small helper components ────────────────────────────────────────────────
-
-function Chip({ label, onClick }: { label: string; onClick: () => void }) {
-    return (
-        <Button
-            type="button"
-            variant="outline"
-            onClick={onClick}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-small font-medium text-foreground shadow-card transition hover:border-foreground"
-        >
-            {label}
-            <X size={12} className="text-muted-foreground" />
-        </Button>
-    );
-}
+// ── Label helpers ────────────────────────────────────────────────────────
 
 function priceLabel(value: string): string {
     const map: Record<string, string> = {

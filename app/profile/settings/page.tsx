@@ -560,7 +560,7 @@ export default function SettingsPage() {
                             leftIcon={<LogOut size={16} />}
                             className="rounded-xl"
                         >
-                            Sign Out
+                            Sign Outsf sdf
                         </Button>
                     </div>
                 </SectionCard>

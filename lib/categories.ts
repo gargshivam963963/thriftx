@@ -1,11 +1,4 @@
-import {
-  databases,
-  APPWRITE_DATABASE_ID,
-  APPWRITE_CATEGORIES_COLLECTION_ID,
-  APPWRITE_GENDERS_COLLECTION_ID,
-  AppwriteQuery,
-  isAppwriteDataConfigured,
-} from "./appwrite";
+import { catalogRepository } from "./repositories";
 
 export type Gender = {
   id: string;
@@ -253,47 +246,24 @@ const FALLBACK_CATEGORIES: Category[] = [
 ];
 
 export async function getGenders(): Promise<Gender[]> {
-  if (!isAppwriteDataConfigured) {
+  const dbGenders = await catalogRepository.getGenders();
+
+  // When the DB isn't configured (or has no gender rows), fall back to the
+  // static list so the shop sidebar still renders.
+  if (!dbGenders.length) {
     return FALLBACK_GENDERS;
   }
 
-  const response = await databases.listDocuments(
-    APPWRITE_DATABASE_ID,
-    APPWRITE_GENDERS_COLLECTION_ID,
-    [AppwriteQuery.equal("active", true), AppwriteQuery.orderAsc("order")],
-  );
-
-  return response.documents.map<Gender>((doc) => ({
-    id: doc.$id,
-    slug: (doc.slug as string) || "",
-    name: (doc.name as string) || "",
-  }));
+  return dbGenders;
 }
 
 export async function getCategories(): Promise<Category[]> {
-  if (!isAppwriteDataConfigured) {
-    return FALLBACK_CATEGORIES;
-  }
+  const dbCategories = await catalogRepository.getCategories();
 
-  const response = await databases.listDocuments(
-    APPWRITE_DATABASE_ID,
-    APPWRITE_CATEGORIES_COLLECTION_ID,
-    [AppwriteQuery.equal("active", true), AppwriteQuery.orderAsc("order")],
-  );
-
-  const dbCategories: Category[] = response.documents.map<Category>((doc) => ({
-    id: doc.$id,
-    slug: (doc.slug as string) || "",
-    name: (doc.name as string) || "",
-    gender: (doc.gender as Category["gender"]) || "Unisex",
-    order: Number(doc.order) || 0,
-    active: doc.active !== false,
-    image: (doc.image as string) ?? "",
-  }));
-
-  // Merge in any missing fallback categories (e.g. "Lower" for Men if not in DB yet)
-  const dbKeys = new Set(dbCategories.map((c) => `${c.gender}-${c.slug}`));
+  // Merge in any fallback categories (e.g. "Lower" for Men) so the sidebar
+  // always shows a complete set even before the DB is fully seeded.
   const merged: Category[] = [...dbCategories];
+  const dbKeys = new Set(dbCategories.map((c) => `${c.gender}-${c.slug}`));
   for (const fb of FALLBACK_CATEGORIES) {
     const key = `${fb.gender}-${fb.slug}`;
     if (!dbKeys.has(key)) {

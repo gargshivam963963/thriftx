@@ -557,7 +557,6 @@ export default function Header() {
                     onClick={() => router.push("/login")}
                     variant="primary"
                     size="md"
-                    className="h-11 px-5"
                   >
                     <User size={iconSize} strokeWidth={iconStroke} />
                     Sign In

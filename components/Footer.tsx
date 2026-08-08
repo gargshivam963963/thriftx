@@ -17,8 +17,10 @@ import {
   Send,
 } from "lucide-react";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/Container";
+import { Input } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
 
 // ── Business info ────────────────────────────────────────────────────────────
 const BUSINESS_EMAIL = "support@thriftx.in";
@@ -118,7 +120,7 @@ export default function Footer() {
     <footer className="relative w-full overflow-hidden border-t border-border bg-card">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-      <div className="mx-auto w-full max-w-[1440px] px-4 py-14 sm:px-6 lg:px-8 xl:px-12 lg:py-20">
+      <Container className="py-14 lg:py-20">
         {/* ── Trust Strip ─────────────────────────────────────── */}
         <div className="mb-14 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {trustBadges.map(({ icon: Icon, label }) => (
@@ -166,10 +168,9 @@ export default function Footer() {
               <p className="mt-1.5 text-body-sm text-muted-foreground">
                 Be the first to know about new drops and exclusive deals.
               </p>
-              <form onSubmit={handleSubscribe} className="mt-4 flex max-w-sm items-center gap-2">
+              <form onSubmit={handleSubscribe} className="mt-4 flex max-w-sm flex-col gap-2 sm:flex-row sm:items-stretch">
                 <div className="relative flex-1">
-                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
+                  <Input
                     type="email"
                     value={email}
                     onChange={(e) => {
@@ -179,29 +180,48 @@ export default function Footer() {
                     placeholder="Your email address"
                     aria-label="Email address"
                     aria-invalid={status === "error"}
-                    className={`h-12 w-full rounded-xl border pl-10 pr-4 text-body-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-2 ${status === "success"
-                      ? inputSuccess
-                      : status === "error"
-                        ? inputError
-                        : inputIdle
-                      }`}
+                    leftIcon={<Mail className="h-4 w-4" />}
+                    variant="lg"
+                    error={status === "error"}
+                    className={cn(
+                      "h-12",
+                      status === "success" &&
+                      "border-success bg-success-bg/40 focus:border-success focus:ring-success/20",
+                    )}
                   />
                 </div>
+
                 <Button
-                  type="submit"
+                  variant="primary"
                   size="lg"
-                  loading={status === "loading"}
-                  loadingText=""
+                  className="
+    h-12
+    min-w-[170px]
+    w-full
+    sm:w-auto
+    gap-2
+    justify-center
+    items-center
+    font-medium
+
+    text-primary-foreground
+    dark:text-primary-foreground
+
+    [&>svg]:h-4
+    [&>svg]:w-4
+    [&>svg]:shrink-0
+    [&>svg]:text-current
+  "
+                  // loading={loading}
+                  loadingText="Subscribing..."
                   success={status === "success"}
-                  successText=""
-                  aria-label="Subscribe to newsletter"
-                  className="h-12 shrink-0 rounded-xl px-5"
+                  successText="Subscribed"
                 >
-                  {status === "success" ? (
-                    <Check className="h-4 w-4" />
-                  ) : status === "loading" ? null : (
-                    <Send className="h-4 w-4" />
-                  )}
+                  <Send />
+
+                  <span className="whitespace-nowrap">
+                    Subscribe
+                  </span>
                 </Button>
               </form>
               {status === "success" && (
@@ -357,7 +377,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </footer>
   );
 }

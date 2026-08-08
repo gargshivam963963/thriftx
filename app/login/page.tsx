@@ -135,7 +135,7 @@ export default function Login() {
                 <div className="absolute bottom-0 right-0 h-[200px] w-[200px] rounded-full bg-muted blur-[120px] sm:h-[300px] sm:w-[300px] dark:bg-card/50" />
             </div>
 
-            <div className="container mx-auto flex min-h-[90vh] max-w-[1200px] items-center justify-center px-4 py-12 sm:px-5 sm:py-16">
+            <div className="container-tight mx-auto flex min-h-[90vh] items-center justify-center px-4 py-12 sm:px-6 sm:py-16">
                 <motion.div
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -175,15 +175,11 @@ export default function Login() {
 
                         {/* Google OAuth */}
                         <Button
-                            type="button"
-                            disabled={isSubmitting}
-                            onClick={handleGoogleLogin}
                             variant="outline"
                             size="lg"
                             fullWidth
-                            className="mb-5 sm:mb-6"
                         >
-                            <svg width="20" height="20" viewBox="0 0 48 48" className="sm:h-[22px] sm:w-[22px]">
+                            <svg width="20" height="20" viewBox="0 0 48 48">
                                 <path
                                     fill="#FFC107"
                                     d="M43.611 20.083H42V20H24v8h11.303C33.651 32.657 29.215 36 24 36c-6.627 0-12-5.373-12-12S17.373 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.27 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"

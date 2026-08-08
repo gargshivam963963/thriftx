@@ -19,6 +19,24 @@ import type { ButtonProps } from "./button.types";
  *   avoid it here.
  * - Non-asChild renders a `motion.button` with hover/tap/transition motion.
  */
+
+const ButtonIcon = ({
+    children,
+}: {
+    children?: React.ReactNode;
+}) => {
+    if (!children) return null;
+
+    return (
+        <span
+            className="inline-flex shrink-0 items-center justify-center text-current"
+            aria-hidden="true"
+        >
+            {children}
+        </span>
+    );
+};
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     (
         {
@@ -110,7 +128,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     ref={ref}
                     aria-disabled={isDisabled}
                     aria-busy={loading}
-                    className={variantClasses}
+                    className={cn(
+                        variantClasses,
+                        "relative isolate overflow-hidden"
+                    )}
                     {...(domProps as React.HTMLAttributes<HTMLElement>)}
                 >
                     {content}
@@ -156,51 +177,39 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
                 {loading ? (
                     <>
-                        <Loader2
-                            className="h-[1.125em] w-[1.125em] animate-spin shrink-0"
-                            aria-hidden="true"
-                        />
+                        <ButtonIcon>
+                            <Loader2 className="animate-spin" />
+                        </ButtonIcon>
 
                         {!isIconOnly && (
-                            <span className="truncate">{loadingText}</span>
+                            <span className="truncate leading-none">
+                                {loadingText}
+                            </span>
                         )}
                     </>
                 ) : success ? (
                     <>
-                        <Check
-                            className="h-[1.125em] w-[1.125em] shrink-0"
-                            aria-hidden="true"
-                        />
+                        <ButtonIcon>
+                            <Check />
+                        </ButtonIcon>
 
                         {!isIconOnly && (
-                            <span className="truncate">{successText}</span>
+                            <span className="truncate leading-none">
+                                {successText}
+                            </span>
                         )}
                     </>
                 ) : isIconOnly ? (
-                    <span className="flex items-center justify-center">
+                    <span className="inline-flex items-center justify-center">
                         {content}
                     </span>
                 ) : (
                     <>
-                        {leftIcon && (
-                            <span
-                                className="flex h-[1.125em] w-[1.125em] shrink-0 items-center justify-center [&_svg]:h-full [&_svg]:w-full"
-                                aria-hidden="true"
-                            >
-                                {leftIcon}
-                            </span>
-                        )}
+                        {leftIcon && <ButtonIcon>{leftIcon}</ButtonIcon>}
 
-                        <span className="truncate">{content}</span>
+                        {content}
 
-                        {rightIcon && (
-                            <span
-                                className="flex h-[1.125em] w-[1.125em] shrink-0 items-center justify-center [&_svg]:h-full [&_svg]:w-full"
-                                aria-hidden="true"
-                            >
-                                {rightIcon}
-                            </span>
-                        )}
+                        {rightIcon && <ButtonIcon>{rightIcon}</ButtonIcon>}
                     </>
                 )}
             </motion.button>

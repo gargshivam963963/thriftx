@@ -1,26 +1,37 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import {
+  PackageCheck,
+  RotateCcw,
+  ShieldCheck,
+  Truck,
+  ChevronRight,
+  BadgeCheck,
+  Sparkles,
+  Clock,
+} from "lucide-react";
 
+import Section from "@/components/ui/Section";
+import { Card } from "@/components/ui/Card";
 import ProductGallery from "@/components/product/ProductGallery";
+import { getProductBySlug } from "@/lib/services/products";
 import ShareButton from "@/components/product/ShareButton";
 import WishlistButton from "@/components/product/WishlistButton";
-import ProductPurchasePanel from "@/components/product/ProductPurchasePanel";
-import ProductMeasurements from "@/components/product/ProductMeasurements";
-import ProductDetails from "@/components/product/ProductDetails";
-import TrustBadges from "@/components/product/TrustBadges";
-import DeliveryEstimate from "@/components/product/DeliveryEstimate";
+import ProductActions from "@/app/product/[slug]/ProductActions";
 import ProductViewTracker from "@/app/product/[slug]/ProductViewTracker";
 import RecentlyViewedTracker from "@/components/product/RecentlyViewedTracker";
+import StickyPurchaseBar from "@/components/product/StickyPurchaseBar";
+import MeasurementsCard from "@/components/product/MeasurementsCard";
+import SizeRecommendation from "@/components/product/SizeRecommendation";
 import RecentlyViewedSection from "@/components/product/RecentlyViewedSection";
 import SimilarProductsSection from "@/components/product/SimilarProductsSection";
-import SizeRecommendation from "@/components/product/SizeRecommendation";
 import CompleteTheLookSection from "@/components/product/CompleteTheLookSection";
-
-import { getProductBySlug } from "@/lib/services/products";
 import { siteConfig } from "@/lib/seo";
+import { getDeliveryInfo } from "@/lib/delivery";
 
-export const revalidate = 300;
+export const revalidate = 3600; // ISR — cache product page for 1 hour to minimize Appwrite reads
 
 export async function generateMetadata({
   params,
@@ -29,38 +40,20 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-
-  if (!product) {
-    return { title: "Product Not Found", robots: { index: false } };
-  }
-
+  if (!product) return { title: "Product Not Found" };
   const description =
     product.description ||
     `${product.title} from ${product.brand || "THRIFTX"} — Premium branded thrift wear.`;
-
+  const url = `${siteConfig.url}/product/${slug}`;
   return {
     title: product.title,
     description,
-    keywords: [
-      product.brand,
-      product.category,
-      "thrift",
-      "premium",
-      "branded",
-    ].filter(Boolean).join(", "),
     openGraph: {
       title: `${product.title} | THRIFTX`,
       description,
-      type: "website",
-      images: [
-        {
-          url: product.primaryImage,
-          width: 1200,
-          height: 1500,
-          alt: product.title,
-        },
-      ],
-      url: `${siteConfig.url}/product/${slug}`,
+      images: [{ url: product.primaryImage, width: 1200, height: 1500 }],
+      url,
+      siteName: siteConfig.name,
     },
     twitter: {
       card: "summary_large_image",
@@ -68,7 +61,7 @@ export async function generateMetadata({
       description,
       images: [product.primaryImage],
     },
-    alternates: { canonical: `/product/${slug}` },
+    alternates: { canonical: url },
     robots: { index: true, follow: true },
   };
 }
@@ -78,11 +71,38 @@ function getRetailPrice(price?: number): string {
   return `₹${Math.round(price * 1.25).toLocaleString("en-IN")}`;
 }
 
-/**
- * ProductDetail — complete product details page.
- * Uses a consistent 1280px container, sticky desktop purchase panel,
- * mobile sticky bar, and premium below-the-fold sections.
- */
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between py-3.5">
+      <span className="text-body-sm text-muted-foreground">{label}</span>
+      <span className="text-body-sm font-semibold text-foreground">{value}</span>
+    </div>
+  );
+}
+
+/* ── Trust badge item ── */
+function TrustBadge({
+  icon: Icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ElementType;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <Card className="flex items-center gap-3 rounded-2xl border bg-card p-4 transition-all hover:-translate-y-0.5 hover:shadow-md">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background">
+        <Icon className="h-5 w-5 text-foreground" />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-body font-semibold text-foreground">{title}</p>
+        <p className="truncate text-small text-muted-foreground">{subtitle}</p>
+      </div>
+    </Card>
+  );
+}
+
 export default async function ProductDetail({
   params,
 }: {
@@ -95,22 +115,22 @@ export default async function ProductDetail({
   const retailPrice = product.retailPrice ?? getRetailPrice(product.price);
   const descriptionText =
     product.description ||
-    `${product.title} from ${product.brand || "our curated collection"} is presented in ${product.condition ? product.condition.toLowerCase() : "excellent"
+    `${product.title} from ${product.brand || "our curated collection"
+    } is presented in ${product.condition ? product.condition.toLowerCase() : "excellent"
     } condition and ready to be styled with confidence.`;
 
   const retail = Number(String(retailPrice).replace(/[^\d]/g, ""));
-  const discount = retail
-    ? Math.round(((retail - product.price) / retail) * 100)
-    : null;
+  const discount = retail ? Math.round(((retail - product.price) / retail) * 100) : null;
   const savings = retail ? retail - product.price : null;
+
+  // Delivery estimate (default to courier estimate for the PDP)
+  const delivery = getDeliveryInfo("", undefined);
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
-    description:
-      product.description ||
-      `${product.title} from ${product.brand || "THRIFTX"}`,
+    description: product.description || `${product.title} from ${product.brand || "THRIFTX"}`,
     image: product.primaryImage,
     brand: { "@type": "Brand", name: product.brand || "THRIFTX" },
     offers: {
@@ -134,54 +154,100 @@ export default async function ProductDetail({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-6 sm:px-6 lg:px-8">
-        {/* ── Breadcrumb ─────────────────────────────── */}
-        <nav
-          aria-label="Breadcrumb"
-          className="mb-6 flex items-center gap-2 overflow-x-auto whitespace-nowrap text-small text-muted-foreground"
-        >
-          <Link href="/" className="transition-colors hover:text-foreground">
-            Home
-          </Link>
-          <span aria-hidden="true">/</span>
-          <Link href="/shop" className="transition-colors hover:text-foreground">
-            Shop
-          </Link>
-          <span aria-hidden="true">/</span>
-          {product.category && (
-            <>
-              <Link
-                href={`/shop/${product.gender.toLowerCase()}/${product.categorySlug}`}
-                className="transition-colors hover:text-foreground"
-              >
-                {product.category}
-              </Link>
-              <span aria-hidden="true">/</span>
-            </>
-          )}
-          <span className="font-medium text-foreground">{product.title}</span>
-        </nav>
+      <Section className="pt-8 pb-24 lg:pb-16">
+        <div className="mx-auto w-full max-w-[1280px]">
+          {/* ── Breadcrumb ── */}
+          <nav
+            aria-label="Breadcrumb"
+            className="mb-8 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-small text-muted-foreground"
+          >
+            <Link href="/" className="transition-colors hover:text-foreground">
+              Home
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted" />
+            <Link href="/shop" className="transition-colors hover:text-foreground">
+              Shop
+            </Link>
+            {product.category && (
+              <>
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted" />
+                <Link
+                  href={`/shop/${product.gender.toLowerCase()}/${product.categorySlug}`}
+                  className="transition-colors hover:text-foreground"
+                >
+                  {product.category}
+                </Link>
+              </>
+            )}
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted" />
+            <span className="font-medium text-foreground">{product.title}</span>
+          </nav>
 
-        {/* ── Main Grid ──────────────────────────────── */}
-        <div className="grid gap-8 xl:grid-cols-[1.25fr_500px]">
-          {/* LEFT COLUMN */}
-          <div className="min-w-0 space-y-8">
-            <ProductGallery
-              title={product.title}
-              primaryImage={product.primaryImage}
-              images={product.images}
-            />
+          <div className="grid gap-8 xl:grid-cols-[1.25fr_500px]">
+            {/* ── LEFT COLUMN ── */}
+            <div className="min-w-0 space-y-8">
+              <ProductGallery
+                title={product.title}
+                primaryImage={product.primaryImage}
+                images={product.images}
+              />
 
-            <TrustBadges />
-          </div>
+              {/* Trust badges */}
+              <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                <TrustBadge
+                  icon={ShieldCheck}
+                  title="100% Authentic"
+                  subtitle="Quality Checked"
+                />
+                <TrustBadge
+                  icon={RotateCcw}
+                  title="7 Day Returns"
+                  subtitle="Easy & Simple"
+                />
+                <TrustBadge
+                  icon={PackageCheck}
+                  title="Secure Packing"
+                  subtitle="Safe Delivery"
+                />
+                <TrustBadge
+                  icon={Truck}
+                  title="Pan India"
+                  subtitle="Fast & Reliable"
+                />
+              </div>
 
-          {/* RIGHT COLUMN — Sticky Purchase Panel (desktop) */}
-          <div className="xl:sticky xl:top-24 xl:h-fit">
-            <div className="space-y-6">
-              {/* Header */}
+              {/* Measurements */}
+              <MeasurementsCard product={product} />
+
+              {/* Description */}
+              <Card className="rounded-2xl border border-border bg-card p-6 shadow-none">
+                <h3 className="mb-4 flex items-center gap-2 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  <Sparkles className="h-4 w-4" />
+                  Description
+                </h3>
+                <div className="space-y-3 text-body leading-relaxed text-foreground/90">
+                  {[
+                    "Premium thrift piece — curated & inspected",
+                    "Quality Checked & freshly sanitized",
+                    "Original product photos",
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2.5">
+                      <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                  <p className="border-t border-border pt-4 text-body-sm leading-7 text-muted-foreground">
+                    {descriptionText}
+                  </p>
+                </div>
+              </Card>
+            </div>
+
+            {/* ── RIGHT COLUMN — Sticky info panel ── */}
+            <div className="xl:sticky xl:top-24 xl:h-fit space-y-6">
               <div>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
+                <div className="flex items-start justify-between gap-6">
+                  <div>
                     <p className="text-caption font-semibold uppercase tracking-[0.28em] text-muted-foreground">
                       {product.brand || "THRIFTX"}
                     </p>
@@ -191,111 +257,135 @@ export default async function ProductDetail({
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <WishlistButton productId={product.id} />
-                    <ShareButton
-                      title={product.title}
-                      price={product.price}
-                    />
+                    <ShareButton title={product.title} price={product.price} />
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-warning-bg px-3 py-1 text-small font-semibold text-warning-foreground">
+                {/* Stock + condition badges */}
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-warning-bg px-3 py-1 text-small font-semibold text-warning-foreground">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-warning" />
+                    </span>
                     Only 1 Left
                   </span>
-                  <span className="rounded-full bg-success-bg px-3 py-1 text-small font-semibold text-success-foreground">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-success-bg px-3 py-1 text-small font-semibold text-success-foreground">
+                    <BadgeCheck className="h-3.5 w-3.5" />
                     Quality Checked
                   </span>
+                  {product.condition && (
+                    <span className="rounded-full bg-muted px-3 py-1 text-small font-semibold text-muted-foreground">
+                      {product.condition}
+                    </span>
+                  )}
                 </div>
               </div>
 
               {/* Price */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="text-display-lg font-bold tracking-tight text-foreground">
                     ₹{product.price.toLocaleString("en-IN")}
                   </span>
-                  {discount && discount > 0 && (
+                  {discount && product.retailPrice && (
                     <span className="rounded-full bg-success-bg px-3 py-1 text-small font-semibold text-success-foreground">
                       {discount}% OFF
                     </span>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  {retailPrice && (
+                {retailPrice && (
+                  <div className="flex flex-wrap items-center gap-3">
                     <p className="text-body-sm text-muted-foreground">
                       MRP{" "}
-                      <span className="ml-1 line-through">
-                        {retailPrice}
-                      </span>
+                      <span className="ml-1 line-through">{retailPrice}</span>
                     </p>
-                  )}
-                  {savings && savings > 0 && (
-                    <p className="text-body-sm font-semibold text-success">
-                      You Save ₹
-                      {savings.toLocaleString("en-IN")}
-                    </p>
-                  )}
-                </div>
+                    {savings && (
+                      <p className="text-body-sm font-semibold text-success">
+                        You save ₹{savings.toLocaleString("en-IN")}
+                      </p>
+                    )}
+                  </div>
+                )}
                 <p className="text-small text-muted-foreground">
                   Inclusive of all taxes
                 </p>
               </div>
 
-              {/* Purchase actions + mobile sticky bar */}
-              <ProductPurchasePanel product={product} />
-
               <hr className="border-border" />
 
-              {/* Delivery + returns */}
-              <DeliveryEstimate />
+              {/* Actions (desktop) */}
+              <ProductActions product={product} />
 
-              {/* Measurements */}
-              <ProductMeasurements product={product} />
-
-              {/* Details */}
-              <div className="rounded-2xl border border-border bg-card p-6">
-                <ProductDetails product={product} />
-              </div>
-
-              {/* Description */}
-              <div className="rounded-2xl border border-border bg-card p-6">
-                <h3 className="mb-4 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  Description
-                </h3>
-                <div className="space-y-3 text-body-sm leading-7 text-foreground">
-                  <div className="flex items-center gap-2">
-                    <span className="text-success">✔</span>
-                    <span>Premium thrift piece</span>
+              {/* Delivery estimate */}
+              <Card className="rounded-2xl border border-border bg-card p-5 shadow-none">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background">
+                    <Clock className="h-5 w-5 text-foreground" />
+                  </span>
+                  <div>
+                    <p className="text-body font-semibold text-foreground">
+                      {delivery.label}
+                    </p>
+                    <p className="mt-0.5 text-small text-muted-foreground">
+                      {delivery.description}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-success">✔</span>
-                    <span>Quality Checked</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-success">✔</span>
-                    <span>Freshly Sanitized</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-success">✔</span>
-                    <span>Original Product Photos</span>
-                  </div>
-                  <p className="border-t border-border pt-3 text-muted-foreground">
-                    {descriptionText}
-                  </p>
                 </div>
-              </div>
+              </Card>
+
+              {/* Product information */}
+              <Card className="rounded-2xl border border-border bg-card p-6 shadow-none">
+                <h3 className="mb-3 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Product Details
+                </h3>
+                <div className="divide-y divide-border">
+                  {product.brand && (
+                    <InfoRow label="Brand" value={product.brand} />
+                  )}
+                  {product.category && (
+                    <InfoRow label="Category" value={product.category} />
+                  )}
+                  {product.gender && (
+                    <InfoRow label="Gender" value={product.gender} />
+                  )}
+                  {product.color && (
+                    <InfoRow label="Color" value={product.color} />
+                  )}
+                  {product.material && (
+                    <InfoRow label="Material" value={product.material} />
+                  )}
+                  {product.size && (
+                    <InfoRow label="Size" value={product.size} />
+                  )}
+                  {product.condition && (
+                    <InfoRow label="Condition" value={product.condition} />
+                  )}
+                </div>
+              </Card>
             </div>
           </div>
-        </div>
 
-        {/* ── Below the fold ─────────────────────────── */}
-        <div className="mt-12 space-y-6">
-          <SizeRecommendation product={product} />
-          <RecentlyViewedSection excludeSlug={product.slug} />
-          <SimilarProductsSection product={product} />
-          <CompleteTheLookSection product={product} />
+          {/* ── Below-the-fold sections (lazy loaded) ── */}
+          <div className="mt-12 space-y-6">
+            <Suspense fallback={null}>
+              <SizeRecommendation product={product} />
+            </Suspense>
+            <Suspense fallback={null}>
+              <CompleteTheLookSection product={product} />
+            </Suspense>
+            <Suspense fallback={null}>
+              <SimilarProductsSection product={product} />
+            </Suspense>
+            <Suspense fallback={null}>
+              <RecentlyViewedSection excludeSlug={product.slug} />
+            </Suspense>
+          </div>
         </div>
-      </div>
+      </Section>
+
+      {/* Mobile sticky purchase bar */}
+      <StickyPurchaseBar product={product} />
     </>
   );
 }

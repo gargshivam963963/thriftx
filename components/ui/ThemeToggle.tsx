@@ -29,11 +29,7 @@ export default function ThemeToggle({
             variant="ghost"
             size={size === "sm" ? "iconSm" : size === "lg" ? "iconLg" : "iconMd"}
             rounded="full"
-            className={cn(
-                "shrink-0 text-muted-foreground hover:text-foreground",
-                "dark:text-muted-foreground dark:hover:text-foreground",
-                className,
-            )}
+            className={cn("shrink-0", className)}
             aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
             title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
         >

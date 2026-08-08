@@ -1,14 +1,3 @@
-import {
-  databases,
-  APPWRITE_DATABASE_ID,
-  APPWRITE_PRODUCTS_COLLECTION_ID,
-  APPWRITE_BUCKET_ID,
-  storage,
-  AppwriteQuery,
-  isAppwriteDataConfigured,
-} from "@/lib/appwrite";
-import type { Product } from "./products";
-
 export interface SearchResult {
   id: string;
   title: string;
@@ -23,95 +12,47 @@ export interface SearchResult {
   slug: string;
 }
 
-function normalizeSearchResult(doc: Record<string, unknown>): SearchResult {
-  const primaryImage = doc.primaryImage as string;
-  const resolvedImage =
-    primaryImage && !primaryImage.startsWith("http")
-      ? storage.getFileView(APPWRITE_BUCKET_ID, primaryImage).toString()
-      : (primaryImage ?? "");
-
-  return {
-    id: (doc.$id as string) ?? "",
-    title: (doc.title as string) ?? "",
-    brand: (doc.brand as string) ?? "",
-    price: Number(doc.price ?? 0),
-    retailPrice: doc.retailPrice != null ? Number(doc.retailPrice) : undefined,
-    category: (doc.category as string) ?? "",
-    gender: (doc.gender as string) ?? "Unisex",
-    size: (doc.size as string) ?? "",
-    condition: (doc.condition as string) ?? "",
-    primaryImage: resolvedImage,
-    slug: (doc.slug as string) ?? "",
-  };
-}
-
 /**
- * Search products by title, brand, and category using Appwrite full-text search.
- * Falls back to client-side filtering if full-text search is not configured.
+ * Client-safe wrapper around the search route handler.
+ *
+ * Used by "use client" components (e.g. GlobalSearch). It does NOT import
+ * Prisma / pg, so it is safe to bundle for the browser. Product search runs
+ * server-side through Route Handler → Repository Layer → Prisma → PostgreSQL.
+ *
+ * Returns an empty array on any failure so the UI can render a graceful
+ * empty state instead of crashing.
  */
 export async function searchProducts(
   query: string,
   limit: number = 12,
 ): Promise<SearchResult[]> {
   if (!query.trim()) return [];
-  if (!isAppwriteDataConfigured) return [];
 
   try {
-    const searchTerm = query.trim().toLowerCase();
-
-    // Try Appwrite full-text search first
-    const response = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_PRODUCTS_COLLECTION_ID,
-      [
-        AppwriteQuery.search("title", searchTerm),
-        AppwriteQuery.equal("isActive", true),
-        AppwriteQuery.equal("status", "active"),
-        AppwriteQuery.limit(limit),
-      ],
-    );
-
-    if (response.documents.length > 0) {
-      return response.documents.map((doc) =>
-        normalizeSearchResult(doc as Record<string, unknown>),
-      );
-    }
-
-    // Fallback: fetch recent active products and filter client-side
-    const fallbackResponse = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_PRODUCTS_COLLECTION_ID,
-      [
-        AppwriteQuery.equal("isActive", true),
-        AppwriteQuery.equal("status", "active"),
-        AppwriteQuery.orderDesc("$createdAt"),
-        AppwriteQuery.limit(50),
-      ],
-    );
-
-    const results = fallbackResponse.documents.filter((doc) => {
-      const title = ((doc.title as string) ?? "").toLowerCase();
-      const brand = ((doc.brand as string) ?? "").toLowerCase();
-      const category = ((doc.category as string) ?? "").toLowerCase();
-      const description = ((doc.description as string) ?? "").toLowerCase();
-      const color = ((doc.color as string) ?? "").toLowerCase();
-      const material = ((doc.material as string) ?? "").toLowerCase();
-
-      return (
-        title.includes(searchTerm) ||
-        brand.includes(searchTerm) ||
-        category.includes(searchTerm) ||
-        description.includes(searchTerm) ||
-        color.includes(searchTerm) ||
-        material.includes(searchTerm)
-      );
+    const params = new URLSearchParams({ q: query, limit: String(limit) });
+    const res = await fetch(`/api/shop/search?${params.toString()}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
     });
 
-    return results
-      .slice(0, limit)
-      .map((doc) => normalizeSearchResult(doc as Record<string, unknown>));
+    if (!res.ok) {
+      console.error("[searchProducts] route handler returned", res.status);
+      return [];
+    }
+
+    const data = (await res.json()) as {
+      success: boolean;
+      products?: SearchResult[];
+    };
+
+    if (!data.success || !Array.isArray(data.products)) {
+      return [];
+    }
+
+    return data.products;
   } catch (error) {
-    console.error("searchProducts error:", error);
+    console.error("[searchProducts] failed to fetch search results:", error);
     return [];
   }
 }

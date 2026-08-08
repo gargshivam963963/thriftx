@@ -1,10 +1,10 @@
 "use client";
 
-
-import { Button } from '@/components/ui/button';import { useState } from "react";
+import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Ruler } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { controlTransition, controlFocusRing } from "@/components/ui/control.styles";
 
 /**
  * Clothing measurements. Values are stored as `type-value` (e.g. `chest-38`)
@@ -129,20 +129,22 @@ export default function MeasurementFilter() {
                         {m.buckets.map((bucket) => {
                             const active = selected === bucket.value;
                             return (
-                                <Button
+                                <button
                                     key={bucket.value}
                                     type="button"
                                     onClick={() => toggleBucket(m, bucket.value)}
                                     aria-pressed={active}
                                     className={cn(
-                                        "rounded-lg border px-2 py-1.5 text-badge font-semibold transition-all",
+                                        controlTransition,
+                                        controlFocusRing,
+                                        "rounded-lg border px-2 py-1.5 text-sm font-medium transition-colors",
                                         active
                                             ? "border-foreground bg-foreground text-background"
-                                            : "border-border bg-card text-muted-foreground hover:border-foreground/50 hover:text-foreground",
+                                            : "border-border bg-card text-muted-foreground hover:border-foreground/50 hover:text-foreground dark:bg-card",
                                     )}
                                 >
                                     {bucket.label}
-                                </Button>
+                                </button>
                             );
                         })}
                     </div>

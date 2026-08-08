@@ -1,15 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Share2, Link2, MessageCircle, Mail, Twitter, Instagram, Check } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-    Share2,
-    Link2,
-    MessageCircle,
-    Mail,
-    X,
-    Check,
-} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -20,72 +13,98 @@ interface ShareButtonProps {
 }
 
 /**
- * ShareButton — native sharing via navigator.share() with a
- * fallback popover (Copy Link / WhatsApp / Instagram / Email).
+ * ShareButton — native sharing with graceful fallback menu.
+ *
+ * 1. Tries `navigator.share()` (native share sheet on mobile/desktop).
+ * 2. If unavailable, opens an inline menu with Copy Link, WhatsApp,
+ *    Twitter/X, Instagram, and Email options.
  */
 export default function ShareButton({ title, price }: ShareButtonProps) {
     const [open, setOpen] = useState(false);
-    const [copied, setCopied] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
 
-    const getText = () =>
-        `${title}\n\n₹${price.toLocaleString("en-IN")}\n\nOnly 1 Piece Available\n\nShop now on THRIFTX`;
-
-    async function handleShare() {
-        const url = window.location.href;
-
-        const shareData = {
-            title,
-            text: getText(),
-            url,
-        };
-
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-                return;
-            } catch {
-                // User cancelled or sharing failed — fall through to popover
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (ref.current && !ref.current.contains(e.target as Node)) {
+                setOpen(false);
             }
         }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
-        setOpen(true);
-    }
+    const buildShareData = () => {
+        const url = window.location.href;
+        return {
+            url,
+            text: `${title}\n\n₹${price.toLocaleString("en-IN")}\n\n🔥 1-of-1 curated piece — Shop now on THRIFTX`,
+        };
+    };
 
-    async function handleCopy() {
+    async function handleShare() {
+        const { url, text } = buildShareData();
+
         try {
-            await navigator.clipboard.writeText(window.location.href);
-            setCopied(true);
-            toast.success("Product link copied.");
-            setTimeout(() => {
-                setCopied(false);
-                setOpen(false);
-            }, 1200);
+            if (navigator.share) {
+                await navigator.share({ title, text, url });
+                return;
+            }
+            setOpen(true);
         } catch {
-            toast.error("Unable to copy link.");
+            // User cancelled native share — fall back to menu
+            setOpen(true);
         }
     }
 
-    function handleWhatsApp() {
-        const url = encodeURIComponent(window.location.href);
-        const text = encodeURIComponent(getText());
-        window.open(`https://wa.me/?text=${text}%20${url}`, "_blank", "noopener");
+    async function copyLink() {
+        const { url } = buildShareData();
+        try {
+            await navigator.clipboard.writeText(url);
+            toast.success("Product link copied");
+            setOpen(false);
+        } catch {
+            toast.error("Unable to copy link");
+        }
+    }
+
+    function openSocial(kind: "whatsapp" | "twitter" | "instagram" | "email") {
+        const { url, text } = buildShareData();
+        const encodedUrl = encodeURIComponent(url);
+        const encodedText = encodeURIComponent(text);
+
+        let href = "";
+        switch (kind) {
+            case "whatsapp":
+                href = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
+                break;
+            case "twitter":
+                href = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+                break;
+            case "instagram":
+                href = `https://www.instagram.com/`;
+                break;
+            case "email":
+                href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodedText}%20${encodedUrl}`;
+                break;
+        }
+        window.open(href, "_blank", "noopener,noreferrer");
         setOpen(false);
     }
 
-    function handleEmail() {
-        const subject = encodeURIComponent(`${title} — THRIFTX`);
-        const body = encodeURIComponent(`${getText()}\n\n${window.location.href}`);
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
-        setOpen(false);
-    }
+    const options = [
+        { kind: "whatsapp" as const, label: "WhatsApp", icon: MessageCircle },
+        { kind: "twitter" as const, label: "Twitter / X", icon: Twitter },
+        { kind: "instagram" as const, label: "Instagram", icon: Instagram },
+        { kind: "email" as const, label: "Email", icon: Mail },
+    ];
 
     return (
-        <div className="relative">
+        <div className="relative" ref={ref}>
             <Button
                 variant="outline"
                 size="iconMd"
-                aria-label="Share Product"
-                aria-haspopup="true"
+                aria-label="Share product"
+                aria-haspopup="menu"
                 aria-expanded={open}
                 onClick={handleShare}
             >
@@ -94,77 +113,38 @@ export default function ShareButton({ title, price }: ShareButtonProps) {
 
             <AnimatePresence>
                 {open && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-[60]"
-                            onClick={() => setOpen(false)}
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute right-0 top-full z-tooltip mt-2 w-56 origin-top-right rounded-2xl border border-border bg-card p-2 shadow-float"
+                    <motion.div
+                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                        transition={{ duration: 0.15 }}
+                        role="menu"
+                        className="absolute right-0 top-full z-[70] mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-float"
+                    >
+                        {options.map((opt) => (
+                            <button
+                                key={opt.kind}
+                                type="button"
+                                role="menuitem"
+                                onClick={() => openSocial(opt.kind)}
+                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-foreground transition hover:bg-muted"
+                            >
+                                <opt.icon className="h-4 w-4 text-muted-foreground" />
+                                {opt.label}
+                            </button>
+                        ))}
+                        <div className="my-1.5 h-px bg-border" />
+                        <button
+                            type="button"
+                            role="menuitem"
+                            onClick={copyLink}
+                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-foreground transition hover:bg-muted"
                         >
-                            <div className="flex items-center justify-between px-2 py-1">
-                                <p className="text-caption font-semibold uppercase tracking-wider text-muted-foreground">
-                                    Share
-                                </p>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="iconSm"
-                                    onClick={() => setOpen(false)}
-                                    aria-label="Close share menu"
-                                    className="text-muted-foreground hover:text-foreground"
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-
-                            <div className="mt-1 space-y-0.5">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleCopy}
-                                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-foreground transition hover:bg-muted"
-                                >
-                                    {copied ? (
-                                        <Check className="h-4 w-4 text-success" />
-                                    ) : (
-                                        <Link2 className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                    {copied ? "Copied!" : "Copy Link"}
-                                </Button>
-
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleWhatsApp}
-                                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-foreground transition hover:bg-muted"
-                                >
-                                    <MessageCircle className="h-4 w-4 text-emerald-600" />
-                                    WhatsApp
-                                </Button>
-
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleEmail}
-                                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-foreground transition hover:bg-muted"
-                                >
-                                    <Mail className="h-4 w-4 text-muted-foreground" />
-                                    Email
-                                </Button>
-                            </div>
-                        </motion.div>
-                    </>
+                            <Link2 className="h-4 w-4 text-muted-foreground" />
+                            Copy Link
+                            <Check className="ml-auto h-3.5 w-3.5 text-success" />
+                        </button>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>

@@ -20,10 +20,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
 import { toggleWishlist } from "@/lib/services/wishlist";
-import {
-    getWishlistProducts,
-    type WishlistProduct,
-} from "@/lib/services/getWishlistProducts";
+import type { WishlistProduct } from "@/lib/services/getWishlistProducts";
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
@@ -201,8 +198,12 @@ export default function ProfileWishlistPage() {
         try {
             setLoading(true);
             setError(null);
-            const data = await getWishlistProducts();
-            setItems(data);
+            const res = await fetch("/api/wishlist");
+            if (!res.ok) {
+                throw new Error(`wishlist request failed: ${res.status}`);
+            }
+            const json = await res.json();
+            setItems(Array.isArray(json?.items) ? json.items : []);
         } catch (err) {
             console.error(err);
             setError("Failed to load wishlist.");

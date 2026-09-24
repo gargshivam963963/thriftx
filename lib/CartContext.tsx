@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Product } from '@/lib/services/products';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 export type CartItem = Product & { quantity: number };
 

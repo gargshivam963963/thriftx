@@ -1,13 +1,5 @@
 "use client";
 
-import { ID } from "appwrite";
-
-import {
-  databases,
-  APPWRITE_DATABASE_ID,
-  APPWRITE_PRODUCTS_COLLECTION_ID,
-} from "@/lib/appwrite";
-
 import { uploadImages, UploadedImage } from "./storage";
 import { compressImages } from "./imageCompression";
 
@@ -74,10 +66,19 @@ export async function uploadProduct({
     isActive: true,
   };
 
-  return await databases.createDocument(
-    APPWRITE_DATABASE_ID,
-    APPWRITE_PRODUCTS_COLLECTION_ID,
-    ID.unique(),
-    payload,
-  );
+  const response = await fetch("/api/admin/products", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const result = (await response.json()) as {
+    success?: boolean;
+    message?: string;
+  };
+  if (!response.ok || !result.success) {
+    throw new Error(result.message ?? "Failed to create product");
+  }
+
+  return result;
 }

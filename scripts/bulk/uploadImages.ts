@@ -33,7 +33,9 @@ export async function uploadImages(
       InputFile.fromPath(path.join(imageFolder, file)),
     );
 
-    uploaded.push(uploadedFile.$id);
+    uploaded.push(
+      storage.getFileView(APPWRITE.BUCKET_ID, uploadedFile.$id).toString(),
+    );
   }
 
   return {

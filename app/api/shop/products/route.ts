@@ -20,9 +20,14 @@ export async function GET(req: NextRequest) {
         | "price-high"
         | "name"
         | "popular") || "newest";
-    const search = searchParams.get("search") || undefined;
-    const limit = parseInt(searchParams.get("limit") || "12", 10);
-    const offset = parseInt(searchParams.get("offset") || "0", 10);
+const search = searchParams.get("search") || undefined;
+    const MAX_LIMIT = 100;
+    const parsedLimit = parseInt(searchParams.get("limit") || "12", 10);
+    const limit = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(1, parsedLimit), MAX_LIMIT)
+      : 12;
+    const parsedOffset = parseInt(searchParams.get("offset") || "0", 10);
+    const offset = Number.isFinite(parsedOffset) ? Math.max(0, parsedOffset) : 0;
 
     const measurement = searchParams.get("measurement") || undefined;
 
@@ -35,6 +40,7 @@ export async function GET(req: NextRequest) {
       color,
       material,
       condition: condition ? [condition] : undefined,
+      search,
       sort,
       limit,
       offset,
@@ -64,18 +70,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Server-side search filter
-    if (search) {
-      const q = search.toLowerCase().trim();
-      filteredProducts = filteredProducts.filter(
-        (p) =>
-          p.title?.toLowerCase().includes(q) ||
-          p.brand?.toLowerCase().includes(q) ||
-          p.description?.toLowerCase().includes(q),
-      );
-    }
-
-    return NextResponse.json({
+return NextResponse.json({
       success: true,
       products: filteredProducts,
       offset,

@@ -1,3 +1,40 @@
+# THRIFTX — Appwrite → PostgreSQL/Prisma Migration
+
+## Phase 1 — Migrate Product Reads from Appwrite to PostgreSQL + Prisma ✅
+
+**Goal:** Remove Appwrite **Database** dependency for product/category/brand **reads** and load them from Neon PostgreSQL via Prisma. Keep Appwrite Auth + Storage. Keep UI/routes/logic unchanged.
+
+### Status: COMPLETE ✅
+
+- [x] 1. Installed Prisma CLI + `@prisma/client` + `@prisma/adapter-pg` + `pg`
+- [x] 2. Init Prisma (provider = postgresql)
+- [x] 3. Created `prisma/schema.prisma` (User, Brand, Category, Product, ProductImage)
+- [x] 4. Created `lib/prisma.ts` — singleton client with graceful unconfigured handling
+- [x] 5. Added `DATABASE_URL` placeholder (`.env.example`)
+- [x] 6. Created repository layer: `productRepository.ts`, `catalogRepository.ts`
+- [x] 7. Refactored `lib/services/products.ts` to delegate to repositories (same exports)
+- [x] 8. Refactored `lib/categories.ts` to delegate to repositories (same exports)
+- [x] 9. Refactored `lib/services/searchService.server.ts` to use Prisma (product search)
+- [x] 10. Generated Prisma client (`generated/prisma`)
+- [x] 11. Verified `npx tsc --noEmit` passes
+- [x] 12. Verified `npm run build` passes (all 53 pages)
+- [x] 13. Admin product CRUD routed through `/api/admin/products` (server-only, keeps `pg` out of client bundle)
+- [x] 14. Graceful empty states added to all repository read functions (missing-table safe)
+- [x] 15. Applied schema to Neon via `prisma db push` (resolved failed migration + created tables)
+- [x] 16. Seeded Neon PostgreSQL with categories (25), brands, and 21 products (varied catalog across Men/Women/Kids/Unisex)
+- [x] 17. Dedicated `BrandRepository` (`lib/repositories/brandRepository.ts`) for clean modular data access
+
+### Architecture
+```
+Frontend → Next.js Route Handlers → Repository Layer → Prisma → Neon PostgreSQL
+```
+
+### Scope
+- **Migrated:** Product/Category/Brand reads, admin product CRUD, product search
+- **Not migrated (Phase 2+):** Orders, Wishlist, Addresses, Marketing, Analytics, Auth, Storage
+
+---
+
 # THRIFTX — Auth + Footer UI Polish (Design System Compliance)
 
 ## Steps

@@ -1,19 +1,17 @@
+import type { Order } from "@/lib/types/order";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import {
   databases,
   account,
   AppwriteQuery,
-  AppwriteID,
   APPWRITE_DATABASE_ID,
   APPWRITE_ORDERS_COLLECTION_ID,
-  APPWRITE_PRODUCTS_COLLECTION_ID,
   APPWRITE_ADDRESSES_COLLECTION_ID,
   APPWRITE_WISHLIST_COLLECTION_ID,
   APPWRITE_CATEGORIES_COLLECTION_ID,
 } from "@/lib/appwrite";
-import type { Order } from "@/lib/types/order";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
 export interface DashboardStats {
   totalUsers: number;
   totalOrders: number;
@@ -64,32 +62,6 @@ export interface OrderAnalytics {
   topProducts: TopProduct[];
   categoryDistribution: { category: string; count: number; revenue: number }[];
   statusDistribution: { status: string; count: number }[];
-}
-
-export interface AdminProduct {
-  $id: string;
-  $createdAt: string;
-  title: string;
-  brand: string;
-  slug: string;
-  category: string;
-  gender: string;
-  price: number;
-  retailPrice?: number;
-  condition: string;
-  size: string;
-  chest?: string;
-  waist?: string;
-  length?: string;
-  inseam?: string;
-  color: string;
-  material: string;
-  description: string;
-  shippingInfo?: string;
-  primaryImage: string;
-  images: string[];
-  status: string;
-  isActive: boolean;
 }
 
 /** Raw Appwrite document shape (union of the fields we map below). */
@@ -207,14 +179,11 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
     const orders = ordersResponse.documents as OrderDocument[];
 
-    // Fetch products
-    const productsResponse = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_PRODUCTS_COLLECTION_ID,
-      [AppwriteQuery.limit(5000)],
-    );
-
-    const products = productsResponse.documents as ProductDocument[];
+    const products = isDatabaseConfigured
+      ? await prisma!.product.findMany({
+          select: { isActive: true },
+        })
+      : [];
 
     // Calculate stats
     const totalOrders = orders.length;
@@ -325,18 +294,18 @@ export async function getSalesAnalytics(): Promise<OrderAnalytics> {
     });
 
     // Category distribution
-    const productsResponse = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_PRODUCTS_COLLECTION_ID,
-      [AppwriteQuery.limit(5000)],
-    );
+    const products = isDatabaseConfigured
+      ? await prisma!.product.findMany({
+          select: { category: true, price: true },
+        })
+      : [];
 
     const categoryMap = new Map<string, { count: number; revenue: number }>();
-    productsResponse.documents.forEach((p) => {
-      const cat = (p.category as string) || "Uncategorized";
+    products.forEach((p) => {
+      const cat = p.category || "Uncategorized";
       const existing = categoryMap.get(cat) || { count: 0, revenue: 0 };
       existing.count += 1;
-      existing.revenue += Number(p.price) || 0;
+      existing.revenue += p.price || 0;
       categoryMap.set(cat, existing);
     });
 
@@ -387,97 +356,59 @@ export async function getAllOrders(): Promise<Order[]> {
     const response = await databases.listDocuments(
       APPWRITE_DATABASE_ID,
       APPWRITE_ORDERS_COLLECTION_ID,
-      [AppwriteQuery.orderDesc("$createdAt"), AppwriteQuery.limit(5000)],
-    );
-
-    return response.documents.map((doc) => ({
-      $id: doc.$id,
-      $createdAt: doc.$createdAt,
-      orderId: (doc.orderId as string) || doc.$id,
-      status: (doc.status as string) || "Pending",
-      subtotal: Number(doc.subtotal) || 0,
-      shipping: Number(doc.shipping) || 0,
-      total: Number(doc.total) || 0,
-      firstName: (doc.firstName as string) || "",
-      lastName: (doc.lastName as string) || "",
-      phone: (doc.phone as string) || "",
-      address: (doc.address as string) || "",
-      city: (doc.city as string) || "",
-      postalCode: (doc.postalCode as string) || "",
-      country: (doc.country as string) || "India",
-      paymentMethod: (doc.paymentMethod as "razorpay" | "cod") || "cod",
-      paymentId: (doc.paymentId as string) || "",
-      signature: (doc.signature as string) || "",
-      deliveryMethod: (doc.deliveryMethod as string) || "courier",
-      products: (doc.products as string) || "[]",
-
-      // Shipping / fulfillment fields
-      shippingProvider: (doc.shippingProvider as string) || "",
-      shipmentStatus: (doc.shipmentStatus as string) || "",
-      pickupStatus: (doc.pickupStatus as string) || "",
-      shipmentId: (doc.shipmentId as string) || "",
-      trackingNumber: (doc.trackingNumber as string) || "",
-      awbNumber: (doc.awbNumber as string) || "",
-      courier: (doc.courier as string) || "",
-      courierId: (doc.courierId as string) || "",
-      estimatedDelivery: (doc.estimatedDelivery as string) || "",
-      labelUrl: (doc.labelUrl as string) || "",
-      invoiceUrl: (doc.invoiceUrl as string) || "",
-      trackingUrl: (doc.trackingUrl as string) || "",
-      pickupId: (doc.pickupId as string) || "",
-      shippedAt: (doc.shippedAt as string) || "",
-      deliveredAt: (doc.deliveredAt as string) || "",
-    })) as Order[];
-  } catch (error) {
-    console.error("getAllOrders error:", error);
-    return [];
-  }
-}
-
-export async function getAllProducts(): Promise<AdminProduct[]> {
-  try {
-    const response = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_PRODUCTS_COLLECTION_ID,
-      [AppwriteQuery.limit(5000)],
+      [AppwriteQuery.limit(1000), AppwriteQuery.orderDesc("$createdAt")],
     );
 
     return response.documents.map((doc) => ({
       $id: doc.$id,
       $createdAt: doc.$createdAt,
 
-      title: (doc.title as string) || "",
-      brand: (doc.brand as string) || "",
-      slug: (doc.slug as string) || "",
+      orderId: doc.orderId,
+      status: doc.status,
+      email: doc.email ?? "",
 
-      category: (doc.category as string) || "",
-      gender: (doc.gender as string) || "Unisex",
+      subtotal: doc.subtotal,
+      shipping: doc.shipping,
+      discount: doc.discount ?? 0,
+      couponCode: doc.couponCode ?? "",
+      creditUsed: doc.creditUsed ?? 0,
+      total: doc.total,
 
-      price: Number(doc.price) || 0,
-      retailPrice: doc.retailPrice ? Number(doc.retailPrice) : undefined,
+      firstName: doc.firstName,
+      lastName: doc.lastName,
+      phone: doc.phone,
 
-      condition: (doc.condition as string) || "",
-      size: (doc.size as string) || "",
+      address: doc.address,
+      city: doc.city,
+      postalCode: doc.postalCode,
+      country: doc.country,
 
-      chest: (doc.chest as string) ?? "",
-      waist: (doc.waist as string) ?? "",
-      length: (doc.length as string) ?? "",
-      inseam: (doc.inseam as string) ?? "",
+      paymentMethod: doc.paymentMethod ?? "razorpay",
+      paymentId: doc.paymentId,
+      signature: doc.signature,
 
-      color: (doc.color as string) || "",
-      material: (doc.material as string) || "",
+      deliveryMethod: doc.deliveryMethod,
 
-      description: (doc.description as string) || "",
-      shippingInfo: (doc.shippingInfo as string) ?? "",
+      products: doc.products ?? "[]",
+      shippingProvider: doc.shippingProvider,
 
-      primaryImage: (doc.primaryImage as string) || "",
-      images: Array.isArray(doc.images) ? (doc.images as string[]) : [],
-
-      status: (doc.status as string) || "active",
-      isActive: doc.isActive !== false,
+      shipmentStatus: doc.shipmentStatus,
+      pickupStatus: doc.pickupStatus,
+      shipmentId: doc.shipmentId,
+      trackingNumber: doc.trackingNumber,
+      awbNumber: doc.awbNumber,
+      courier: doc.courier,
+      courierId: doc.courierId,
+      estimatedDelivery: doc.estimatedDelivery,
+      labelUrl: doc.labelUrl,
+      invoiceUrl: doc.invoiceUrl,
+      trackingUrl: doc.trackingUrl,
+      pickupId: doc.pickupId,
+      shippedAt: doc.shippedAt,
+      deliveredAt: doc.deliveredAt,
     }));
   } catch (error) {
-    console.error("getAllProducts error:", error);
+    console.error("getAllOrders error:", error);
     return [];
   }
 }
@@ -565,77 +496,6 @@ export async function deleteOrder(documentId: string): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("deleteOrder error:", error);
-    return false;
-  }
-}
-
-export async function toggleProductStatus(
-  documentId: string,
-  isActive: boolean,
-): Promise<boolean> {
-  try {
-    await databases.updateDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_PRODUCTS_COLLECTION_ID,
-      documentId,
-      { isActive },
-    );
-    return true;
-  } catch (error) {
-    console.error("toggleProductStatus error:", error);
-    return false;
-  }
-}
-
-export async function deleteProduct(documentId: string): Promise<boolean> {
-  try {
-    await databases.deleteDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_PRODUCTS_COLLECTION_ID,
-      documentId,
-    );
-    return true;
-  } catch (error) {
-    console.error("deleteProduct error:", error);
-    return false;
-  }
-}
-
-export async function createProduct(
-  data: Record<string, unknown>,
-): Promise<boolean> {
-  try {
-    await databases.createDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_PRODUCTS_COLLECTION_ID,
-      AppwriteID.unique(),
-      {
-        ...data,
-        isActive: true,
-        status: "active",
-      },
-    );
-    return true;
-  } catch (error) {
-    console.error("createProduct error:", error);
-    return false;
-  }
-}
-
-export async function updateProduct(
-  documentId: string,
-  data: Record<string, unknown>,
-): Promise<boolean> {
-  try {
-    await databases.updateDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_PRODUCTS_COLLECTION_ID,
-      documentId,
-      data,
-    );
-    return true;
-  } catch (error) {
-    console.error("updateProduct error:", error);
     return false;
   }
 }

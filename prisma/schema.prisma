@@ -66,6 +66,7 @@ model Product {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   images        ProductImage[]
+wishlists     Wishlist[]
 
   brandRel      Brand?         @relation(fields: [brand], references: [name])
   categoryRel   Category?      @relation(fields: [categorySlug, gender], references: [slug, gender])
@@ -95,4 +96,21 @@ model User {
   appwriteId String? @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ── Wishlist ──────────────────────────────────────────────────────────────────
+// Temporary userId is kept as a String because Appwrite Auth remains the
+// current identity source during the migration.
+// Once Better Auth is migrated, this can be connected to User.id.
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, createdAt])
+  @@index([productId])
 }

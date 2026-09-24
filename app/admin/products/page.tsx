@@ -20,13 +20,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import {
-    getAllProducts,
-    toggleProductStatus,
-    deleteProduct,
-    createProduct as createProductService,
-    updateProduct as updateProductService,
-} from "@/lib/services/adminService";
 import { uploadImages } from "@/lib/services/storage";
 import { Button } from "@/components/ui/button";
 import { showToast } from "@/components/admin/toast/Toast";
@@ -41,6 +34,52 @@ const slugify = (value: string) =>
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
+
+// ── Admin product API helpers (server route proxies) ──
+async function apiGetProducts(): Promise<AdminProduct[]> {
+    const res = await fetch("/api/admin/products");
+    if (!res.ok) throw new Error(`Failed to fetch products: ${res.status}`);
+    const json = await res.json();
+    return Array.isArray(json?.products) ? json.products : [];
+}
+
+async function apiToggleStatus(id: string, isActive: boolean): Promise<boolean> {
+    const res = await fetch("/api/admin/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, isActive }),
+    });
+    const json = await res.json();
+    return json?.success === true;
+}
+
+async function apiDeleteProduct(id: string): Promise<boolean> {
+    const res = await fetch(`/api/admin/products?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+    });
+    const json = await res.json();
+    return json?.success === true;
+}
+
+async function apiCreateProduct(data: Record<string, unknown>): Promise<boolean> {
+    const res = await fetch("/api/admin/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    return json?.success === true;
+}
+
+async function apiUpdateProduct(id: string, data: Record<string, unknown>): Promise<boolean> {
+    const res = await fetch("/api/admin/products", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, data }),
+    });
+    const json = await res.json();
+    return json?.success === true;
+}
 
 interface AdminProduct {
     $id: string;
@@ -157,7 +196,7 @@ export default function AdminProductsPage() {
     } | null>(null);
     const [deleting, setDeleting] = useState(false);
 
-    // Image preview
+// Image preview
     const [previewProduct, setPreviewProduct] = useState<AdminProduct | null>(null);
     const [previewIndex, setPreviewIndex] = useState(0);
 
@@ -165,8 +204,8 @@ export default function AdminProductsPage() {
         setLoading(true);
         setError(null);
         try {
-            const data = await getAllProducts();
-            setProducts(data as AdminProduct[]);
+            const data = await apiGetProducts();
+            setProducts(data);
         } catch (err) {
             console.error("Error loading products:", err);
             setError("Failed to load products. Please try again.");
@@ -207,10 +246,10 @@ export default function AdminProductsPage() {
 
     // ── Handlers ──
 
-    const handleToggleStatus = async (productId: string, currentActive: boolean) => {
+const handleToggleStatus = async (productId: string, currentActive: boolean) => {
         setUpdatingId(productId);
         try {
-            const success = await toggleProductStatus(productId, !currentActive);
+            const success = await apiToggleStatus(productId, !currentActive);
             if (success) {
                 setProducts((prev) =>
                     prev.map((p) =>
@@ -235,7 +274,7 @@ export default function AdminProductsPage() {
         if (!deleteTarget) return;
         setDeleting(true);
         try {
-            const success = await deleteProduct(deleteTarget.id);
+const success = await apiDeleteProduct(deleteTarget.id);
             if (success) {
                 setProducts((prev) => prev.filter((p) => p.$id !== deleteTarget.id));
                 showToast({ type: "success", title: "Product deleted", message: deleteTarget.title });
@@ -357,7 +396,7 @@ export default function AdminProductsPage() {
 
             if (editProduct) {
                 // Update existing
-                const success = await updateProductService(editProduct.id, payload);
+const success = await apiUpdateProduct(editProduct.id, payload);
                 if (success) {
                     showToast({ type: "success", title: "Product updated" });
                     setFormOpen(false);
@@ -367,7 +406,7 @@ export default function AdminProductsPage() {
                 }
             } else {
                 // Create new
-                const success = await createProductService(payload);
+const success = await apiCreateProduct(payload);
                 if (success) {
                     showToast({ type: "success", title: "Product created" });
                     setFormOpen(false);

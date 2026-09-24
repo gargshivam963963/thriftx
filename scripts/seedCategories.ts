@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 
-config({ path: ".env.local" });
+config({ path: ".env" });
 
 console.log("ENV:", process.cwd());
 console.log("ENDPOINT:", process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT);

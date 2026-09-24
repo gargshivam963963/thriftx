@@ -1,4 +1,5 @@
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+import { getBrands as getBrandNames } from "./brandRepository";
 import type { Product, ProductFilters } from "@/lib/services/products";
 
 /**
@@ -12,12 +13,20 @@ import type { Product, ProductFilters } from "@/lib/services/products";
 
 type ProductRow = Exclude<Awaited<ReturnType<typeof getRows>>, null>[number];
 
+export type ProductImport = Omit<Product, "id"> & { id: string };
+
 async function getRows() {
   if (!isDatabaseConfigured) return null;
-  return prisma!.product.findMany({
-    where: { isActive: true, status: "active" },
-    include: { images: { orderBy: { position: "asc" } } },
-  });
+  try {
+    return await prisma!.product.findMany({
+      where: { isActive: true, status: "active" },
+      include: { images: { orderBy: { position: "asc" } } },
+    });
+  } catch (error) {
+    // Table may not exist yet (migration not applied) — return null gracefully.
+    console.error("getRows error:", error);
+    return null;
+  }
 }
 
 function mapProduct(row: ProductRow): Product {
@@ -109,6 +118,20 @@ export async function getProductsByFilters(
     where.material = filters.material;
   }
 
+  if (filters.search) {
+    const q = filters.search.trim().toLowerCase();
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: "insensitive" } },
+        { brand: { contains: q, mode: "insensitive" } },
+        { category: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { color: { contains: q, mode: "insensitive" } },
+        { material: { contains: q, mode: "insensitive" } },
+      ];
+    }
+  }
+
   if (filters.price) {
     switch (filters.price) {
       case "0-499":
@@ -140,35 +163,54 @@ export async function getProductsByFilters(
       break;
   }
 
-  const rows = await prisma!.product.findMany({
-    where,
-    orderBy,
-    include: { images: { orderBy: { position: "asc" } } },
-    skip: filters.offset ?? 0,
-    take: filters.limit ?? 48,
-  });
+  const MAX_LIMIT = 100;
+  const requested = filters.limit ?? 48;
+  const take = Math.min(Math.max(1, requested), MAX_LIMIT);
+
+  const rows = await prisma!.product
+    .findMany({
+      where,
+      orderBy,
+      include: { images: { orderBy: { position: "asc" } } },
+      skip: Math.max(0, filters.offset ?? 0),
+      take,
+    })
+    .catch((error) => {
+      console.error("getProductsByFilters error:", error);
+      return [];
+    });
 
   return rows.map(mapProduct);
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   if (!isDatabaseConfigured) return null;
-  const row = await prisma!.product.findUnique({
-    where: { slug },
-    include: { images: { orderBy: { position: "asc" } } },
-  });
-  if (!row) return null;
-  return mapProduct(row);
+  try {
+    const row = await prisma!.product.findFirst({
+      where: { slug, isActive: true, status: "active" },
+      include: { images: { orderBy: { position: "asc" } } },
+    });
+    if (!row) return null;
+    return mapProduct(row);
+  } catch (error) {
+    console.error("getProductBySlug error:", error);
+    return null;
+  }
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
   if (!isDatabaseConfigured) return null;
-  const row = await prisma!.product.findUnique({
-    where: { id },
-    include: { images: { orderBy: { position: "asc" } } },
-  });
-  if (!row) return null;
-  return mapProduct(row);
+  try {
+    const row = await prisma!.product.findFirst({
+      where: { id, isActive: true, status: "active" },
+      include: { images: { orderBy: { position: "asc" } } },
+    });
+    if (!row) return null;
+    return mapProduct(row);
+  } catch (error) {
+    console.error("getProductById error:", error);
+    return null;
+  }
 }
 
 export async function getSimilarProducts(
@@ -177,15 +219,20 @@ export async function getSimilarProducts(
 ): Promise<Product[]> {
   if (!isDatabaseConfigured) return [];
 
-  const candidates = await prisma!.product.findMany({
-    where: {
-      isActive: true,
-      status: "active",
-      id: { not: product.id },
-    },
-    include: { images: { orderBy: { position: "asc" } } },
-    take: 200,
-  });
+  const candidates = await prisma!.product
+    .findMany({
+      where: {
+        isActive: true,
+        status: "active",
+        id: { not: product.id },
+      },
+      include: { images: { orderBy: { position: "asc" } } },
+      take: 200,
+    })
+    .catch((error) => {
+      console.error("getSimilarProducts error:", error);
+      return [];
+    });
 
   const scored = candidates.map((candidate) => {
     const mapped = mapProduct(candidate);
@@ -238,23 +285,24 @@ export async function getProductsForSitemap(): Promise<
   { slug: string; updatedAt: string }[]
 > {
   if (!isDatabaseConfigured) return [];
-  const rows = await prisma!.product.findMany({
-    where: { isActive: true, status: "active" },
-    select: { slug: true, updatedAt: true },
-  });
-  return rows.map((r) => ({
-    slug: r.slug,
-    updatedAt: r.updatedAt.toISOString(),
-  }));
+  try {
+    const rows = await prisma!.product.findMany({
+      where: { isActive: true, status: "active" },
+      select: { slug: true, updatedAt: true },
+    });
+    return rows.map((r) => ({
+      slug: r.slug,
+      updatedAt: r.updatedAt.toISOString(),
+    }));
+  } catch (error) {
+    // Table may not exist yet (migration not applied) — return empty gracefully.
+    console.error("getProductsForSitemap error:", error);
+    return [];
+  }
 }
 
 export async function getBrands(): Promise<string[]> {
-  if (!isDatabaseConfigured) return [];
-  const rows = await prisma!.brand.findMany({
-    orderBy: { name: "asc" },
-    select: { name: true },
-  });
-  return rows.map((r) => r.name);
+  return getBrandNames();
 }
 
 export async function seedProducts(
@@ -317,6 +365,162 @@ export async function seedProducts(
   return { seeded: true };
 }
 
+/**
+ * Import products from the legacy Appwrite catalog without changing their IDs.
+ * Each product is independent so a failed run can be safely resumed.
+ */
+export async function importProducts(
+  products: ProductImport[],
+): Promise<{ imported: number; updated: number }> {
+  if (!isDatabaseConfigured) {
+    throw new Error("DATABASE_URL is not configured");
+  }
+
+  const ids = new Set<string>();
+  const slugs = new Set<string>();
+  for (const product of products) {
+    if (!product.id) throw new Error("Appwrite product is missing its ID");
+    if (!product.slug) {
+      throw new Error(`Product ${product.id} is missing a slug`);
+    }
+    if (ids.has(product.id)) {
+      throw new Error(`Duplicate Appwrite product ID: ${product.id}`);
+    }
+    if (slugs.has(product.slug)) {
+      throw new Error(`Duplicate Appwrite product slug: ${product.slug}`);
+    }
+    ids.add(product.id);
+    slugs.add(product.slug);
+  }
+
+  const existingById = await prisma!.product.findMany({
+    where: { id: { in: [...ids] } },
+    select: { id: true },
+  });
+  const existingIds = new Set(existingById.map((product) => product.id));
+  const slugOwners = await prisma!.product.findMany({
+    where: { slug: { in: [...slugs] } },
+    select: { id: true, slug: true },
+  });
+  for (const owner of slugOwners) {
+    const source = products.find((product) => product.slug === owner.slug);
+    if (source && source.id !== owner.id) {
+      throw new Error(
+        `Slug collision for "${owner.slug}": Appwrite ID ${source.id} conflicts with PostgreSQL ID ${owner.id}`,
+      );
+    }
+  }
+
+  let imported = 0;
+  let updated = 0;
+  for (const product of products) {
+    const brandName = product.brand.trim();
+    const categorySlug = product.categorySlug || slugify(product.category);
+    const gender = product.gender || "Unisex";
+
+    await prisma!.$transaction(async (tx) => {
+      if (brandName) {
+        const brandSlug = slugify(brandName);
+        const brandWithSlug = await tx.brand.findUnique({
+          where: { slug: brandSlug },
+          select: { name: true },
+        });
+        if (brandWithSlug && brandWithSlug.name !== brandName) {
+          throw new Error(
+            `Brand slug collision for "${brandSlug}": "${brandWithSlug.name}" conflicts with "${brandName}"`,
+          );
+        }
+        await tx.brand.upsert({
+          where: { name: brandName },
+          create: { name: brandName, slug: brandSlug },
+          update: { slug: brandSlug },
+        });
+      }
+
+      await tx.category.upsert({
+        where: { slug_gender: { slug: categorySlug, gender } },
+        create: {
+          name: product.category || categorySlug,
+          slug: categorySlug,
+          gender,
+        },
+        update: { name: product.category || categorySlug },
+      });
+
+      await tx.product.upsert({
+        where: { id: product.id },
+        create: {
+          id: product.id,
+          title: product.title,
+          brand: brandName,
+          slug: product.slug,
+          category: product.category,
+          categorySlug,
+          gender,
+          price: Number(product.price),
+          retailPrice:
+            product.retailPrice !== undefined
+              ? Number(product.retailPrice)
+              : null,
+          condition: product.condition,
+          size: product.size,
+          chest: product.chest || null,
+          waist: product.waist || null,
+          length: product.length || null,
+          inseam: product.inseam || null,
+          color: product.color || null,
+          material: product.material,
+          description: product.description || null,
+          shippingInfo: product.shippingInfo || null,
+          status: product.status,
+          isActive: product.isActive,
+        },
+        update: {
+          title: product.title,
+          brand: brandName,
+          slug: product.slug,
+          category: product.category,
+          categorySlug,
+          gender,
+          price: Number(product.price),
+          retailPrice:
+            product.retailPrice !== undefined
+              ? Number(product.retailPrice)
+              : null,
+          condition: product.condition,
+          size: product.size,
+          chest: product.chest || null,
+          waist: product.waist || null,
+          length: product.length || null,
+          inseam: product.inseam || null,
+          color: product.color || null,
+          material: product.material,
+          description: product.description || null,
+          shippingInfo: product.shippingInfo || null,
+          status: product.status,
+          isActive: product.isActive,
+        },
+      });
+
+      await tx.productImage.deleteMany({ where: { productId: product.id } });
+      if (product.images.length > 0) {
+        await tx.productImage.createMany({
+          data: product.images.filter(Boolean).map((url, position) => ({
+            productId: product.id,
+            url,
+            position,
+          })),
+        });
+      }
+    });
+
+    if (existingIds.has(product.id)) updated += 1;
+    else imported += 1;
+  }
+
+  return { imported, updated };
+}
+
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -332,23 +536,28 @@ export async function searchProducts(
   const q = query.trim().toLowerCase();
   if (!q) return [];
 
-  const rows = await prisma!.product.findMany({
-    where: {
-      isActive: true,
-      status: "active",
-      OR: [
-        { title: { contains: q, mode: "insensitive" } },
-        { brand: { contains: q, mode: "insensitive" } },
-        { category: { contains: q, mode: "insensitive" } },
-        { description: { contains: q, mode: "insensitive" } },
-        { color: { contains: q, mode: "insensitive" } },
-        { material: { contains: q, mode: "insensitive" } },
-      ],
-    },
-    include: { images: { orderBy: { position: "asc" } } },
-    take: limit,
-    orderBy: { createdAt: "desc" },
-  });
+  const rows = await prisma!.product
+    .findMany({
+      where: {
+        isActive: true,
+        status: "active",
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { brand: { contains: q, mode: "insensitive" } },
+          { category: { contains: q, mode: "insensitive" } },
+          { description: { contains: q, mode: "insensitive" } },
+          { color: { contains: q, mode: "insensitive" } },
+          { material: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      include: { images: { orderBy: { position: "asc" } } },
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    })
+    .catch((error) => {
+      console.error("searchProducts error:", error);
+      return [];
+    });
 
   return rows.map(mapProduct);
 }

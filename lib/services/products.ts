@@ -74,6 +74,7 @@ export interface ProductFilters {
   price?: string;
   color?: string;
   material?: string;
+  search?: string;
   sort?: "newest" | "price-low" | "price-high" | "name" | "popular";
   limit?: number;
   offset?: number;
@@ -81,6 +82,12 @@ export interface ProductFilters {
 
 export async function seedProducts(initialProducts: Omit<Product, "id">[]) {
   return productRepository.seedProducts(initialProducts);
+}
+
+export async function importProducts(
+  initialProducts: (Product & { id: string })[],
+) {
+  return productRepository.importProducts(initialProducts);
 }
 export async function getProducts(
   filters: ProductFilters = {},
@@ -117,6 +124,7 @@ const ProductService = {
   getProductBySlug,
   getProductsForSitemap,
   seedProducts,
+  importProducts,
   getBrands,
 };
 

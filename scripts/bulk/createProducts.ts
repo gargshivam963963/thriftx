@@ -1,6 +1,4 @@
-import { ID } from "node-appwrite";
-
-import { databases, APPWRITE } from "./appwrite";
+import { createProduct as createPrismaProduct } from "../../lib/services/adminProductService";
 import { CsvProduct } from "./types";
 import { createCategorySlug, createProductSlug } from "./slug";
 import { UploadedImages } from "./uploadImages";
@@ -9,49 +7,48 @@ export async function createProduct(
   product: CsvProduct,
   uploadedImages: UploadedImages,
 ) {
-  return databases.createDocument(
-    APPWRITE.DATABASE_ID,
-    APPWRITE.PRODUCTS_COLLECTION_ID,
-    ID.unique(),
-    {
-      title: product.title,
+  const ok = await createPrismaProduct({
+    title: product.title,
 
-      brand: product.brand,
+    brand: product.brand,
 
-      slug: createProductSlug(product.title),
+    slug: createProductSlug(product.title),
 
-      gender: product.gender,
+    gender: product.gender,
 
-      category: product.category,
+    category: product.category,
 
-      categorySlug: createCategorySlug(product.category),
+    categorySlug: createCategorySlug(product.category),
 
-      price: Number(product.price),
+    price: Number(product.price),
 
-      retailPrice:
-        product.retailPrice.trim() !== ""
-          ? Number(product.retailPrice)
-          : undefined,
+    retailPrice:
+      product.retailPrice.trim() !== ""
+        ? Number(product.retailPrice)
+        : undefined,
 
-      condition: product.condition,
+    condition: product.condition,
 
-      size: product.size,
+    size: product.size,
 
-      color: product.color,
+    color: product.color,
 
-      material: product.material,
+    material: product.material,
 
-      description: product.description,
+    description: product.description,
 
-      shippingInfo: product.shippingInfo,
+    shippingInfo: product.shippingInfo,
 
-      primaryImage: uploadedImages.primaryImage,
+    primaryImage: uploadedImages.primaryImage,
 
-      images: uploadedImages.images,
+    images: uploadedImages.images,
 
-      status: "active",
+    status: "active",
 
-      isActive: true,
-    },
-  );
+    isActive: true,
+  });
+
+  if (!ok)
+    throw new Error(`Failed to create PostgreSQL product for ${product.sku}`);
+  return ok;
 }

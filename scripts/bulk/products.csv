@@ -1,2 +1,21 @@
 sku,title,brand,gender,category,price,retailPrice,condition,size,color,material,description,shippingInfo
-TX001,Levi's 501 Jeans,Levi's,Men,Jeans,999,3999,Excellent,32,Blue,Denim,Original vintage,Ships within 24 hours
+TX001,"Levi's 501 Jeans original",Levi's,Men,Jeans,999,3999,Excellent,32,Blue,Denim,"Original vintage Levi's 501 jeans, quality checked and ready to style.",Ships within 24 hours
+TX002,Nike Air Force 1 White,Nike,Men,Lower,5999,7995,Excellent,UK 9,White,Leather,"Classic Nike Air Force 1 in premium white leather.",Ships within 24 hours
+TX003,Adidas Originals Hoodie,Adidas,Men,Hoodies,1499,2999,Very Good,L,Black,Cotton,"Comfortable Adidas Originals hoodie with embroidered logo.",Ships within 24 hours
+TX004,Polo Ralph Lauren Shirt,Polo Ralph Lauren,Men,Shirts,1299,3499,Excellent,M,Blue,Cotton,"Iconic Polo Ralph Lauren shirt with classic pony logo.",Ships within 24 hours
+TX005,Carhartt Cargo Pants,Carhartt,Men,Trousers,1799,3999,Very Good,34,Olive,Cotton,"Durable Carhartt cargo pants with multiple pockets.",Ships within 24 hours
+TX006,The North Face Jacket,The North Face,Men,Jackets,2499,5999,Excellent,L,Black,Nylon,"Windproof North Face jacket, perfect for layering.",Ships within 24 hours
+TX007,Vintage Band T-Shirt,Various,Men,T-Shirts,499,1299,Good,M,Black,Cotton,"Vintage concert t-shirt with faded graphic print.",Ships within 24 hours
+TX008,Levi's Trucker Jacket,Levi's,Men,Jackets,2199,4999,Very Good,M,Denim Blue,Denim,"Classic Levi's trucker jacket in washed denim.",Ships within 24 hours
+TX009,Zara Black Dress,Zara,Women,Dresses,999,2499,Excellent,UK 8,Black,Polyester,"Sleek Zara bodycon dress, evening ready.",Ships within 24 hours
+TX010,H&M Floral Top,H&M,Women,Tops,599,1499,Very Good,S,Multicolor,Cotton,"Lightweight floral top with flowy fit.",Ships within 24 hours
+TX011,Levi's Women Jeans,Levi's,Women,Jeans,1199,2999,Excellent,30,Light Blue,Denim,"High-waist Levi's jeans in light wash.",Ships within 24 hours
+TX012,Adidas Women Jacket,Adidas,Women,Jackets,1699,3999,Very Good,M,Black,Polyester,"Sporty Adidas women's jacket with 3-stripe details.",Ships within 24 hours
+TX013,Zara Pleated Skirt,Zara,Women,Skirts,699,1799,Excellent,M,Beige,Polyester,"Elegant pleated midi skirt from Zara.",Ships within 24 hours
+TX014,Nike Kids Hoodie,Nike,Kids,Hoodies,899,1999,Very Good,8Y,Green,Cotton,"Cozy Nike hoodie for kids, machine washable.",Ships within 24 hours
+TX015,Adidas Kids T-Shirt,Adidas,Kids,T-Shirts,399,999,Excellent,7Y,White,Cotton,"Soft Adidas kids tee with logo print.",Ships within 24 hours
+TX016,Polo Kids Shorts,Polo Ralph Lauren,Kids,Shorts,499,1299,Very Good,6Y,Navy,Cotton,"Classic polo shorts for kids with elastic waist.",Ships within 24 hours
+TX017,Unisex Essentials Hoodie,Essentials,Unisex,Hoodies,1299,2999,Excellent,L,Heather Grey,Fleece,"Premium Essentials hoodie, oversized unisex fit.",Ships within 24 hours
+TX018,Unisex Bomber Jacket,Alpha Industries,Unisex,Jackets,1999,4999,Very Good,M,Brown,Nylon,"Vintage-style bomber jacket, unisex fit.",Ships within 24 hours
+TX019,Unisex Sweatpants,Champion,Unisex,Lower,999,2199,Excellent,M,Black,Fleece,"Champion reverse weave sweatpants, unisex.",Ships within 24 hours
+TX020,Women Oversized Sweatshirt,Champion,Women,Hoodies,899,1999,Very Good,L,Red,Fleece,"Oversized Champion sweatshirt in bold red.",Ships within 24 hours

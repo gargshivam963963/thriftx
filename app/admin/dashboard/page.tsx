@@ -19,13 +19,32 @@ import RecentOrders from "@/components/admin/dashboard/RecentOrders";
 import CategoryChart from "@/components/admin/dashboard/CategoryChart";
 import OrderStatusChart from "@/components/admin/dashboard/OrderStatusChart";
 import CustomerInsights from "@/components/admin/dashboard/CustomerInsights";
-import {
-    getDashboardStats,
-    getSalesAnalytics,
-    getAllOrders,
+import type {
     DashboardStats,
     OrderAnalytics,
 } from "@/lib/services/adminService";
+
+// API helpers
+async function apiGetDashboardStats(): Promise<DashboardStats | null> {
+    const res = await fetch('/api/admin/dashboard/stats');
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.stats ?? null;
+}
+
+async function apiGetSalesAnalytics(): Promise<OrderAnalytics | null> {
+    const res = await fetch('/api/admin/dashboard/analytics');
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.analytics ?? null;
+}
+
+async function apiGetAllOrders(): Promise<Order[]> {
+    const res = await fetch('/api/admin/orders');
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json?.orders ?? [];
+}
 import type { Order } from "@/lib/types/order";
 
 function getGreeting() {
@@ -46,9 +65,9 @@ export default function AdminDashboardPage() {
         setLoading(true);
         try {
             const [statsData, analyticsData, ordersData] = await Promise.all([
-                getDashboardStats(),
-                getSalesAnalytics(),
-                getAllOrders(),
+                apiGetDashboardStats(),
+                apiGetSalesAnalytics(),
+                apiGetAllOrders(),
             ]);
             setStats(statsData);
             setAnalytics(analyticsData);

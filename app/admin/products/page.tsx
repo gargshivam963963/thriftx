@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { uploadImages } from "@/lib/services/storage";
+import { uploadImageToR2 } from "@/lib/services/r2Upload";
 import { Button } from "@/components/ui/button";
 import { showToast } from "@/components/admin/toast/Toast";
 import ToastContainer from "@/components/admin/toast/Toast";
@@ -196,7 +196,7 @@ export default function AdminProductsPage() {
     } | null>(null);
     const [deleting, setDeleting] = useState(false);
 
-// Image preview
+    // Image preview
     const [previewProduct, setPreviewProduct] = useState<AdminProduct | null>(null);
     const [previewIndex, setPreviewIndex] = useState(0);
 
@@ -246,7 +246,7 @@ export default function AdminProductsPage() {
 
     // ── Handlers ──
 
-const handleToggleStatus = async (productId: string, currentActive: boolean) => {
+    const handleToggleStatus = async (productId: string, currentActive: boolean) => {
         setUpdatingId(productId);
         try {
             const success = await apiToggleStatus(productId, !currentActive);
@@ -274,7 +274,7 @@ const handleToggleStatus = async (productId: string, currentActive: boolean) => 
         if (!deleteTarget) return;
         setDeleting(true);
         try {
-const success = await apiDeleteProduct(deleteTarget.id);
+            const success = await apiDeleteProduct(deleteTarget.id);
             if (success) {
                 setProducts((prev) => prev.filter((p) => p.$id !== deleteTarget.id));
                 showToast({ type: "success", title: "Product deleted", message: deleteTarget.title });
@@ -349,23 +349,33 @@ const success = await apiDeleteProduct(deleteTarget.id);
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [previewProduct]);
 
-    const handleSave = async (data: ProductFormData, orderedImageUrls: string[], filesToUpload: File[]) => {
+    const handleSave = async (
+        data: ProductFormData,
+        orderedImageUrls: string[],
+        images: File[],
+    ) => {
         setSaving(true);
+
         try {
-            // Upload any new files
+            // Upload new files to R2
             const uploadedUrls: string[] = [];
-            if (filesToUpload.length > 0) {
-                const uploaded = await uploadImages(filesToUpload);
-                uploadedUrls.push(...uploaded.map((u) => u.url));
+
+            if (images.length > 0) {
+                const uploaded = await Promise.all(
+                    images.map((file) => uploadImageToR2(file)),
+                );
+
+                uploadedUrls.push(...uploaded.map((image) => image.key));
             }
 
-            // Build final ordered image URLs
-            // Replace new blob URLs with actual uploaded URLs
+            // Replace blob URLs with uploaded R2 keys
             let uploadIndex = 0;
+
             const finalImageUrls = orderedImageUrls.map((url) => {
                 if (url.startsWith("blob:")) {
                     return uploadedUrls[uploadIndex++] || url;
                 }
+
                 return url;
             });
 
@@ -380,7 +390,9 @@ const success = await apiDeleteProduct(deleteTarget.id);
                 categorySlug: slugify(data.category),
                 size: data.size,
                 price: Number(data.price),
-                retailPrice: data.retailPrice ? Number(data.retailPrice) : undefined,
+                retailPrice: data.retailPrice
+                    ? Number(data.retailPrice)
+                    : undefined,
                 condition: data.condition,
                 color: data.color,
                 material: data.material,
@@ -395,36 +407,58 @@ const success = await apiDeleteProduct(deleteTarget.id);
             };
 
             if (editProduct) {
-                // Update existing
-const success = await apiUpdateProduct(editProduct.id, payload);
+                const success = await apiUpdateProduct(
+                    editProduct.id,
+                    payload,
+                );
+
                 if (success) {
-                    showToast({ type: "success", title: "Product updated" });
+                    showToast({
+                        type: "success",
+                        title: "Product updated",
+                    });
+
                     setFormOpen(false);
                     loadProducts();
                 } else {
-                    showToast({ type: "error", title: "Failed to update product" });
+                    showToast({
+                        type: "error",
+                        title: "Failed to update product",
+                    });
                 }
             } else {
-                // Create new
-const success = await apiCreateProduct(payload);
+                const success = await apiCreateProduct(payload);
+
                 if (success) {
-                    showToast({ type: "success", title: "Product created" });
+                    showToast({
+                        type: "success",
+                        title: "Product created",
+                    });
+
                     setFormOpen(false);
                     loadProducts();
                 } else {
-                    showToast({ type: "error", title: "Failed to create product" });
+                    showToast({
+                        type: "error",
+                        title: "Failed to create product",
+                    });
                 }
             }
-        } catch (err) {
-            console.error("Save error:", err);
-            showToast({ type: "error", title: "Something went wrong" });
+        } catch (error) {
+            console.error("Save product error:", error);
+
+            showToast({
+                type: "error",
+                title: editProduct
+                    ? "Failed to update product"
+                    : "Failed to create product",
+            });
         } finally {
             setSaving(false);
         }
-    }
+    };
 
     // ── Render ──
-
     return (
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <ToastContainer />

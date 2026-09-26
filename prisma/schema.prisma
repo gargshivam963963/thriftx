@@ -1,9 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// THRIFTX — Prisma Schema (PostgreSQL / Neon)
-// Phase 1: Core catalog models only (User, Brand, Category, Product, ProductImage)
-// We keep this minimal — only fields currently required by the app.
-// ─────────────────────────────────────────────────────────────────────────────
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -13,7 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-// ── Brand ────────────────────────────────────────────────────────────────────
 model Brand {
   id        String    @id @default(cuid())
   name      String    @unique
@@ -23,53 +16,50 @@ model Brand {
   products  Product[]
 }
 
-// ── Category ─────────────────────────────────────────────────────────────────
 model Category {
-  id        String       @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
   slug      String
-  gender    String // Men | Women | Kids | Unisex
-  order     Int          @default(0)
-  active    Boolean      @default(true)
+  gender    String
+  order     Int       @default(0)
+  active    Boolean   @default(true)
   image     String?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   products  Product[]
 
   @@unique([slug, gender])
   @@index([active, order])
 }
 
-// ── Product ──────────────────────────────────────────────────────────────────
 model Product {
-  id            String         @id @default(cuid())
-  title         String
-  brand         String
-  slug          String         @unique
-  category      String
-  categorySlug  String
-  gender        String // Men | Women | Kids | Unisex
-  price         Int
-  retailPrice   Int?
-  condition     String
-  size          String
-  chest         String?
-  waist         String?
-  length        String?
-  inseam        String?
-  color         String?
-  material      String
-  description   String?
-  shippingInfo  String?
-  isActive      Boolean        @default(true)
-  status        String         @default("active") // draft | active | sold
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  images        ProductImage[]
-wishlists     Wishlist[]
-
-  brandRel      Brand?         @relation(fields: [brand], references: [name])
-  categoryRel   Category?      @relation(fields: [categorySlug, gender], references: [slug, gender])
+  id           String         @id @default(cuid())
+  title        String
+  brand        String
+  slug         String         @unique
+  category     String
+  categorySlug String
+  gender       String
+  price        Int
+  retailPrice  Int?
+  condition    String
+  size         String
+  chest        String?
+  waist        String?
+  length       String?
+  inseam       String?
+  color        String?
+  material     String
+  description  String?
+  shippingInfo String?
+  isActive     Boolean        @default(true)
+  status       String         @default("active")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  brandRel     Brand          @relation(fields: [brand], references: [name])
+  categoryRel  Category       @relation(fields: [categorySlug, gender], references: [slug, gender])
+  images       ProductImage[]
+  wishlists    Wishlist[]
 
   @@index([isActive, status])
   @@index([categorySlug, gender])
@@ -77,38 +67,29 @@ wishlists     Wishlist[]
   @@index([brand])
 }
 
-// ── ProductImage ─────────────────────────────────────────────────────────────
 model ProductImage {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   productId String
   url       String
-  position  Int      @default(0)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  position  Int     @default(0)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
-// ── User ─────────────────────────────────────────────────────────────────────
-// Minimal user stub for future auth migration. Appwrite Auth is still the current
-// source of truth, so this model is intentionally minimal for now.
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  appwriteId String? @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String?
+  appwriteId String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
-// ── Wishlist ──────────────────────────────────────────────────────────────────
-// Temporary userId is kept as a String because Appwrite Auth remains the
-// current identity source during the migration.
-// Once Better Auth is migrated, this can be connected to User.id.
 model Wishlist {
   id        String   @id @default(cuid())
   userId    String
   productId String
   createdAt DateTime @default(now())
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@index([userId, createdAt])

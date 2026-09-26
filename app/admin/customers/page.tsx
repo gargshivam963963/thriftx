@@ -15,7 +15,15 @@ import {
     Calendar,
     IndianRupee,
 } from "lucide-react";
-import { getCustomers, CustomerData } from "@/lib/services/adminService";
+import type { CustomerData } from "@/lib/services/adminService";
+
+// API helper
+async function apiGetCustomers(): Promise<CustomerData[]> {
+    const res = await fetch('/api/admin/customers');
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json?.customers ?? [];
+}
 import { cn } from "@/lib/utils";
 
 export default function AdminCustomersPage() {
@@ -29,7 +37,7 @@ export default function AdminCustomersPage() {
     const loadCustomers = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await getCustomers();
+            const data = await apiGetCustomers();
             setCustomers(data);
         } catch (error) {
             console.error("Error loading customers:", error);

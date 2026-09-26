@@ -1,3 +1,4 @@
+import { createDownloadUrl } from "@/lib/storage/r2Download";
 import { NextRequest, NextResponse } from "next/server";
 import {
   getAllProducts,
@@ -18,11 +19,37 @@ import {
 export async function GET() {
   try {
     const products = await getAllProducts();
-    return NextResponse.json({ success: true, products });
+
+    const productsWithImageUrls = await Promise.all(
+      products.map(async (product) => {
+        const imageKeys = Array.isArray(product.images)
+          ? product.images.filter(Boolean)
+          : [];
+
+        const imageUrls = await Promise.all(
+          imageKeys.map((key) => createDownloadUrl(key)),
+        );
+
+        return {
+          ...product,
+          primaryImage: imageUrls[0] || "",
+          images: imageUrls,
+        };
+      }),
+    );
+
+    return NextResponse.json({
+      success: true,
+      products: productsWithImageUrls,
+    });
   } catch (error) {
     console.error("[api/admin/products] GET failed:", error);
+
     return NextResponse.json(
-      { success: false, message: "Failed to fetch products" },
+      {
+        success: false,
+        message: "Failed to fetch products",
+      },
       { status: 500 },
     );
   }

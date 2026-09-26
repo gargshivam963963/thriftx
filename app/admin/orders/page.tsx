@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { useEffect, useState, useMemo, useCallback } from "react";
+import { Button } from '@/components/ui/button'; import { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
     Search,
@@ -21,7 +21,33 @@ import {
     Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getAllOrders, updateOrderStatus, deleteOrder } from "@/lib/services/adminService";
+// API helpers
+async function apiGetAllOrders(): Promise<Order[]> {
+    const res = await fetch('/api/admin/orders');
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json?.orders ?? [];
+}
+
+async function apiUpdateOrderStatus(id: string, status: string): Promise<boolean> {
+    const res = await fetch('/api/admin/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+    });
+    if (!res.ok) return false;
+    const json = await res.json();
+    return json?.success === true;
+}
+
+async function apiDeleteOrder(id: string): Promise<boolean> {
+    const res = await fetch(`/api/admin/orders?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+    });
+    if (!res.ok) return false;
+    const json = await res.json();
+    return json?.success === true;
+}
 import { shipOrder } from "@/lib/shipping/admin";
 import type { Order } from "@/lib/types/order";
 import { toast } from "sonner";
@@ -65,7 +91,7 @@ export default function AdminOrdersPage() {
     const loadOrders = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await getAllOrders();
+            const data = await apiGetAllOrders();
             setOrders(data);
         } catch (error) {
             console.error("Error loading orders:", error);
@@ -104,7 +130,7 @@ export default function AdminOrdersPage() {
     const handleStatusUpdate = async (orderId: string, newStatus: string) => {
         setUpdatingId(orderId);
         try {
-            const success = await updateOrderStatus(orderId, newStatus);
+            const success = await apiUpdateOrderStatus(orderId, newStatus);
             if (success) {
                 setOrders((prev) =>
                     prev.map((o) => (o.$id === orderId ? { ...o, status: newStatus } : o)),
@@ -124,7 +150,7 @@ export default function AdminOrdersPage() {
         if (!confirm("Are you sure you want to delete this order?")) return;
 
         try {
-            const success = await deleteOrder(orderId);
+            const success = await apiDeleteOrder(orderId);
             if (success) {
                 setOrders((prev) => prev.filter((o) => o.$id !== orderId));
                 toast.success("Order deleted successfully");
@@ -147,7 +173,7 @@ export default function AdminOrdersPage() {
             if (result.success) {
                 toast.success("Shipment created successfully!");
                 // Refresh order list to show new shipping fields
-                const data = await getAllOrders();
+                const data = await apiGetAllOrders();
                 setOrders(data);
             } else {
                 toast.error(result.message || "Failed to create shipment");
@@ -181,7 +207,7 @@ export default function AdminOrdersPage() {
                     onClick={async () => {
                         setLoading(true);
                         try {
-                            const data = await getAllOrders();
+                            const data = await apiGetAllOrders();
                             setOrders(data);
                         } catch (error) {
                             console.error(error);

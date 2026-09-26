@@ -1,13 +1,16 @@
 import "dotenv/config";
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { r2, R2_BUCKET_NAME } from "../lib/storage/r2";
+import { getR2BucketName, getR2Client } from "../lib/storage/r2";
 
 const key = "test/connection-test.txt";
 
 async function main() {
+  const r2 = getR2Client();
+  const bucketName = getR2BucketName();
+
   await r2.send(
     new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: bucketName,
       Key: key,
       Body: "THRIFTX R2 connection test",
       ContentType: "text/plain",
@@ -18,7 +21,7 @@ async function main() {
 
   await r2.send(
     new DeleteObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: bucketName,
       Key: key,
     }),
   );

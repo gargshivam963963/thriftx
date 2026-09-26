@@ -1,26 +1,37 @@
 import { S3Client } from "@aws-sdk/client-s3";
 
-const endpoint = process.env.R2_ENDPOINT;
-const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+let client: S3Client | undefined;
 
-if (!endpoint) {
-  throw new Error("R2_ENDPOINT is not configured");
-}
-if (!accessKeyId) {
-  throw new Error("R2_ACCESS_KEY_ID is not configured");
-}
-if (!secretAccessKey) {
-  throw new Error("R2_SECRET_ACCESS_KEY is not configured");
+function getRequiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is not configured`);
+  }
+  return value;
 }
 
-export const r2 = new S3Client({
-  region: "auto",
-  endpoint,
-  credentials: {
-    accessKeyId,
-    secretAccessKey,
-  },
-});
+function getR2Config() {
+  const endpoint = getRequiredEnv("R2_ENDPOINT");
+  const accessKeyId = getRequiredEnv("R2_ACCESS_KEY_ID");
+  const secretAccessKey = getRequiredEnv("R2_SECRET_ACCESS_KEY");
+  const bucketName = getRequiredEnv("R2_BUCKET_NAME");
 
-export const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || "";
+  client ??= new S3Client({
+    region: "auto",
+    endpoint,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+  });
+
+  return { client, bucketName };
+}
+
+export function getR2Client(): S3Client {
+  return getR2Config().client;
+}
+
+export function getR2BucketName(): string {
+  return getR2Config().bucketName;
+}

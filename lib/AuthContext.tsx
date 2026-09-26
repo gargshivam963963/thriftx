@@ -1,16 +1,21 @@
 'use client';
-import { createContext, useContext, useEffect, useState } from 'react';
-import { account, isAppwriteEndpointConfigured } from './appwrite';
 
-type AppwriteUser = {
+import { createContext, useContext, useMemo } from 'react';
+import { authClient } from '@/lib/auth-client';
+
+type BetterAuthUser = {
   $id: string;
-  name?: string;
+  id: string;
   email?: string;
+  name?: string;
+  image?: string | null;
   phone?: string;
+  role?: string;
+  appwriteId?: string | null;
 };
 
 interface AuthContextType {
-  user: AppwriteUser | null;
+  user: BetterAuthUser | null;
   loading: boolean;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -24,64 +29,41 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AppwriteUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isPending, refetch } = authClient.useSession();
 
-  const refreshUser = async () => {
-    if (!isAppwriteEndpointConfigured) {
-      setUser(null);
-      return;
+  const user = useMemo<BetterAuthUser | null>(() => {
+    const sessionUser = data?.user;
+    if (!sessionUser) {
+      return null;
     }
 
-    try {
-      const currentUser = await account.get();
-      const phone = currentUser.phone || "";
-      setUser({
-        $id: currentUser.$id,
-        name: currentUser.name,
-        email: currentUser.email,
-        phone,
-      });
-    } catch {
-      setUser(null);
-    }
-  };
-
-  useEffect(() => {
-    const loadUser = async () => {
-      if (!isAppwriteEndpointConfigured) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const currentUser = await account.get();
-        const phone = currentUser.phone || "";
-        setUser({
-          $id: currentUser.$id,
-          name: currentUser.name,
-          email: currentUser.email,
-          phone,
-        });
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+    const typedUser = sessionUser as typeof sessionUser & {
+      role?: string;
+      appwriteId?: string | null;
     };
 
-    loadUser();
-  }, []);
+    return {
+      ...typedUser,
+      id: sessionUser.id,
+      $id: sessionUser.id,
+      name: sessionUser.name || "User",
+      email: sessionUser.email || "",
+      phone: "",
+      role: typedUser.role || "customer",
+      appwriteId: typedUser.appwriteId ?? null,
+    };
+  }, [data]);
+
+  const refreshUser = async () => {
+    await refetch();
+  };
 
   const logout = async () => {
-    if (isAppwriteEndpointConfigured) {
-      await account.deleteSession('current');
-    }
-    setUser(null);
+    await authClient.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading: isPending, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

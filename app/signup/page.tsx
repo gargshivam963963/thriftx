@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import { ArrowRight, Loader2, Check, X, UserPlus } from "lucide-react";
-import { ID, OAuthProvider } from "appwrite";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,8 +16,8 @@ import {
   PasswordField,
   ErrorMessage,
 } from "@/components/ui/form";
-import { account } from "@/lib/appwrite";
 import { useAuth } from "@/lib/AuthContext";
+import { authClient } from "@/lib/auth-client";
 import { getFriendlyError } from "@/lib/errors";
 
 // ─── Validation Schema ───────────────────────────────────────────────────────
@@ -124,8 +123,17 @@ export default function Signup() {
 
   const onSubmit = async (values: SignupValues) => {
     try {
-      await account.create(ID.unique(), values.email, values.password, values.name);
-      await account.createEmailPasswordSession(values.email, values.password);
+      const response = await authClient.signUp.email({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        callbackURL: "/",
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
       await refreshUser();
       router.replace("/");
     } catch (err) {
@@ -140,11 +148,14 @@ export default function Signup() {
 
   const handleGoogleSignup = async () => {
     try {
-      await account.createOAuth2Session(
-        OAuthProvider.Google,
-        `${window.location.origin}/`,
-        `${window.location.origin}/signup`,
-      );
+      const response = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
     } catch (err) {
       setError("root", {
         type: "manual",

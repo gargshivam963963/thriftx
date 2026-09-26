@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import { ArrowRight, Loader2, ShieldCheck, X } from "lucide-react";
-import { OAuthProvider } from "appwrite";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,8 +12,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@/components/ui/button";
 import { FormField, Input, PasswordField } from "@/components/ui/form";
-import { account } from "@/lib/appwrite";
 import { useAuth } from "@/lib/AuthContext";
+import { authClient } from "@/lib/auth-client";
 import { getFriendlyError } from "@/lib/errors";
 
 // ─── Validation Schema ───────────────────────────────────────────────────────
@@ -56,7 +55,17 @@ export default function Login() {
 
     const onSubmit = async (values: LoginValues) => {
         try {
-            await account.createEmailPasswordSession(values.email, values.password);
+            const response = await authClient.signIn.email({
+                email: values.email,
+                password: values.password,
+                rememberMe: remember,
+                callbackURL: "/",
+            });
+
+            if (response.error) {
+                throw response.error;
+            }
+
             if (remember) {
                 localStorage.setItem("thriftx-email", values.email);
             } else {
@@ -79,10 +88,20 @@ export default function Login() {
             return;
         }
         try {
-            await account.createRecovery(
-                email,
-                `${window.location.origin}/reset-password`,
-            );
+            const response = await fetch("/api/auth/request-password-reset", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email,
+                    redirectTo: `${window.location.origin}/reset-password`,
+                }),
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(data?.message || "Unable to send recovery email.");
+            }
+
             setError("root", {
                 type: "manual",
                 message: "Recovery email sent successfully.",
@@ -97,11 +116,14 @@ export default function Login() {
 
     const handleGoogleLogin = async () => {
         try {
-            await account.createOAuth2Session(
-                OAuthProvider.Google,
-                `${window.location.origin}/`,
-                `${window.location.origin}/login`,
-            );
+            const response = await authClient.signIn.social({
+                provider: "google",
+                callbackURL: "/",
+            });
+
+            if (response.error) {
+                throw response.error;
+            }
         } catch (err) {
             setError("root", {
                 type: "manual",

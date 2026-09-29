@@ -32,7 +32,7 @@ export interface AIProductResponse {
 export interface AIFillRequest {
   /** Optional existing product id (used for caching / attribution). */
   productId?: string;
-  /** Appwrite public URLs / signed URLs. Never raw binaries. */
+  /** Public or signed image URLs. Never raw binaries. */
   imageUrls: string[];
   /** When true, analyzes all images. Default: primary/front only. */
   analyzeAllImages?: boolean;

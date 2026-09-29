@@ -4,8 +4,12 @@ import {
   updateOrderStatus,
   deleteOrder,
 } from "@/lib/services/adminService";
+import { adminAuthErrorResponse } from "@/lib/auth-guard";
 
 export async function GET() {
+  const authError = await adminAuthErrorResponse();
+  if (authError) return authError;
+
   try {
     const orders = await getAllOrders();
     return NextResponse.json({ success: true, orders });
@@ -19,6 +23,9 @@ export async function GET() {
 }
 
 export async function PATCH(request: NextRequest) {
+  const authError = await adminAuthErrorResponse();
+  if (authError) return authError;
+
   try {
     const body = await request.json();
     const { id, status } = body ?? {};
@@ -40,6 +47,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const authError = await adminAuthErrorResponse();
+  if (authError) return authError;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

@@ -1,4 +1,3 @@
-import { account } from "@/lib/appwrite";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 
 export interface WishlistProduct {
@@ -19,19 +18,18 @@ export interface WishlistProduct {
  * Fetch all wishlisted products with full product details
  * for the current user.
  *
- * Appwrite Auth remains the identity source temporarily.
- * Wishlist + Product data now come from Prisma/Neon.
+ * Better Auth provides the identity; wishlist and product data come from
+ * Prisma/Neon.
  */
-export async function getWishlistProducts(): Promise<WishlistProduct[]> {
+export async function getWishlistProducts(
+  userId: string,
+): Promise<WishlistProduct[]> {
   if (!isDatabaseConfigured) {
     return [];
   }
 
   try {
-    const user = await account.get();
-    const userId = user.$id;
-
-const wishlistItems = await prisma!.wishlist.findMany({
+    const wishlistItems = await prisma!.wishlist.findMany({
       where: {
         userId,
         product: {

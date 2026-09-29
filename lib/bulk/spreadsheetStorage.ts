@@ -29,12 +29,39 @@ export function loadDraft(): DraftData {
     if (raw) {
       const parsed = JSON.parse(raw) as DraftData;
 
-      // Rehydrate File objects (they can't be serialized — mark as needing re-upload)
-      const rehydrated = parsed.products.map((p) => ({
-        ...p,
-        imageFiles: [],
-        _needsReupload: (p.imageUrls?.length ?? 0) > 0,
-      }));
+      const rehydrated = parsed.products.map((product) => {
+        const savedImageCount = Number(
+          (product as BulkProduct & { _savedImageCount?: number })
+            ._savedImageCount ??
+            product.imageUrls?.length ??
+            0,
+        );
+        if (product.status === "Uploaded" && product.productId) {
+          return {
+            ...product,
+            imageFiles: [],
+            imageUrls: [],
+            primaryImage: undefined,
+            errors: [],
+          };
+        }
+
+        return {
+          ...product,
+          imageFiles: [],
+          imageUrls: [],
+          primaryImage: undefined,
+          status:
+            savedImageCount > 0 ? ("Missing Images" as const) : product.status,
+          errors:
+            savedImageCount > 0
+              ? [
+                  ...product.errors,
+                  "Select the image files again to continue this draft.",
+                ]
+              : product.errors,
+        };
+      });
 
       return {
         products: rehydrated,
@@ -64,8 +91,9 @@ export function saveDraft(
     const serializable = products.map((p) => ({
       ...p,
       imageFiles: [], // can't store File objects
-      imageUrls: p.imageUrls ?? [],
-      _savedImageCount: p.imageFiles.length, // remember count for UI
+      imageUrls: [],
+      primaryImage: undefined,
+      _savedImageCount: p.imageFiles.length,
     }));
 
     const data: DraftData = {
@@ -118,8 +146,8 @@ export function createBlankProduct(skuNumber: number): BulkProduct {
     imageFiles: [],
     imageUrls: [],
     aiGenerated: false,
-    status: "Ready",
-    errors: [],
+    status: "Missing Images",
+    errors: ["Add at least one image."],
   };
 }
 

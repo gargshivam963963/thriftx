@@ -2,7 +2,6 @@ import type { Order } from "@/lib/types/order";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import {
   databases,
-  account,
   AppwriteQuery,
   APPWRITE_DATABASE_ID,
   APPWRITE_ORDERS_COLLECTION_ID,

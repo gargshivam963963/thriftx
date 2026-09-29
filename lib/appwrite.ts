@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Storage, Query, ID } from "appwrite";
+import { Client, Databases, Storage, Query, ID } from "appwrite";
 
 const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "";
 const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT || "";
@@ -71,7 +71,6 @@ if (!appwriteEndpointConfigured) {
   client.setEndpoint(endpoint).setProject(project);
 }
 
-export const account = new Account(client);
 export const databases = new Databases(client);
 export const storage = new Storage(client);
 

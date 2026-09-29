@@ -18,3 +18,19 @@ View your app in AI Studio: https://ai.studio/apps/0b072784-44b1-48a2-8473-df1be
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Authentication Configuration
+
+Better Auth uses the absolute application URL in `BETTER_AUTH_URL` and serves
+its API at `/api/auth`. Configure `BETTER_AUTH_SECRET` with a random secret of
+at least 32 characters.
+
+Google OAuth credentials are server-only: `GOOGLE_CLIENT_ID` and
+`GOOGLE_CLIENT_SECRET`. Register these callback URLs with Google:
+
+- Local: `http://localhost:3000/api/auth/callback/google`
+- Production: `https://YOUR_DOMAIN/api/auth/callback/google`
+
+Email verification and password reset use Resend. Configure the server-only
+`RESEND_API_KEY` and `EMAIL_FROM`; both are required before email signup or
+password reset can complete.

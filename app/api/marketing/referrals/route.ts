@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth-guard";
 import {
-  account,
   databases,
   AppwriteQuery,
   APPWRITE_DATABASE_ID,
@@ -12,8 +12,8 @@ import type { Referral } from "@/lib/marketing/types";
 
 export async function GET() {
   try {
-    const user = await account.get();
-    const userId = user.$id;
+    const user = await requireUser();
+    const userId = user.id;
 
     let code: string;
     let referrals: Referral[] = [];

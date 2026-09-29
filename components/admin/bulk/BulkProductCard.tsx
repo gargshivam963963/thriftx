@@ -361,8 +361,8 @@ export default function BulkProductCard({
     }
 
     function openPreview(idx: number) {
-        const images = product.imageFiles.map((f, i) => ({
-            src: URL.createObjectURL(f),
+        const images = product.imageFiles.map((_, i) => ({
+            src: product.imageUrls[i] || product.primaryImage || "/images/placeholder.jpg",
             label: labels[i] || `Img ${i + 1}`,
         }));
         if (images.length) setPreviewModal({ images, currentIndex: idx });
@@ -388,10 +388,14 @@ export default function BulkProductCard({
                             <Badge variant="secondary" size="xs" rounded="md" className="font-mono tracking-tight">
                                 {product.sku}
                             </Badge>
-                            {hasErrors ? (
+                            {product.status === "Uploaded" ? (
+                                <Badge variant="success" size="xs" className="gap-1">
+                                    Uploaded
+                                </Badge>
+                            ) : hasErrors || product.status === "Invalid" || product.status === "Missing Images" ? (
                                 <Badge variant="error" size="xs" className="gap-1">
                                     <AlertCircle size={9} />
-                                    {product.errors.length}
+                                    {product.errors.length || "Needs attention"}
                                 </Badge>
                             ) : (
                                 <Badge variant="success" size="xs" className="gap-1">
@@ -490,7 +494,7 @@ export default function BulkProductCard({
                                             className="group/cover relative h-full w-full"
                                         >
                                             <Image
-                                                src={URL.createObjectURL(product.imageFiles[0])}
+                                                src={product.imageUrls[0] || product.primaryImage || "/images/placeholder.jpg"}
                                                 alt={labels[0] || "Cover"}
                                                 fill
                                                 unoptimized
@@ -546,7 +550,7 @@ export default function BulkProductCard({
                                                     className="relative h-full w-full"
                                                 >
                                                     <Image
-                                                        src={URL.createObjectURL(file)}
+                                                        src={product.imageUrls[i] || product.primaryImage || "/images/placeholder.jpg"}
                                                         alt={labels[i] || `Image ${i + 1}`}
                                                         fill
                                                         unoptimized

@@ -123,7 +123,7 @@ function UserDropdown({
   user,
   logout,
 }: {
-  user: { $id: string; name?: string; email?: string };
+  user: { id: string; name?: string; email?: string };
   logout: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -230,7 +230,7 @@ function MobileMenu({
 }: {
   open: boolean;
   onClose: () => void;
-  user: { $id: string; name?: string; email?: string } | null;
+  user: { id: string; name?: string; email?: string } | null;
   logout: () => void;
 }) {
   return (

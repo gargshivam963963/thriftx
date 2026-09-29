@@ -17,26 +17,27 @@ model Brand {
 }
 
 model Category {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
   slug      String
   gender    String
-  order     Int       @default(0)
-  active    Boolean   @default(true)
+  order     Int      @default(0)
+  active    Boolean  @default(true)
   image     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  products  Product[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
 
   @@unique([slug, gender])
   @@index([active, order])
 }
 
 model Product {
-  id           String         @id @default(cuid())
+  id           String   @id @default(cuid())
   title        String
   brand        String
-  slug         String         @unique
+  slug         String   @unique
   category     String
   categorySlug String
   gender       String
@@ -52,14 +53,17 @@ model Product {
   material     String
   description  String?
   shippingInfo String?
-  isActive     Boolean        @default(true)
-  status       String         @default("active")
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  brandRel     Brand          @relation(fields: [brand], references: [name])
-  categoryRel  Category       @relation(fields: [categorySlug, gender], references: [slug, gender])
-  images       ProductImage[]
-  wishlists    Wishlist[]
+  isActive     Boolean  @default(true)
+  status       String   @default("active")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  brandRel    Brand    @relation(fields: [brand], references: [name])
+  categoryRel Category @relation(fields: [categorySlug, gender], references: [slug, gender])
+
+  images    ProductImage[]
+  wishlists Wishlist[]
+  cartItems CartItem[]
 
   @@index([isActive, status])
   @@index([categorySlug, gender])
@@ -68,26 +72,30 @@ model Product {
 }
 
 model ProductImage {
-  id        String  @id @default(cuid())
+  id        String @id @default(cuid())
   productId String
   url       String
-  position  Int     @default(0)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  position  Int    @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  id            String   @id @default(cuid())
+  email         String   @unique
+  emailVerified Boolean  @default(false)
   name          String?
   image         String?
-  role          String    @default("customer")
-  appwriteId    String?   @unique
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          String   @default("customer")
+  appwriteId    String?  @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
   sessions      Session[]
   accounts      Account[]
   verifications Verification[]
+  cartItems     CartItem[]
+  wishlists     Wishlist[]
 }
 
 model Session {
@@ -99,7 +107,8 @@ model Session {
   userAgent String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -118,7 +127,8 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerId, accountId])
   @@index([userId])
@@ -132,10 +142,27 @@ model Verification {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   userId     String?
-  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([identifier, value])
   @@index([userId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, createdAt])
+  @@index([productId])
 }
 
 model Wishlist {
@@ -143,9 +170,22 @@ model Wishlist {
   userId    String
   productId String
   createdAt DateTime @default(now())
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@index([userId, createdAt])
   @@index([productId])
+}
+
+model StoredDocument {
+  collectionKey String
+  id            String
+  data          Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@id([collectionKey, id])
+  @@index([collectionKey, createdAt])
 }

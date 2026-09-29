@@ -1,4 +1,5 @@
 import { BulkProduct } from "./types";
+import { validateImageFile } from "@/lib/services/imageCompression";
 
 const VALID_GENDERS = ["Men", "Women", "Kids", "Unisex"];
 
@@ -70,11 +71,11 @@ export function validateProduct(
   if (!product.title?.trim()) errors.push("Title is required.");
   if (!product.brand?.trim()) errors.push("Brand is required.");
 
-  if (product.gender && !VALID_GENDERS.includes(product.gender)) {
+  if (!product.gender || !VALID_GENDERS.includes(product.gender)) {
     errors.push("Invalid gender.");
   }
 
-  if (product.condition && !VALID_CONDITIONS.includes(product.condition)) {
+  if (!product.condition || !VALID_CONDITIONS.includes(product.condition)) {
     errors.push("Invalid condition.");
   }
 
@@ -84,13 +85,16 @@ export function validateProduct(
     errors.push("Invalid category.");
   }
 
-  if (product.price <= 0) errors.push("Price must be greater than 0.");
+  if (!Number.isFinite(product.price) || product.price <= 0) {
+    errors.push("Price must be greater than 0.");
+  }
 
   if (product.retailPrice && product.retailPrice < product.price) {
     errors.push("Retail price must be greater than selling price.");
   }
 
   if (!product.size?.trim()) errors.push("Size is required.");
+  if (!product.material?.trim()) errors.push("Material is required.");
 
   // ── Measurements by category ─────────────────────────
   if (product.category) {
@@ -109,6 +113,12 @@ export function validateProduct(
     errors.push("No images attached.");
   } else if (product.imageFiles.length > maxImages) {
     errors.push(`Maximum ${maxImages} images allowed.`);
+  } else {
+    for (const file of product.imageFiles) {
+      const validation = validateImageFile(file, product.imageFiles.length);
+      if (!validation.valid)
+        errors.push(validation.reason ?? "Invalid image file.");
+    }
   }
 
   return errors;
@@ -134,6 +144,10 @@ export function validateProducts(
   }
 
   return products.map((product) => {
+    if (product.status === "Uploaded" && product.productId) {
+      return { ...product, errors: [] };
+    }
+
     const errors = validateProduct(product, options);
 
     // ── Duplicate checks ───────────────────────────────
@@ -151,7 +165,12 @@ export function validateProducts(
     return {
       ...product,
       errors: [...new Set(errors)],
-      status: errors.length === 0 ? "Ready" : "Invalid",
+      status:
+        errors.length === 0
+          ? "Ready"
+          : errors.some((error) => error === "No images attached.")
+            ? "Missing Images"
+            : "Invalid",
     };
   });
 }

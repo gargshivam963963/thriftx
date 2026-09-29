@@ -21,7 +21,7 @@ export default function ProfileAddressesPage() {
         loading,
         deleteExistingAddress,
         setDefault,
-    } = useAddresses(user?.$id ?? "");
+    } = useAddresses(user?.id ?? "");
 
     useEffect(() => {
         if (authLoading) return;

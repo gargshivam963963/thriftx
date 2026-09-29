@@ -67,19 +67,10 @@ export function matchImages(products: BulkProduct[], files: File[]) {
     map.get(sku)!.push(file);
   }
 
-  console.log("IMAGE MAP");
-  console.log(map);
-
   return products.map((product) => {
     const sku = normalize(product.sku);
 
     const matched = map.get(sku) ?? [];
-
-    console.log({
-      sku,
-      matchedCount: matched.length,
-      matchedNames: matched.map((f) => f.name),
-    });
 
     matched.sort((a, b) =>
       a.name.localeCompare(b.name, undefined, {
@@ -87,18 +78,20 @@ export function matchImages(products: BulkProduct[], files: File[]) {
       }),
     );
 
-    const errors = [...product.errors];
+    const errors = product.errors.filter(
+      (error) => error !== "No images found.",
+    );
 
     if (matched.length === 0) {
       errors.push("No images found.");
     }
+    const imageUrls = matched.map((file) => URL.createObjectURL(file));
     const updatedProduct: BulkProduct = {
       ...product,
 
       imageFiles: matched,
-
-      primaryImage:
-        matched.length > 0 ? URL.createObjectURL(matched[0]) : undefined,
+      imageUrls,
+      primaryImage: imageUrls[0],
 
       status: errors.length === 0 ? "Ready" : "Missing Images",
 

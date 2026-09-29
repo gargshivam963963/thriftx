@@ -180,9 +180,7 @@ function processProductFolder(
   const sku = generateSku(folderName || title || "product");
   const slug = generateSlug(folderName || title || "product");
 
-  // Create preview images as object URLs
-  const primaryImage =
-    sortedImages.length > 0 ? URL.createObjectURL(sortedImages[0]) : undefined;
+  const imageUrls = sortedImages.map((image) => URL.createObjectURL(image));
 
   return {
     row: 0,
@@ -206,8 +204,8 @@ function processProductFolder(
     shippingInfo:
       "Ships within 24 hours. Pan India delivery in 3-7 business days.",
     imageFiles: sortedImages,
-    imageUrls: [],
-    primaryImage,
+    imageUrls,
+    primaryImage: imageUrls[0],
     aiGenerated: false,
     status: sortedImages.length > 0 ? "Ready" : "Missing Images",
     errors,

@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  databases,
-  AppwriteID,
-  AppwriteQuery,
-  APPWRITE_DATABASE_ID,
-} from "@/lib/appwrite";
-
-const ANALYTICS_EVENTS_COLLECTION_ID =
-  process.env.NEXT_PUBLIC_APPWRITE_ANALYTICS_EVENTS_COLLECTION_ID || "";
-const ANALYTICS_SESSIONS_COLLECTION_ID =
-  process.env.NEXT_PUBLIC_APPWRITE_ANALYTICS_SESSIONS_COLLECTION_ID || "";
+  DOCUMENT_COLLECTIONS,
+  DOCUMENT_DATABASE_ID,
+  DocumentID,
+  DocumentQuery,
+  documentStore,
+} from "@/lib/document-store";
 
 /**
  * Server-side filter: returns true if the event should be stored.
  * Defense-in-depth — client-side filtering should catch most, but this
- * ensures no admin/localhost/dev data ever reaches Appwrite.
+ * ensures no admin/localhost/dev data is persisted.
  */
 function shouldStoreEvent(event: Record<string, unknown>): boolean {
   const page = (event.page as string) || "";
@@ -80,28 +76,26 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Store filtered events in Appwrite
+    // Store filtered events in Neon.
     const storedEvents = [];
     for (const event of customerEvents) {
       try {
-        if (ANALYTICS_EVENTS_COLLECTION_ID) {
-          const doc = await databases.createDocument(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_EVENTS_COLLECTION_ID,
-            AppwriteID.unique(),
-            {
-              eventType: event.eventType,
-              eventName: event.eventName,
-              properties: JSON.stringify(event.properties || {}),
-              page: event.page || "",
-              referrer: event.referrer || "",
-              sessionId: event.sessionId || sessionId || "",
-              timestamp: event.timestamp || Date.now(),
-              createdAt: new Date().toISOString(),
-            },
-          );
-          storedEvents.push(doc.$id);
-        }
+        const doc = await documentStore.createDocument(
+          DOCUMENT_DATABASE_ID,
+          DOCUMENT_COLLECTIONS.analyticsEvents,
+          DocumentID.unique(),
+          {
+            eventType: event.eventType,
+            eventName: event.eventName,
+            properties: JSON.stringify(event.properties || {}),
+            page: event.page || "",
+            referrer: event.referrer || "",
+            sessionId: event.sessionId || sessionId || "",
+            timestamp: event.timestamp || Date.now(),
+            createdAt: new Date().toISOString(),
+          },
+        );
+        storedEvents.push(doc.$id);
       } catch (err) {
         console.error("❌ Failed to store analytics event");
         console.error(err);
@@ -117,32 +111,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Update session heartbeat
-    if (sessionId && ANALYTICS_SESSIONS_COLLECTION_ID) {
+    if (sessionId) {
       try {
-        // Try to find existing session
-        const existingSessions = await databases.listDocuments(
-          APPWRITE_DATABASE_ID,
-          ANALYTICS_SESSIONS_COLLECTION_ID,
-          [AppwriteQuery.equal("sessionId", sessionId)],
+        const existingSessions = await documentStore.listDocuments(
+          DOCUMENT_DATABASE_ID,
+          DOCUMENT_COLLECTIONS.analyticsSessions,
+          [DocumentQuery.equal("sessionId", sessionId)],
         );
 
         if (existingSessions.documents.length > 0) {
           const session = existingSessions.documents[0];
-          await databases.updateDocument(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_SESSIONS_COLLECTION_ID,
+          await documentStore.updateDocument(
+            DOCUMENT_DATABASE_ID,
+            DOCUMENT_COLLECTIONS.analyticsSessions,
             session.$id,
             {
               lastActivity: Date.now(),
-              eventCount: (session.eventCount || 0) + events.length,
-              duration: Date.now() - (session.sessionStart || Date.now()),
+              eventCount: Number(session.eventCount || 0) + events.length,
+              duration: Date.now() - Number(session.sessionStart || Date.now()),
             },
           );
         } else {
-          await databases.createDocument(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_SESSIONS_COLLECTION_ID,
-            AppwriteID.unique(),
+          await documentStore.createDocument(
+            DOCUMENT_DATABASE_ID,
+            DOCUMENT_COLLECTIONS.analyticsSessions,
+            DocumentID.unique(),
             {
               sessionId,
               sessionStart: Date.now(),

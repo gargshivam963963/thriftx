@@ -51,6 +51,38 @@ export async function postAiFill(
   payload: AIFillRequest,
   options: { timeoutMs?: number; signal?: AbortSignal } = {},
 ): Promise<AIFillResponse> {
+  return postAiFillBody(
+    JSON.stringify(payload),
+    { "Content-Type": "application/json" },
+    options,
+  );
+}
+
+export async function postAiFillFiles(
+  payload: {
+    productId?: string;
+    images: Array<{ file: Blob; mimeType: string }>;
+    analyzeAllImages: boolean;
+  },
+  options: { timeoutMs?: number; signal?: AbortSignal } = {},
+): Promise<AIFillResponse> {
+  const formData = new FormData();
+  if (payload.productId) formData.append("productId", payload.productId);
+  formData.append("analyzeAllImages", String(payload.analyzeAllImages));
+
+  payload.images.forEach((image, index) => {
+    const extension = image.mimeType.split("/")[1] || "image";
+    formData.append("images", image.file, `image-${index + 1}.${extension}`);
+  });
+
+  return postAiFillBody(formData, undefined, options);
+}
+
+async function postAiFillBody(
+  body: BodyInit,
+  headers: HeadersInit | undefined,
+  options: { timeoutMs?: number; signal?: AbortSignal },
+): Promise<AIFillResponse> {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, signal } = options;
 
   const controller = new AbortController();
@@ -63,8 +95,8 @@ export async function postAiFill(
   try {
     const response = await fetch("/api/ai/fill", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      headers,
+      body,
       signal: controller.signal,
     });
 

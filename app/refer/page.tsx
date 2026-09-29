@@ -94,7 +94,7 @@ export default function ReferPage() {
                 const res = await fetch("/api/marketing/referrals");
                 const data = await res.json();
                 if (active && data.success) {
-                    setReferralCode(data.code || `THRIFTX-${user.$id.slice(0, 6).toUpperCase()}`);
+                    setReferralCode(data.code || `THRIFTX-${user.id.slice(0, 6).toUpperCase()}`);
                     setReferrals(data.referrals || []);
                 }
             } catch (error) {

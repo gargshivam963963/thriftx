@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ai } from "@/lib/ai/gemini";
 import { buildPrompt } from "@/lib/ai/prompt";
 import { parseAIResponse } from "@/lib/ai/parser";
+import { adminAuthErrorResponse } from "@/lib/auth-guard";
 import type {
   AIFillRequest,
   AIProductResponse,
@@ -11,27 +12,19 @@ import type {
 /**
  * THRIFTX — AI Fill API
  *
- * Production architecture:
- *   Client compresses images → uploads to Appwrite Storage
- *   → sends ONLY Appwrite public URLs here.
- *
- * This endpoint NEVER receives Base64 image data.
- * It fetches image bytes server-side and calls Gemini.
+ * Accepts compressed multipart image files from authenticated admins or
+ * existing public/signed URLs, then sends image bytes to Gemini server-side.
  */
 
 // Models to try in order of preference (v1beta-compatible)
-const MODELS = [
-  "gemini-2.0-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-flash-latest",
-  "gemini-2.5-pro",
-];
+const MODELS = ["gemini-3.5-flash-lite", "gemini-3.5-flash"];
 
 /** Max images allowed. */
 const MAX_IMAGES = 10;
 
 /** Max bytes per fetched image (e.g. 8MB). */
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_TOTAL_IMAGE_BYTES = 24 * 1024 * 1024;
 
 /** Valid image MIME types for Gemini inline data. */
 const VALID_MIME_TYPES = [
@@ -311,34 +304,102 @@ function errorResponse(
 }
 
 export async function POST(req: NextRequest) {
+  const authError = await adminAuthErrorResponse();
+  if (authError) return authError;
+
   const startedAt = Date.now();
 
   try {
-    let body: AIFillRequest;
-    try {
-      body = (await req.json()) as AIFillRequest;
-    } catch {
-      return errorResponse("Invalid JSON payload.", "VALIDATION", 400);
-    }
+    const imageParts: { inlineData: { mimeType: string; data: string } }[] = [];
+    let imageUrls: string[] = [];
+    let productId: string | undefined;
+    let analyzeAllImages = false;
+    let requestSizeBytes = 0;
+    const isMultipart = req.headers
+      .get("content-type")
+      ?.toLowerCase()
+      .includes("multipart/form-data");
 
-    const validationError = validatePayload(body);
-    if (validationError) {
-      return NextResponse.json(
-        { success: false, message: validationError, code: "VALIDATION" },
-        { status: 400 },
+    if (isMultipart) {
+      const formData = await req.formData();
+      const entries = formData.getAll("images");
+      const files = entries.filter(
+        (entry): entry is File => entry instanceof File,
       );
-    }
+      if (files.length === 0 || files.length !== entries.length) {
+        return errorResponse("No valid images provided.", "VALIDATION", 400);
+      }
+      if (files.length > MAX_IMAGES) {
+        return errorResponse(
+          `Maximum ${MAX_IMAGES} images per request.`,
+          "VALIDATION",
+          400,
+        );
+      }
 
-    const { imageUrls, analyzeAllImages = false, productId } = body;
+      productId = formData.get("productId")?.toString() || undefined;
+      analyzeAllImages = formData.get("analyzeAllImages") === "true";
+
+      for (const file of files) {
+        if (!VALID_MIME_TYPES.includes(file.type)) {
+          return errorResponse(
+            `Unsupported image type: ${file.type || "unknown"}`,
+            "VALIDATION",
+            400,
+          );
+        }
+        if (file.size > MAX_IMAGE_BYTES) {
+          return errorResponse(
+            "An image exceeded the maximum allowed size.",
+            "PAYLOAD_TOO_LARGE",
+            413,
+          );
+        }
+
+        requestSizeBytes += file.size;
+        if (requestSizeBytes > MAX_TOTAL_IMAGE_BYTES) {
+          return errorResponse(
+            "The image batch exceeded the maximum allowed size.",
+            "PAYLOAD_TOO_LARGE",
+            413,
+          );
+        }
+
+        const data = Buffer.from(await file.arrayBuffer()).toString("base64");
+        imageParts.push({
+          inlineData: { mimeType: file.type, data },
+        });
+      }
+    } else {
+      let body: AIFillRequest;
+      try {
+        body = (await req.json()) as AIFillRequest;
+      } catch {
+        return errorResponse("Invalid JSON payload.", "VALIDATION", 400);
+      }
+
+      const validationError = validatePayload(body);
+      if (validationError) {
+        return NextResponse.json(
+          { success: false, message: validationError, code: "VALIDATION" },
+          { status: 400 },
+        );
+      }
+
+      imageUrls = body.imageUrls;
+      analyzeAllImages = body.analyzeAllImages ?? false;
+      productId = body.productId;
+      requestSizeBytes = imageUrls.reduce(
+        (total, url) => total + Buffer.byteLength(url),
+        0,
+      );
+
+      for (const url of imageUrls) {
+        imageParts.push({ inlineData: await urlToInlineData(url) });
+      }
+    }
 
     const prompt = buildPrompt(analyzeAllImages);
-
-    // Fetch images server-side (never trust client base64).
-    const imageParts: { inlineData: { mimeType: string; data: string } }[] = [];
-    for (const url of imageUrls) {
-      const part = await urlToInlineData(url);
-      imageParts.push({ inlineData: part });
-    }
 
     const { text, model } = await generateWithFallback(prompt, imageParts);
 
@@ -349,7 +410,7 @@ export async function POST(req: NextRequest) {
     // Structured logging — never log Base64 or sensitive info.
     console.info("[api/ai/fill] success", {
       productId: productId ?? null,
-      imageCount: imageUrls.length,
+      imageCount: imageParts.length,
       analyzeAllImages,
       durationMs,
       model,
@@ -360,7 +421,8 @@ export async function POST(req: NextRequest) {
       data: parsed,
       meta: {
         durationMs,
-        imageCount: imageUrls.length,
+        imageCount: imageParts.length,
+        requestSizeBytes,
         retryCount: 0,
         model,
       },

@@ -1,6 +1,6 @@
 /**
  * THRIFTX Design System — Centralized Error Handling
- * Converts raw API / Appwrite errors into friendly, user-facing messages.
+ * Converts raw API and identity-provider errors into friendly, user-facing messages.
  * Never expose raw error internals to the UI.
  */
 
@@ -75,7 +75,7 @@ export function normalizeError(error: unknown): FriendlyError {
   if (typeof error === "object" && error !== null) {
     const e = error as Record<string, unknown>;
 
-    // Appwrite-style errors
+    // API-style errors
     if (typeof e.code === "number") {
       const code = STATUS_MAP[e.code] ?? "UNKNOWN";
       return {
@@ -121,7 +121,7 @@ export function getFriendlyError(error: unknown, fallback?: string): string {
 }
 
 /**
- * Map a raw message to a friendly one for common Appwrite/backend patterns.
+ * Map a raw message to a friendly one for common backend patterns.
  */
 function friendlyFromRaw(raw: string): string {
   const lower = raw.toLowerCase();

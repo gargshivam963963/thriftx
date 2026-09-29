@@ -1,7 +1,7 @@
 "use client";
 
-
-import { Button } from '@/components/ui/button';import { useEffect, useState, useMemo } from "react";
+import { Button } from '@/components/ui/button';
+import { useEffect, useState, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import AdminSidebar from "@/components/admin/dashboard/Sidebar";
@@ -97,4 +97,3 @@ export default function AdminLayout({
         </div>
     );
 }
-

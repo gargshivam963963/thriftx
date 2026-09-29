@@ -2,19 +2,26 @@ export interface R2UploadedImage {
   key: string;
 }
 
-export async function uploadImageToR2(file: File): Promise<R2UploadedImage> {
+export async function uploadImageToR2(
+  file: File,
+  productId: string,
+  position: number,
+): Promise<R2UploadedImage> {
   const response = await fetch("/api/storage/upload-url", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      productId,
       contentType: file.type,
+      position,
     }),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to create R2 upload URL");
+    const result = await response.json().catch(() => null);
+    throw new Error(result?.error || "Failed to create R2 upload URL");
   }
 
   const { uploadUrl, key } = await response.json();
@@ -28,7 +35,7 @@ export async function uploadImageToR2(file: File): Promise<R2UploadedImage> {
   });
 
   if (!uploadResponse.ok) {
-    throw new Error("Failed to upload image to R2");
+    throw new Error(`Failed to upload image to R2 (${uploadResponse.status})`);
   }
 
   return { key };

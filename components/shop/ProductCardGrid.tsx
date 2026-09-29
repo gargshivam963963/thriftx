@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { useState, useEffect } from "react";
+import { Button } from '@/components/ui/button'; import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -130,16 +130,34 @@ export default function ProductCardGrid({
                             </Badge>
                         )}
 
+
                         <Button
                             type="button"
+                            variant="ghost"
+                            size="iconSm"
+                            rounded="full"
                             onClick={handleWishlist}
                             disabled={wishlistLoading}
-                            className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card/90 backdrop-blur-sm shadow-sm transition-all hover:bg-card hover:scale-110 active:scale-90"
+                            aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                            className="
+        !absolute !right-2 !top-2 !z-10
+        !h-9 !w-9 !rounded-full !p-0
+        !bg-white/95 !text-zinc-800
+        !shadow-md !backdrop-blur-sm
+        hover:!bg-white hover:!text-zinc-950
+        dark:!bg-zinc-900/95 dark:!text-zinc-100
+        dark:hover:!bg-zinc-800 dark:hover:!text-white
+        transition-all
+    "
                         >
                             <Heart
-                                size={13}
-                                className={`transition-all duration-200 ${wishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground"
-                                    }`}
+                                size={17}
+                                strokeWidth={2}
+                                className={
+                                    wishlisted
+                                        ? "!fill-red-500 !stroke-red-500 !text-red-500"
+                                        : "!fill-none !stroke-current !text-current"
+                                }
                             />
                         </Button>
                     </div>

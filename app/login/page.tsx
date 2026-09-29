@@ -28,12 +28,14 @@ type LoginValues = z.infer<typeof loginSchema>;
 export default function Login() {
     const router = useRouter();
     const { user, loading: authLoading, refreshUser } = useAuth();
-    const [remember, setRemember] = useState(false);
+    const [remember, setRemember] = useState(true);
 
     const {
         register,
         handleSubmit,
+        getValues,
         setError,
+        setValue,
         formState: { errors, isSubmitting },
     } = useForm<LoginValues>({
         resolver: zodResolver(loginSchema),
@@ -49,9 +51,9 @@ export default function Login() {
     useEffect(() => {
         const savedEmail = localStorage.getItem("thriftx-email");
         if (savedEmail) {
-            return;
+            setValue("email", savedEmail);
         }
-    }, []);
+    }, [setValue]);
 
     const onSubmit = async (values: LoginValues) => {
         try {
@@ -82,29 +84,33 @@ export default function Login() {
     };
 
     const handleForgotPassword = async () => {
-        const email = (document.getElementById("email") as HTMLInputElement)?.value;
+        const email = getValues("email");
         if (!email) {
             setError("email", { type: "manual", message: "Enter your email first." });
             return;
         }
         try {
-            const response = await fetch("/api/auth/request-password-reset", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email,
-                    redirectTo: `${window.location.origin}/reset-password`,
-                }),
+            const configResponse = await fetch("/api/auth/config-status");
+            const authConfig = await configResponse.json();
+            if (!authConfig.emailDeliveryConfigured) {
+                throw new Error(
+                    "Password reset email is not configured. Set RESEND_API_KEY and EMAIL_FROM on the server.",
+                );
+            }
+
+            const response = await authClient.requestPasswordReset({
+                email,
+                redirectTo: `${window.location.origin}/reset-password`,
             });
 
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) {
-                throw new Error(data?.message || "Unable to send recovery email.");
+            if (response.error) {
+                throw response.error;
             }
 
             setError("root", {
                 type: "manual",
-                message: "Recovery email sent successfully.",
+                message:
+                    "Request accepted. If an account exists and email delivery succeeds, a reset link will arrive.",
             });
         } catch (err) {
             setError("root", {
@@ -116,6 +122,14 @@ export default function Login() {
 
     const handleGoogleLogin = async () => {
         try {
+            const configResponse = await fetch("/api/auth/config-status");
+            const authConfig = await configResponse.json();
+            if (!authConfig.googleConfigured) {
+                throw new Error(
+                    "Google sign-in is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET on the server.",
+                );
+            }
+
             const response = await authClient.signIn.social({
                 provider: "google",
                 callbackURL: "/",
@@ -197,9 +211,12 @@ export default function Login() {
 
                         {/* Google OAuth */}
                         <Button
+                            type="button"
                             variant="outline"
                             size="lg"
                             fullWidth
+                            disabled={isSubmitting}
+                            onClick={handleGoogleLogin}
                         >
                             <svg width="20" height="20" viewBox="0 0 48 48">
                                 <path

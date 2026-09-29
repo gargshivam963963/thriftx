@@ -10,7 +10,19 @@ export async function createDownloadUrl(key: string) {
       Key: key,
     }),
     {
-      expiresIn: 3600,
+      expiresIn: 86400,
     },
   );
+}
+
+export async function createProductImageUrl(value: string): Promise<string> {
+  if (!value || value.startsWith("/") || /^https?:\/\//i.test(value)) {
+    return value;
+  }
+
+  if (value.startsWith("products/")) {
+    return createDownloadUrl(value);
+  }
+
+  return value;
 }

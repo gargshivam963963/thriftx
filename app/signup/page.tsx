@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Loader2, Check, X, UserPlus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -103,6 +103,7 @@ function PasswordStrengthBar({ password }: { password: string }) {
 export default function Signup() {
   const router = useRouter();
   const { user, loading: authLoading, refreshUser } = useAuth();
+  const [verificationNotice, setVerificationNotice] = useState("");
 
   const {
     register,
@@ -123,6 +124,14 @@ export default function Signup() {
 
   const onSubmit = async (values: SignupValues) => {
     try {
+      const configResponse = await fetch("/api/auth/config-status");
+      const authConfig = await configResponse.json();
+      if (!authConfig.emailDeliveryConfigured) {
+        throw new Error(
+          "Email verification is not configured. Set RESEND_API_KEY and EMAIL_FROM on the server before creating accounts.",
+        );
+      }
+
       const response = await authClient.signUp.email({
         name: values.name,
         email: values.email,
@@ -132,6 +141,13 @@ export default function Signup() {
 
       if (response.error) {
         throw response.error;
+      }
+
+      if (!response.data?.token) {
+        setVerificationNotice(
+          "Your account needs email verification before signing in. A verification email should arrive if delivery succeeds.",
+        );
+        return;
       }
 
       await refreshUser();
@@ -148,6 +164,14 @@ export default function Signup() {
 
   const handleGoogleSignup = async () => {
     try {
+      const configResponse = await fetch("/api/auth/config-status");
+      const authConfig = await configResponse.json();
+      if (!authConfig.googleConfigured) {
+        throw new Error(
+          "Google sign-in is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET on the server.",
+        );
+      }
+
       const response = await authClient.signIn.social({
         provider: "google",
         callbackURL: "/",
@@ -226,6 +250,12 @@ export default function Signup() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {verificationNotice && (
+              <div className="mb-5 rounded-xl border border-success/30 bg-success/10 p-4 text-body-sm text-success">
+                {verificationNotice}
+              </div>
+            )}
 
             {/* Google OAuth */}
             <Button

@@ -11,7 +11,10 @@ import type { BulkProduct } from "@/app/lib/bulk/types";
 import { uploadProducts } from "@/app/lib/bulk/uploader";
 import { processSmartFolders } from "@/app/lib/bulk/smart-processor";
 import { sortByFilename } from "@/app/lib/bulk/image-sorter";
+import { matchImages } from "@/app/lib/bulk/image-matcher";
+import { parseExcel } from "@/app/lib/bulk/excel-parser";
 import { mapAIResponseToProduct } from "@/lib/ai/parser";
+import { validateProducts } from "@/app/lib/bulk/validators";
 import { runAiFill } from "@/lib/services/aiFill";
 import {
     loadDraft,
@@ -37,6 +40,9 @@ export default function BulkUploadPage() {
     } | null>(null);
     const [aiLoadingSku, setAiLoadingSku] = useState<string | null>(null);
     const [bulkAiLoading, setBulkAiLoading] = useState(false);
+    const [excelFile, setExcelFile] = useState<File | null>(null);
+    const [excelLoading, setExcelLoading] = useState(false);
+    const [excelError, setExcelError] = useState<string | undefined>();
 
     // ── Spreadsheet mode state ─────────────────────────────────
     const [nextSkuNumber, setNextSkuNumber] = useState(1);
@@ -78,7 +84,7 @@ export default function BulkUploadPage() {
     // ── Core handlers ──────────────────────────────────────────
     const handleAddRow = useCallback(() => {
         const newProduct = createBlankProduct(nextSkuNumber);
-        setProducts((prev) => [...prev, newProduct]);
+        setProducts((prev) => validateProducts([...prev, newProduct]));
         setNextSkuNumber((prev) => prev + 1);
         showToast({
             type: "success",
@@ -107,6 +113,11 @@ export default function BulkUploadPage() {
                     ...source,
                     sku: generateSku(nextSkuNumber),
                     row: prev.length + 1,
+                    productId: undefined,
+                    imageUrls: source.imageFiles.map((file) => URL.createObjectURL(file)),
+                    primaryImage: source.imageFiles[0]
+                        ? URL.createObjectURL(source.imageFiles[0])
+                        : undefined,
                     title: source.title ? `${source.title} (Copy)` : "",
                     aiGenerated: false,
                     aiConfidence: undefined,
@@ -115,7 +126,7 @@ export default function BulkUploadPage() {
                     errors: [],
                 };
                 setNextSkuNumber((n) => n + 1);
-                return [...prev, copy];
+                return validateProducts([...prev, copy]);
             });
             showToast({
                 type: "success",
@@ -128,31 +139,39 @@ export default function BulkUploadPage() {
 
     const handleImagesChange = useCallback(
         (sku: string, files: File[]) => {
-            setProducts((prev) =>
+            const imageUrls = files.map((file) => URL.createObjectURL(file));
+            setProducts((prev) => validateProducts(
                 prev.map((p) =>
                     p.sku === sku
                         ? {
                             ...p,
                             imageFiles: files,
-                            imageUrls: files.map((f) =>
-                                URL.createObjectURL(f),
-                            ),
+                            imageUrls,
+                            primaryImage: imageUrls[0],
+                            status: p.status === "Uploaded" ? "Ready" : p.status,
                             errors: [],
                         }
                         : p,
                 ),
-            );
+            ));
         },
         [],
     );
 
     const handleProductUpdate = useCallback(
         (sku: string, updates: Partial<BulkProduct>) => {
-            setProducts((prev) =>
+            setProducts((prev) => validateProducts(
                 prev.map((p) =>
-                    p.sku === sku ? { ...p, ...updates, errors: [] } : p,
+                    p.sku === sku
+                        ? {
+                            ...p,
+                            ...updates,
+                            status: p.status === "Uploaded" ? "Ready" : p.status,
+                            errors: [],
+                        }
+                        : p,
                 ),
-            );
+            ));
         },
         [],
     );
@@ -310,15 +329,54 @@ export default function BulkUploadPage() {
     // ── Dropzone handlers ──────────────────────────────────────
     const handleFilesSelected = useCallback(
         (files: File[]) => {
-            const hasFolderPath = files.some(
-                (f) =>
-                    (f as File & { webkitRelativePath?: string })
+            let imageFiles = files.filter((file) => file.type.startsWith("image/"));
+            if (imageFiles.length === 0) {
+                showToast({ type: "warning", title: "No supported images selected" });
+                return;
+            }
+            const hasFolderPath = imageFiles.some(
+                (file) =>
+                    (file as File & { webkitRelativePath?: string })
                         .webkitRelativePath,
             );
 
+            const waitingForImages = products.filter(
+                (product) =>
+                    product.status !== "Uploaded" && product.imageFiles.length === 0,
+            );
+            if (waitingForImages.length > 0) {
+                const matchedProducts = matchImages(waitingForImages, imageFiles).filter(
+                    (product) => product.imageFiles.length > 0,
+                );
+                if (matchedProducts.length > 0) {
+                    const matchedBySku = new Map(
+                        matchedProducts.map((product) => [product.sku, product]),
+                    );
+                    setProducts((current) =>
+                        validateProducts(
+                            current.map((product) =>
+                                matchedBySku.get(product.sku) ?? product,
+                            ),
+                        ),
+                    );
+                    enqueueAi(matchedProducts);
+                    const matchedFiles = new Set(
+                        matchedProducts.flatMap((product) => product.imageFiles),
+                    );
+                    imageFiles = imageFiles.filter((file) => !matchedFiles.has(file));
+                    if (imageFiles.length === 0) {
+                        showToast({
+                            type: "success",
+                            title: "Images matched by SKU",
+                            message: `${matchedProducts.length} product row(s) received images.`,
+                        });
+                        return;
+                    }
+                }
+            }
+
             if (hasFolderPath) {
-                // Folder structure → each subfolder is one product
-                const result = processSmartFolders(files);
+                const result = processSmartFolders(imageFiles);
                 if (result.products.length === 0) {
                     showToast({
                         type: "warning",
@@ -330,32 +388,34 @@ export default function BulkUploadPage() {
                     return;
                 }
 
-                setProducts((prev) => {
-                    const merged = [...prev, ...result.products];
-                    // Renumber rows sequentially
-                    return merged.map((p, idx) => ({ ...p, row: idx + 1 }));
+                setProducts((current) => {
+                    const merged = [...current, ...result.products];
+                    return validateProducts(
+                        merged.map((product, index) => ({ ...product, row: index + 1 })),
+                    );
                 });
 
                 showToast({
                     type: "success",
-                    title: `${result.products.length} product${result.products.length !== 1 ? "s" : ""
-                        } detected`,
-                    message: `Auto-starting AI to extract details...`,
+                    title: `${result.products.length} product${result.products.length !== 1 ? "s" : ""} detected`,
+                    message: "Auto-starting AI to extract details...",
                     duration: 4000,
                 });
-
-                // Auto-AI each detected product
                 enqueueAi(result.products);
-            } else {
-                // Loose images → treat as one product (sorted)
-                const sorted = sortByFilename(files);
+                return;
+            }
+
+            if (imageFiles.length > 0) {
+                const sorted = sortByFilename(imageFiles);
+                const imageUrls = sorted.map((file) => URL.createObjectURL(file));
                 const newProduct: BulkProduct = {
                     ...createBlankProduct(nextSkuNumber),
                     imageFiles: sorted,
-                    imageUrls: sorted.map((f) => URL.createObjectURL(f)),
+                    imageUrls,
+                    primaryImage: imageUrls[0],
                 };
-                setProducts((prev) => [...prev, newProduct]);
-                setNextSkuNumber((n) => n + 1);
+                setProducts((current) => validateProducts([...current, newProduct]));
+                setNextSkuNumber((current) => current + 1);
                 showToast({
                     type: "success",
                     title: "Product created",
@@ -365,7 +425,7 @@ export default function BulkUploadPage() {
                 enqueueAi([newProduct]);
             }
         },
-        [nextSkuNumber, enqueueAi],
+        [nextSkuNumber, enqueueAi, products],
     );
 
     const handleFolderSelected = useCallback(
@@ -374,6 +434,45 @@ export default function BulkUploadPage() {
         },
         [handleFilesSelected],
     );
+
+    const handleExcelSelect = useCallback(async (file: File) => {
+        setExcelFile(file);
+        setExcelError(undefined);
+        setExcelLoading(true);
+        try {
+            const imported = await parseExcel(file);
+            if (imported.length === 0) {
+                throw new Error("The spreadsheet contains no product rows.");
+            }
+
+            setProducts((current) => validateProducts([...current, ...imported]));
+            const highestSkuNumber = imported.reduce((highest, product) => {
+                const match = product.sku.match(/^TX(\d+)$/i);
+                return match ? Math.max(highest, Number(match[1])) : highest;
+            }, 0);
+            setNextSkuNumber((current) =>
+                Math.max(current, highestSkuNumber + 1, imported.length + 1),
+            );
+            showToast({
+                type: "success",
+                title: "Spreadsheet imported",
+                message: `${imported.length} row(s) added. Add images named by SKU or drop product folders.`,
+            });
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : "Could not parse spreadsheet.";
+            setExcelError(message);
+            setExcelFile(null);
+            showToast({ type: "error", title: "Spreadsheet import failed", message });
+        } finally {
+            setExcelLoading(false);
+        }
+    }, []);
+
+    const handleExcelClear = useCallback(() => {
+        setExcelFile(null);
+        setExcelError(undefined);
+    }, []);
 
     // ── Bulk AI Fill ───────────────────────────────────────────
     const handleBulkAiFill = useCallback(async () => {
@@ -472,12 +571,25 @@ export default function BulkUploadPage() {
 
     // ── Upload ─────────────────────────────────────────────────
     const handleUpload = useCallback(async () => {
-        const ready = products.filter((p) => p.errors.length === 0);
+        const validated = validateProducts(
+            products.filter((product) => product.status !== "Uploaded"),
+        );
+        const validatedBySku = new Map(validated.map((product) => [product.sku, product]));
+        setProducts((current) =>
+            current.map((product) =>
+                product.status === "Uploaded"
+                    ? product
+                    : validatedBySku.get(product.sku) ?? product,
+            ),
+        );
+        const ready = validated.filter(
+            (product) => product.status === "Ready" && product.errors.length === 0,
+        );
         if (ready.length === 0) {
             showToast({
                 type: "warning",
                 title: "No products ready",
-                message: "Fix validation errors before uploading.",
+                message: "Complete required fields and reselect any missing images before uploading.",
             });
             return;
         }
@@ -494,14 +606,29 @@ export default function BulkUploadPage() {
         try {
             const result = await uploadProducts({
                 products: ready,
-                onProgress: (p) =>
+                onProgress: (p) => {
                     setProgress({
                         current: p.current,
                         total: p.total,
                         percentage: p.percentage,
                         currentSku: p.currentSku,
-                    }),
+                    });
+                    setProducts((current) =>
+                        current.map((product) =>
+                            product.sku === p.currentSku
+                                ? { ...product, status: "Uploading" }
+                                : product,
+                        ),
+                    );
+                },
             });
+
+            const resultsBySku = new Map(
+                [...result.success, ...result.failed].map((product) => [product.sku, product]),
+            );
+            setProducts((current) =>
+                current.map((product) => resultsBySku.get(product.sku) ?? product),
+            );
 
             const res = {
                 success: result.success.length,
@@ -563,6 +690,11 @@ export default function BulkUploadPage() {
                     onAiFillAll={handleBulkAiFill}
                     onFilesSelected={handleFilesSelected}
                     onFolderSelected={handleFolderSelected}
+                    excelFile={excelFile}
+                    excelLoading={excelLoading}
+                    excelError={excelError}
+                    onExcelSelect={handleExcelSelect}
+                    onExcelClear={handleExcelClear}
                     aiProcessing={autoAiRunning}
                     aiProcessingInfo={aiProcessingInfo}
                 />
@@ -581,4 +713,3 @@ export default function BulkUploadPage() {
         </div>
     );
 }
-

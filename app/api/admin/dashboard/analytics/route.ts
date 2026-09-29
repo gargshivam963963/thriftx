@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSalesAnalytics } from "@/lib/services/adminService";
+import { adminAuthErrorResponse } from "@/lib/auth-guard";
 
 export async function GET() {
+  const authError = await adminAuthErrorResponse();
+  if (authError) return authError;
+
   try {
     const analytics = await getSalesAnalytics();
     return NextResponse.json({ success: true, analytics });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { adminAuthErrorResponse } from "@/lib/auth-guard";
 import {
   listCoupons,
   createCoupon,
@@ -23,6 +24,9 @@ import {
 // and `action`: list | create | update | delete
 
 export async function POST(req: NextRequest) {
+  const authError = await adminAuthErrorResponse();
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     const { type, action, id, data } = body;

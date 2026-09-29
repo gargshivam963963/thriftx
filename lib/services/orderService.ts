@@ -1,11 +1,11 @@
 import {
   databases,
-  account,
   AppwriteID,
   AppwriteQuery,
   APPWRITE_DATABASE_ID,
   APPWRITE_ORDERS_COLLECTION_ID,
 } from "@/lib/appwrite";
+import { authClient } from "@/lib/auth-client";
 import type { Order, PaymentMethod } from "@/lib/types/order";
 
 export interface OrderData {
@@ -163,14 +163,16 @@ export async function getOrder(documentId: string): Promise<Order> {
 }
 
 export async function createOrder(data: OrderData) {
-  const user = await account.get();
+  const session = await authClient.getSession();
+  const user = session.data?.user;
+  if (!user) throw new Error("Not authenticated");
 
   return databases.createDocument(
     APPWRITE_DATABASE_ID,
     APPWRITE_ORDERS_COLLECTION_ID,
     AppwriteID.unique(),
     {
-      userId: user.$id,
+      userId: user.id,
       email: user.email,
 
       subtotal: data.subtotal,
@@ -232,13 +234,15 @@ export async function createOrder(data: OrderData) {
 }
 
 export async function getUserOrders(): Promise<Order[]> {
-  const user = await account.get();
+  const session = await authClient.getSession();
+  const user = session.data?.user;
+  if (!user) throw new Error("Not authenticated");
 
   const response = await databases.listDocuments(
     APPWRITE_DATABASE_ID,
     APPWRITE_ORDERS_COLLECTION_ID,
     [
-      AppwriteQuery.equal("userId", user.$id),
+      AppwriteQuery.equal("userId", user.id),
       AppwriteQuery.orderDesc("$createdAt"),
     ],
   );

@@ -187,7 +187,7 @@ export default function CheckoutPage() {
         updateExistingAddress,
         deleteExistingAddress,
         setDefault,
-    } = useAddresses(user?.$id ?? "");
+    } = useAddresses(user?.id ?? "");
 
     const [cartItems, setCartItems] = useState<CartProduct[]>([]);
     const [cartLoading, setCartLoading] = useState(true);

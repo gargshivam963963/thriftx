@@ -30,6 +30,7 @@ export interface AdminProduct {
   shippingInfo?: string;
   primaryImage: string;
   images: string[];
+  imageKeys: string[];
   status: string;
   isActive: boolean;
 }
@@ -80,6 +81,7 @@ export async function getAllProducts(): Promise<AdminProduct[]> {
 
       primaryImage: product.images[0]?.url ?? "",
       images: product.images.map((image) => image.url),
+      imageKeys: product.images.map((image) => image.url),
 
       status: product.status,
       isActive: product.isActive,
@@ -95,6 +97,13 @@ export async function toggleProductStatus(
   isActive: boolean,
 ): Promise<boolean> {
   try {
+    if (isActive) {
+      const imageCount = await prisma!.productImage.count({
+        where: { productId: documentId },
+      });
+      if (imageCount === 0) return false;
+    }
+
     await prisma!.product.update({
       where: {
         id: documentId,
@@ -129,86 +138,169 @@ export async function deleteProduct(documentId: string): Promise<boolean> {
 
 export async function createProduct(
   data: Record<string, unknown>,
-): Promise<boolean> {
-  try {
-    const images = Array.isArray(data.images)
-      ? data.images.filter(
-          (image): image is string => typeof image === "string",
-        )
-      : [];
+): Promise<{ productId: string }> {
+  if (!isDatabaseConfigured || !prisma) {
+    throw new Error("Database is not configured");
+  }
 
-    await prisma!.product.create({
+  const title = String(data.title ?? "").trim();
+  const brand = String(data.brand ?? "").trim();
+  const category = String(data.category ?? "").trim();
+  const gender = String(data.gender ?? "Unisex");
+  const slug = String(data.slug ?? "").trim();
+  const categorySlug = String(data.categorySlug ?? slugify(category));
+  const price = Number(data.price);
+  const material = String(data.material ?? "").trim();
+
+  if (
+    !title ||
+    !brand ||
+    !category ||
+    !slug ||
+    !material ||
+    !Number.isFinite(price) ||
+    price <= 0
+  ) {
+    throw new Error(
+      "Title, brand, category, slug, material, and a valid price are required",
+    );
+  }
+
+  const product = await prisma.$transaction(async (tx) => {
+    await tx.brand.upsert({
+      where: { name: brand },
+      create: { name: brand, slug: slugify(brand) },
+      update: {},
+    });
+
+    await tx.category.upsert({
+      where: { slug_gender: { slug: categorySlug, gender } },
+      create: { name: category, slug: categorySlug, gender },
+      update: {},
+    });
+
+    return tx.product.create({
       data: {
-        title: String(data.title ?? ""),
-        brand: String(data.brand ?? ""),
-        slug: String(data.slug ?? ""),
-
-        category: String(data.category ?? ""),
-        categorySlug: String(data.categorySlug ?? data.category ?? ""),
-        gender: String(data.gender ?? "Unisex"),
-
-        price: Number(data.price ?? 0),
+        title,
+        brand,
+        slug,
+        category,
+        categorySlug,
+        gender,
+        price,
         retailPrice:
           data.retailPrice !== undefined && data.retailPrice !== null
             ? Number(data.retailPrice)
             : null,
-
         condition: String(data.condition ?? ""),
         size: String(data.size ?? ""),
-
         chest: data.chest ? String(data.chest) : null,
         waist: data.waist ? String(data.waist) : null,
         length: data.length ? String(data.length) : null,
         inseam: data.inseam ? String(data.inseam) : null,
-
         color: data.color ? String(data.color) : null,
-        material: String(data.material ?? ""),
-
+        material,
         description: data.description ? String(data.description) : null,
-
         shippingInfo: data.shippingInfo ? String(data.shippingInfo) : null,
-
-        isActive: true,
-        status: "active",
-
-        images: {
-          create: images.map((url, index) => ({
-            url,
-            position: index,
-          })),
-        },
+        isActive: false,
+        status: "draft",
       },
+      select: { id: true },
     });
+  });
 
-    return true;
-  } catch (error) {
-    console.error("createProduct error:", error);
-    return false;
-  }
+  return { productId: product.id };
 }
 
 export async function updateProduct(
   documentId: string,
   data: Record<string, unknown>,
-): Promise<boolean> {
-  try {
-    const images = Array.isArray(data.images)
-      ? data.images.filter(
-          (image): image is string => typeof image === "string",
-        )
-      : null;
+): Promise<void> {
+  if (!isDatabaseConfigured || !prisma) {
+    throw new Error("Database is not configured");
+  }
 
-    await prisma!.product.update({
-      where: {
-        id: documentId,
+  const imageInput = data.images;
+  let images: string[] | undefined;
+  if (Array.isArray(imageInput)) {
+    images = imageInput.filter(
+      (image): image is string => typeof image === "string",
+    );
+    if (images.length !== imageInput.length) {
+      throw new Error("Image references must be strings");
+    }
+  }
+  if (images && new Set(images).size !== images.length) {
+    throw new Error("Duplicate product image references are not allowed");
+  }
+  if (
+    images?.some((image) => {
+      if (image.startsWith("/") || /^https?:\/\//i.test(image)) return false;
+      return !image.startsWith(`products/${documentId}/`);
+    })
+  ) {
+    throw new Error("Image reference is not a valid key for this product");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const current = await tx.product.findUnique({
+      where: { id: documentId },
+      select: {
+        brand: true,
+        category: true,
+        categorySlug: true,
+        gender: true,
+        isActive: true,
+        status: true,
       },
+    });
+    if (!current) throw new Error("Product not found");
+
+    const brand = String(data.brand ?? current.brand).trim();
+    const category = String(data.category ?? current.category).trim();
+    const gender = String(data.gender ?? current.gender);
+    const categorySlug = String(
+      data.categorySlug ?? current.categorySlug ?? slugify(category),
+    );
+    const nextIsActive =
+      data.isActive === undefined ? undefined : Boolean(data.isActive);
+    const nextStatus =
+      data.status === undefined ? undefined : String(data.status);
+
+    await tx.brand.upsert({
+      where: { name: brand },
+      create: { name: brand, slug: slugify(brand) },
+      update: {},
+    });
+    await tx.category.upsert({
+      where: { slug_gender: { slug: categorySlug, gender } },
+      create: { name: category, slug: categorySlug, gender },
+      update: {},
+    });
+
+    if (
+      nextIsActive === true ||
+      nextStatus === "active" ||
+      (nextIsActive === undefined && current.isActive) ||
+      (nextStatus === undefined && current.status === "active")
+    ) {
+      const imageCount = images
+        ? images.length
+        : await tx.productImage.count({ where: { productId: documentId } });
+      if (imageCount === 0) {
+        throw new Error("A product needs at least one image before activation");
+      }
+    }
+
+    await tx.product.update({
+      where: { id: documentId },
       data: {
         ...(data.title !== undefined && {
           title: String(data.title),
         }),
 
         ...(data.brand !== undefined && {
-          brand: String(data.brand),
+          brand,
         }),
 
         ...(data.slug !== undefined && {
@@ -216,15 +308,15 @@ export async function updateProduct(
         }),
 
         ...(data.category !== undefined && {
-          category: String(data.category),
+          category,
         }),
 
         ...(data.categorySlug !== undefined && {
-          categorySlug: String(data.categorySlug),
+          categorySlug,
         }),
 
         ...(data.gender !== undefined && {
-          gender: String(data.gender),
+          gender,
         }),
 
         ...(data.price !== undefined && {
@@ -287,26 +379,41 @@ export async function updateProduct(
     });
 
     if (images) {
-      await prisma!.productImage.deleteMany({
+      const existing = await tx.productImage.findMany({
+        where: { productId: documentId },
+      });
+      const existingByKey = new Map(
+        existing.map((image) => [image.url, image]),
+      );
+
+      for (const [position, key] of images.entries()) {
+        const retained = existingByKey.get(key);
+        if (retained) {
+          await tx.productImage.update({
+            where: { id: retained.id },
+            data: { position },
+          });
+        } else {
+          await tx.productImage.create({
+            data: { productId: documentId, url: key, position },
+          });
+        }
+      }
+
+      await tx.productImage.deleteMany({
         where: {
           productId: documentId,
+          ...(images.length > 0 ? { url: { notIn: images } } : {}),
         },
       });
-
-      if (images.length > 0) {
-        await prisma!.productImage.createMany({
-          data: images.map((url, index) => ({
-            productId: documentId,
-            url,
-            position: index,
-          })),
-        });
-      }
     }
+  });
+}
 
-    return true;
-  } catch (error) {
-    console.error("updateProduct error:", error);
-    return false;
-  }
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }

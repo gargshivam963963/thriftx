@@ -4,14 +4,12 @@ import { createContext, useContext, useMemo } from 'react';
 import { authClient } from '@/lib/auth-client';
 
 type BetterAuthUser = {
-  $id: string;
   id: string;
   email?: string;
   name?: string;
   image?: string | null;
   phone?: string;
   role?: string;
-  appwriteId?: string | null;
 };
 
 interface AuthContextType {
@@ -37,20 +35,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return null;
     }
 
-    const typedUser = sessionUser as typeof sessionUser & {
-      role?: string;
-      appwriteId?: string | null;
-    };
+    const typedUser = sessionUser as typeof sessionUser & { role?: string };
 
     return {
       ...typedUser,
       id: sessionUser.id,
-      $id: sessionUser.id,
       name: sessionUser.name || "User",
       email: sessionUser.email || "",
       phone: "",
       role: typedUser.role || "customer",
-      appwriteId: typedUser.appwriteId ?? null,
     };
   }, [data]);
 
@@ -59,7 +52,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await authClient.signOut();
+    const response = await authClient.signOut();
+    if (response.error) {
+      throw response.error;
+    }
+    await refetch();
   };
 
   return (

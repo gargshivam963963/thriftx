@@ -61,24 +61,29 @@ async function apiDeleteProduct(id: string): Promise<boolean> {
     return json?.success === true;
 }
 
-async function apiCreateProduct(data: Record<string, unknown>): Promise<boolean> {
+async function apiCreateProduct(data: Record<string, unknown>): Promise<string> {
     const res = await fetch("/api/admin/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
     });
     const json = await res.json();
-    return json?.success === true;
+    if (!res.ok || json?.success !== true || typeof json.productId !== "string") {
+        throw new Error(json?.message || "Failed to create product draft");
+    }
+    return json.productId;
 }
 
-async function apiUpdateProduct(id: string, data: Record<string, unknown>): Promise<boolean> {
+async function apiUpdateProduct(id: string, data: Record<string, unknown>): Promise<void> {
     const res = await fetch("/api/admin/products", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, data }),
     });
     const json = await res.json();
-    return json?.success === true;
+    if (!res.ok || json?.success !== true) {
+        throw new Error(json?.message || "Failed to save product");
+    }
 }
 
 interface AdminProduct {
@@ -110,6 +115,7 @@ interface AdminProduct {
 
     primaryImage: string;
     images: string[];
+    imageKeys: string[];
 
     status: string;
     isActive: boolean;
@@ -187,6 +193,7 @@ export default function AdminProductsPage() {
         id: string;
         data: ProductFormData;
         images: string[];
+        imageKeys: string[];
     } | null>(null);
 
     // Delete confirm
@@ -320,6 +327,7 @@ export default function AdminProductsPage() {
             id: product.$id,
             data: formData,
             images: product.images || (product.primaryImage ? [product.primaryImage] : []),
+            imageKeys: product.imageKeys || [],
         });
 
         setFormOpen(true);
@@ -351,37 +359,14 @@ export default function AdminProductsPage() {
 
     const handleSave = async (
         data: ProductFormData,
-        orderedImageUrls: string[],
+        orderedImages: { url: string; key?: string }[],
         images: File[],
     ) => {
         setSaving(true);
+        let newDraftId: string | null = null;
 
         try {
-            // Upload new files to R2
-            const uploadedUrls: string[] = [];
-
-            if (images.length > 0) {
-                const uploaded = await Promise.all(
-                    images.map((file) => uploadImageToR2(file)),
-                );
-
-                uploadedUrls.push(...uploaded.map((image) => image.key));
-            }
-
-            // Replace blob URLs with uploaded R2 keys
-            let uploadIndex = 0;
-
-            const finalImageUrls = orderedImageUrls.map((url) => {
-                if (url.startsWith("blob:")) {
-                    return uploadedUrls[uploadIndex++] || url;
-                }
-
-                return url;
-            });
-
-            const primaryImage = finalImageUrls[0] || "";
-
-            const payload: Record<string, unknown> = {
+            const productData: Record<string, unknown> = {
                 title: data.title,
                 brand: data.brand,
                 gender: data.gender,
@@ -402,56 +387,44 @@ export default function AdminProductsPage() {
                 inseam: data.inseam,
                 description: data.description,
                 shippingInfo: data.shippingInfo,
-                primaryImage,
-                images: finalImageUrls,
             };
 
-            if (editProduct) {
-                const success = await apiUpdateProduct(
-                    editProduct.id,
-                    payload,
-                );
+            const productId = editProduct?.id ?? (newDraftId = await apiCreateProduct(productData));
+            const finalImageKeys: string[] = [];
+            let fileIndex = 0;
 
-                if (success) {
-                    showToast({
-                        type: "success",
-                        title: "Product updated",
-                    });
-
-                    setFormOpen(false);
-                    loadProducts();
+            for (const [position, image] of orderedImages.entries()) {
+                if (image.url.startsWith("blob:")) {
+                    const file = images[fileIndex++];
+                    if (!file) throw new Error("An image file is missing from the upload queue");
+                    const uploaded = await uploadImageToR2(file, productId, position);
+                    finalImageKeys.push(uploaded.key);
                 } else {
-                    showToast({
-                        type: "error",
-                        title: "Failed to update product",
-                    });
-                }
-            } else {
-                const success = await apiCreateProduct(payload);
-
-                if (success) {
-                    showToast({
-                        type: "success",
-                        title: "Product created",
-                    });
-
-                    setFormOpen(false);
-                    loadProducts();
-                } else {
-                    showToast({
-                        type: "error",
-                        title: "Failed to create product",
-                    });
+                    finalImageKeys.push(image.key ?? image.url);
                 }
             }
+
+            await apiUpdateProduct(productId, {
+                ...productData,
+                images: finalImageKeys,
+                ...(editProduct ? {} : { status: "active", isActive: true }),
+            });
+
+            showToast({
+                type: "success",
+                title: editProduct ? "Product updated" : "Product created",
+            });
+            setFormOpen(false);
+            await loadProducts();
         } catch (error) {
             console.error("Save product error:", error);
 
             showToast({
                 type: "error",
-                title: editProduct
-                    ? "Failed to update product"
-                    : "Failed to create product",
+                title: newDraftId ? "Product saved as draft" : editProduct ? "Failed to update product" : "Failed to create product",
+                message: error instanceof Error
+                    ? `${error.message}${newDraftId ? ` Draft ID: ${newDraftId}` : ""}`
+                    : "The product was not published.",
             });
         } finally {
             setSaving(false);

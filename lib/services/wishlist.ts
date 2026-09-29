@@ -1,12 +1,12 @@
 import { AppwriteID, AppwriteQuery } from "@/lib/appwrite";
 import {
-  account,
   databases,
   APPWRITE_DATABASE_ID,
   APPWRITE_WISHLIST_COLLECTION_ID,
 } from "@/lib/appwrite";
+import { authClient } from "@/lib/auth-client";
 
-// Cache current user ID to avoid repeated account.get() calls
+// Cache the Better Auth user ID to avoid repeated session requests.
 let cachedUserId: string | null = null;
 let userIdPromise: Promise<string> | null = null;
 
@@ -16,8 +16,9 @@ async function getUserId(): Promise<string> {
 
   userIdPromise = (async () => {
     try {
-      const user = await account.get();
-      cachedUserId = user.$id;
+      const session = await authClient.getSession();
+      if (!session.data?.user) throw new Error("Not authenticated");
+      cachedUserId = session.data.user.id;
       return cachedUserId;
     } catch {
       cachedUserId = null;

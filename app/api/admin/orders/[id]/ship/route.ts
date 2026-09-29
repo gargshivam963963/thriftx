@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createShipmentFromOrder } from "@/lib/shipping/createShipmentFromOrder";
+import { adminAuthErrorResponse } from "@/lib/auth-guard";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const authError = await adminAuthErrorResponse();
+  if (authError) return authError;
+
   try {
     const { id } = await params;
 

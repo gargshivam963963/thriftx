@@ -1,4 +1,7 @@
-import { uploadProduct } from "@/lib/services/uploadProduct";
+import {
+  ProductUploadError,
+  uploadProduct,
+} from "@/lib/services/uploadProduct";
 
 import { BulkProduct } from "./types";
 
@@ -12,6 +15,14 @@ export interface UploadProgress {
 export interface UploadResult {
   success: BulkProduct[];
   failed: BulkProduct[];
+}
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 interface UploadOptions {
@@ -38,6 +49,11 @@ export async function uploadProducts({
       currentSku: product.sku,
     });
 
+    if (product.status === "Uploaded") {
+      success.push(product);
+      continue;
+    }
+
     if (product.status !== "Ready") {
       failed.push({
         ...product,
@@ -48,12 +64,14 @@ export async function uploadProducts({
     }
 
     try {
-      await uploadProduct({
+      const result = await uploadProduct({
         form: {
           title: product.title,
           brand: product.brand,
+          slug: `${slugify(product.title)}-${slugify(product.sku)}`,
           gender: product.gender,
           category: product.category,
+          categorySlug: product.categorySlug || slugify(product.category),
 
           price: String(product.price),
 
@@ -78,19 +96,28 @@ export async function uploadProducts({
 
         images: product.imageFiles,
         primaryIndex: 0,
+        productId: product.productId,
       });
+
+      for (const url of [...product.imageUrls, product.primaryImage ?? ""]) {
+        if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+      }
 
       success.push({
         ...product,
+        productId: result.productId,
+        imageFiles: [],
         imageUrls: [],
-        primaryImage: product.imageFiles[0]
-          ? URL.createObjectURL(product.imageFiles[0])
-          : undefined,
+        primaryImage: undefined,
         status: "Uploaded",
+        errors: [],
       });
     } catch (error) {
       failed.push({
         ...product,
+        ...(error instanceof ProductUploadError && error.productId
+          ? { productId: error.productId }
+          : {}),
         status: "Invalid",
         errors: [
           ...product.errors,

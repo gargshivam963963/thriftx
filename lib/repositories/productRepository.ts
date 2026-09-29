@@ -1,4 +1,5 @@
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+import { createProductImageUrl } from "@/lib/storage/r2Download";
 import { getBrands as getBrandNames } from "./brandRepository";
 import type { Product, ProductFilters } from "@/lib/services/products";
 
@@ -29,10 +30,12 @@ async function getRows() {
   }
 }
 
-function mapProduct(row: ProductRow): Product {
-  const images = row.images
-    .sort((a, b) => a.position - b.position)
-    .map((img) => img.url);
+async function mapProduct(row: ProductRow): Promise<Product> {
+  const images = await Promise.all(
+    [...row.images]
+      .sort((a, b) => a.position - b.position)
+      .map((image) => createProductImageUrl(image.url)),
+  );
 
   return {
     id: row.id,
@@ -66,7 +69,7 @@ function mapProduct(row: ProductRow): Product {
 export async function getAllProducts(): Promise<Product[]> {
   const rows = await getRows();
   if (!rows) return [];
-  return rows.map(mapProduct);
+  return Promise.all(rows.map(mapProduct));
 }
 
 export async function getProductsByFilters(
@@ -180,7 +183,7 @@ export async function getProductsByFilters(
       return [];
     });
 
-  return rows.map(mapProduct);
+  return Promise.all(rows.map(mapProduct));
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -234,8 +237,8 @@ export async function getSimilarProducts(
       return [];
     });
 
-  const scored = candidates.map((candidate) => {
-    const mapped = mapProduct(candidate);
+  const mappedCandidates = await Promise.all(candidates.map(mapProduct));
+  const scored = mappedCandidates.map((mapped) => {
     const sharedCategory = mapped.category === product.category ? 4 : 0;
     const sharedBrand = mapped.brand === product.brand ? 4 : 0;
     const sharedColor =
@@ -559,5 +562,5 @@ export async function searchProducts(
       return [];
     });
 
-  return rows.map(mapProduct);
+  return Promise.all(rows.map(mapProduct));
 }

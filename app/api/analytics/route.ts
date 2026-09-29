@@ -1,11 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
-import { databases, AppwriteQuery, APPWRITE_DATABASE_ID } from "@/lib/appwrite";
+import {
+  DOCUMENT_COLLECTIONS,
+  DOCUMENT_DATABASE_ID,
+  DocumentQuery,
+  documentStore,
+} from "@/lib/document-store";
 import type { TrafficSource } from "@/lib/analytics/types";
 
-const ANALYTICS_EVENTS_COLLECTION_ID =
-  process.env.NEXT_PUBLIC_APPWRITE_ANALYTICS_EVENTS_COLLECTION_ID || "";
-const ANALYTICS_SESSIONS_COLLECTION_ID =
-  process.env.NEXT_PUBLIC_APPWRITE_ANALYTICS_SESSIONS_COLLECTION_ID || "";
+interface AnalyticsEventRecord {
+  eventType?: string;
+  properties?: string | Record<string, unknown>;
+  page?: string;
+  referrer?: string;
+  sessionId?: string;
+  timestamp?: number;
+}
+
+interface AnalyticsSessionRecord {
+  sessionStart?: number;
+  userAgent?: string;
+  ip?: string;
+}
+
+function parseProperties(
+  value: AnalyticsEventRecord["properties"],
+): Record<string, unknown> {
+  if (typeof value === "string") {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : {};
+    } catch {
+      return {};
+    }
+  }
+  return value ?? {};
+}
+
+async function fetchAnalyticsEvents() {
+  const response = await documentStore.listDocuments(
+    DOCUMENT_DATABASE_ID,
+    DOCUMENT_COLLECTIONS.analyticsEvents,
+    [DocumentQuery.limit(5000)],
+  );
+  return {
+    ...response,
+    documents: response.documents as unknown as AnalyticsEventRecord[],
+  };
+}
+
+async function fetchAnalyticsSessions() {
+  const response = await documentStore.listDocuments(
+    DOCUMENT_DATABASE_ID,
+    DOCUMENT_COLLECTIONS.analyticsSessions,
+    [DocumentQuery.limit(5000)],
+  );
+  return {
+    ...response,
+    documents: response.documents as unknown as AnalyticsSessionRecord[],
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,12 +105,8 @@ export async function GET(request: NextRequest) {
 
       try {
         // Fetch events for the period
-        if (ANALYTICS_EVENTS_COLLECTION_ID) {
-          const eventsResponse = await databases.listDocuments(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_EVENTS_COLLECTION_ID,
-            [AppwriteQuery.limit(5000)],
-          );
+        {
+          const eventsResponse = await fetchAnalyticsEvents();
 
           const events = eventsResponse.documents;
           totalEvents = events.length;
@@ -94,12 +145,8 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-        if (ANALYTICS_SESSIONS_COLLECTION_ID) {
-          const sessionsResponse = await databases.listDocuments(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_SESSIONS_COLLECTION_ID,
-            [AppwriteQuery.limit(5000)],
-          );
+        {
+          const sessionsResponse = await fetchAnalyticsSessions();
 
           const sessions = sessionsResponse.documents.filter(
             (s) =>
@@ -148,20 +195,14 @@ export async function GET(request: NextRequest) {
       const sourcesMap = new Map<string, number>();
 
       try {
-        if (ANALYTICS_EVENTS_COLLECTION_ID) {
-          const eventsResponse = await databases.listDocuments(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_EVENTS_COLLECTION_ID,
-            [AppwriteQuery.limit(5000)],
-          );
+        {
+          const eventsResponse = await fetchAnalyticsEvents();
 
           for (const event of eventsResponse.documents) {
             const ts = event.timestamp || 0;
             if (ts < startTimestamp || ts > endTimestamp) continue;
 
-            const properties = event.properties
-              ? JSON.parse(event.properties)
-              : {};
+            const properties = parseProperties(event.properties);
             const referrer = event.referrer || "direct";
             let source = "direct";
 
@@ -205,12 +246,8 @@ export async function GET(request: NextRequest) {
       >();
 
       try {
-        if (ANALYTICS_EVENTS_COLLECTION_ID) {
-          const eventsResponse = await databases.listDocuments(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_EVENTS_COLLECTION_ID,
-            [AppwriteQuery.limit(5000)],
-          );
+        {
+          const eventsResponse = await fetchAnalyticsEvents();
 
           for (const event of eventsResponse.documents) {
             const ts = event.timestamp || 0;
@@ -252,21 +289,17 @@ export async function GET(request: NextRequest) {
       >();
 
       try {
-        if (ANALYTICS_EVENTS_COLLECTION_ID) {
-          const eventsResponse = await databases.listDocuments(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_EVENTS_COLLECTION_ID,
-            [AppwriteQuery.limit(5000)],
-          );
+        {
+          const eventsResponse = await fetchAnalyticsEvents();
 
           for (const event of eventsResponse.documents) {
             const ts = event.timestamp || 0;
             if (ts < startTimestamp || ts > endTimestamp) continue;
 
-            const properties = event.properties
-              ? JSON.parse(event.properties)
-              : {};
-            const query = (properties.query || "").toLowerCase().trim();
+            const properties = parseProperties(event.properties);
+            const query = String(properties.query || "")
+              .toLowerCase()
+              .trim();
             if (!query) continue;
 
             const existing = searchesMap.get(query) || {
@@ -311,21 +344,15 @@ export async function GET(request: NextRequest) {
       >();
 
       try {
-        if (ANALYTICS_EVENTS_COLLECTION_ID) {
-          const eventsResponse = await databases.listDocuments(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_EVENTS_COLLECTION_ID,
-            [AppwriteQuery.limit(5000)],
-          );
+        {
+          const eventsResponse = await fetchAnalyticsEvents();
 
           for (const event of eventsResponse.documents) {
             const ts = event.timestamp || 0;
             if (ts < startTimestamp || ts > endTimestamp) continue;
 
-            const properties = event.properties
-              ? JSON.parse(event.properties)
-              : {};
-            const productId = properties.productId || "";
+            const properties = parseProperties(event.properties);
+            const productId = String(properties.productId || "");
             if (!productId) continue;
 
             const existing = productMap.get(productId) || {
@@ -377,12 +404,8 @@ export async function GET(request: NextRequest) {
       const deviceMap = new Map<string, number>();
 
       try {
-        if (ANALYTICS_SESSIONS_COLLECTION_ID) {
-          const sessionsResponse = await databases.listDocuments(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_SESSIONS_COLLECTION_ID,
-            [AppwriteQuery.limit(5000)],
-          );
+        {
+          const sessionsResponse = await fetchAnalyticsSessions();
 
           for (const session of sessionsResponse.documents) {
             const ts = session.sessionStart || 0;
@@ -420,12 +443,8 @@ export async function GET(request: NextRequest) {
       >();
 
       try {
-        if (ANALYTICS_SESSIONS_COLLECTION_ID) {
-          const sessionsResponse = await databases.listDocuments(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_SESSIONS_COLLECTION_ID,
-            [AppwriteQuery.limit(5000)],
-          );
+        {
+          const sessionsResponse = await fetchAnalyticsSessions();
 
           for (const session of sessionsResponse.documents) {
             const ts = session.sessionStart || 0;
@@ -484,12 +503,8 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-        if (ANALYTICS_EVENTS_COLLECTION_ID) {
-          const eventsResponse = await databases.listDocuments(
-            APPWRITE_DATABASE_ID,
-            ANALYTICS_EVENTS_COLLECTION_ID,
-            [AppwriteQuery.limit(5000)],
-          );
+        {
+          const eventsResponse = await fetchAnalyticsEvents();
 
           for (const event of eventsResponse.documents) {
             const ts = event.timestamp || 0;

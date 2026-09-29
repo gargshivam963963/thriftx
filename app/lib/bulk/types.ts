@@ -62,6 +62,7 @@ export interface BulkProduct {
   aiNeedsReview?: string[];
 
   // Upload
+  productId?: string;
   status: "Ready" | "Missing Images" | "Invalid" | "Uploading" | "Uploaded";
 
   errors: string[];

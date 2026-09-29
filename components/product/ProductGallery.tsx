@@ -318,6 +318,7 @@ export default function ProductGallery({
             </div>
 
             {/* ── Fullscreen ── */}
+            {/* ── Fullscreen ── */}
             <AnimatePresence>
                 {fullscreen && (
                     <motion.div
@@ -330,76 +331,143 @@ export default function ProductGallery({
                         aria-modal="true"
                         aria-label="Fullscreen gallery"
                     >
-                        {/* Close */}
-                        <Button
-                            variant="ghost"
-                            size="iconLg"
+                        {/* ── Close ── */}
+                        <button
+                            type="button"
                             onClick={() => {
                                 setFullscreen(false);
                                 setZoomed(false);
                                 setZoomScale(2);
                             }}
                             aria-label="Close fullscreen"
-                            className="absolute right-6 top-6 z-30 text-white hover:bg-white/10"
+                            className={cn(
+                                "absolute right-5 top-5 z-40",
+                                "flex h-12 w-12 items-center justify-center",
+                                "rounded-full border border-white/20",
+                                "bg-black/40 text-white",
+                                "backdrop-blur-md",
+                                "shadow-lg shadow-black/20",
+                                "transition-all duration-200",
+                                "hover:scale-105 hover:bg-white/15 hover:text-white",
+                                "active:scale-95",
+                                "focus-visible:outline-none",
+                                "focus-visible:ring-2 focus-visible:ring-white/60",
+                                "focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                            )}
                         >
-                            <X />
-                        </Button>
+                            <X size={22} strokeWidth={2} />
+                        </button>
 
-                        {/* Zoom controls */}
-                        <div className="absolute bottom-6 right-6 z-30 flex items-center gap-2">
-                            <Button
-                                variant="ghost"
-                                size="iconMd"
+                        {/* ── Zoom controls ── */}
+                        <div className="absolute bottom-5 right-5 z-40 flex items-center gap-2">
+                            <button
+                                type="button"
                                 onClick={() => {
                                     setZoomed(true);
                                     setZoomScale((z) => Math.min(z + 0.25, 4));
                                 }}
+                                disabled={zoomed && zoomScale >= 4}
                                 aria-label="Zoom in"
-                                className="text-white hover:bg-white/10"
+                                className={cn(
+                                    "flex h-11 w-11 items-center justify-center",
+                                    "rounded-full border border-white/20",
+                                    "bg-black/40 text-white",
+                                    "backdrop-blur-md",
+                                    "shadow-lg shadow-black/20",
+                                    "transition-all duration-200",
+                                    "hover:scale-105 hover:bg-white/15 hover:text-white",
+                                    "active:scale-95",
+                                    "focus-visible:outline-none",
+                                    "focus-visible:ring-2 focus-visible:ring-white/60",
+                                    "disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:scale-100"
+                                )}
                             >
-                                <ZoomIn />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="iconMd"
+                                <ZoomIn size={20} strokeWidth={2} />
+                            </button>
+
+                            <button
+                                type="button"
                                 onClick={() => {
                                     setZoomScale((z) => {
-                                        const next = Math.max(z - 0.25, 1);
-                                        if (next <= 1) setZoomed(false);
-                                        return next;
+                                        const nextScale = Math.max(z - 0.25, 1);
+
+                                        if (nextScale <= 1) {
+                                            setZoomed(false);
+                                        }
+
+                                        return nextScale;
                                     });
                                 }}
+                                disabled={!zoomed || zoomScale <= 1}
                                 aria-label="Zoom out"
-                                className="text-white hover:bg-white/10"
+                                className={cn(
+                                    "flex h-11 w-11 items-center justify-center",
+                                    "rounded-full border border-white/20",
+                                    "bg-black/40 text-white",
+                                    "backdrop-blur-md",
+                                    "shadow-lg shadow-black/20",
+                                    "transition-all duration-200",
+                                    "hover:scale-105 hover:bg-white/15 hover:text-white",
+                                    "active:scale-95",
+                                    "focus-visible:outline-none",
+                                    "focus-visible:ring-2 focus-visible:ring-white/60",
+                                    "disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:scale-100"
+                                )}
                             >
-                                <ZoomOut />
-                            </Button>
+                                <ZoomOut size={20} strokeWidth={2} />
+                            </button>
                         </div>
 
-                        {/* Prev / Next */}
+                        {/* ── Previous / Next ── */}
                         {galleryLength > 1 && (
                             <>
-                                <Button
-                                    variant="ghost"
-                                    size="iconLg"
+                                <button
+                                    type="button"
                                     onClick={previous}
                                     aria-label="Previous image"
-                                    className="absolute left-5 top-1/2 z-30 -translate-y-1/2 text-white hover:bg-white/10"
+                                    className={cn(
+                                        "absolute left-5 top-1/2 z-40 -translate-y-1/2",
+                                        "flex h-12 w-12 items-center justify-center",
+                                        "rounded-full border border-white/20",
+                                        "bg-black/40 text-white",
+                                        "backdrop-blur-md",
+                                        "shadow-lg shadow-black/20",
+                                        "transition-all duration-200",
+                                        "hover:scale-105 hover:bg-white/15 hover:text-white",
+                                        "active:scale-95",
+                                        "focus-visible:outline-none",
+                                        "focus-visible:ring-2 focus-visible:ring-white/60",
+                                        "focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                                    )}
                                 >
-                                    <ChevronLeft />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="iconLg"
+                                    <ChevronLeft size={24} strokeWidth={2} />
+                                </button>
+
+                                <button
+                                    type="button"
                                     onClick={next}
                                     aria-label="Next image"
-                                    className="absolute right-5 top-1/2 z-30 -translate-y-1/2 text-white hover:bg-white/10"
+                                    className={cn(
+                                        "absolute right-5 top-1/2 z-40 -translate-y-1/2",
+                                        "flex h-12 w-12 items-center justify-center",
+                                        "rounded-full border border-white/20",
+                                        "bg-black/40 text-white",
+                                        "backdrop-blur-md",
+                                        "shadow-lg shadow-black/20",
+                                        "transition-all duration-200",
+                                        "hover:scale-105 hover:bg-white/15 hover:text-white",
+                                        "active:scale-95",
+                                        "focus-visible:outline-none",
+                                        "focus-visible:ring-2 focus-visible:ring-white/60",
+                                        "focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                                    )}
                                 >
-                                    <ChevronRight />
-                                </Button>
+                                    <ChevronRight size={24} strokeWidth={2} />
+                                </button>
                             </>
                         )}
 
+                        {/* ── Fullscreen image area ── */}
                         <div
                             className="relative flex h-full w-full select-none items-center justify-center p-6 sm:p-12"
                             onWheel={handleWheel}
@@ -430,14 +498,15 @@ export default function ProductGallery({
                                         className="max-h-[88vh] max-w-[92vw] rounded-2xl object-contain"
                                         style={{
                                             transform: `scale(${zoomed ? zoomScale : 1})`,
-                                            transition: "transform .28s cubic-bezier(.22,.61,.36,1)",
+                                            transition:
+                                                "transform .28s cubic-bezier(.22,.61,.36,1)",
                                         }}
                                     />
                                 </motion.div>
                             </AnimatePresence>
 
-                            {/* Counter */}
-                            <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-small font-medium text-white backdrop-blur-xl">
+                            {/* ── Counter ── */}
+                            <div className="absolute bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-small font-medium text-white backdrop-blur-xl">
                                 {selectedIndex + 1} / {galleryLength}
                             </div>
                         </div>

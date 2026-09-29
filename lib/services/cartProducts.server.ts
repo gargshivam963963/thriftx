@@ -1,5 +1,6 @@
 import { getCartItems, removeCartItem as removeFromCart } from "./cart";
 import { getProductById, Product } from "./products";
+import { requireUser } from "@/lib/auth-guard";
 
 export interface CartProduct extends Product {
   cartId: string;
@@ -18,7 +19,8 @@ export interface CartProduct extends Product {
  * `./cartProducts`, which fetches the `/api/shop/cart-products` route handler.
  */
 export async function getCartProductsServer(): Promise<CartProduct[]> {
-  const cartItems = await getCartItems();
+  const user = await requireUser();
+  const cartItems = await getCartItems(user.id);
 
   if (!cartItems.length) {
     return [];

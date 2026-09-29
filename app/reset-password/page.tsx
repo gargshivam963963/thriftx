@@ -7,6 +7,7 @@ import { ArrowRight, Loader2, ShieldCheck, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { FormField, PasswordField } from "@/components/ui/form";
+import { authClient } from "@/lib/auth-client";
 import { getFriendlyError } from "@/lib/errors";
 
 export default function ResetPasswordPage() {
@@ -31,16 +32,13 @@ export default function ResetPasswordPage() {
         setSuccess("");
 
         try {
-            const response = await fetch("/api/auth/reset-password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token, newPassword: password }),
+            const response = await authClient.resetPassword({
+                token,
+                newPassword: password,
             });
 
-            const data = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-                throw new Error(data?.message || "Unable to reset password.");
+            if (response.error) {
+                throw response.error;
             }
 
             setSuccess("Your password has been reset. Redirecting to login...");

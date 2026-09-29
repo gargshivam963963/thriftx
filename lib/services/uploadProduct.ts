@@ -1,12 +1,23 @@
 "use client";
 
-import { uploadImages, UploadedImage } from "./storage";
 import { compressImages } from "./imageCompression";
+import { uploadImageToR2 } from "./r2Upload";
 
 export interface UploadProductInput {
   form: Record<string, string>;
   images: File[];
   primaryIndex: number;
+  productId?: string;
+}
+
+export class ProductUploadError extends Error {
+  constructor(
+    message: string,
+    readonly productId?: string,
+  ) {
+    super(message);
+    this.name = "ProductUploadError";
+  }
 }
 
 const slugify = (value: string) =>
@@ -20,6 +31,7 @@ export async function uploadProduct({
   form,
   images,
   primaryIndex,
+  productId: existingProductId,
 }: UploadProductInput) {
   // Required fields
   if (!form.title || !form.category || !form.gender || !form.price) {
@@ -30,55 +42,71 @@ export async function uploadProduct({
     throw new Error("Please upload at least one image.");
   }
 
-  // Compress images on the client before upload (max 1024px, q0.8, WebP).
-  const compressed = await compressImages(images);
-  const compressedFiles = compressed.map(
-    (c) => new File([c.file], "product-image", { type: c.mimeType }),
-  );
-
-  // Upload images
-  const uploadedImages: UploadedImage[] = await uploadImages(compressedFiles);
-
-  const imageUrls = uploadedImages.map((image) => image.url);
-
-  const primaryImage = imageUrls[primaryIndex] ?? imageUrls[0];
-
-  // Product payload
   const payload = {
     ...form,
-
-    // Slugs
-    slug: slugify(form.title),
-    categorySlug: slugify(form.category),
-
-    // Pricing
+    slug: form.slug?.trim() || slugify(form.title),
+    categorySlug: form.categorySlug?.trim() || slugify(form.category),
     price: Number(form.price),
-
     retailPrice:
       form.retailPrice?.trim() !== "" ? Number(form.retailPrice) : undefined,
-
-    // Images
-    primaryImage,
-    images: imageUrls,
-
-    // Status
-    status: "active",
-    isActive: true,
   };
 
-  const response = await fetch("/api/admin/products", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  let productId = existingProductId;
+  try {
+    if (!productId) {
+      const response = await fetch("/api/admin/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || typeof result?.productId !== "string") {
+        throw new Error(result?.message ?? "Failed to create product draft");
+      }
+      productId = result.productId;
+    }
 
-  const result = (await response.json()) as {
-    success?: boolean;
-    message?: string;
-  };
-  if (!response.ok || !result.success) {
-    throw new Error(result.message ?? "Failed to create product");
+    if (!productId) throw new Error("Product draft ID is unavailable");
+    const resolvedProductId = productId;
+    const compressed = await compressImages(images);
+    const keys: string[] = [];
+    try {
+      for (const [position, image] of compressed.entries()) {
+        const file = new File(
+          [image.file],
+          `product-image-${position + 1}.${image.mimeType.split("/")[1] || "jpg"}`,
+          { type: image.mimeType },
+        );
+        keys.push(
+          (await uploadImageToR2(file, resolvedProductId, position)).key,
+        );
+      }
+    } finally {
+      compressed.forEach((image) => URL.revokeObjectURL(image.url));
+    }
+
+    if (primaryIndex > 0 && primaryIndex < keys.length) {
+      keys.unshift(...keys.splice(primaryIndex, 1));
+    }
+
+    const response = await fetch("/api/admin/products", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: resolvedProductId,
+        data: { ...payload, images: keys, status: "active", isActive: true },
+      }),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || result?.success !== true) {
+      throw new Error(result?.message ?? "Failed to finalize product");
+    }
+
+    return { productId: resolvedProductId, imageKeys: keys };
+  } catch (error) {
+    throw new ProductUploadError(
+      error instanceof Error ? error.message : "Product upload failed",
+      productId,
+    );
   }
-
-  return result;
 }

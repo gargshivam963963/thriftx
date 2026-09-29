@@ -3,7 +3,7 @@
 /**
  * THRIFTX — Client-side Image Compression
  *
- * Compresses and resizes images BEFORE upload to Appwrite Storage.
+ * Compresses and resizes images before secure server-side image processing.
  * - Max width 1024px
  * - JPEG quality 0.80
  * - Preserves aspect ratio
@@ -12,7 +12,7 @@
  *
  * This dramatically reduces upload size and eliminates the
  * 413 / FUNCTION PAYLOAD TOO LARGE errors on the AI endpoint,
- * because we only ever send Appwrite URLs — never Base64.
+ * without sending the original full-resolution file.
  */
 
 import type { CompressionOptions, CompressedImage } from "@/lib/ai/types";

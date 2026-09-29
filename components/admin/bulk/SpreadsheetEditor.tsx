@@ -11,6 +11,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import StickyToolbar from "./StickyToolbar";
 import BulkProductCard from "./BulkProductCard";
 import UploadDropzone from "./UploadDropzone";
+import ExcelUploader from "./ExcelUploader";
 
 interface Props {
     products: BulkProduct[];
@@ -27,6 +28,11 @@ interface Props {
     onAiFillAll?: () => void;
     onFilesSelected?: (files: File[]) => void;
     onFolderSelected?: (files: File[]) => void;
+    excelFile: File | null;
+    excelLoading: boolean;
+    excelError?: string;
+    onExcelSelect: (file: File) => void;
+    onExcelClear: () => void;
     loading?: boolean;
     aiProcessing?: boolean;
     aiProcessingInfo?: {
@@ -51,6 +57,11 @@ export default function SpreadsheetEditor({
     onAiFillAll,
     onFilesSelected,
     onFolderSelected,
+    excelFile,
+    excelLoading,
+    excelError,
+    onExcelSelect,
+    onExcelClear,
     loading = false,
     aiProcessing = false,
     aiProcessingInfo = null,
@@ -58,11 +69,11 @@ export default function SpreadsheetEditor({
     const [searchQuery, setSearchQuery] = useState("");
 
     const readyCount = useMemo(
-        () => products.filter((p) => p.errors.length === 0).length,
+        () => products.filter((p) => p.status === "Ready" && p.errors.length === 0).length,
         [products],
     );
     const errorCount = useMemo(
-        () => products.filter((p) => p.errors.length > 0).length,
+        () => products.filter((p) => p.status === "Invalid" || p.status === "Missing Images" || p.errors.length > 0).length,
         [products],
     );
     const uploadingCount = useMemo(
@@ -148,6 +159,14 @@ export default function SpreadsheetEditor({
                     </div>
                 </div>
 
+                <ExcelUploader
+                    file={excelFile}
+                    loading={excelLoading}
+                    error={excelError}
+                    onFileSelect={onExcelSelect}
+                    onClear={onExcelClear}
+                />
+
                 <UploadDropzone
                     onFilesSelected={
                         onFilesSelected || (() => { })
@@ -186,6 +205,14 @@ export default function SpreadsheetEditor({
                 onUpload={onUpload}
                 uploadingActive={uploading}
                 bulkAiLoading={bulkAiLoading}
+            />
+
+            <ExcelUploader
+                file={excelFile}
+                loading={excelLoading}
+                error={excelError}
+                onFileSelect={onExcelSelect}
+                onClear={onExcelClear}
             />
 
             {/* AI Processing banner */}

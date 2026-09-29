@@ -4,12 +4,12 @@
  * THRIFTX — Centralized AI Fill Service
  *
  * Production pipeline:
- *   validate → compress (client) → upload (Appwrite) → POST URLs only
+ *   validate → compress (client) → send bounded multipart images to the server
  *
  * Features:
  * - Payload validation (count, file type, size)
  * - Automatic client-side compression (max 1024px, q0.8, WebP, strip EXIF)
- * - Uploads to Appwrite Storage, then sends ONLY public URLs
+ * - Sends compressed images to the authenticated server endpoint; no Appwrite storage
  * - Request dedup (in-flight guard) — prevents concurrent AI requests
  * - Retry with exponential backoff (max 2, network/timeout only)
  * - Never retries validation errors
@@ -27,8 +27,11 @@ import {
   validateImageFile,
   compressImage,
 } from "@/lib/services/imageCompression";
-import { uploadImages } from "@/lib/services/storage";
-import { postAiFill, AIFillApiError } from "@/lib/services/aiApi";
+import {
+  postAiFill,
+  postAiFillFiles,
+  AIFillApiError,
+} from "@/lib/services/aiApi";
 
 /** Max images allowed per AI fill request. */
 const MAX_IMAGES = 10;
@@ -86,7 +89,7 @@ function validateFiles(files: File[]): string | null {
 }
 
 /**
- * Validate Appwrite image URLs before sending to the AI endpoint.
+ * Validate existing public or signed image URLs before sending to the AI endpoint.
  */
 function validateImageUrls(urls: string[]): string | null {
   if (!urls || urls.length === 0) {
@@ -156,7 +159,7 @@ function logFill(opts: {
  * @param opts.productId  Optional existing product id.
  * @param opts.analyzeAllImages Whether to analyze all images (default primary/front only).
  * @param opts.onProgress  Progress callback.
- * @param opts.imageUrls   Pre-uploaded Appwrite URLs (skip upload step).
+ * @param opts.imageUrls   Existing public or signed URLs (when supplied by another caller).
  */
 export async function runAiFill(
   files: File[],
@@ -200,6 +203,7 @@ export async function runAiFill(
 
   const startedAt = Date.now();
   let retryCount = 0;
+  let compressed: CompressedImage[] = [];
 
   try {
     // ── 1. Validate before any network call ──
@@ -224,7 +228,6 @@ export async function runAiFill(
 
     // ── 2. Compress on the client ──
     let urls = imageUrls ?? [];
-    let compressed: CompressedImage[] = [];
 
     if (!imageUrls) {
       onProgress?.({
@@ -241,25 +244,17 @@ export async function runAiFill(
         `[ai-fill] compressed ${compressed.length} images in ${Date.now() - t0}ms`,
       );
 
-      // ── 3. Upload to Appwrite Storage ──
+      // ── 3. Send compressed images to the authenticated server ──
       onProgress?.({
         stage: "uploading",
         percent: 45,
-        message: "Uploading to storage...",
+        message: "Preparing images for secure analysis...",
       });
-      const uploadStart = Date.now();
-      const uploaded = await uploadImages(
-        compressed.map(
-          (c) => new File([c.file], "ai-image", { type: c.mimeType }),
-        ),
-      );
-      console.info(
-        `[ai-fill] uploaded ${uploaded.length} images in ${Date.now() - uploadStart}ms`,
-      );
-      urls = uploaded.map((u) => u.url);
     }
 
-    const requestSizeBytes = estimateRequestSize(urls);
+    const requestSizeBytes = imageUrls
+      ? estimateRequestSize(urls)
+      : compressed.reduce((total, image) => total + image.sizeBytes, 0);
 
     // ── 4. POST to AI (URLs only, with retry for network/timeout) ──
     onProgress?.({
@@ -271,11 +266,16 @@ export async function runAiFill(
     let response;
     while (true) {
       try {
-        response = await postAiFill({
-          productId,
-          imageUrls: urls,
-          analyzeAllImages,
-        });
+        response = imageUrls
+          ? await postAiFill({ productId, imageUrls: urls, analyzeAllImages })
+          : await postAiFillFiles({
+              productId,
+              images: compressed.map((image) => ({
+                file: image.file,
+                mimeType: image.mimeType,
+              })),
+              analyzeAllImages,
+            });
         break;
       } catch (err) {
         const code = err instanceof AIFillApiError ? err.code : "UNKNOWN";
@@ -301,7 +301,7 @@ export async function runAiFill(
       const err = response as { message?: string; code?: AIFillErrorCode };
       logFill({
         event: "failed",
-        imageCount: urls.length,
+        imageCount: imageUrls ? urls.length : compressed.length,
         durationMs: totalMs,
         requestSizeBytes,
         retryCount,
@@ -318,7 +318,7 @@ export async function runAiFill(
 
     logFill({
       event: "complete",
-      imageCount: urls.length,
+      imageCount: imageUrls ? urls.length : compressed.length,
       durationMs: totalMs,
       requestSizeBytes,
       retryCount,
@@ -355,6 +355,7 @@ export async function runAiFill(
       message,
     };
   } finally {
+    compressed.forEach((image) => URL.revokeObjectURL(image.url));
     if (key) inFlightKeys.delete(key);
     inFlight = false;
   }

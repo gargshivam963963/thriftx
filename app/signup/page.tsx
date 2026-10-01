@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { ArrowRight, Loader2, Check, X, UserPlus } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -108,7 +108,7 @@ export default function Signup() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<SignupValues>({
@@ -116,7 +116,7 @@ export default function Signup() {
     defaultValues: { name: "", email: "", password: "", terms: false },
   });
 
-  const password = watch("password");
+  const password = useWatch({ control, name: "password" });
 
   useEffect(() => {
     if (!authLoading && user) router.replace("/");

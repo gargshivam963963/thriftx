@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -18,7 +18,7 @@ import PremiumImage from "@/components/ui/PremiumImage";
 import EmptyState from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
-import { getUserOrders } from "@/lib/services/orderService";
+import { getUserOrders } from "@/lib/client/orders";
 import type { Order } from "@/lib/types/order";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -161,7 +161,7 @@ export default function OrdersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         if (!user) return;
         try {
             setLoading(true);
@@ -175,7 +175,7 @@ export default function OrdersPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
 
     useEffect(() => {
         if (authLoading) return;
@@ -184,7 +184,7 @@ export default function OrdersPage() {
             return;
         }
         fetchOrders();
-    }, [authLoading, user, router]);
+    }, [authLoading, user, router, fetchOrders]);
 
     return (
         <main className="min-h-screen bg-background">
@@ -366,4 +366,3 @@ export default function OrdersPage() {
         </main>
     );
 }
-

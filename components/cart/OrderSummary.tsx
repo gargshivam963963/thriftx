@@ -305,7 +305,8 @@ export default function OrderSummary({
                                 if (e.key === "Enter") handleApplyCoupon();
                             }}
                             placeholder="Enter code"
-                            className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-small font-medium outline-none transition focus:border-foreground focus:ring-1 focus:ring-foreground placeholder:text-muted"
+                            aria-label="Coupon code"
+                            className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-small font-medium text-foreground outline-none transition focus:border-foreground focus:ring-1 focus:ring-foreground placeholder:text-muted-foreground"
                         />
                         <Button
                             type="button"

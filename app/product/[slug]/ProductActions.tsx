@@ -54,7 +54,7 @@ export default function ProductActions({ product }: ProductActionsProps) {
       // Optimistic local cart update (instant UI)
       addToCart(product, 1);
 
-      // Persist to Appwrite so the cart page reflects it (ignore if not logged in)
+      // Persist the cart update so the cart page reflects it (ignore if not logged in)
       if (user) {
         await persistAddToCart(product.id, 1);
       }
@@ -155,7 +155,7 @@ export default function ProductActions({ product }: ProductActionsProps) {
 
       <div className="flex items-center justify-center gap-1.5 text-small text-muted-foreground">
         <Heart className="h-3.5 w-3.5" />
-        <span>1-of-1 curated piece — once sold, it's gone</span>
+        <span>1-of-1 curated piece — once sold, it&apos;s gone</span>
       </div>
     </div>
   );

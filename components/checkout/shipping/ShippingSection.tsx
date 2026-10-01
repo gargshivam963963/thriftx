@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { AnimatePresence, motion } from "framer-motion";
+import { Button } from '@/components/ui/button'; import { AnimatePresence, motion } from "framer-motion";
 import {
     ChevronDown,
     ChevronRight,
@@ -16,7 +16,7 @@ import {
     PackageOpen,
 } from "lucide-react";
 
-import type { ShippingMethod } from "../CheckoutAccordion";
+import type { ShippingMethod } from "@/lib/shipping/checkout-options";
 
 interface ShippingSectionProps {
     open: boolean;
@@ -112,8 +112,8 @@ export default function ShippingSection({
                 <div className="flex items-center gap-3 sm:gap-4">
                     <div
                         className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 sm:h-12 sm:w-12 sm:rounded-2xl ${open
-                                ? "bg-foreground text-white shadow-lg shadow-foreground/20"
-                                : "bg-muted text-muted-foreground"
+                            ? "bg-foreground text-white shadow-lg shadow-foreground/20"
+                            : "bg-muted text-muted-foreground"
                             }`}
                     >
                         <Truck size={18} className="sm:h-[20px] sm:w-[20px]" />
@@ -180,8 +180,8 @@ export default function ShippingSection({
                                             type="button"
                                             onClick={() => onSelect(method)}
                                             className={`w-full overflow-hidden rounded-2xl border text-left transition-all sm:rounded-3xl ${selected
-                                                    ? "border-foreground bg-foreground text-white shadow-xl"
-                                                    : "border-border bg-card hover:border-foreground hover:shadow-md"
+                                                ? "border-foreground bg-foreground text-white shadow-xl"
+                                                : "border-border bg-card hover:border-foreground hover:shadow-md"
                                                 }`}
                                         >
                                             <div className="flex items-start justify-between p-4 sm:p-6">
@@ -216,8 +216,8 @@ export default function ShippingSection({
                                                         <div className="mt-2 flex items-center gap-3">
                                                             <span
                                                                 className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${selected
-                                                                        ? "bg-card/10 text-muted-foreground"
-                                                                        : "bg-muted text-muted-foreground"
+                                                                    ? "bg-card/10 text-muted-foreground"
+                                                                    : "bg-muted text-muted-foreground"
                                                                     }`}
                                                             >
                                                                 <Clock size={11} />
@@ -227,8 +227,8 @@ export default function ShippingSection({
                                                             {method.price > 0 && (
                                                                 <span
                                                                     className={`text-[11px] font-semibold ${selected
-                                                                            ? "text-muted-foreground"
-                                                                            : "text-muted-foreground"
+                                                                        ? "text-muted-foreground"
+                                                                        : "text-muted-foreground"
                                                                         }`}
                                                                 >
                                                                     ₹{method.price}

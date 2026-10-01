@@ -19,7 +19,7 @@ import PremiumImage from "@/components/ui/PremiumImage";
 import EmptyState from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
-import { toggleWishlist } from "@/lib/services/wishlist";
+import { useWishlist } from "@/lib/WishlistContext";
 import type { WishlistProduct } from "@/lib/services/getWishlistProducts";
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
@@ -187,6 +187,7 @@ function WishlistCard({
 export default function ProfileWishlistPage() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
+    const { toggle } = useWishlist();
 
     const [items, setItems] = useState<WishlistProduct[]>([]);
     const [loading, setLoading] = useState(true);
@@ -226,7 +227,7 @@ export default function ProfileWishlistPage() {
         if (removingIds.has(item.productId)) return;
         try {
             setRemovingIds((prev) => new Set(prev).add(item.productId));
-            await toggleWishlist(item.productId);
+            await toggle(item.productId);
             setItems((prev) => prev.filter((i) => i.productId !== item.productId));
             toast.success("Removed from wishlist.");
         } catch {

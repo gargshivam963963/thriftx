@@ -8,11 +8,45 @@ import type {
   UpdateAddressPayload,
 } from "@/lib/types/address";
 
-import { createAddress } from "@/lib/services/address/create";
-import { deleteAddress } from "@/lib/services/address/delete";
-import { getAddresses } from "@/lib/services/address/get";
-import { setDefaultAddress } from "@/lib/services/address/setDefault";
-import { updateAddress } from "@/lib/services/address/update";
+async function addressRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(path, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...init?.headers,
+    },
+  });
+  const result = (await response.json()) as {
+    success?: boolean;
+    message?: string;
+    address?: T;
+    addresses?: T;
+  };
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "Address request failed");
+  }
+
+  return (result.address ?? result.addresses) as T;
+}
+
+const addressRequests = new Map<string, Promise<Address[]>>();
+
+function getAddressesForUser(userId: string): Promise<Address[]> {
+  const existingRequest = addressRequests.get(userId);
+  if (existingRequest) return existingRequest;
+
+  const request = addressRequest<Address[]>("/api/addresses", {
+    method: "GET",
+  });
+
+  addressRequests.set(userId, request);
+  return request.finally(() => {
+    if (addressRequests.get(userId) === request) {
+      addressRequests.delete(userId);
+    }
+  });
+}
 
 interface UseAddressesReturn {
   addresses: Address[];
@@ -48,7 +82,7 @@ export function useAddresses(userId: string): UseAddressesReturn {
     try {
       setLoading(true);
 
-      const data = await getAddresses(userId);
+      const data = await getAddressesForUser(userId);
 
       setAddresses(data);
     } catch (err) {
@@ -67,9 +101,9 @@ export function useAddresses(userId: string): UseAddressesReturn {
   const createNewAddress = async (
     data: CreateAddressPayload,
   ): Promise<Address> => {
-    const address = await createAddress({
-      userId,
-      data,
+    const address = await addressRequest<Address>("/api/addresses", {
+      method: "POST",
+      body: JSON.stringify(data),
     });
 
     await fetchAddresses();
@@ -81,25 +115,33 @@ export function useAddresses(userId: string): UseAddressesReturn {
     addressId: string,
     data: UpdateAddressPayload,
   ) => {
-    await updateAddress({
-      addressId,
-      data,
-    });
+    await addressRequest<void>(
+      `/api/addresses/${encodeURIComponent(addressId)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      },
+    );
 
     await fetchAddresses();
   };
 
   const deleteExistingAddress = async (addressId: string) => {
-    await deleteAddress(addressId);
+    await addressRequest<void>(
+      `/api/addresses/${encodeURIComponent(addressId)}`,
+      {
+        method: "DELETE",
+      },
+    );
 
     await fetchAddresses();
   };
 
   const setDefault = async (addressId: string) => {
-    await setDefaultAddress({
-      userId,
-      addressId,
-    });
+    await addressRequest<void>(
+      `/api/addresses/${encodeURIComponent(addressId)}/default`,
+      { method: "POST" },
+    );
 
     await fetchAddresses();
   };

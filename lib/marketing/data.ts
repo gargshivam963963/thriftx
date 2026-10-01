@@ -1,15 +1,8 @@
 import {
-  databases,
-  AppwriteQuery,
-  APPWRITE_DATABASE_ID,
-  APPWRITE_COUPONS_COLLECTION_ID,
-  APPWRITE_OFFERS_COLLECTION_ID,
-  APPWRITE_ANNOUNCEMENTS_COLLECTION_ID,
-  APPWRITE_SALES_COLLECTION_ID,
-  APPWRITE_REFERRALS_COLLECTION_ID,
-  APPWRITE_CREDITS_COLLECTION_ID,
-  isAppwriteDataConfigured,
-} from "@/lib/appwrite";
+  documentStore,
+  DocumentQuery,
+  isDocumentStoreConfigured,
+} from "@/lib/document-store";
 import type {
   Coupon,
   Offer,
@@ -19,10 +12,6 @@ import type {
   CreditEntry,
   WalletBalance,
 } from "./types";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Fallback data (used when Appwrite is not configured, so the UI still works)
-// ─────────────────────────────────────────────────────────────────────────────
 
 const FALLBACK_COUPONS: Coupon[] = [
   {
@@ -122,14 +111,10 @@ const FALLBACK_SALES: SaleEvent[] = [
 const FALLBACK_REFERRALS: Referral[] = [];
 const FALLBACK_CREDITS: CreditEntry[] = [];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Normalizers (Appwrite doc → typed objects)
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function normalizeCoupon(doc: Record<string, any>): Coupon {
+function normalizeCoupon(doc: Record<string, any>): Coupon {
   return {
-    id: (doc.$id as string) ?? "",
-    code: (doc.code as string) ?? "",
+    id: String(doc.id ?? doc.$id ?? ""),
+    code: String(doc.code ?? ""),
     discountType: (doc.discountType as Coupon["discountType"]) ?? "flat",
     discountValue: Number(doc.discountValue ?? 0),
     minOrderValue: Number(doc.minOrderValue ?? 0),
@@ -139,16 +124,16 @@ export function normalizeCoupon(doc: Record<string, any>): Coupon {
     usedCount: Number(doc.usedCount ?? 0),
     description: (doc.description as string) ?? "",
     isActive: doc.isActive !== false,
-    $createdAt: (doc.$createdAt as string) ?? "",
+    $createdAt: String(doc.$createdAt ?? ""),
   };
 }
 
-export function normalizeOffer(doc: Record<string, any>): Offer {
+function normalizeOffer(doc: Record<string, any>): Offer {
   return {
-    id: (doc.$id as string) ?? "",
-    title: (doc.title as string) ?? "",
+    id: String(doc.id ?? doc.$id ?? ""),
+    title: String(doc.title ?? ""),
     type: (doc.type as Offer["type"]) ?? "bundle",
-    description: (doc.description as string) ?? "",
+    description: String(doc.description ?? ""),
     buyQuantity: Number(doc.buyQuantity ?? 0),
     getQuantity: Number(doc.getQuantity ?? 0),
     minQuantity: doc.minQuantity != null ? Number(doc.minQuantity) : undefined,
@@ -168,14 +153,14 @@ export function normalizeOffer(doc: Record<string, any>): Offer {
     endsAt: (doc.endsAt as string) ?? undefined,
     isActive: doc.isActive !== false,
     priority: Number(doc.priority ?? 0),
-    $createdAt: (doc.$createdAt as string) ?? "",
+    $createdAt: String(doc.$createdAt ?? ""),
   };
 }
 
-export function normalizeAnnouncement(doc: Record<string, any>): Announcement {
+function normalizeAnnouncement(doc: Record<string, any>): Announcement {
   return {
-    id: (doc.$id as string) ?? "",
-    message: (doc.message as string) ?? "",
+    id: String(doc.id ?? doc.$id ?? ""),
+    message: String(doc.message ?? ""),
     linkHref: (doc.linkHref as string) ?? undefined,
     linkLabel: (doc.linkLabel as string) ?? undefined,
     bgColor: (doc.bgColor as string) ?? "bg-neutral-900",
@@ -183,70 +168,71 @@ export function normalizeAnnouncement(doc: Record<string, any>): Announcement {
     priority: Number(doc.priority ?? 0),
     startsAt: (doc.startsAt as string) ?? undefined,
     endsAt: (doc.endsAt as string) ?? undefined,
-    $createdAt: (doc.$createdAt as string) ?? "",
+    $createdAt: String(doc.$createdAt ?? ""),
   };
 }
 
-export function normalizeSale(doc: Record<string, any>): SaleEvent {
+function normalizeSale(doc: Record<string, any>): SaleEvent {
   return {
-    id: (doc.$id as string) ?? "",
-    title: (doc.title as string) ?? "",
-    subtitle: (doc.subtitle as string) ?? "",
+    id: String(doc.id ?? doc.$id ?? ""),
+    title: String(doc.title ?? ""),
+    subtitle: String(doc.subtitle ?? ""),
     couponCode: (doc.couponCode as string) ?? undefined,
-    discountLabel: (doc.discountLabel as string) ?? "",
-    startsAt: (doc.startsAt as string) ?? new Date().toISOString(),
-    endsAt: (doc.endsAt as string) ?? new Date().toISOString(),
+    discountLabel: String(doc.discountLabel ?? ""),
+    startsAt: String(doc.startsAt ?? new Date().toISOString()),
+    endsAt: String(doc.endsAt ?? new Date().toISOString()),
     isActive: doc.isActive !== false,
-    $createdAt: (doc.$createdAt as string) ?? "",
+    $createdAt: String(doc.$createdAt ?? ""),
   };
 }
 
-export function normalizeReferral(doc: Record<string, any>): Referral {
+function normalizeReferral(doc: Record<string, any>): Referral {
   return {
-    id: (doc.$id as string) ?? "",
-    referrerUserId: (doc.referrerUserId as string) ?? "",
-    referrerName: (doc.referrerName as string) ?? "",
-    code: (doc.code as string) ?? "",
-    referredEmail: (doc.referredEmail as string) ?? "",
-    referredUserId: (doc.referredUserId as string) ?? "",
-    orderId: (doc.orderId as string) ?? "",
+    id: String(doc.id ?? doc.$id ?? ""),
+    referrerUserId: String(doc.referrerUserId ?? ""),
+    referrerName: String(doc.referrerName ?? ""),
+    code: String(doc.code ?? ""),
+    referredEmail: String(doc.referredEmail ?? ""),
+    referredUserId: String(doc.referredUserId ?? ""),
+    orderId: String(doc.orderId ?? ""),
     rewardAmount: Number(doc.rewardAmount ?? 0),
     status: (doc.status as Referral["status"]) ?? "pending",
-    $createdAt: (doc.$createdAt as string) ?? "",
-    completedAt: (doc.completedAt as string) ?? "",
+    $createdAt: String(doc.$createdAt ?? ""),
+    completedAt: String(doc.completedAt ?? ""),
   };
 }
 
-export function normalizeCredit(doc: Record<string, any>): CreditEntry {
+function normalizeCredit(doc: Record<string, any>): CreditEntry {
   return {
-    id: (doc.$id as string) ?? "",
-    userId: (doc.userId as string) ?? "",
+    id: String(doc.id ?? doc.$id ?? ""),
+    userId: String(doc.userId ?? ""),
     amount: Number(doc.amount ?? 0),
-    reason: (doc.reason as string) ?? "",
+    reason: String(doc.reason ?? ""),
     orderId: (doc.orderId as string) ?? undefined,
-    createdAt: (doc.$createdAt as string) ?? new Date().toISOString(),
+    createdAt: String(doc.$createdAt ?? new Date().toISOString()),
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Query helpers with graceful fallback
-// ─────────────────────────────────────────────────────────────────────────────
+async function fetchCollection<T>(
+  collection: string,
+  fallback: T[],
+): Promise<T[]> {
+  if (!isDocumentStoreConfigured) return fallback;
+  try {
+    const { documents } = await documentStore.listDocuments(
+      "thriftx",
+      collection,
+      [DocumentQuery.orderDesc("$createdAt")],
+    );
+    return documents.map((document) => document as unknown as T);
+  } catch {
+    return fallback;
+  }
+}
 
 export async function fetchCoupons(): Promise<Coupon[]> {
-  if (!isAppwriteDataConfigured || !APPWRITE_COUPONS_COLLECTION_ID) {
-    return FALLBACK_COUPONS;
-  }
-  try {
-    const res = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_COUPONS_COLLECTION_ID,
-      [AppwriteQuery.limit(200)],
-    );
-    return res.documents.map(normalizeCoupon);
-  } catch (error) {
-    console.error("fetchCoupons fallback:", error);
-    return FALLBACK_COUPONS;
-  }
+  const items = await fetchCollection<Coupon>("coupons", FALLBACK_COUPONS);
+  return items.length ? items : FALLBACK_COUPONS;
 }
 
 export async function fetchActiveCoupons(): Promise<Coupon[]> {
@@ -261,20 +247,7 @@ export async function fetchActiveCoupons(): Promise<Coupon[]> {
 }
 
 export async function fetchOffers(): Promise<Offer[]> {
-  if (!isAppwriteDataConfigured || !APPWRITE_OFFERS_COLLECTION_ID) {
-    return FALLBACK_OFFERS;
-  }
-  try {
-    const res = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_OFFERS_COLLECTION_ID,
-      [AppwriteQuery.limit(200)],
-    );
-    return res.documents.map(normalizeOffer);
-  } catch (error) {
-    console.error("fetchOffers fallback:", error);
-    return FALLBACK_OFFERS;
-  }
+  return fetchCollection<Offer>("offers", FALLBACK_OFFERS);
 }
 
 export async function fetchActiveOffers(): Promise<Offer[]> {
@@ -289,20 +262,7 @@ export async function fetchActiveOffers(): Promise<Offer[]> {
 }
 
 export async function fetchAnnouncements(): Promise<Announcement[]> {
-  if (!isAppwriteDataConfigured || !APPWRITE_ANNOUNCEMENTS_COLLECTION_ID) {
-    return FALLBACK_ANNOUNCEMENTS;
-  }
-  try {
-    const res = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_ANNOUNCEMENTS_COLLECTION_ID,
-      [AppwriteQuery.orderAsc("priority"), AppwriteQuery.limit(50)],
-    );
-    return res.documents.map(normalizeAnnouncement);
-  } catch (error) {
-    console.error("fetchAnnouncements fallback:", error);
-    return FALLBACK_ANNOUNCEMENTS;
-  }
+  return fetchCollection<Announcement>("announcements", FALLBACK_ANNOUNCEMENTS);
 }
 
 export async function fetchActiveAnnouncements(): Promise<Announcement[]> {
@@ -317,20 +277,7 @@ export async function fetchActiveAnnouncements(): Promise<Announcement[]> {
 }
 
 export async function fetchSales(): Promise<SaleEvent[]> {
-  if (!isAppwriteDataConfigured || !APPWRITE_SALES_COLLECTION_ID) {
-    return FALLBACK_SALES;
-  }
-  try {
-    const res = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_SALES_COLLECTION_ID,
-      [AppwriteQuery.limit(100)],
-    );
-    return res.documents.map(normalizeSale);
-  } catch (error) {
-    console.error("fetchSales fallback:", error);
-    return FALLBACK_SALES;
-  }
+  return fetchCollection<SaleEvent>("sales", FALLBACK_SALES);
 }
 
 export async function fetchActiveSales(): Promise<SaleEvent[]> {
@@ -347,22 +294,15 @@ export async function fetchActiveSales(): Promise<SaleEvent[]> {
 export async function fetchReferralsByUser(
   userId: string,
 ): Promise<Referral[]> {
-  if (
-    !isAppwriteDataConfigured ||
-    !APPWRITE_REFERRALS_COLLECTION_ID ||
-    !userId
-  ) {
-    return FALLBACK_REFERRALS;
-  }
+  if (!userId || !isDocumentStoreConfigured) return FALLBACK_REFERRALS;
   try {
-    const res = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_REFERRALS_COLLECTION_ID,
-      [AppwriteQuery.equal("referrerUserId", userId), AppwriteQuery.limit(200)],
+    const { documents } = await documentStore.listDocuments(
+      "thriftx",
+      "referrals",
+      [DocumentQuery.equal("referrerUserId", userId), DocumentQuery.limit(200)],
     );
-    return res.documents.map(normalizeReferral);
-  } catch (error) {
-    console.error("fetchReferralsByUser fallback:", error);
+    return documents.map(normalizeReferral);
+  } catch {
     return FALLBACK_REFERRALS;
   }
 }
@@ -370,22 +310,19 @@ export async function fetchReferralsByUser(
 export async function fetchCreditsByUser(
   userId: string,
 ): Promise<CreditEntry[]> {
-  if (!isAppwriteDataConfigured || !APPWRITE_CREDITS_COLLECTION_ID || !userId) {
-    return FALLBACK_CREDITS;
-  }
+  if (!userId || !isDocumentStoreConfigured) return FALLBACK_CREDITS;
   try {
-    const res = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_CREDITS_COLLECTION_ID,
+    const { documents } = await documentStore.listDocuments(
+      "thriftx",
+      "credits",
       [
-        AppwriteQuery.equal("userId", userId),
-        AppwriteQuery.orderDesc("$createdAt"),
-        AppwriteQuery.limit(200),
+        DocumentQuery.equal("userId", userId),
+        DocumentQuery.orderDesc("$createdAt"),
+        DocumentQuery.limit(200),
       ],
     );
-    return res.documents.map(normalizeCredit);
-  } catch (error) {
-    console.error("fetchCreditsByUser fallback:", error);
+    return documents.map(normalizeCredit);
+  } catch {
     return FALLBACK_CREDITS;
   }
 }

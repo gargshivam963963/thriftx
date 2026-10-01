@@ -1,89 +1,33 @@
-import { AppwriteID, AppwriteQuery } from "@/lib/appwrite";
-import {
-  databases,
-  APPWRITE_DATABASE_ID,
-  APPWRITE_WISHLIST_COLLECTION_ID,
-} from "@/lib/appwrite";
-import { authClient } from "@/lib/auth-client";
+export async function getWishlistedProductIds(): Promise<string[]> {
+  const response = await fetch("/api/wishlist?ids=1", { cache: "no-store" });
+  const result = (await response.json()) as {
+    success?: boolean;
+    message?: string;
+    productIds?: string[];
+  };
 
-// Cache the Better Auth user ID to avoid repeated session requests.
-let cachedUserId: string | null = null;
-let userIdPromise: Promise<string> | null = null;
+  if (!response.ok || !result.success || !Array.isArray(result.productIds)) {
+    throw new Error(result.message || "Failed to load wishlist");
+  }
 
-async function getUserId(): Promise<string> {
-  if (cachedUserId) return cachedUserId;
-  if (userIdPromise) return userIdPromise;
-
-  userIdPromise = (async () => {
-    try {
-      const session = await authClient.getSession();
-      if (!session.data?.user) throw new Error("Not authenticated");
-      cachedUserId = session.data.user.id;
-      return cachedUserId;
-    } catch {
-      cachedUserId = null;
-      throw new Error("Not authenticated");
-    } finally {
-      userIdPromise = null;
-    }
-  })();
-
-  return userIdPromise;
-}
-
-export async function isWishlisted(productId: string) {
-  const userId = await getUserId();
-
-  const result = await databases.listDocuments(
-    APPWRITE_DATABASE_ID,
-    APPWRITE_WISHLIST_COLLECTION_ID,
-    [
-      AppwriteQuery.equal("userId", userId),
-      AppwriteQuery.equal("productId", productId),
-      AppwriteQuery.limit(1),
-    ],
-  );
-
-  return result.documents.length > 0;
+  return result.productIds;
 }
 
 export async function toggleWishlist(productId: string) {
-  const userId = await getUserId();
+  const response = await fetch("/api/wishlist", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ productId }),
+  });
+  const result = (await response.json()) as {
+    success?: boolean;
+    message?: string;
+    wishlisted?: boolean;
+  };
 
-  const existing = await databases.listDocuments(
-    APPWRITE_DATABASE_ID,
-    APPWRITE_WISHLIST_COLLECTION_ID,
-    [
-      AppwriteQuery.equal("userId", userId),
-      AppwriteQuery.equal("productId", productId),
-      AppwriteQuery.limit(1),
-    ],
-  );
-
-  if (existing.documents.length) {
-    await databases.deleteDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_WISHLIST_COLLECTION_ID,
-      existing.documents[0].$id,
-    );
-
-    return false;
+  if (!response.ok || !result.success || typeof result.wishlisted !== "boolean") {
+    throw new Error(result.message || "Wishlist request failed");
   }
 
-  await databases.createDocument(
-    APPWRITE_DATABASE_ID,
-    APPWRITE_WISHLIST_COLLECTION_ID,
-    AppwriteID.unique(),
-    {
-      userId,
-      productId,
-    },
-  );
-
-  return true;
-}
-
-// Clear cached user ID (call on logout)
-export function clearWishlistCache() {
-  cachedUserId = null;
+  return result.wishlisted;
 }

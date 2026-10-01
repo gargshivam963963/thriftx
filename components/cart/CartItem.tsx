@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Heart, Minus, Plus, Trash2 } from "lucide-react";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import type { CartProduct } from "@/lib/services/cartProducts";
 import ConfirmPopover from "@/components/ui/ConfirmPopover";
 import { Button } from "@/components/ui/button";
-import { isWishlisted, toggleWishlist } from "@/lib/services/wishlist";
+import { useWishlistProduct } from "@/lib/WishlistContext";
 
 interface CartItemProps {
     item: CartProduct;
@@ -20,18 +20,13 @@ interface CartItemProps {
 
 export default function CartItem({ item, onIncrease, onDecrease, onRemove }: CartItemProps) {
     const [deleteOpen, setDeleteOpen] = useState(false);
-    const [wishlisted, setWishlisted] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
-
-    useEffect(() => {
-        isWishlisted(item.id).then(setWishlisted).catch(() => { });
-    }, [item.id]);
+    const { wishlisted, toggle } = useWishlistProduct(item.id);
 
     const handleWishlistToggle = async () => {
         setWishlistLoading(true);
         try {
-            const state = await toggleWishlist(item.id);
-            setWishlisted(state);
+            const state = await toggle();
             toast.success(state ? "Added to wishlist ❤️" : "Removed from wishlist");
         } catch {
             toast.error("Please sign in to wishlist");
@@ -171,4 +166,3 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }: Car
         </>
     );
 }
-

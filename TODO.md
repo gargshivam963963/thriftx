@@ -1,8 +1,4 @@
-# THRIFTX — Appwrite → PostgreSQL/Prisma Migration
-
-## Phase 1 — Migrate Product Reads from Appwrite to PostgreSQL + Prisma ✅
-
-**Goal:** Remove Appwrite **Database** dependency for product/category/brand **reads** and load them from Neon PostgreSQL via Prisma. Keep Appwrite Auth + Storage. Keep UI/routes/logic unchanged.
+# THRIFTX — PostgreSQL/Prisma Migration
 
 ### Status: COMPLETE ✅
 

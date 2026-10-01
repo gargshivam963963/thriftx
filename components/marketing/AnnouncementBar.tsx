@@ -9,6 +9,39 @@ import type { Announcement } from "@/lib/marketing/types";
 import { Container } from "@/components/ui/Container";
 import { cn } from "@/lib/utils";
 
+let announcementsCache: {
+    items: Announcement[];
+    expiresAt: number;
+} | null = null;
+let announcementsRequest: Promise<Announcement[]> | null = null;
+
+function loadAnnouncements(): Promise<Announcement[]> {
+    if (announcementsCache && announcementsCache.expiresAt > Date.now()) {
+        return Promise.resolve(announcementsCache.items);
+    }
+    if (announcementsRequest) return announcementsRequest;
+
+    announcementsRequest = fetch("/api/marketing/announcements")
+        .then(async (response) => {
+            if (!response.ok) throw new Error("Unable to load announcements");
+            const data = await response.json();
+            const items = data.success && Array.isArray(data.announcements)
+                ? data.announcements as Announcement[]
+                : [];
+            announcementsCache = {
+                items,
+                expiresAt: Date.now() + 60_000,
+            };
+            return items;
+        })
+        .catch(() => [])
+        .finally(() => {
+            announcementsRequest = null;
+        });
+
+    return announcementsRequest;
+}
+
 export default function AnnouncementBar() {
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -16,17 +49,9 @@ export default function AnnouncementBar() {
 
     useEffect(() => {
         let active = true;
-        (async () => {
-            try {
-                const res = await fetch("/api/marketing/announcements");
-                const data = await res.json();
-                if (active && data.success) {
-                    setAnnouncements(data.announcements || []);
-                }
-            } catch {
-                // Silently ignore — no announcements is a valid empty state.
-            }
-        })();
+        loadAnnouncements().then((items) => {
+            if (active) setAnnouncements(items);
+        });
         return () => {
             active = false;
         };

@@ -81,7 +81,6 @@ export default function AdminDashboardPage() {
 
     useEffect(() => {
         loadData();
-        // eslint-disable-next-line react-hooks/set-state-in-effect
     }, [loadData]);
 
     return (
@@ -220,4 +219,3 @@ export default function AdminDashboardPage() {
         </div>
     );
 }
-

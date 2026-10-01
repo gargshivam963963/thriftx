@@ -106,14 +106,14 @@
   --duration-slower: 700ms;
 
   /* ─── Design System: Container Widths ────────────────────────── */
-  --container-sm: 640px;
-  --container-md: 768px;
-  --container-lg: 1024px;
-  --container-xl: 1280px;
-  --container-2xl: 1440px;
-  --container-3xl: 1600px;
-  --container-tight: 1280px;
-  --container-narrow: 960px;
+  --layout-width-sm: 640px;
+  --layout-width-md: 768px;
+  --layout-width-lg: 1024px;
+  --layout-width-xl: 1280px;
+  --layout-width-2xl: 1440px;
+  --layout-width-3xl: 1600px;
+  --layout-width-tight: 1280px;
+  --layout-width-narrow: 960px;
 
   /* ─── Design System: Status + Descriptive Color Tokens ──────────
      Semantic shadcn names (foreground, muted-foreground, card, muted,
@@ -1007,7 +1007,7 @@ body {
   margin-right: auto;
   padding-left: clamp(1rem, 0.5rem + 2.5vw, 1.5rem);
   padding-right: clamp(1rem, 0.5rem + 2.5vw, 1.5rem);
-  max-width: var(--container-sm);
+  max-width: var(--layout-width-sm);
 }
 
 .container-md {
@@ -1016,7 +1016,7 @@ body {
   margin-right: auto;
   padding-left: clamp(1rem, 0.5rem + 2.5vw, 1.75rem);
   padding-right: clamp(1rem, 0.5rem + 2.5vw, 1.75rem);
-  max-width: var(--container-md);
+  max-width: var(--layout-width-md);
 }
 
 .container-lg {
@@ -1025,7 +1025,7 @@ body {
   margin-right: auto;
   padding-left: clamp(1rem, 0.5rem + 2.5vw, 2rem);
   padding-right: clamp(1rem, 0.5rem + 2.5vw, 2rem);
-  max-width: var(--container-lg);
+  max-width: var(--layout-width-lg);
 }
 
 .container-xl {
@@ -1034,7 +1034,7 @@ body {
   margin-right: auto;
   padding-left: clamp(1rem, 0.5rem + 2.5vw, 2rem);
   padding-right: clamp(1rem, 0.5rem + 2.5vw, 2rem);
-  max-width: var(--container-xl);
+  max-width: var(--layout-width-xl);
 }
 
 .container-2xl {
@@ -1043,7 +1043,7 @@ body {
   margin-right: auto;
   padding-left: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
   padding-right: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
-  max-width: var(--container-2xl);
+  max-width: var(--layout-width-2xl);
 }
 
 .container-3xl {
@@ -1052,7 +1052,7 @@ body {
   margin-right: auto;
   padding-left: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
   padding-right: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
-  max-width: var(--container-3xl);
+  max-width: var(--layout-width-3xl);
 }
 
 .container-tight {
@@ -1061,7 +1061,7 @@ body {
   margin-right: auto;
   padding-left: clamp(1rem, 0.5rem + 2.5vw, 2rem);
   padding-right: clamp(1rem, 0.5rem + 2.5vw, 2rem);
-  max-width: var(--container-tight);
+  max-width: var(--layout-width-tight);
 }
 
 .container-narrow {
@@ -1070,7 +1070,7 @@ body {
   margin-right: auto;
   padding-left: clamp(1rem, 0.5rem + 2.5vw, 2rem);
   padding-right: clamp(1rem, 0.5rem + 2.5vw, 2rem);
-  max-width: var(--container-narrow);
+  max-width: var(--layout-width-narrow);
 }
 
 /* ─── DESIGN SYSTEM: RADIUS UTILITIES ─────────────────────────────────────

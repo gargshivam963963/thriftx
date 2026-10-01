@@ -2,12 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  // typescript: {
-  //   ignoreBuildErrors: true,
-  // },
   images: {
     remotePatterns: [
       {
@@ -15,10 +9,6 @@ const nextConfig: NextConfig = {
         hostname: "picsum.photos",
         port: "",
         pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "sgp.cloud.appwrite.io",
       },
       {
         protocol: "https",
@@ -35,7 +25,6 @@ const nextConfig: NextConfig = {
     ],
   },
   output: "standalone",
-  transpilePackages: ["motion"],
   webpack: (config, { dev }) => {
     if (dev && process.env.DISABLE_HMR === "true") {
       config.watchOptions = {

@@ -31,7 +31,7 @@ import CompleteTheLookSection from "@/components/product/CompleteTheLookSection"
 import { siteConfig } from "@/lib/seo";
 import { getDeliveryInfo } from "@/lib/delivery";
 
-export const revalidate = 3600; // ISR — cache product page for 1 hour to minimize Appwrite reads
+export const revalidate = 3600; // ISR — cache product page for 1 hour
 
 export async function generateMetadata({
   params,

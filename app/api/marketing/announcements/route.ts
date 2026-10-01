@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { fetchActiveAnnouncements } from "@/lib/marketing/data";
 
+export const revalidate = 60;
+
 export async function GET() {
   try {
     const announcements = await fetchActiveAnnouncements();

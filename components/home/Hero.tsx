@@ -123,11 +123,11 @@ export default function Hero() {
                             {/* Main Image */}
                             <div className="relative mx-auto aspect-[4/5] max-w-lg overflow-hidden rounded-3xl shadow-2xl shadow-foreground/10 dark:shadow-black/30">
                                 <Image
-                                    src="/images/hero.jpg"
-                                    alt="THRIFTX Premium Fashion"
+                                    src="/images/jeans1.jpg"
+                                    alt="A curated THRIFTX denim look"
                                     fill
                                     priority
-                                    quality={100}
+                                    quality={75}
                                     sizes="(max-width: 768px) 100vw, 50vw"
                                     className="object-cover transition-all duration-700 hover:scale-105"
                                 />

@@ -291,7 +291,7 @@ export default function SettingsPage() {
     if (authLoading) {
         return (
             <main className="min-h-screen bg-background">
-                <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
+                <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
                     <SettingsSkeleton />
                 </div>
             </main>
@@ -302,7 +302,7 @@ export default function SettingsPage() {
 
     return (
         <main className="min-h-screen bg-background">
-            <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
+            <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
                 {/* ── Header ────────────────────────────────────────────── */}
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}

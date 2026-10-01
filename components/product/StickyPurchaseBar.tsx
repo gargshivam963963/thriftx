@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { ShoppingBag, Zap, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -11,7 +11,7 @@ import { useCart } from "@/lib/CartContext";
 import { useAuth } from "@/lib/AuthContext";
 import { addToCart as persistAddToCart } from "@/lib/services/cart";
 import { Button } from "@/components/ui/button";
-import { toggleWishlist, isWishlisted } from "@/lib/services/wishlist";
+import { useWishlistProduct } from "@/lib/WishlistContext";
 
 interface StickyPurchaseBarProps {
     product: Product;
@@ -27,25 +27,11 @@ export default function StickyPurchaseBar({ product }: StickyPurchaseBarProps) {
     const { addToCart } = useCart();
 
     const [loading, setLoading] = useState<"none" | "add" | "buy">("none");
-    const [wishlisted, setWishlisted] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
+    const { wishlisted, toggle } = useWishlistProduct(product.id);
     const busyRef = useRef(false);
 
     const soldOut = product.status === "sold" || product.isActive === false;
-
-    const checkWishlist = useCallback(async () => {
-        if (!user) return;
-        try {
-            setWishlisted(await isWishlisted(product.id));
-        } catch {
-            // ignore
-        }
-    }, [user, product.id]);
-
-    // Check wishlist on mount if logged in
-    useEffect(() => {
-        checkWishlist();
-    }, [checkWishlist]);
 
     const ensureAuth = useCallback(() => {
         if (!user) {
@@ -98,15 +84,14 @@ export default function StickyPurchaseBar({ product }: StickyPurchaseBarProps) {
         if (wishlistLoading) return;
         setWishlistLoading(true);
         try {
-            const state = await toggleWishlist(product.id);
-            setWishlisted(state);
+            const state = await toggle();
             toast.success(state ? "Added to wishlist" : "Removed from wishlist");
         } catch {
             toast.error("Please sign in to wishlist");
         } finally {
             setWishlistLoading(false);
         }
-    }, [product.id, wishlistLoading]);
+    }, [toggle, wishlistLoading]);
 
     if (soldOut) {
         return (

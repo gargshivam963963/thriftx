@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import PremiumImage from "@/components/ui/PremiumImage";
 import { useAuth } from "@/lib/AuthContext";
-import { getUserOrders } from "@/lib/services/orderService";
+import { getUserOrders } from "@/lib/client/orders";
 import { getDeliveryInfo, formatDeliveryTimeline } from "@/lib/delivery";
 import type { Order } from "@/lib/types/order";
 
@@ -202,7 +202,7 @@ export default function OrderTrackingPage() {
 
     const documentId = params.id as string;
 
-    const fetchLiveTracking = async () => {
+    const fetchLiveTracking = useCallback(async () => {
         if (!order?.awbNumber) return;
         setTrackingLoading(true);
         try {
@@ -219,9 +219,9 @@ export default function OrderTrackingPage() {
         } finally {
             setTrackingLoading(false);
         }
-    };
+    }, [documentId, order?.awbNumber]);
 
-    const fetchOrder = async () => {
+    const fetchOrder = useCallback(async () => {
         if (!user) return;
         try {
             setLoading(true);
@@ -240,7 +240,7 @@ export default function OrderTrackingPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [documentId, user]);
 
     useEffect(() => {
         if (authLoading) return;
@@ -249,15 +249,14 @@ export default function OrderTrackingPage() {
             return;
         }
         fetchOrder();
-    }, [authLoading, user, documentId, router]);
+    }, [authLoading, user, documentId, router, fetchOrder]);
 
     // Fetch live tracking when order has an AWB
     useEffect(() => {
         if (order?.awbNumber) {
             fetchLiveTracking();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [order?.awbNumber]);
+    }, [fetchLiveTracking, order?.awbNumber]);
 
     // ── Render ──
 
@@ -676,4 +675,3 @@ function DetailRow({
         </div>
     );
 }
-

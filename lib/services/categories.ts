@@ -1,10 +1,4 @@
-import {
-  databases,
-  APPWRITE_DATABASE_ID,
-  APPWRITE_CATEGORIES_COLLECTION_ID,
-  AppwriteQuery,
-  isAppwriteDataConfigured,
-} from "@/lib/appwrite";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 
 export interface Category {
   id: string;
@@ -13,26 +7,37 @@ export interface Category {
   order?: number;
   active?: boolean;
   slug?: string;
+  gender?: "Men" | "Women" | "Kids" | "Unisex";
 }
 
 export async function getCategories(): Promise<Category[]> {
-  if (!isAppwriteDataConfigured) {
-    console.error(
-      "Appwrite dynamic category data unavailable. Set NEXT_PUBLIC_APPWRITE_* env vars.",
-    );
+  if (!isDatabaseConfigured || !prisma) {
     return [];
   }
 
-  const response = await databases.listDocuments(
-    APPWRITE_DATABASE_ID,
-    APPWRITE_CATEGORIES_COLLECTION_ID,
-    [AppwriteQuery.equal("active", true), AppwriteQuery.orderAsc("order")],
-  );
-
-  return response.documents.map((doc) => {
-    const { $id, $collection, $database, ...data } = doc;
-    return { id: $id, ...(data as Omit<Category, "id">) } as Category;
+  const rows = await prisma.category.findMany({
+    where: { active: true },
+    orderBy: [{ order: "asc" }, { name: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      gender: true,
+      order: true,
+      active: true,
+      image: true,
+    },
   });
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    gender: row.gender as Category["gender"],
+    order: row.order,
+    active: row.active,
+    image: row.image ?? undefined,
+  }));
 }
 
 const CategoryService = {

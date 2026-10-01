@@ -1,43 +1,47 @@
 "use client";
 
-import { Client, Storage, ID } from "appwrite";
-
-const client = new Client()
-  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT!);
-
-const storage = new Storage(client);
-
-const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!;
-
 export interface UploadedImage {
   fileId: string;
   url: string;
 }
 
-/**
- * Upload image Files to Appwrite Storage.
- * Images should be compressed (see `imageCompression.ts`) before calling.
- */
 export async function uploadImages(images: File[]): Promise<UploadedImage[]> {
-  const uploaded: UploadedImage[] = [];
+  return Promise.all(
+    images.map(async (image, index) => {
+      const response = await fetch("/api/storage/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: image.name || `image-${index + 1}`,
+          contentType: image.type || "image/jpeg",
+          productId: "legacy",
+          position: index,
+        }),
+      });
 
-  for (const image of images) {
-    const file = await storage.createFile(bucketId, ID.unique(), image);
+      if (!response.ok) {
+        throw new Error("Failed to generate image upload URL");
+      }
 
-    uploaded.push({
-      fileId: file.$id,
-      url: storage.getFileView(bucketId, file.$id).toString(),
-    });
-  }
+      const { uploadUrl, key } = await response.json();
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": image.type || "image/jpeg" },
+        body: image,
+      });
 
-  return uploaded;
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload image to storage");
+      }
+
+      return {
+        fileId: key,
+        url: key,
+      };
+    }),
+  );
 }
 
-/**
- * Upload an array of compressed Blobs to Appwrite Storage.
- * Assumes the caller has already compressed/resized the images.
- */
 export async function uploadBlobs(
   blobs: Blob[],
   mimeType = "image/jpeg",
@@ -51,14 +55,9 @@ export async function uploadBlobs(
   return uploadImages(files);
 }
 
-/**
- * Parses a fileId from an Appwrite image URL.
- * Appwrite view URLs contain the file ID after the bucket ID.
- * e.g. https://cloud.appwrite.io/v1/storage/buckets/{bucketId}/files/{fileId}/view
- */
 export function extractFileIdFromUrl(url: string): string | null {
   try {
-    const match = url.match(/\/files\/([^/]+)\/view/);
+    const match = url.match(/(?:\/|%2F)([A-Za-z0-9_-]+)(?:\?|$)/);
     return match ? match[1] : null;
   } catch {
     return null;
@@ -71,10 +70,13 @@ export async function deleteImageFromStorage(
   try {
     const fileId = extractFileIdFromUrl(imageUrl);
     if (!fileId) return false;
-    await storage.deleteFile(bucketId, fileId);
+    await fetch("/api/storage/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: fileId }),
+    });
     return true;
-  } catch (error) {
-    console.error("deleteImageFromStorage error:", error);
+  } catch {
     return false;
   }
 }

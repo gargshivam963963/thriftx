@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-    isWishlisted,
-    toggleWishlist,
-} from "@/lib/services/wishlist";
+import { useWishlistProduct } from "@/lib/WishlistContext";
 import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
 
 interface Props {
@@ -17,35 +14,16 @@ interface Props {
 }
 
 export default function WishlistButton({ productId }: Props) {
-    const [wishlisted, setWishlisted] = useState(false);
-    const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
+    const { wishlisted, loading, toggle } = useWishlistProduct(productId);
     const { trackWishlistAdd, trackWishlistRemove } = useAnalytics();
-
-    useEffect(() => {
-        async function load() {
-            try {
-                setWishlisted(await isWishlisted(productId));
-            } catch {
-                // User may not be logged in
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        load();
-    }, [productId]);
 
     const handleClick = useCallback(async () => {
         if (busy) return;
         setBusy(true);
         // Optimistic toggle for instant UI feedback
-        const next = !wishlisted;
-        setWishlisted(next);
-
         try {
-            const state = await toggleWishlist(productId);
-            setWishlisted(state);
+            const state = await toggle();
 
             if (state) {
                 trackWishlistAdd(productId, { productId });
@@ -55,13 +33,11 @@ export default function WishlistButton({ productId }: Props) {
                 toast.success("Removed from wishlist");
             }
         } catch {
-            // Revert optimistic state on failure
-            setWishlisted(!next);
             toast.error("Please sign in to wishlist");
         } finally {
             setBusy(false);
         }
-    }, [busy, wishlisted, productId, trackWishlistAdd, trackWishlistRemove]);
+    }, [busy, toggle, productId, trackWishlistAdd, trackWishlistRemove]);
 
     return (
         <Button

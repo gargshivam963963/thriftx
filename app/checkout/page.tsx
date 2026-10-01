@@ -20,8 +20,8 @@ import { toast } from "sonner";
 
 import CheckoutAccordion, {
     type CheckoutStep,
-    type ShippingMethod,
 } from "@/components/checkout/CheckoutAccordion";
+import type { ShippingMethod } from "@/lib/shipping/checkout-options";
 import CheckoutOrderSummary from "@/components/checkout/CheckoutOrderSummary";
 import { Button } from "@/components/ui/button";
 
@@ -34,7 +34,7 @@ import {
     getCartProducts,
     type CartProduct,
 } from "@/lib/services/cartProducts";
-import { createOrder } from "@/lib/services/orderService";
+import { createOrder } from "@/lib/client/orders";
 import type { Address, CreateAddressPayload } from "@/lib/types/address";
 import type { PaymentMethod } from "@/lib/types/order";
 
@@ -366,14 +366,20 @@ export default function CheckoutPage() {
             const response = await fetch("/api/payment/create-order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ amount: total }),
+                body: JSON.stringify({
+                    amount: total,
+                    addressId: selectedAddress.$id,
+                    deliveryMethod: shippingMethod.name,
+                }),
             });
 
+            const razorpayOrder = await response.json();
             if (!response.ok) {
-                throw new Error("Failed to create payment order.");
+                throw new Error(
+                    razorpayOrder.error || "Failed to create payment order.",
+                );
             }
 
-            const razorpayOrder = await response.json();
             const { firstName, lastName } = splitFullName(
                 selectedAddress.fullName,
             );
@@ -387,22 +393,6 @@ export default function CheckoutPage() {
                 order_id: razorpayOrder.id,
                 handler: async (paymentResponse: Record<string, string>) => {
                     try {
-                        const verifyResponse = await fetch(
-                            "/api/payment/verify",
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify(paymentResponse),
-                            },
-                        );
-
-                        const verification = await verifyResponse.json();
-                        if (!verification.success) {
-                            throw new Error("Payment verification failed.");
-                        }
-
                         const products = JSON.stringify(
                             cartItems.map((item) => ({
                                 id: item.id,
@@ -415,6 +405,7 @@ export default function CheckoutPage() {
                         );
 
                         await createOrder({
+                            addressId: selectedAddress.$id,
                             subtotal,
                             shipping: shippingCost,
                             total,
@@ -686,4 +677,3 @@ export default function CheckoutPage() {
         </main>
     );
 }
-

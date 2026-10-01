@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isShiprocketConfigured } from "@/lib/shipping/providers/auth";
 import { PICKUP_ADDRESS } from "@/lib/shipping/constants";
 import { getAvailableCouriers } from "@/lib/shipping/providers/couriers";
+import { adminAuthErrorResponse } from "@/lib/auth-guard";
 
 /**
  * GET /api/shipping/diagnose?pincode=132103
@@ -12,8 +13,17 @@ import { getAvailableCouriers } from "@/lib/shipping/providers/couriers";
  * - Attempts a live courier serviceability check
  */
 export async function GET(req: Request) {
+  const authError = await adminAuthErrorResponse();
+  if (authError) return authError;
+
   const url = new URL(req.url);
   const pincode = url.searchParams.get("pincode") || "132103";
+  if (!/^\d{6}$/.test(pincode)) {
+    return NextResponse.json(
+      { success: false, message: "A valid six-digit pincode is required." },
+      { status: 400 },
+    );
+  }
 
   const configured = isShiprocketConfigured();
 
@@ -35,7 +45,7 @@ export async function GET(req: Request) {
       result.status = "ok";
     } catch (error) {
       result.status = "error";
-      result.message = error instanceof Error ? error.message : "Unknown error";
+      result.message = "Courier serviceability check failed.";
     }
   } else {
     result.status = "not_configured";

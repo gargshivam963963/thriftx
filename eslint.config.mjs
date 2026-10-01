@@ -6,9 +6,14 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default defineConfig([{
-    extends: [...next],
-    rules: {
-        "react-hooks/set-state-in-effect": "off",
+export default defineConfig([
+    {
+        ignores: ["generated/**", ".next/**", "node_modules/**"],
     },
-}]);
+    {
+        extends: [...next],
+        rules: {
+            "react-hooks/set-state-in-effect": "off",
+        },
+    },
+]);

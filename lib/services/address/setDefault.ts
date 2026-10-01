@@ -1,8 +1,4 @@
-import { AppwriteQuery, databases } from "@/lib/appwrite";
-import {
-  APPWRITE_ADDRESSES_COLLECTION_ID,
-  APPWRITE_DATABASE_ID,
-} from "@/lib/appwrite";
+import { documentStore, DocumentQuery } from "@/lib/document-store";
 
 import type { Address } from "@/lib/types/address";
 
@@ -16,31 +12,32 @@ export async function setDefaultAddress({
   addressId,
 }: SetDefaultAddressParams): Promise<Address> {
   try {
-    const response = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_ADDRESSES_COLLECTION_ID,
-      [AppwriteQuery.equal("userId", userId)],
+    const address = await documentStore.getDocument(
+      "thriftx",
+      "addresses",
+      addressId,
     );
+    if (address.userId !== userId) {
+      throw new Error("Address not found");
+    }
+
+    const response = await documentStore.listDocuments("thriftx", "addresses", [
+      DocumentQuery.equal("userId", userId),
+    ]);
 
     await Promise.all(
       response.documents.map((document) =>
-        databases.updateDocument(
-          APPWRITE_DATABASE_ID,
-          APPWRITE_ADDRESSES_COLLECTION_ID,
-          document.$id,
-          {
-            isDefault: document.$id === addressId,
-          },
-        ),
+        documentStore.updateDocument("thriftx", "addresses", document.$id, {
+          isDefault: document.$id === addressId,
+        }),
       ),
     );
 
-    const updated = await databases.getDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_ADDRESSES_COLLECTION_ID,
+    const updated = await documentStore.getDocument(
+      "thriftx",
+      "addresses",
       addressId,
     );
-
     return updated as unknown as Address;
   } catch (error) {
     console.error("Failed to set default address:", error);

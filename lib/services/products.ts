@@ -99,6 +99,10 @@ export async function getProductById(id: string): Promise<Product | null> {
   return productRepository.getProductById(id);
 }
 
+export async function getProductsByIds(ids: string[]): Promise<Product[]> {
+  return productRepository.getProductsByIds(ids);
+}
+
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   return productRepository.getProductBySlug(slug);
 }

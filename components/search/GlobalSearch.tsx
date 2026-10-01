@@ -99,7 +99,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
         return () => {
             cancelled = true;
         };
-    }, [debouncedQuery]);
+    }, [debouncedQuery, trackSearch]);
 
     const handleSubmit = useCallback(
         (e?: React.FormEvent) => {

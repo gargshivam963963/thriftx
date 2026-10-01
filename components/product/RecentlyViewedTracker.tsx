@@ -19,7 +19,7 @@ export default function RecentlyViewedTracker({ product }: RecentlyViewedTracker
             image: product.primaryImage || product.images?.[0] || "",
             category: product.category,
         });
-    }, [product.slug, product.title, product.brand, product.price, product.primaryImage, product.images, product.category]);
+    }, [product.id, product.slug, product.title, product.brand, product.price, product.primaryImage, product.images, product.category]);
 
     return null;
 }

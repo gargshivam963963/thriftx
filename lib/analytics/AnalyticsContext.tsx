@@ -53,12 +53,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     const prevPathRef = useRef<string>("");
     const [isReady, setIsReady] = useState(false);
 
-    // Determine if the current user is an admin (any authenticated user on admin routes)
-    const isAdmin = useRef(false);
-
-    useEffect(() => {
-        isAdmin.current = !!user;
-    }, [user]);
+    const isAdminUser = user?.role === "admin";
 
     useEffect(() => {
         const tracker = initTracker({
@@ -80,7 +75,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         if (!trackerRef.current || !isReady) return;
 
         // Skip tracking if this is localhost, admin route, or admin user
-        if (!shouldTrack(isAdmin.current, pathname)) {
+        if (!shouldTrack(isAdminUser, pathname)) {
             if (process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "true") {
                 console.log(`[Analytics] Skipping page view (filtered): ${pathname}`);
             }
@@ -92,10 +87,14 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
             prevPathRef.current = currentPath;
             trackerRef.current.trackPageView();
         }
-    }, [pathname, searchParams, isReady]);
+    }, [pathname, searchParams, isAdminUser, isReady]);
 
     useEffect(() => {
-        if (!trackerRef.current || !isReady) return;
+        if (
+            !trackerRef.current ||
+            !isReady ||
+            !shouldTrack(isAdminUser, pathname)
+        ) return;
         let ticking = false;
         const handleScroll = () => {
             if (!ticking) {
@@ -108,10 +107,10 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         };
         window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [isReady]);
+    }, [isAdminUser, isReady, pathname]);
 
     // Whether tracking is allowed for the current session
-    const trackingAllowed = shouldTrack(!!user && pathname.startsWith("/admin"), pathname);
+    const trackingAllowed = shouldTrack(isAdminUser, pathname);
 
     const track = useCallback(
         (eventType: EventType, eventName: string, properties: Record<string, string | number | boolean | string[] | number[] | null> = {}) => {

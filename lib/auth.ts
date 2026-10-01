@@ -6,6 +6,11 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const secret = process.env.BETTER_AUTH_SECRET;
+if (!secret || secret.length < 32) {
+  throw new Error(
+    "BETTER_AUTH_SECRET must be configured with at least 32 characters.",
+  );
+}
 const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -68,7 +73,7 @@ if (!prisma) {
 const prismaClientForAuth = (prisma ?? ({} as PrismaClient)) as PrismaClient;
 
 export const auth = betterAuth({
-  secret: secret || "development-secret-change-me",
+  secret,
   baseURL,
   basePath: "/api/auth",
   database: prismaAdapter(prismaClientForAuth, {

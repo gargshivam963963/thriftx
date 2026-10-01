@@ -1,14 +1,6 @@
 import type { Order } from "@/lib/types/order";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
-import {
-  databases,
-  AppwriteQuery,
-  APPWRITE_DATABASE_ID,
-  APPWRITE_ORDERS_COLLECTION_ID,
-  APPWRITE_ADDRESSES_COLLECTION_ID,
-  APPWRITE_WISHLIST_COLLECTION_ID,
-  APPWRITE_CATEGORIES_COLLECTION_ID,
-} from "@/lib/appwrite";
+import { documentStore, DocumentQuery } from "@/lib/document-store";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface DashboardStats {
@@ -63,7 +55,7 @@ export interface OrderAnalytics {
   statusDistribution: { status: string; count: number }[];
 }
 
-/** Raw Appwrite document shape (union of the fields we map below). */
+/** Raw stored-document shape (union of the fields we map below). */
 type OrderDocument = Record<string, unknown> & {
   $id: string;
   $createdAt: string;
@@ -73,7 +65,7 @@ type ProductDocument = Record<string, unknown> & {
   $createdAt: string;
 };
 
-// ─── Mock Data Helpers (for demo when Appwrite is not configured) ───────────
+// ─── Mock Data Helpers (for demo when the document store is not configured) ───────────
 
 function generateMockStats(): DashboardStats {
   return {
@@ -169,11 +161,10 @@ function generateMockTopProducts(): TopProduct[] {
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   try {
-    // Fetch orders
-    const ordersResponse = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_ORDERS_COLLECTION_ID,
-      [AppwriteQuery.limit(5000)],
+    const ordersResponse = await documentStore.listDocuments(
+      "thriftx",
+      "orders",
+      [DocumentQuery.limit(5000)],
     );
 
     const orders = ordersResponse.documents as OrderDocument[];
@@ -203,7 +194,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     });
 
     return {
-      totalUsers: 0, // Appwrite users count not available via client SDK
+      totalUsers: 0,
       totalOrders,
       totalRevenue,
       totalProducts,
@@ -222,10 +213,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
 export async function getSalesAnalytics(): Promise<OrderAnalytics> {
   try {
-    const ordersResponse = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_ORDERS_COLLECTION_ID,
-      [AppwriteQuery.limit(5000), AppwriteQuery.orderDesc("$createdAt")],
+    const ordersResponse = await documentStore.listDocuments(
+      "thriftx",
+      "orders",
+      [DocumentQuery.limit(5000), DocumentQuery.orderDesc("$createdAt")],
     );
 
     const orders = ordersResponse.documents as OrderDocument[];
@@ -352,60 +343,12 @@ export async function getSalesAnalytics(): Promise<OrderAnalytics> {
 
 export async function getAllOrders(): Promise<Order[]> {
   try {
-    const response = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_ORDERS_COLLECTION_ID,
-      [AppwriteQuery.limit(1000), AppwriteQuery.orderDesc("$createdAt")],
-    );
+    const response = await documentStore.listDocuments("thriftx", "orders", [
+      DocumentQuery.limit(1000),
+      DocumentQuery.orderDesc("$createdAt"),
+    ]);
 
-    return response.documents.map((doc) => ({
-      $id: doc.$id,
-      $createdAt: doc.$createdAt,
-
-      orderId: doc.orderId,
-      status: doc.status,
-      email: doc.email ?? "",
-
-      subtotal: doc.subtotal,
-      shipping: doc.shipping,
-      discount: doc.discount ?? 0,
-      couponCode: doc.couponCode ?? "",
-      creditUsed: doc.creditUsed ?? 0,
-      total: doc.total,
-
-      firstName: doc.firstName,
-      lastName: doc.lastName,
-      phone: doc.phone,
-
-      address: doc.address,
-      city: doc.city,
-      postalCode: doc.postalCode,
-      country: doc.country,
-
-      paymentMethod: doc.paymentMethod ?? "razorpay",
-      paymentId: doc.paymentId,
-      signature: doc.signature,
-
-      deliveryMethod: doc.deliveryMethod,
-
-      products: doc.products ?? "[]",
-      shippingProvider: doc.shippingProvider,
-
-      shipmentStatus: doc.shipmentStatus,
-      pickupStatus: doc.pickupStatus,
-      shipmentId: doc.shipmentId,
-      trackingNumber: doc.trackingNumber,
-      awbNumber: doc.awbNumber,
-      courier: doc.courier,
-      courierId: doc.courierId,
-      estimatedDelivery: doc.estimatedDelivery,
-      labelUrl: doc.labelUrl,
-      invoiceUrl: doc.invoiceUrl,
-      trackingUrl: doc.trackingUrl,
-      pickupId: doc.pickupId,
-      shippedAt: doc.shippedAt,
-      deliveredAt: doc.deliveredAt,
-    }));
+    return response.documents as unknown as Order[];
   } catch (error) {
     console.error("getAllOrders error:", error);
     return [];
@@ -414,13 +357,12 @@ export async function getAllOrders(): Promise<Order[]> {
 
 export async function getCustomers(): Promise<CustomerData[]> {
   try {
-    const ordersResponse = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_ORDERS_COLLECTION_ID,
-      [AppwriteQuery.limit(5000)],
+    const ordersResponse = await documentStore.listDocuments(
+      "thriftx",
+      "orders",
+      [DocumentQuery.limit(5000)],
     );
 
-    // Group orders by user
     const userOrdersMap = new Map<string, OrderDocument[]>();
     ordersResponse.documents.forEach((doc) => {
       const userId =
@@ -472,12 +414,9 @@ export async function updateOrderStatus(
   status: string,
 ): Promise<boolean> {
   try {
-    await databases.updateDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_ORDERS_COLLECTION_ID,
-      documentId,
-      { status },
-    );
+    await documentStore.updateDocument("thriftx", "orders", documentId, {
+      status,
+    });
     return true;
   } catch (error) {
     console.error("updateOrderStatus error:", error);
@@ -487,11 +426,7 @@ export async function updateOrderStatus(
 
 export async function deleteOrder(documentId: string): Promise<boolean> {
   try {
-    await databases.deleteDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_ORDERS_COLLECTION_ID,
-      documentId,
-    );
+    await documentStore.deleteDocument("thriftx", "orders", documentId);
     return true;
   } catch (error) {
     console.error("deleteOrder error:", error);

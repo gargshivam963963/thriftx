@@ -216,6 +216,19 @@ export async function getProductById(id: string): Promise<Product | null> {
   }
 }
 
+export async function getProductsByIds(ids: string[]): Promise<Product[]> {
+  if (!isDatabaseConfigured || ids.length === 0) return [];
+  const rows = await prisma!.product.findMany({
+    where: {
+      id: { in: [...new Set(ids)] },
+      isActive: true,
+      status: "active",
+    },
+    include: { images: { orderBy: { position: "asc" } } },
+  });
+  return Promise.all(rows.map(mapProduct));
+}
+
 export async function getSimilarProducts(
   product: Product,
   limit = 6,
@@ -369,7 +382,7 @@ export async function seedProducts(
 }
 
 /**
- * Import products from the legacy Appwrite catalog without changing their IDs.
+ * Import products from the legacy catalog without changing their IDs.
  * Each product is independent so a failed run can be safely resumed.
  */
 export async function importProducts(
@@ -382,15 +395,15 @@ export async function importProducts(
   const ids = new Set<string>();
   const slugs = new Set<string>();
   for (const product of products) {
-    if (!product.id) throw new Error("Appwrite product is missing its ID");
+    if (!product.id) throw new Error("Product is missing its ID");
     if (!product.slug) {
       throw new Error(`Product ${product.id} is missing a slug`);
     }
     if (ids.has(product.id)) {
-      throw new Error(`Duplicate Appwrite product ID: ${product.id}`);
+      throw new Error(`Duplicate product ID: ${product.id}`);
     }
     if (slugs.has(product.slug)) {
-      throw new Error(`Duplicate Appwrite product slug: ${product.slug}`);
+      throw new Error(`Duplicate product slug: ${product.slug}`);
     }
     ids.add(product.id);
     slugs.add(product.slug);
@@ -409,7 +422,7 @@ export async function importProducts(
     const source = products.find((product) => product.slug === owner.slug);
     if (source && source.id !== owner.id) {
       throw new Error(
-        `Slug collision for "${owner.slug}": Appwrite ID ${source.id} conflicts with PostgreSQL ID ${owner.id}`,
+        `Slug collision for "${owner.slug}": imported ID ${source.id} conflicts with PostgreSQL ID ${owner.id}`,
       );
     }
   }

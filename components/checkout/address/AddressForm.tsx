@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -152,7 +152,7 @@ export default function AddressForm({
     const {
         register,
         handleSubmit,
-        watch,
+        control,
         reset,
         setValue,
         formState: { errors, isSubmitting },
@@ -206,7 +206,7 @@ export default function AddressForm({
         });
     }, [initialData, reset]);
 
-    const selectedType = watch("type");
+    const selectedType = useWatch({ control, name: "type" });
 
     const submit = useCallback(
         async (values: FormValues) => {
@@ -472,4 +472,3 @@ export default function AddressForm({
         </motion.form>
     );
 }
-

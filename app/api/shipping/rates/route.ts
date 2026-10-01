@@ -1,32 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { shipmentService } from "@/lib/shipping";
 import { SHIPPING_DEFAULTS } from "@/lib/shipping/constants";
+import { getCachedShippingRates } from "@/lib/shipping/cachedRates";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const pincode = searchParams.get("pincode");
-    const weight = parseFloat(
-      searchParams.get("weight") ?? String(SHIPPING_DEFAULTS.defaultWeight),
-    );
+    const weightValue = searchParams.get("weight");
+    const weight = weightValue
+      ? Number(weightValue)
+      : SHIPPING_DEFAULTS.defaultWeight;
 
-    if (!pincode) {
+    if (!pincode || !/^\d{6}$/.test(pincode)) {
       return NextResponse.json(
-        { success: false, message: "Pincode is required" },
+        { success: false, message: "A valid six-digit pincode is required." },
         { status: 400 },
       );
     }
 
-    const rates = await shipmentService.getShippingRates(pincode, weight);
+    if (!Number.isFinite(weight) || weight <= 0) {
+      return NextResponse.json(
+        { success: false, message: "A valid positive weight is required." },
+        { status: 400 },
+      );
+    }
+
+    const rates = await getCachedShippingRates(pincode, weight);
 
     return NextResponse.json({ success: true, rates });
   } catch (error) {
+    console.error("GET /api/shipping/rates error:", error);
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error ? error.message : "Internal Server Error",
+        message: "Unable to retrieve shipping rates.",
       },
       { status: 500 },
     );

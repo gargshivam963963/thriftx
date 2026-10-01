@@ -13,6 +13,9 @@ export async function GET(req: NextRequest) {
     const color = searchParams.get("color") || undefined;
     const material = searchParams.get("material") || undefined;
     const condition = searchParams.get("condition") || undefined;
+    const search = searchParams.get("search") || undefined;
+    const measurement = searchParams.get("measurement") || undefined;
+
     const sort =
       (searchParams.get("sort") as
         | "newest"
@@ -20,17 +23,25 @@ export async function GET(req: NextRequest) {
         | "price-high"
         | "name"
         | "popular") || "newest";
-const search = searchParams.get("search") || undefined;
-    const MAX_LIMIT = 100;
-    const parsedLimit = parseInt(searchParams.get("limit") || "12", 10);
+
+    const MAX_LIMIT = 48;
+    const parsedLimit = Number.parseInt(
+      searchParams.get("limit") || "12",
+      10,
+    );
     const limit = Number.isFinite(parsedLimit)
       ? Math.min(Math.max(1, parsedLimit), MAX_LIMIT)
       : 12;
-    const parsedOffset = parseInt(searchParams.get("offset") || "0", 10);
-    const offset = Number.isFinite(parsedOffset) ? Math.max(0, parsedOffset) : 0;
 
-    const measurement = searchParams.get("measurement") || undefined;
+    const parsedOffset = Number.parseInt(
+      searchParams.get("offset") || "0",
+      10,
+    );
+    const offset = Number.isFinite(parsedOffset)
+      ? Math.max(0, parsedOffset)
+      : 0;
 
+    // Fetch one extra row so the client can know whether another page exists.
     const products = await getProducts({
       gender,
       category,
@@ -42,45 +53,60 @@ const search = searchParams.get("search") || undefined;
       condition: condition ? [condition] : undefined,
       search,
       sort,
-      limit,
+      limit: limit + 1,
       offset,
     });
 
-    // Server-side measurement filter (since it's not a DB field)
     let filteredProducts = products;
+
     if (measurement) {
       const match = measurement.match(
         /^(chest|waist|length|inseam)-(\d+)(?:-plus)?$/,
       );
+
       if (match) {
-        const type = match[1] as "chest" | "waist" | "length" | "inseam";
-        const value = parseInt(match[2], 10);
+        const type = match[1] as
+          | "chest"
+          | "waist"
+          | "length"
+          | "inseam";
+        const value = Number.parseInt(match[2], 10);
         const isPlus = measurement.endsWith("-plus");
-        filteredProducts = products.filter((p) => {
-          const fieldValue = p[type];
+
+        filteredProducts = products.filter((product) => {
+          const fieldValue = product[type];
           if (!fieldValue) return false;
-          const numVal = parseInt(
-            fieldValue.toString().replace(/[^\d]/g, ""),
+
+          const numericValue = Number.parseInt(
+            String(fieldValue).replace(/[^\d]/g, ""),
             10,
           );
-          if (isNaN(numVal)) return false;
-          if (isPlus) return numVal >= value;
-          return Math.abs(numVal - value) <= 2;
+
+          if (Number.isNaN(numericValue)) return false;
+          if (isPlus) return numericValue >= value;
+          return Math.abs(numericValue - value) <= 2;
         });
       }
     }
 
-return NextResponse.json({
+    const hasMore = filteredProducts.length > limit;
+    const pageProducts = filteredProducts.slice(0, limit);
+
+    return NextResponse.json({
       success: true,
-      products: filteredProducts,
+      products: pageProducts,
       offset,
       limit,
-      hasMore: filteredProducts.length === limit,
+      hasMore,
     });
   } catch (error) {
     console.error("Error fetching shop products:", error);
+
     return NextResponse.json(
-      { success: false, message: "Failed to fetch products" },
+      {
+        success: false,
+        message: "Failed to fetch products",
+      },
       { status: 500 },
     );
   }

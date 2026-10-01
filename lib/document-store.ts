@@ -114,13 +114,46 @@ export const documentStore = {
     queries: Query[] = [],
   ): Promise<{ documents: StoredDocument[]; total: number }> {
     const db = getPrisma();
+    const databaseFilters: Prisma.StoredDocumentWhereInput[] = [];
+    const pushedEqualities = new Set<Query>();
+
+    for (const query of queries) {
+      if (
+        query.kind !== "equal" ||
+        query.values.length === 0 ||
+        query.attribute.startsWith("$") ||
+        !query.values.every(
+          (value) =>
+            typeof value === "string" ||
+            typeof value === "number" ||
+            typeof value === "boolean",
+        )
+      ) {
+        continue;
+      }
+
+      databaseFilters.push({
+        OR: query.values.map((value) => ({
+          data: {
+            path: [query.attribute],
+            equals: value as Prisma.InputJsonValue,
+          },
+        })),
+      });
+      pushedEqualities.add(query);
+    }
+
     const rows = await db.storedDocument.findMany({
-      where: { collectionKey },
+      where: {
+        collectionKey,
+        ...(databaseFilters.length > 0 ? { AND: databaseFilters } : {}),
+      },
     });
     let documents = rows.map(toDocument);
 
     for (const query of queries) {
       if (query.kind === "equal") {
+        if (pushedEqualities.has(query)) continue;
         documents = documents.filter((document) =>
           query.values.some(
             (value) => readAttribute(document, query.attribute) === value,

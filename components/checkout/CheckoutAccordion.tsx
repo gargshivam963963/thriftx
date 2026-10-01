@@ -1,14 +1,18 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from '@/components/ui/button'; import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Truck, CreditCard, Check } from "lucide-react";
 
 import type { Address, CreateAddressPayload } from "@/lib/types/address";
 import type { PaymentMethod } from "@/lib/types/order";
 import { detectDeliveryZone } from "@/lib/delivery";
-import { SHIPPING_DEFAULTS, PANIPAT_LOCAL_DELIVERY } from "@/lib/shipping/constants";
+import {
+    getCheckoutShippingOptions,
+    isLocalDelivery,
+    type ShippingMethod,
+} from "@/lib/shipping/checkout-options";
 import { getShippingRates } from "@/lib/shipping/api";
 
 import AddressSection from "./address/AddressSection";
@@ -16,14 +20,6 @@ import ShippingSection from "./shipping/ShippingSection";
 import PaymentSection from "./payment/PaymentSection";
 
 export type CheckoutStep = "address" | "shipping" | "payment";
-
-export interface ShippingMethod {
-    id: string;
-    name: string;
-    subtitle: string;
-    price: number;
-    eta: string;
-}
 
 /**
  * Fetch REAL shipping rates from Shiprocket API.
@@ -35,80 +31,21 @@ export async function getShippingOptionsForCity(
     pincode?: string,
     orderSubtotal?: number,
 ): Promise<ShippingMethod[]> {
-    // Local delivery (Panipat) — always free, 2–3 hour delivery, no courier needed
-    if (city && pincode && detectDeliveryZone(city, pincode) === "local") {
-        return [
-            {
-                id: "standard",
-                name: "Panipat Same-Day Delivery",
-                subtitle: PANIPAT_LOCAL_DELIVERY.subtitle,
-                price: PANIPAT_LOCAL_DELIVERY.price,
-                eta: PANIPAT_LOCAL_DELIVERY.etaLabel,
-            },
-        ];
+    const subtotal = orderSubtotal ?? 0;
+    if (isLocalDelivery(city, pincode)) {
+        return getCheckoutShippingOptions(city, pincode, subtotal, []);
     }
 
-    const freeShipping = (orderSubtotal ?? 0) >= SHIPPING_DEFAULTS.freeShippingAmount;
-
     try {
-        // Call Shiprocket API via our backend route to get real courier rates
         const response = await getShippingRates(pincode ?? "");
-        const rates = response.rates;
-
-        if (rates && rates.length > 0) {
-            // Sort by amount (cheapest first)
-            const sorted = [...rates].sort((a, b) => a.amount - b.amount);
-
-            // Cheapest courier = standard
-            const cheapest = sorted[0];
-            const standardPrice = freeShipping ? 0 : cheapest.amount;
-
-            const methods: ShippingMethod[] = [
-                {
-                    id: "standard",
-                    name: `${cheapest.courierName} — Standard`,
-                    subtitle: freeShipping ? "FREE on this order" : `Cheapest courier — ₹${cheapest.amount}`,
-                    price: standardPrice,
-                    eta: `${cheapest.estimatedDays} Day${cheapest.estimatedDays !== 1 ? "s" : ""}`,
-                },
-            ];
-
-            // If there's a second cheapest, offer it as express
-            if (sorted.length > 1) {
-                const faster = sorted[1];
-                methods.push({
-                    id: "express",
-                    name: `${faster.courierName} — Express`,
-                    subtitle: `Faster — ₹${faster.amount}`,
-                    price: faster.amount,
-                    eta: `${faster.estimatedDays} Day${faster.estimatedDays !== 1 ? "s" : ""}`,
-                });
-            }
-
-            return methods;
-        }
-
-        throw new Error("No courier rates returned from Shiprocket");
+        return getCheckoutShippingOptions(
+            city,
+            pincode,
+            subtotal,
+            response.rates ?? [],
+        );
     } catch {
-        // Fallback to preset rates if Shiprocket API fails
-        const standardPrice = freeShipping ? 0 : 49;
-
-        return [
-            {
-                id: "standard",
-                name: "Standard Delivery",
-                subtitle: freeShipping ? "FREE on this order" : "Best Value",
-                price: standardPrice,
-                eta: "4–6 Days",
-            },
-            {
-                id: "express",
-                name: "Express Delivery",
-                subtitle: "Faster Shipping",
-                price: 99,
-                eta: "2–3 Days",
-            },
-        ];
+        return getCheckoutShippingOptions(city, pincode, subtotal, []);
     }
 }
 
@@ -384,7 +321,13 @@ export default function CheckoutAccordion({
         return () => {
             cancelled = true;
         };
-    }, [selectedAddress?.city, selectedAddress?.pincode, subtotal]);
+    }, [
+        onShippingSelect,
+        selectedAddress?.city,
+        selectedAddress?.pincode,
+        shippingMethod,
+        subtotal,
+    ]);
 
     const stepStatus = useMemo((): Record<string, "complete" | "current" | "pending"> => {
         return {

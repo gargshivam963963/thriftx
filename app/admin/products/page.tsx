@@ -359,7 +359,7 @@ export default function AdminProductsPage() {
 
     const handleSave = async (
         data: ProductFormData,
-        orderedImages: { url: string; key?: string }[],
+        orderedImages: string[],
         images: File[],
     ) => {
         setSaving(true);
@@ -394,13 +394,13 @@ export default function AdminProductsPage() {
             let fileIndex = 0;
 
             for (const [position, image] of orderedImages.entries()) {
-                if (image.url.startsWith("blob:")) {
+                if (image.startsWith("blob:")) {
                     const file = images[fileIndex++];
                     if (!file) throw new Error("An image file is missing from the upload queue");
                     const uploaded = await uploadImageToR2(file, productId, position);
                     finalImageKeys.push(uploaded.key);
                 } else {
-                    finalImageKeys.push(image.key ?? image.url);
+                    finalImageKeys.push(image);
                 }
             }
 
@@ -982,4 +982,3 @@ export default function AdminProductsPage() {
         </div>
     );
 }
-

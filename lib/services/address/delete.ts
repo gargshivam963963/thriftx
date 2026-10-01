@@ -1,16 +1,20 @@
-import { databases } from "@/lib/appwrite";
-import {
-  APPWRITE_ADDRESSES_COLLECTION_ID,
-  APPWRITE_DATABASE_ID,
-} from "@/lib/appwrite";
+import { documentStore } from "@/lib/document-store";
 
-export async function deleteAddress(addressId: string): Promise<void> {
+export async function deleteAddress(
+  userId: string,
+  addressId: string,
+): Promise<void> {
   try {
-    await databases.deleteDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_ADDRESSES_COLLECTION_ID,
+    const existing = await documentStore.getDocument(
+      "thriftx",
+      "addresses",
       addressId,
     );
+    if (existing.userId !== userId) {
+      throw new Error("Address not found");
+    }
+
+    await documentStore.deleteDocument("thriftx", "addresses", addressId);
   } catch (error) {
     console.error("Failed to delete address:", error);
     throw error;

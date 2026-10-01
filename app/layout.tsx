@@ -5,6 +5,7 @@ import NextTopLoader from "nextjs-toploader";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/lib/AuthContext";
+import { WishlistProvider } from "@/lib/WishlistContext";
 import { CartProvider } from "@/lib/CartContext";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import AnalyticsProviderWrapper from "@/components/AnalyticsProviderWrapper";
@@ -142,29 +143,30 @@ export default function RootLayout({
 
         <ThemeProvider>
           <AuthProvider>
-            <CartProvider>
-              <AnalyticsProviderWrapper>
-                <Header />
+            <WishlistProvider>
+              <CartProvider>
+                <AnalyticsProviderWrapper>
+                  <Header />
 
-                <main className="flex flex-1 flex-col">
-                  {children}
-                </main>
+                  <main className="flex flex-1 flex-col">
+                    {children}
+                  </main>
 
-                <Footer />
-                <BottomNav />
+                  <Footer />
+                  <BottomNav />
 
-                <Toaster
-                  position="top-right"
-                  richColors
-                  closeButton
-                  duration={3000}
-                />
-              </AnalyticsProviderWrapper>
-            </CartProvider>
+                  <Toaster
+                    position="top-right"
+                    richColors
+                    closeButton
+                    duration={3000}
+                  />
+                </AnalyticsProviderWrapper>
+              </CartProvider>
+            </WishlistProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
-

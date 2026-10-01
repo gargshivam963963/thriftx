@@ -1,24 +1,31 @@
-import { databases } from "@/lib/appwrite";
-import {
-  APPWRITE_ADDRESSES_COLLECTION_ID,
-  APPWRITE_DATABASE_ID,
-} from "@/lib/appwrite";
+import { documentStore } from "@/lib/document-store";
 
 import type { Address, UpdateAddressPayload } from "@/lib/types/address";
 
 interface UpdateAddressParams {
+  userId: string;
   addressId: string;
   data: UpdateAddressPayload;
 }
 
 export async function updateAddress({
+  userId,
   addressId,
   data,
 }: UpdateAddressParams): Promise<Address> {
   try {
-    const response = await databases.updateDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_ADDRESSES_COLLECTION_ID,
+    const existing = await documentStore.getDocument(
+      "thriftx",
+      "addresses",
+      addressId,
+    );
+    if (existing.userId !== userId) {
+      throw new Error("Address not found");
+    }
+
+    const response = await documentStore.updateDocument(
+      "thriftx",
+      "addresses",
       addressId,
       data,
     );

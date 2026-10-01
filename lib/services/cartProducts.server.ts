@@ -1,5 +1,5 @@
-import { getCartItems, removeCartItem as removeFromCart } from "./cart";
-import { getProductById, Product } from "./products";
+import { getCartItems, removeCartItem as removeFromCart } from "./cart.server";
+import { getProductsByIds, Product } from "./products";
 import { requireUser } from "@/lib/auth-guard";
 
 export interface CartProduct extends Product {
@@ -10,7 +10,7 @@ export interface CartProduct extends Product {
 /**
  * Server-side implementation of getCartProducts.
  *
- * Reads cart items (Appwrite cart — still in scope for Phase 1) and enriches
+ * Reads cart items and enriches
  * each with product data from the repository layer (ProductRepository → Prisma).
  *
  * NOTE: This file is server-only. It imports `./products` → `lib/prisma.ts` →
@@ -20,49 +20,36 @@ export interface CartProduct extends Product {
  */
 export async function getCartProductsServer(): Promise<CartProduct[]> {
   const user = await requireUser();
-  const cartItems = await getCartItems(user.id);
+  return getCartProductsForUser(user.id);
+}
+
+export async function getCartProductsForUser(
+  userId: string,
+): Promise<CartProduct[]> {
+  const cartItems = await getCartItems(userId);
 
   if (!cartItems.length) {
     return [];
   }
 
-  const results = await Promise.allSettled(
-    cartItems.map(async (item) => {
-      try {
-        const product = await getProductById(item.productId);
-
-        if (!product) {
-          // Product no longer exists in DB — clean up the orphaned cart item silently
-          try {
-            await removeFromCart(item.id);
-          } catch {
-            // Ignore cleanup errors
-          }
-          return null;
-        }
-
-        return {
-          ...product,
-          cartId: item.id,
-          quantity: item.quantity,
-        } satisfies CartProduct;
-      } catch {
-        // Product fetch failed — clean up orphaned cart item
-        try {
-          await removeFromCart(item.id);
-        } catch {
-          // Ignore cleanup errors
-        }
-        return null;
-      }
-    }),
+  const products = await getProductsByIds(
+    cartItems.map((item) => item.productId),
+  );
+  const productsById = new Map(
+    products.map((product) => [product.id, product]),
+  );
+  const orphanedItems = cartItems.filter(
+    (item) => !productsById.has(item.productId),
   );
 
-  return results
-    .filter(
-      (result): result is PromiseFulfilledResult<CartProduct | null> =>
-        result.status === "fulfilled",
-    )
-    .map((result) => result.value)
-    .filter((product): product is CartProduct => product !== null);
+  await Promise.allSettled(
+    orphanedItems.map((item) => removeFromCart(userId, item.id)),
+  );
+
+  return cartItems.flatMap((item) => {
+    const product = productsById.get(item.productId);
+    return product
+      ? [{ ...product, cartId: item.id, quantity: item.quantity }]
+      : [];
+  });
 }

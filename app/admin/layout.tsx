@@ -23,15 +23,22 @@ export default function AdminLayout({
         setMounted(true);
     }, []);
 
-    const shouldRedirect = useMemo(() => {
-        return mounted && !loading && !user;
-    }, [mounted, loading, user]);
+    const shouldRedirect = useMemo(
+        () => mounted && !loading && !user,
+        [mounted, loading, user],
+    );
 
     useEffect(() => {
         if (shouldRedirect) {
             router.replace("/login?redirect=/admin/dashboard");
         }
     }, [shouldRedirect, router]);
+
+    useEffect(() => {
+        if (mounted && !loading && user && user.role !== "admin") {
+            router.replace("/");
+        }
+    }, [mounted, loading, router, user]);
 
     // Close sidebar on route change (mobile)
     useEffect(() => {
@@ -49,7 +56,7 @@ export default function AdminLayout({
         );
     }
 
-    if (!user) return null;
+    if (!user || user.role !== "admin") return null;
 
     return (
         <div className="flex min-h-screen bg-background">
@@ -70,7 +77,7 @@ export default function AdminLayout({
             <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             {/* Main content */}
-            <div className="flex flex-1 flex-col lg:pl-[280px]">
+            <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden lg:pl-[280px]">
                 {/* Mobile header */}
                 <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card px-4 lg:hidden">
                     <Button
@@ -90,7 +97,7 @@ export default function AdminLayout({
                 </header>
 
                 {/* Page content */}
-                <div className="flex-1 p-4 sm:p-6 lg:p-8">
+                <div className="min-w-0 w-full max-w-full flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
                     {children}
                 </div>
             </div>

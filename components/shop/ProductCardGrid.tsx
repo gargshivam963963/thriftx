@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button'; import { useState, useEffect } from "react";
+import { Button } from '@/components/ui/button'; import { useState } from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/badge";
 import PremiumImage from "@/components/ui/PremiumImage";
-import { isWishlisted, toggleWishlist } from "@/lib/services/wishlist";
+import { useWishlistProduct } from "@/lib/WishlistContext";
 
 const TOPWEAR_KEYWORDS = [
     "t-shirts", "shirt", "hoodie", "jacket", "blazer",
@@ -70,20 +70,15 @@ export default function ProductCardGrid({
     length,
     onlyOneLeft = false,
 }: ProductCardGridProps) {
-    const [wishlisted, setWishlisted] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
-
-    useEffect(() => {
-        isWishlisted(id).then(setWishlisted).catch(() => { });
-    }, [id]);
+    const { wishlisted, toggle } = useWishlistProduct(id);
 
     const handleWishlist = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         setWishlistLoading(true);
         try {
-            const state = await toggleWishlist(id);
-            setWishlisted(state);
+            const state = await toggle();
             toast.success(state ? "Added to wishlist ❤️" : "Removed from wishlist");
         } catch {
             toast.error("Please sign in to wishlist");

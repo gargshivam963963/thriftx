@@ -28,8 +28,6 @@ import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
 interface NavCategory {
   label: string;
   href: string;
@@ -38,16 +36,30 @@ interface NavCategory {
   badge?: string;
 }
 
-// ─── Modern Product-Focused Categories ────────────────────────────────────────
-
 const navCategories: NavCategory[] = [
-  { label: "New Arrivals", href: "/shop?sort=newest", icon: "🔥" },
-  { label: "Vintage", href: "/shop/vintage", icon: "✨" },
-  { label: "Best Sellers", href: "/shop?sort=popular", icon: "⭐" },
-  { label: "Sale", href: "/shop?sort=sale", icon: "🏷️", highlight: true, badge: "UP TO 60%" },
+  {
+    label: "New Arrivals",
+    href: "/shop?sort=newest",
+    icon: "🔥",
+  },
+  {
+    label: "Vintage",
+    href: "/shop/vintage",
+    icon: "✨",
+  },
+  {
+    label: "Best Sellers",
+    href: "/shop?sort=popular",
+    icon: "⭐",
+  },
+  {
+    label: "Sale",
+    href: "/shop?sort=sale",
+    icon: "🏷️",
+    highlight: true,
+    badge: "UP TO 60%",
+  },
 ];
-
-// ─── Tooltip (Shared, consistent) ─────────────────────────────────────────────
 
 function Tooltip({
   children,
@@ -59,6 +71,7 @@ function Tooltip({
   return (
     <div className="group/tooltip relative">
       {children}
+
       <div className="pointer-events-none absolute -bottom-9 left-1/2 z-tooltip -translate-x-1/2 opacity-0 transition-opacity duration-150 group-hover/tooltip:opacity-100">
         <div className="whitespace-nowrap rounded-lg border border-border/80 bg-foreground px-2.5 py-1.5 shadow-popover dark:bg-muted dark:text-foreground">
           <span className="text-badge text-background dark:text-foreground">
@@ -70,25 +83,49 @@ function Tooltip({
   );
 }
 
-// ─── Cart Badge ───────────────────────────────────────────────────────────────
-
-function CartBadge({ count }: { count: number }) {
-  if (count === 0) return null;
+function CartBadge({
+  count,
+}: {
+  count: number;
+}) {
+  if (count === 0) {
+    return null;
+  }
 
   return (
     <motion.span
       key={count}
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
-      transition={{ type: "spring", stiffness: 500, damping: 25 }}
-      className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-foreground px-1 text-badge font-bold leading-none text-background dark:bg-muted dark:text-foreground"
+      transition={{
+        type: "spring",
+        stiffness: 500,
+        damping: 25,
+      }}
+      className="
+        absolute
+        -right-0.5
+        -top-0.5
+        flex
+        h-[18px]
+        min-w-[18px]
+        items-center
+        justify-center
+        rounded-full
+        bg-foreground
+        px-1
+        text-badge
+        font-bold
+        leading-none
+        text-background
+        dark:bg-muted
+        dark:text-foreground
+      "
     >
       {count > 9 ? "9+" : count}
     </motion.span>
   );
 }
-
-// ─── Compact User Avatar ──────────────────────────────────────────────────────
 
 function UserAvatar({
   name,
@@ -99,7 +136,14 @@ function UserAvatar({
   email?: string;
   size?: "sm" | "md";
 }) {
-  const initial = (name || email || "U").charAt(0).toUpperCase();
+  const initial = (
+    name ||
+    email ||
+    "U"
+  )
+    .charAt(0)
+    .toUpperCase();
+
   const sizes = {
     sm: "h-9 w-9 text-xs",
     md: "h-10 w-10 text-sm",
@@ -117,48 +161,114 @@ function UserAvatar({
   );
 }
 
-// ─── Desktop User Dropdown (email only inside) ────────────────────────────────
-
 function UserDropdown({
   user,
   logout,
 }: {
-  user: { id: string; name?: string; email?: string };
+  user: {
+    $id: string;
+    name?: string;
+    email?: string;
+  };
   logout: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] =
+    useState(false);
+
+  const ref =
+    useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+    function handleClickOutside(
+      event: MouseEvent,
+    ) {
+      if (
+        ref.current &&
+        !ref.current.contains(
+          event.target as Node,
+        )
+      ) {
         setOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside,
+      );
+    };
   }, []);
 
   const menuItems = [
-    { href: "/profile", label: "Profile", icon: UserCircle },
-    { href: "/profile/orders", label: "Orders", icon: Package },
-    { href: "/profile/wishlist", label: "Wishlist", icon: Heart },
-    { href: "/profile/addresses", label: "Addresses", icon: MapPin },
-    { href: "/profile/settings", label: "Settings", icon: Settings },
+    {
+      href: "/profile",
+      label: "Profile",
+      icon: UserCircle,
+    },
+    {
+      href: "/profile/orders",
+      label: "Orders",
+      icon: Package,
+    },
+    {
+      href: "/profile/wishlist",
+      label: "Wishlist",
+      icon: Heart,
+    },
+    {
+      href: "/profile/addresses",
+      label: "Addresses",
+      icon: MapPin,
+    },
+    {
+      href: "/profile/settings",
+      label: "Settings",
+      icon: Settings,
+    },
   ];
 
   return (
-    <div ref={ref} className="relative">
+    <div
+      ref={ref}
+      className="relative"
+    >
       <motion.button
         type="button"
         whileTap={{ scale: 0.95 }}
-        onClick={() => setOpen(!open)}
+        onClick={() =>
+          setOpen((value) => !value)
+        }
         aria-label="Account menu"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-11 w-11 items-center justify-center rounded-full transition hover:bg-muted dark:hover:bg-card"
+        className="
+          relative
+          flex
+          h-11
+          w-11
+          items-center
+          justify-center
+          rounded-full
+          transition
+          hover:bg-muted
+          dark:hover:bg-card
+          focus-visible:outline-none
+          focus-visible:ring-2
+          focus-visible:ring-ring
+        "
       >
-        <UserAvatar name={user.name} email={user.email} size="sm" />
+        <UserAvatar
+          name={user.name}
+          email={user.email}
+          size="sm"
+        />
+
         <ChevronDown
           size={14}
           className={cn(
@@ -172,34 +282,90 @@ function UserDropdown({
         {open && (
           <motion.div
             role="menu"
-            initial={{ opacity: 0, y: -6, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.96 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-60 origin-top-right overflow-hidden rounded-2xl border border-border bg-card shadow-float dark:bg-card"
+            initial={{
+              opacity: 0,
+              y: -6,
+              scale: 0.96,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+            }}
+            exit={{
+              opacity: 0,
+              y: -6,
+              scale: 0.96,
+            }}
+            transition={{
+              duration: 0.15,
+            }}
+            className="
+              absolute
+              right-0
+              top-full
+              z-50
+              mt-2
+              w-60
+              origin-top-right
+              overflow-hidden
+              rounded-2xl
+              border
+              border-border
+              bg-card
+              shadow-float
+            "
           >
             <div className="border-b border-border px-4 py-3">
               <p className="text-body font-bold text-foreground">
                 {user.name || "User"}
               </p>
+
               <p className="mt-0.5 truncate text-small text-muted-foreground">
                 {user.email || ""}
               </p>
             </div>
+
             <div className="p-1.5">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  role="menuitem"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-foreground transition hover:bg-muted"
-                >
-                  <item.icon size={17} className="text-muted-foreground" />
-                  {item.label}
-                </Link>
-              ))}
+              {menuItems.map(
+                (item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    role="menuitem"
+                    onClick={() =>
+                      setOpen(false)
+                    }
+                    className="
+                      flex
+                      min-h-10
+                      items-center
+                      gap-3
+                      rounded-xl
+                      px-3
+                      py-2.5
+                      text-body-sm
+                      font-medium
+                      text-foreground
+                      transition
+                      hover:bg-muted
+                      focus-visible:outline-none
+                      focus-visible:ring-2
+                      focus-visible:ring-ring
+                    "
+                  >
+                    <item.icon
+                      size={17}
+                      className="text-muted-foreground"
+                    />
+
+                    {item.label}
+                  </Link>
+                ),
+              )}
+
               <div className="my-1.5 h-px bg-border" />
+
               <Button
                 type="button"
                 onClick={() => {
@@ -207,7 +373,21 @@ function UserDropdown({
                   logout();
                 }}
                 role="menuitem"
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-error transition hover:bg-error-bg/50"
+                className="
+                  flex
+                  min-h-10
+                  w-full
+                  items-center
+                  gap-3
+                  rounded-xl
+                  px-3
+                  py-2.5
+                  text-body-sm
+                  font-medium
+                  text-error
+                  transition
+                  hover:bg-error-bg/50
+                "
               >
                 <LogOut size={17} />
                 Sign Out
@@ -220,8 +400,6 @@ function UserDropdown({
   );
 }
 
-// ─── Mobile Menu ──────────────────────────────────────────────────────────────
-
 function MobileMenu({
   open,
   onClose,
@@ -230,7 +408,11 @@ function MobileMenu({
 }: {
   open: boolean;
   onClose: () => void;
-  user: { id: string; name?: string; email?: string } | null;
+  user: {
+    $id: string;
+    name?: string;
+    email?: string;
+  } | null;
   logout: () => void;
 }) {
   return (
@@ -238,48 +420,115 @@ function MobileMenu({
       {open && (
         <>
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-md"
+            initial={{
+              opacity: 0,
+            }}
+            animate={{
+              opacity: 1,
+            }}
+            exit={{
+              opacity: 0,
+            }}
+            className="
+              fixed
+              inset-0
+              z-[90]
+              bg-black/50
+              backdrop-blur-md
+            "
             onClick={onClose}
           />
+
           <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed inset-y-0 left-0 z-[100] w-[85vw] max-w-sm overflow-y-auto bg-background shadow-2xl dark:bg-card"
+            initial={{
+              x: "-100%",
+            }}
+            animate={{
+              x: 0,
+            }}
+            exit={{
+              x: "-100%",
+            }}
+            transition={{
+              type: "spring",
+              damping: 28,
+              stiffness: 300,
+            }}
+            className="
+              fixed
+              inset-y-0
+              left-0
+              z-[100]
+              w-[86vw]
+              max-w-sm
+              overflow-y-auto
+              bg-background
+              shadow-2xl
+              dark:bg-card
+            "
           >
-            <div className="flex items-center justify-between border-b border-border px-6 py-5">
+            <div
+              className="
+                flex
+                min-h-16
+                items-center
+                justify-between
+                border-b
+                border-border
+                px-5
+                sm:px-6
+              "
+            >
               <Link
                 href="/"
                 onClick={onClose}
-                className="font-display text-title font-bold tracking-tighter text-foreground"
+                className="
+                  font-display
+                  text-title
+                  font-bold
+                  tracking-tighter
+                  text-foreground
+                "
               >
                 THRIFTX
               </Link>
+
               <Button
                 type="button"
                 variant="ghost"
                 size="iconSm"
                 onClick={onClose}
                 aria-label="Close menu"
-                className="rounded-xl p-2.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                className="
+                  min-h-11
+                  min-w-11
+                  rounded-xl
+                  p-2.5
+                  text-muted-foreground
+                  transition
+                  hover:bg-muted
+                  hover:text-foreground
+                "
               >
                 <X size={22} />
               </Button>
             </div>
 
             {user && (
-              <div className="border-b border-border px-6 py-5">
+              <div className="border-b border-border px-5 py-5 sm:px-6">
                 <div className="flex items-center gap-4">
-                  <UserAvatar name={user.name} email={user.email} size="md" />
-                  <div>
-                    <p className="text-body font-bold text-foreground">
+                  <UserAvatar
+                    name={user.name}
+                    email={user.email}
+                    size="md"
+                  />
+
+                  <div className="min-w-0">
+                    <p className="truncate text-body font-bold text-foreground">
                       {user.name || "User"}
                     </p>
-                    <p className="text-small text-muted-foreground">
+
+                    <p className="truncate text-small text-muted-foreground">
                       {user.email || ""}
                     </p>
                   </div>
@@ -287,78 +536,188 @@ function MobileMenu({
               </div>
             )}
 
-            <nav className="px-4 py-6">
-              <p className="px-3 pb-3 text-caption text-muted-foreground">Shop</p>
+            <nav className="px-3 py-6 sm:px-4">
+              <p className="px-3 pb-3 text-caption text-muted-foreground">
+                Shop
+              </p>
+
               <div className="space-y-1">
-                {navCategories.map((cat) => (
-                  <Link
-                    key={cat.href}
-                    href={cat.href}
-                    onClick={onClose}
-                    className={cn(
-                      "flex items-center gap-4 rounded-2xl px-4 py-3.5 text-base font-semibold transition-all",
-                      cat.highlight
-                        ? "bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-300"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    )}
-                  >
-                    <span className="text-xl">{cat.icon}</span>
-                    {cat.label}
-                    {cat.badge && (
-                      <span className="ml-auto rounded-full bg-amber-500 px-2.5 py-0.5 text-badge font-bold uppercase tracking-wider text-white">
-                        {cat.badge}
+                {navCategories.map(
+                  (cat) => (
+                    <Link
+                      key={cat.href}
+                      href={cat.href}
+                      onClick={onClose}
+                      className={cn(
+                        "flex min-h-12 items-center gap-4 rounded-2xl px-4 py-3.5 text-base font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        cat.highlight
+                          ? "bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-300"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      <span
+                        className="text-xl"
+                        aria-hidden="true"
+                      >
+                        {cat.icon}
                       </span>
-                    )}
-                  </Link>
-                ))}
+
+                      <span>
+                        {cat.label}
+                      </span>
+
+                      {cat.badge && (
+                        <span className="ml-auto rounded-full bg-amber-500 px-2.5 py-0.5 text-badge font-bold uppercase tracking-wider text-white">
+                          {cat.badge}
+                        </span>
+                      )}
+                    </Link>
+                  ),
+                )}
               </div>
 
               <div className="mt-8">
-                <p className="px-3 pb-3 text-caption text-muted-foreground">Account</p>
+                <p className="px-3 pb-3 text-caption text-muted-foreground">
+                  Account
+                </p>
+
                 <div className="space-y-1">
                   {user ? (
                     <>
                       <Link
                         href="/profile"
                         onClick={onClose}
-                        className="flex items-center gap-4 rounded-2xl px-4 py-3.5 text-base font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                        className="
+                          flex
+                          min-h-12
+                          items-center
+                          gap-4
+                          rounded-2xl
+                          px-4
+                          py-3.5
+                          text-base
+                          font-semibold
+                          text-muted-foreground
+                          transition
+                          hover:bg-muted
+                          hover:text-foreground
+                          focus-visible:outline-none
+                          focus-visible:ring-2
+                          focus-visible:ring-ring
+                        "
                       >
-                        <UserCircle size={22} /> My Profile
+                        <UserCircle
+                          size={22}
+                        />
+                        My Profile
                       </Link>
+
                       <Link
                         href="/profile/orders"
                         onClick={onClose}
-                        className="flex items-center gap-4 rounded-2xl px-4 py-3.5 text-base font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                        className="
+                          flex
+                          min-h-12
+                          items-center
+                          gap-4
+                          rounded-2xl
+                          px-4
+                          py-3.5
+                          text-base
+                          font-semibold
+                          text-muted-foreground
+                          transition
+                          hover:bg-muted
+                          hover:text-foreground
+                          focus-visible:outline-none
+                          focus-visible:ring-2
+                          focus-visible:ring-ring
+                        "
                       >
-                        <Package size={22} /> Orders
+                        <Package
+                          size={22}
+                        />
+                        Orders
                       </Link>
+
                       <Link
                         href="/profile/wishlist"
                         onClick={onClose}
-                        className="flex items-center gap-4 rounded-2xl px-4 py-3.5 text-base font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                        className="
+                          flex
+                          min-h-12
+                          items-center
+                          gap-4
+                          rounded-2xl
+                          px-4
+                          py-3.5
+                          text-base
+                          font-semibold
+                          text-muted-foreground
+                          transition
+                          hover:bg-muted
+                          hover:text-foreground
+                          focus-visible:outline-none
+                          focus-visible:ring-2
+                          focus-visible:ring-ring
+                        "
                       >
-                        <Heart size={22} /> Wishlist
+                        <Heart size={22} />
+                        Wishlist
                       </Link>
+
                       <Button
                         type="button"
                         onClick={() => {
                           logout();
                           onClose();
                         }}
-                        className="flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-base font-semibold text-error transition hover:bg-error-bg/50"
+                        className="
+                          flex
+                          min-h-12
+                          w-full
+                          items-center
+                          gap-4
+                          rounded-2xl
+                          px-4
+                          py-3.5
+                          text-base
+                          font-semibold
+                          text-error
+                          transition
+                          hover:bg-error-bg/50
+                        "
                       >
-                        <LogOut size={22} /> Sign Out
+                        <LogOut size={22} />
+                        Sign Out
                       </Button>
                     </>
                   ) : (
                     <div className="flex flex-col gap-2">
-                      <Link href="/login" onClick={onClose}>
-                        <Button size="lg" fullWidth>
-                          <User size={18} /> Sign In
+                      <Link
+                        href="/login"
+                        onClick={onClose}
+                      >
+                        <Button
+                          size="lg"
+                          fullWidth
+                          className="min-h-12"
+                        >
+                          <User size={18} />
+                          Sign In
                         </Button>
                       </Link>
-                      <Link href="/signup" onClick={onClose}>
-                        <Button variant="outline" size="lg" fullWidth>
+
+                      <Link
+                        href="/signup"
+                        onClick={onClose}
+                      >
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          fullWidth
+                          className="min-h-12"
+                        >
                           Create Account
                         </Button>
                       </Link>
@@ -368,11 +727,12 @@ function MobileMenu({
               </div>
             </nav>
 
-            <div className="border-t border-border px-6 py-5">
+            <div className="border-t border-border px-5 py-5 sm:px-6">
               <div className="flex items-center justify-between">
                 <span className="text-body-sm font-medium text-muted-foreground">
                   Appearance
                 </span>
+
                 <ThemeToggle size="md" />
               </div>
             </div>
@@ -383,32 +743,59 @@ function MobileMenu({
   );
 }
 
-// ─── Header Skeleton ──────────────────────────────────────────────────────────
-
 function HeaderSkeleton() {
   return (
-    <header className="sticky top-0 z-header h-header w-full border-b border-border bg-background/90 backdrop-blur-xl dark:bg-background/90">
-      <Container className="flex h-full items-center justify-between">
+    <header
+      className="
+        sticky
+        top-0
+        z-header
+        w-full
+        border-b
+        border-border
+        bg-background/90
+        backdrop-blur-xl
+      "
+    >
+      <Container
+        className="
+          flex
+          h-header
+          items-center
+          justify-between
+          gap-4
+          !px-4
+          sm:!px-6
+          lg:!px-8
+          xl:!px-10
+        "
+      >
         <div className="flex items-center gap-4">
-          <div className="h-6 w-6 animate-pulse rounded-lg bg-muted md:hidden" />
-          <div className="hidden md:flex items-center gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-4 w-16 animate-pulse rounded bg-muted" />
-            ))}
+          <div className="h-9 w-9 animate-pulse rounded-xl bg-muted md:hidden" />
+
+          <div className="hidden items-center gap-6 md:flex">
+            {[1, 2, 3, 4].map(
+              (item) => (
+                <div
+                  key={item}
+                  className="h-4 w-16 animate-pulse rounded bg-muted"
+                />
+              ),
+            )}
           </div>
         </div>
+
         <div className="h-9 w-36 animate-pulse rounded-lg bg-muted" />
+
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 animate-pulse rounded bg-muted" />
-          <div className="h-6 w-6 animate-pulse rounded bg-muted" />
+          <div className="h-9 w-9 animate-pulse rounded-xl bg-muted" />
+          <div className="h-9 w-9 animate-pulse rounded-xl bg-muted" />
           <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
         </div>
       </Container>
     </header>
   );
 }
-
-// ─── Header Icon Button (consistent) ──────────────────────────────────────────
 
 function IconButton({
   onClick,
@@ -422,33 +809,73 @@ function IconButton({
   return (
     <motion.button
       type="button"
-      whileTap={{ scale: 0.9 }}
+      whileTap={{
+        scale: 0.9,
+      }}
       aria-label={label}
       onClick={onClick}
-      className="flex h-11 w-11 items-center justify-center rounded-2xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-card"
+      className="
+        flex
+        h-11
+        w-11
+        items-center
+        justify-center
+        rounded-2xl
+        text-muted-foreground
+        transition-colors
+        hover:bg-muted
+        hover:text-foreground
+        focus-visible:outline-none
+        focus-visible:ring-2
+        focus-visible:ring-ring
+        dark:hover:bg-card
+      "
     >
       {icon}
     </motion.button>
   );
 }
 
-// ─── Main Header Component ────────────────────────────────────────────────────
-
 export default function Header() {
   const router = useRouter();
-  const pathname = usePathname();
-  const { user, logout, loading } = useAuth();
-  const { totalItems } = useCart();
+  const pathname =
+    usePathname();
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const {
+    user,
+    logout,
+    loading,
+  } = useAuth();
+
+  const {
+    totalItems,
+  } = useCart();
+
+  const [
+    mobileMenuOpen,
+    setMobileMenuOpen,
+  ] = useState(false);
+
+  const [
+    searchOpen,
+    setSearchOpen,
+  ] = useState(false);
 
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  if (pathname?.startsWith("/admin")) return null;
-  if (loading) return <HeaderSkeleton />;
+  if (
+    pathname?.startsWith(
+      "/admin",
+    )
+  ) {
+    return null;
+  }
+
+  if (loading) {
+    return <HeaderSkeleton />;
+  }
 
   const iconSize = 20;
   const iconStroke = 2;
@@ -456,73 +883,245 @@ export default function Header() {
   return (
     <>
       <AnnouncementBar />
+
       <header
-        className={cn(
-          "sticky top-0 z-header h-header w-full border-b border-border/80",
-          "bg-background/90 backdrop-blur-2xl",
-          "dark:bg-background/90 dark:border-border/50",
-          "shadow-sm",
-          "transition-all duration-300",
-        )}
+        className="
+          sticky
+          top-0
+          z-header
+          w-full
+          border-b
+          border-border/80
+          bg-background/90
+          shadow-sm
+          backdrop-blur-2xl
+          transition-all
+          duration-300
+          dark:border-border/50
+          dark:bg-background/90
+        "
       >
-        <Container className="flex h-full items-center justify-between gap-4">
-          {/* ── Left: Menu (mobile) ─────────────────────────────── */}
+        {/*
+         * IMPORTANT:
+         * Header inner container uses the exact same
+         * 1440px width and horizontal padding scale
+         * as the shop content.
+         */}
+        <Container
+          className="
+            flex
+            h-header
+            items-center
+            justify-between
+            gap-3
+            !px-4
+            sm:!px-6
+            lg:!px-8
+            xl:!px-10
+          "
+        >
+          {/* MOBILE MENU */}
           <div className="flex items-center gap-1 lg:hidden">
             <IconButton
               label="Open menu"
-              icon={<Menu size={iconSize} strokeWidth={iconStroke} />}
-              onClick={() => setMobileMenuOpen(true)}
+              icon={
+                <Menu
+                  size={iconSize}
+                  strokeWidth={
+                    iconStroke
+                  }
+                />
+              }
+              onClick={() =>
+                setMobileMenuOpen(
+                  true,
+                )
+              }
             />
           </div>
 
-          {/* ── Logo ────────────────────────────────────────────── */}
-          <Link href="/" className="group flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-body font-bold text-background shadow-popover transition-transform group-hover:scale-105 dark:bg-muted dark:text-foreground">
+          {/* LOGO */}
+          <Link
+            href="/"
+            className="
+              group
+              flex
+              shrink-0
+              items-center
+              gap-2.5
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-ring
+              focus-visible:ring-offset-2
+            "
+          >
+            <div
+              className="
+                flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                rounded-xl
+                bg-foreground
+                text-body
+                font-bold
+                text-background
+                shadow-popover
+                transition-transform
+                group-hover:scale-105
+                dark:bg-muted
+                dark:text-foreground
+                sm:h-10
+                sm:w-10
+              "
+            >
               T
             </div>
+
             <div className="hidden sm:block">
-              <span className="font-display text-title font-bold tracking-tight text-foreground leading-none">
+              <span
+                className="
+                  block
+                  font-display
+                  text-title
+                  font-bold
+                  leading-none
+                  tracking-tight
+                  text-foreground
+                "
+              >
                 THRIFTX
               </span>
-              <span className="block text-badge font-bold uppercase tracking-widest text-muted-foreground leading-tight">
+
+              <span
+                className="
+                  mt-0.5
+                  block
+                  text-badge
+                  font-bold
+                  uppercase
+                  leading-tight
+                  tracking-widest
+                  text-muted-foreground
+                "
+              >
                 Premium Thrift
               </span>
             </div>
           </Link>
 
-          {/* ── Navigation (desktop) ────────────────────────────── */}
-          <nav className="hidden lg:flex items-center gap-0.5">
-            {navCategories.map((cat) => (
-              <Link
-                key={cat.href}
-                href={cat.href}
-                className={cn(
-                  "relative whitespace-nowrap rounded-xl px-3.5 py-2 text-label font-semibold transition-colors",
-                  pathname === cat.href || pathname.startsWith(cat.href.split("?")[0] + "/")
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                  cat.highlight && "text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300",
-                )}
-              >
-                {cat.label}
-                {cat.badge && (
-                  <span className="ml-1.5 rounded-full bg-amber-500 px-1.5 py-0.5 text-badge font-bold uppercase tracking-wider text-white">
-                    {cat.badge}
-                  </span>
-                )}
-                {(pathname === cat.href || pathname.startsWith(cat.href.split("?")[0] + "/")) && (
-                  <motion.div
-                    layoutId="navIndicator"
-                    className="absolute inset-0 -z-10 rounded-xl bg-muted dark:bg-card"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-              </Link>
-            ))}
+          {/* DESKTOP NAV */}
+          <nav
+            aria-label="Main navigation"
+            className="
+              hidden
+              items-center
+              gap-0.5
+              lg:flex
+            "
+          >
+            {navCategories.map(
+              (cat) => {
+                const basePath =
+                  cat.href.split(
+                    "?",
+                  )[0];
+
+                const active =
+                  pathname ===
+                  basePath ||
+                  pathname.startsWith(
+                    `${basePath}/`,
+                  );
+
+                return (
+                  <Link
+                    key={
+                      cat.href
+                    }
+                    href={
+                      cat.href
+                    }
+                    className={cn(
+                      `
+                        relative
+                        inline-flex
+                        min-h-10
+                        items-center
+                        whitespace-nowrap
+                        rounded-xl
+                        px-3.5
+                        py-2
+                        text-label
+                        font-semibold
+                        transition-colors
+                        focus-visible:outline-none
+                        focus-visible:ring-2
+                        focus-visible:ring-ring
+                      `,
+                      active
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                      cat.highlight &&
+                      "text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300",
+                    )}
+                  >
+                    {cat.label}
+
+                    {cat.badge && (
+                      <span
+                        className="
+                          ml-1.5
+                          rounded-full
+                          bg-amber-500
+                          px-1.5
+                          py-0.5
+                          text-badge
+                          font-bold
+                          uppercase
+                          tracking-wider
+                          text-white
+                        "
+                      >
+                        {cat.badge}
+                      </span>
+                    )}
+
+                    {active && (
+                      <motion.div
+                        layoutId="navIndicator"
+                        className="
+                          absolute
+                          inset-0
+                          -z-10
+                          rounded-xl
+                          bg-muted
+                          dark:bg-card
+                        "
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 30,
+                        }}
+                      />
+                    )}
+                  </Link>
+                );
+              },
+            )}
           </nav>
 
-          {/* ── Right: icons + auth ─────────────────────────────── */}
-          <div className="flex items-center gap-0.5 sm:gap-1">
+          {/* RIGHT ACTIONS */}
+          <div
+            className="
+              flex
+              shrink-0
+              items-center
+              gap-0.5
+              sm:gap-1
+            "
+          >
             <div className="hidden md:block">
               <Tooltip label="Toggle theme">
                 <ThemeToggle size="md" />
@@ -532,33 +1131,93 @@ export default function Header() {
             <Tooltip label="Search products">
               <IconButton
                 label="Search products"
-                icon={<Search size={iconSize} strokeWidth={iconStroke} />}
-                onClick={() => setSearchOpen(true)}
+                icon={
+                  <Search
+                    size={
+                      iconSize
+                    }
+                    strokeWidth={
+                      iconStroke
+                    }
+                  />
+                }
+                onClick={() =>
+                  setSearchOpen(
+                    true,
+                  )
+                }
               />
             </Tooltip>
 
-            <Tooltip label={totalItems > 0 ? `${totalItems} in cart` : "Cart"}>
+            <Tooltip
+              label={
+                totalItems > 0
+                  ? `${totalItems} in cart`
+                  : "Cart"
+              }
+            >
               <Link
                 href="/cart"
                 aria-label="Shopping cart"
-                className="relative flex h-11 w-11 items-center justify-center rounded-2xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-card"
+                className="
+                  relative
+                  flex
+                  h-11
+                  w-11
+                  items-center
+                  justify-center
+                  rounded-2xl
+                  text-muted-foreground
+                  transition-colors
+                  hover:bg-muted
+                  hover:text-foreground
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-ring
+                  dark:hover:bg-card
+                "
               >
-                <ShoppingBag size={iconSize} strokeWidth={iconStroke} />
-                <CartBadge count={totalItems} />
+                <ShoppingBag
+                  size={iconSize}
+                  strokeWidth={
+                    iconStroke
+                  }
+                />
+
+                <CartBadge
+                  count={
+                    totalItems
+                  }
+                />
               </Link>
             </Tooltip>
 
-            <div className="hidden items-center md:flex ml-1">
+            <div className="ml-1 hidden items-center md:flex">
               {user ? (
-                <UserDropdown user={user} logout={logout} />
+                <UserDropdown
+                  user={user}
+                  logout={logout}
+                />
               ) : (
                 <Tooltip label="Sign in">
                   <Button
-                    onClick={() => router.push("/login")}
+                    onClick={() =>
+                      router.push(
+                        "/login",
+                      )
+                    }
                     variant="primary"
                     size="md"
+                    className="min-h-11 rounded-xl px-4"
                   >
-                    <User size={iconSize} strokeWidth={iconStroke} />
+                    <User
+                      size={
+                        iconSize
+                      }
+                      strokeWidth={
+                        iconStroke
+                      }
+                    />
                     Sign In
                   </Button>
                 </Tooltip>
@@ -568,8 +1227,21 @@ export default function Header() {
         </Container>
       </header>
 
-      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <MobileMenu open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} user={user} logout={logout} />
+      <GlobalSearch
+        open={searchOpen}
+        onClose={() =>
+          setSearchOpen(false)
+        }
+      />
+
+      <MobileMenu
+        open={mobileMenuOpen}
+        onClose={() =>
+          setMobileMenuOpen(false)
+        }
+        user={user}
+        logout={logout}
+      />
     </>
   );
 }

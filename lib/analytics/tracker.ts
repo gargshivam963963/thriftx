@@ -58,6 +58,7 @@ export interface Tracker {
 export function initTracker(options: TrackerOptions): Tracker {
   const { enabled, debug, batchSize } = options;
   let flushTimer: ReturnType<typeof setInterval> | null = null;
+  let lastScrollMilestone = 0;
 
   function buildEvent(
     eventType: EventType,
@@ -128,18 +129,21 @@ export function initTracker(options: TrackerOptions): Tracker {
     },
 
     trackPageView() {
+      lastScrollMilestone = 0;
       enqueue(buildEvent("page_view", "Page View", { url: getPagePath() }));
     },
 
     trackScroll() {
-      const depth = Math.round(
-        (window.scrollY /
-          (document.documentElement.scrollHeight - window.innerHeight)) *
-          100,
-      );
-      if (depth > 0) {
-        enqueue(buildEvent("scroll_depth", "Scroll Depth", { depth }));
-      }
+      const scrollableHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollableHeight <= 0) return;
+
+      const depth = Math.round((window.scrollY / scrollableHeight) * 100);
+      const milestone = Math.floor(depth / 25) * 25;
+      if (milestone <= lastScrollMilestone || milestone === 0) return;
+
+      lastScrollMilestone = milestone;
+      enqueue(buildEvent("scroll_depth", "Scroll Depth", { depth: milestone }));
     },
 
     trackSearch(query, resultsCount) {

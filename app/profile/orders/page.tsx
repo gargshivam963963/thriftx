@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import PremiumImage from "@/components/ui/PremiumImage";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
-import { getUserOrders } from "@/lib/services/orderService";
+import { getUserOrders } from "@/lib/client/orders";
 import type { Order } from "@/lib/types/order";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ export default function ProfileOrdersPage() {
     const [error, setError] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState("");
 
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         if (!user) return;
         try {
             setLoading(true);
@@ -210,7 +210,7 @@ export default function ProfileOrdersPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
 
     useEffect(() => {
         if (authLoading) return;
@@ -219,7 +219,7 @@ export default function ProfileOrdersPage() {
             return;
         }
         fetchOrders();
-    }, [authLoading, user, router]);
+    }, [authLoading, user, router, fetchOrders]);
 
     // ── Filtered orders ──
     const filteredOrders = statusFilter
@@ -237,7 +237,7 @@ export default function ProfileOrdersPage() {
 
     return (
         <main className="min-h-screen bg-background">
-            <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
+            <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
                 {/* Back */}
                 <motion.div
                     initial={{ opacity: 0, x: -10 }}
@@ -482,4 +482,3 @@ export default function ProfileOrdersPage() {
         </main>
     );
 }
-

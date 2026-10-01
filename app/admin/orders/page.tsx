@@ -102,7 +102,6 @@ export default function AdminOrdersPage() {
 
     useEffect(() => {
         loadOrders();
-        // eslint-disable-next-line react-hooks/set-state-in-effect
     }, [loadOrders]);
 
     const filteredOrders = useMemo(() => {
@@ -551,4 +550,3 @@ export default function AdminOrdersPage() {
         </div>
     );
 }
-

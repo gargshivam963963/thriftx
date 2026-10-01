@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { shipmentService } from "@/lib/shipping";
+import { adminAuthErrorResponse } from "@/lib/auth-guard";
 
 export async function POST(req: NextRequest) {
+  const authError = await adminAuthErrorResponse();
+  if (authError) return authError;
+
   try {
     const payload = await req.json();
 
@@ -22,11 +26,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
+    console.error("POST /api/shipping/create error:", error);
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error ? error.message : "Internal Server Error",
+        message: "Unable to create shipment.",
       },
       {
         status: 500,

@@ -9,7 +9,7 @@
  * Features:
  * - Payload validation (count, file type, size)
  * - Automatic client-side compression (max 1024px, q0.8, WebP, strip EXIF)
- * - Sends compressed images to the authenticated server endpoint; no Appwrite storage
+ * - Sends compressed images to the authenticated server endpoint
  * - Request dedup (in-flight guard) — prevents concurrent AI requests
  * - Retry with exponential backoff (max 2, network/timeout only)
  * - Never retries validation errors

@@ -1,13 +1,13 @@
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { memo, useState } from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import PremiumImage from "@/components/ui/PremiumImage";
-import { isWishlisted, toggleWishlist } from "@/lib/services/wishlist";
+import { useWishlistProduct } from "@/lib/WishlistContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -52,20 +52,15 @@ function ProductCard({
   waist,
   onlyOneLeft = false,
 }: ProductCardProps) {
-  const [wishlisted, setWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
-
-  useEffect(() => {
-    isWishlisted(id).then(setWishlisted).catch(() => { });
-  }, [id]);
+  const { wishlisted, toggle } = useWishlistProduct(id);
 
   const handleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setWishlistLoading(true);
     try {
-      const state = await toggleWishlist(id);
-      setWishlisted(state);
+      const state = await toggle();
       toast.success(state ? "Added to wishlist ❤️" : "Removed from wishlist");
     } catch {
       toast.error("Please sign in to wishlist");
@@ -169,4 +164,3 @@ function ProductCard({
 }
 
 export default memo(ProductCard);
-

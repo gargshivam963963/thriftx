@@ -1,7 +1,7 @@
 'use client';
 
 
-import { Button } from '@/components/ui/button';import { useState } from 'react';
+import { Button } from '@/components/ui/button'; import { useState } from 'react';
 import { CheckCircle2, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -62,7 +62,8 @@ export default function CouponCard({
                                 e.target.value.toUpperCase()
                             )
                         }
-                        className="flex-1 rounded-2xl border border-border bg-card px-5 py-4 text-body-sm outline-none transition focus:border-foreground placeholder:text-muted"
+                        aria-label="Coupon code"
+                        className="flex-1 rounded-2xl border border-border bg-card px-5 py-4 text-body-sm text-foreground outline-none transition focus:border-foreground placeholder:text-muted-foreground"
                     />
 
                     <Button

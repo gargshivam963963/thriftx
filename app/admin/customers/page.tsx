@@ -48,7 +48,6 @@ export default function AdminCustomersPage() {
 
     useEffect(() => {
         loadCustomers();
-        // eslint-disable-next-line react-hooks/set-state-in-effect
     }, [loadCustomers]);
 
     const filteredCustomers = useMemo(() => {
@@ -368,4 +367,3 @@ export default function AdminCustomersPage() {
         </div>
     );
 }
-

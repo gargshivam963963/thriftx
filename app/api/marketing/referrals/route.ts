@@ -1,11 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth-guard";
-import {
-  databases,
-  AppwriteQuery,
-  APPWRITE_DATABASE_ID,
-  APPWRITE_REFERRALS_COLLECTION_ID,
-} from "@/lib/appwrite";
+import { documentStore, DocumentQuery } from "@/lib/document-store";
 import { getOrCreateReferralCode } from "@/lib/marketing/credits";
 import { makeReferralCode } from "@/lib/marketing/data";
 import type { Referral } from "@/lib/marketing/types";
@@ -24,29 +19,29 @@ export async function GET() {
       code = makeReferralCode(userId);
     }
 
-    // Load referral history for the current user
     try {
-      const res = await databases.listDocuments(
-        APPWRITE_DATABASE_ID,
-        APPWRITE_REFERRALS_COLLECTION_ID,
+      const { documents } = await documentStore.listDocuments(
+        "thriftx",
+        "referrals",
         [
-          AppwriteQuery.equal("referrerUserId", userId),
-          AppwriteQuery.orderDesc("$createdAt"),
-          AppwriteQuery.limit(100),
+          DocumentQuery.equal("referrerUserId", userId),
+          DocumentQuery.orderDesc("$createdAt"),
+          DocumentQuery.limit(100),
         ],
       );
-      referrals = res.documents.map((d) => ({
-        id: d.$id,
-        referrerUserId: (d.referrerUserId as string) || "",
-        referrerName: (d.referrerName as string) || "",
-        code: (d.code as string) || "",
-        referredEmail: (d.referredEmail as string) || "",
-        referredUserId: (d.referredUserId as string) || "",
-        orderId: (d.orderId as string) || "",
-        rewardAmount: Number(d.rewardAmount || 100),
+
+      referrals = documents.map((d) => ({
+        id: String(d.$id ?? d.id ?? ""),
+        referrerUserId: String(d.referrerUserId ?? ""),
+        referrerName: String(d.referrerName ?? ""),
+        code: String(d.code ?? ""),
+        referredEmail: String(d.referredEmail ?? ""),
+        referredUserId: String(d.referredUserId ?? ""),
+        orderId: String(d.orderId ?? ""),
+        rewardAmount: Number(d.rewardAmount ?? 100),
         status: (d.status as Referral["status"]) || "pending",
-        $createdAt: (d.$createdAt as string) || "",
-        completedAt: (d.completedAt as string) || "",
+        $createdAt: String(d.$createdAt ?? ""),
+        completedAt: String(d.completedAt ?? ""),
       }));
     } catch {
       referrals = [];

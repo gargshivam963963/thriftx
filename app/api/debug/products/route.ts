@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getProducts } from "@/lib/services/products";
+import { adminAuthErrorResponse } from "@/lib/auth-guard";
 
 export async function GET(request: Request) {
+  const authError = await adminAuthErrorResponse();
+  if (authError) return authError;
+
   try {
     const url = new URL(request.url);
 

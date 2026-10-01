@@ -5,6 +5,7 @@ import { authClient } from '@/lib/auth-client';
 
 type BetterAuthUser = {
   id: string;
+  $id: string;
   email?: string;
   name?: string;
   image?: string | null;
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return {
       ...typedUser,
       id: sessionUser.id,
+      $id: sessionUser.id,
       name: sessionUser.name || "User",
       email: sessionUser.email || "",
       phone: "",

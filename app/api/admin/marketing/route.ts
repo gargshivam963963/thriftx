@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { adminAuthErrorResponse } from "@/lib/auth-guard";
 import {
   listCoupons,
@@ -72,18 +73,19 @@ export async function POST(req: NextRequest) {
           success: true,
           items: await listAnnouncements(),
         });
-      case "announcement:create":
-        return NextResponse.json({
-          success: true,
-          item: await createAnnouncement(data),
-        });
-      case "announcement:update":
-        return NextResponse.json({
-          success: true,
-          item: await updateAnnouncement(id, data),
-        });
+      case "announcement:create": {
+        const item = await createAnnouncement(data);
+        revalidatePath("/api/marketing/announcements");
+        return NextResponse.json({ success: true, item });
+      }
+      case "announcement:update": {
+        const item = await updateAnnouncement(id, data);
+        revalidatePath("/api/marketing/announcements");
+        return NextResponse.json({ success: true, item });
+      }
       case "announcement:delete":
         await deleteAnnouncement(id);
+        revalidatePath("/api/marketing/announcements");
         return NextResponse.json({ success: true });
 
       // ─── Sales ───

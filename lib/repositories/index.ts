@@ -19,6 +19,7 @@ export const productRepository = {
   getAllProducts: productRepo.getAllProducts,
   getProductBySlug: productRepo.getProductBySlug,
   getProductById: productRepo.getProductById,
+  getProductsByIds: productRepo.getProductsByIds,
   getSimilarProducts: productRepo.getSimilarProducts,
   getProductsForSitemap: productRepo.getProductsForSitemap,
   getBrands: productRepo.getBrands,

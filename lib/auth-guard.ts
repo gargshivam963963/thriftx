@@ -27,14 +27,14 @@ export async function requireUser(): Promise<AuthenticatedUser> {
 export async function requireAdmin(): Promise<AuthenticatedUser> {
   const user = await requireUser();
 
-  //   if (user.role !== "admin") {
-  //     throw new AuthGuardError("Forbidden", 403);
-  //   }
+  if (user.role !== "admin") {
+    throw new AuthGuardError("Forbidden", 403);
+  }
 
   return user;
 }
 
-class AuthGuardError extends Error {
+export class AuthGuardError extends Error {
   constructor(
     message: string,
     readonly status: 401 | 403,
@@ -54,6 +54,7 @@ export async function adminAuthErrorResponse(): Promise<NextResponse | null> {
         { status: error.status },
       );
     }
+
     return NextResponse.json(
       { success: false, message: "Unable to verify authorization" },
       { status: 500 },

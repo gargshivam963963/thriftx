@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
-import { getUserOrders } from "@/lib/services/orderService";
+import { getUserOrders } from "@/lib/client/orders";
 import type { Order } from "@/lib/types/order";
 import WalletBalance from "@/components/marketing/WalletBalance";
 
@@ -185,7 +185,7 @@ export default function ProfilePage() {
     if (authLoading) {
         return (
             <main className="min-h-screen bg-background">
-                <div className="mx-auto max-w-2xl px-4 py-8 sm:py-12">
+                <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
                     <ProfileSkeleton />
                 </div>
             </main>
@@ -200,7 +200,7 @@ export default function ProfilePage() {
 
     return (
         <main className="min-h-screen bg-background">
-            <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
+            <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
                 {/* ── Profile Header ────────────────────────────────────── */}
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -405,4 +405,3 @@ export default function ProfilePage() {
         </main>
     );
 }
-

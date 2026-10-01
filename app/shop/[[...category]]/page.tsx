@@ -82,8 +82,10 @@ export default async function Shop({ params, searchParams }: PageProps) {
     brand: brand ? [brand] : undefined,
     size: size ? [size] : undefined,
     price,
+    search,
     sort: sort as "newest" | "price-low" | "price-high" | "name",
-    limit: 9,
+    limit: 12,
+    offset: 0,
   });
 
   const genders = await getGenders();

@@ -442,10 +442,7 @@ export default function CheckoutAccordion({
                 selectedAddress.pincode,
             ) === "local"
         );
-    }, [
-        selectedAddress?.city,
-        selectedAddress?.pincode,
-    ]);
+    }, [selectedAddress]);
 
     /*
      * Scroll to the checkout section when the active step
@@ -523,9 +520,7 @@ export default function CheckoutAccordion({
             cancelled = true;
         };
     }, [
-        selectedAddress?.$id,
-        selectedAddress?.city,
-        selectedAddress?.pincode,
+        selectedAddress,
         subtotal,
     ]);
 

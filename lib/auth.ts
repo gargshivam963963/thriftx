@@ -6,12 +6,25 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const secret = process.env.BETTER_AUTH_SECRET;
+
 if (!secret || secret.length < 32) {
   throw new Error(
     "BETTER_AUTH_SECRET must be configured with at least 32 characters.",
   );
 }
+
 const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+
+const trustedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://thriftx-sandy.vercel.app",
+  ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+];
+
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -76,6 +89,7 @@ export const auth = betterAuth({
   secret,
   baseURL,
   basePath: "/api/auth",
+  trustedOrigins,
   database: prismaAdapter(prismaClientForAuth, {
     provider: "postgresql",
   }),

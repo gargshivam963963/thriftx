@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface SegmentOption<T extends string> {
     value: T;
@@ -43,9 +44,12 @@ export function SegmentedControl<T extends string>({
             {options.map((opt) => {
                 const active = value === opt.value;
                 return (
-                    <button
+                    <Button
                         key={opt.value}
                         type="button"
+                        variant="ghost"
+                        size="sm"
+                        rounded="md"
                         role="tab"
                         aria-selected={active}
                         aria-label={opt.ariaLabel}
@@ -53,11 +57,9 @@ export function SegmentedControl<T extends string>({
                         className={cn(
                             "relative flex items-center justify-center gap-2 rounded-lg px-3",
                             "h-8 md:h-9",
-                            "text-sm font-medium",
+                            "text-label",
                             "transition-colors duration-200",
                             active ? "text-background" : "text-muted-foreground hover:text-foreground",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
-                            "dark:focus-visible:ring-white/20",
                         )}
                     >
                         {active && (
@@ -73,7 +75,7 @@ export function SegmentedControl<T extends string>({
                             )}
                             {opt.label && <span>{opt.label}</span>}
                         </span>
-                    </button>
+                    </Button>
                 );
             })}
         </div>

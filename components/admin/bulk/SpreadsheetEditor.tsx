@@ -195,14 +195,17 @@ function ImageThumb({
             )}
 
             {onRemove && (
-                <button
+                <Button
                     type="button"
+                    variant="ghost"
+                    size="iconXs"
+                    rounded="full"
                     onClick={onRemove}
-                    className="absolute right-0.5 top-0.5 hidden h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white group-hover:flex"
+                    className="absolute right-0.5 top-0.5 hidden h-5 w-5 bg-black/70 p-0 text-white group-hover:flex hover:bg-black hover:text-white"
                     aria-label="Remove image"
                 >
                     <X className="h-3 w-3" />
-                </button>
+                </Button>
             )}
         </div>
     );
@@ -793,9 +796,12 @@ export default function SpreadsheetEditor({
                                                                         src,
                                                                         imageIndex,
                                                                     ) => (
-                                                                        <button
+                                                                        <Button
                                                                             key={`${product.sku}-${imageIndex}`}
                                                                             type="button"
+                                                                            variant="outline"
+                                                                            size="iconLg"
+                                                                            rounded="lg"
                                                                             onClick={() =>
                                                                                 setPreview(
                                                                                     {
@@ -813,21 +819,25 @@ export default function SpreadsheetEditor({
                                                                                     imageIndex
                                                                                 }
                                                                             />
-                                                                        </button>
+                                                                        </Button>
                                                                     ),
                                                                 )}
 
-                                                            <button
+                                                            <Button
                                                                 type="button"
+                                                                variant="outline"
+                                                                size="iconLg"
+                                                                rounded="lg"
                                                                 onClick={() =>
                                                                     imageInputRefs.current[
                                                                         product.sku
                                                                     ]?.click()
                                                                 }
-                                                                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed text-muted-foreground hover:bg-muted"
+                                                                aria-label={`Add image for ${product.sku}`}
+                                                                className="shrink-0 border-dashed text-muted-foreground hover:bg-muted"
                                                             >
                                                                 <Plus className="h-4 w-4" />
-                                                            </button>
+                                                            </Button>
                                                         </div>
 
                                                         <input
@@ -1414,9 +1424,12 @@ export default function SpreadsheetEditor({
                                                     src,
                                                     imageIndex,
                                                 ) => (
-                                                    <button
+                                                    <Button
                                                         key={`${product.sku}-mobile-${imageIndex}`}
                                                         type="button"
+                                                        variant="outline"
+                                                        size="iconLg"
+                                                        rounded="lg"
                                                         onClick={() =>
                                                             setPreview(
                                                                 {
@@ -1425,7 +1438,7 @@ export default function SpreadsheetEditor({
                                                                 },
                                                             )
                                                         }
-                                                        className="shrink-0"
+                                                        className="shrink-0 overflow-hidden p-0"
                                                     >
                                                         <ImageThumb
                                                             src={
@@ -1435,21 +1448,25 @@ export default function SpreadsheetEditor({
                                                                 imageIndex
                                                             }
                                                         />
-                                                    </button>
+                                                    </Button>
                                                 ),
                                             )}
 
-                                            <button
+                                            <Button
                                                 type="button"
+                                                variant="outline"
+                                                size="iconLg"
+                                                rounded="lg"
                                                 onClick={() =>
                                                     imageInputRefs.current[
                                                         product.sku
                                                     ]?.click()
                                                 }
-                                                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed text-muted-foreground"
+                                                aria-label={`Add image for ${product.sku}`}
+                                                className="shrink-0 border-dashed text-muted-foreground"
                                             >
                                                 <Plus className="h-4 w-4" />
-                                            </button>
+                                            </Button>
                                         </div>
 
                                         <input
@@ -2026,14 +2043,17 @@ function ImagePreviewModal({
                         className="max-h-[75vh] max-w-[85vw] object-contain"
                     />
 
-                    <button
+                    <Button
                         type="button"
+                        variant="glass"
+                        size="iconSm"
+                        rounded="full"
                         onClick={onClose}
-                        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black"
+                        className="absolute right-3 top-3 bg-black/70 text-white hover:bg-black hover:text-white"
                         aria-label="Close preview"
                     >
                         <X className="h-5 w-5" />
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="flex items-center gap-2">

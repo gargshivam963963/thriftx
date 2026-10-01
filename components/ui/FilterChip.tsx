@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { chipBase, chipRemove } from "./control.styles";
 
 interface FilterChipProps {
@@ -25,8 +26,11 @@ export function FilterChip({ label, onRemove, className }: FilterChipProps) {
             className={cn(chipBase, "group", className)}
         >
             <span className="truncate">{label}</span>
-            <button
+            <Button
                 type="button"
+                variant="ghost"
+                size="iconXs"
+                rounded="full"
                 onClick={(e) => {
                     e.stopPropagation();
                     onRemove();
@@ -35,7 +39,7 @@ export function FilterChip({ label, onRemove, className }: FilterChipProps) {
                 className={cn(chipRemove, "group-hover:bg-muted/70")}
             >
                 <X size={12} className="h-3 w-3" strokeWidth={2.5} />
-            </button>
+            </Button>
         </span>
     );
 }

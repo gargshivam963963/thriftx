@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { controlTransition, controlFocusRing } from "@/components/ui/control.styles";
 
 const priceRanges = [
@@ -32,18 +33,19 @@ export default function PriceFilter() {
             {priceRanges.map((range) => {
                 const active = selectedPrice === range.value;
                 return (
-                    <button
+                    <Button
                         key={range.value}
                         type="button"
+                        variant={active ? "primary" : "ghost"}
+                        size="sm"
+                        fullWidth
                         onClick={() => togglePrice(range.value)}
                         aria-pressed={active}
                         className={cn(
                             controlTransition,
                             controlFocusRing,
-                            "flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium",
-                            active
-                                ? "bg-foreground text-background"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-card",
+                            "justify-start rounded-lg px-3 text-left",
+                            !active && "text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-card",
                         )}
                     >
                         <span
@@ -55,7 +57,7 @@ export default function PriceFilter() {
                             {active && <span className="h-2 w-2 rounded-full bg-background" />}
                         </span>
                         <span className="truncate">{range.label}</span>
-                    </button>
+                    </Button>
                 );
             })}
         </div>

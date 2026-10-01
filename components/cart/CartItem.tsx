@@ -1,15 +1,14 @@
+
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Heart, Minus, Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 import type { CartProduct } from "@/lib/services/cartProducts";
 import ConfirmPopover from "@/components/ui/ConfirmPopover";
 import { Button } from "@/components/ui/button";
-import { useWishlistProduct } from "@/lib/WishlistContext";
 
 interface CartItemProps {
     item: CartProduct;
@@ -18,24 +17,16 @@ interface CartItemProps {
     onRemove: (cartId: string) => void;
 }
 
-export default function CartItem({ item, onIncrease, onDecrease, onRemove }: CartItemProps) {
+export default function CartItem({
+    item,
+    onRemove,
+}: CartItemProps) {
     const [deleteOpen, setDeleteOpen] = useState(false);
-    const [wishlistLoading, setWishlistLoading] = useState(false);
-    const { wishlisted, toggle } = useWishlistProduct(item.id);
 
-    const handleWishlistToggle = async () => {
-        setWishlistLoading(true);
-        try {
-            const state = await toggle();
-            toast.success(state ? "Added to wishlist ❤️" : "Removed from wishlist");
-        } catch {
-            toast.error("Please sign in to wishlist");
-        } finally {
-            setWishlistLoading(false);
-        }
-    };
-
-    const retailPrice = item.retailPrice && item.retailPrice > item.price ? item.retailPrice : undefined;
+    const retailPrice =
+        item.retailPrice && item.retailPrice > item.price
+            ? item.retailPrice
+            : undefined;
 
     return (
         <>
@@ -48,8 +39,8 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }: Car
                 className="overflow-hidden rounded-xl border border-border bg-card transition-all duration-200 hover:border-muted-foreground hover:shadow-card"
             >
                 <div className="flex flex-col md:flex-row md:items-stretch">
-                    {/* Image */}
-                    <div className="relative aspect-[4/3] w-full md:aspect-auto md:w-[140px] shrink-0 overflow-hidden bg-muted">
+                    {/* Product image */}
+                    <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-muted md:aspect-auto md:w-[140px]">
                         <Image
                             src={item.primaryImage}
                             alt={item.title}
@@ -59,93 +50,57 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }: Car
                         />
                     </div>
 
-                    {/* Content */}
+                    {/* Product details */}
                     <div className="flex flex-1 flex-col gap-2 p-3.5 md:p-4">
-                        {/* Top row: title + actions */}
                         <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0 flex-1">
-                                <h3 className="text-body font-semibold text-foreground line-clamp-2">
+                                <h3 className="line-clamp-2 text-body font-semibold text-foreground">
                                     {item.title}
                                 </h3>
+
                                 <p className="mt-0.5 text-small text-muted-foreground">
                                     {item.brand} &middot; Size {item.size}
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-1 shrink-0">
-                                <Button
-                                    type="button"
-                                    onClick={handleWishlistToggle}
-                                    disabled={wishlistLoading}
-                                    variant="ghost"
-                                    size="iconMd"
-                                    rounded="lg"
-                                    className="border border-border text-muted-foreground transition hover:border-error hover:bg-error-bg hover:text-error"
-                                    aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                                >
-                                    <Heart
-                                        size={13}
-                                        className={`transition-all duration-200 ${wishlisted ? "fill-error text-error" : ""}`}
-                                    />
-                                </Button>
-
-                                <Button
-                                    type="button"
-                                    onClick={() => setDeleteOpen(true)}
-                                    variant="ghost"
-                                    size="iconMd"
-                                    rounded="lg"
-                                    className="border border-border text-muted-foreground transition hover:border-error hover:bg-error-bg hover:text-error"
-                                    aria-label="Remove item"
-                                >
-                                    <Trash2 size={13} />
-                                </Button>
-                            </div>
+                            <Button
+                                type="button"
+                                onClick={() => setDeleteOpen(true)}
+                                variant="ghost"
+                                size="iconMd"
+                                rounded="lg"
+                                className="shrink-0 border border-border text-muted-foreground transition hover:border-error hover:bg-error-bg hover:text-error"
+                                aria-label="Remove item from cart"
+                            >
+                                <Trash2 size={13} />
+                            </Button>
                         </div>
 
-                        {/* Meta row */}
+                        {/* Condition and retail price */}
                         <div className="flex flex-wrap items-center gap-2 text-small text-muted-foreground">
-                            <span className="rounded-md bg-muted px-2 py-0.5">{item.condition}</span>
+                            <span className="rounded-md bg-muted px-2 py-0.5">
+                                {item.condition}
+                            </span>
+
                             {retailPrice && (
-                                <span className="text-muted-foreground">
-                                    MRP <span className="line-through">₹{retailPrice.toLocaleString("en-IN")}</span>
+                                <span>
+                                    MRP{" "}
+                                    <span className="line-through">
+                                        ₹{retailPrice.toLocaleString("en-IN")}
+                                    </span>
                                 </span>
                             )}
                         </div>
 
-                        {/* Bottom row: price + quantity */}
-                        <div className="mt-auto flex items-center justify-between pt-1">
+                        {/* Price and unique-item label */}
+                        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-1">
                             <span className="text-body-lg font-bold text-foreground">
                                 ₹{item.price.toLocaleString("en-IN")}
                             </span>
 
-                            <div className="flex items-center rounded-lg border border-border bg-muted p-0.5">
-                                <Button
-                                    type="button"
-                                    onClick={() => onDecrease(item.cartId, item.quantity)}
-                                    variant="ghost"
-                                    size="iconMd"
-                                    rounded="md"
-                                    className="transition hover:bg-card active:scale-90"
-                                    aria-label="Decrease quantity"
-                                >
-                                    <Minus size={13} />
-                                </Button>
-                                <span className="min-w-[32px] text-center text-small font-semibold text-foreground">
-                                    {item.quantity}
-                                </span>
-                                <Button
-                                    type="button"
-                                    onClick={() => onIncrease(item.cartId)}
-                                    variant="ghost"
-                                    size="iconMd"
-                                    rounded="md"
-                                    className="transition hover:bg-card active:scale-90"
-                                    aria-label="Increase quantity"
-                                >
-                                    <Plus size={13} />
-                                </Button>
-                            </div>
+                            <span className="rounded-lg bg-muted px-3 py-2 text-small font-medium text-muted-foreground">
+                                One-of-a-kind piece
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -154,7 +109,7 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }: Car
             <ConfirmPopover
                 open={deleteOpen}
                 title="Remove this item?"
-                description="This item will be removed from your cart. You can add it again later if still available."
+                description="This unique piece will be removed from your cart. You can add it again if it is still available."
                 confirmText="Remove"
                 cancelText="Keep"
                 onCancel={() => setDeleteOpen(false)}

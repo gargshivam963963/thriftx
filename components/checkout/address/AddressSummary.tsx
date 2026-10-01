@@ -20,7 +20,10 @@ interface AddressSummaryProps {
 }
 
 const typeConfig = {
-    Home: { icon: Home, color: "bg-amber-100 text-amber-700 border-amber-200" },
+    Home: {
+        icon: Home,
+        color: "bg-amber-100 text-amber-700 border-amber-200",
+    },
     Work: {
         icon: BriefcaseBusiness,
         color: "bg-blue-100 text-blue-700 border-blue-200",
@@ -31,7 +34,7 @@ const typeConfig = {
     },
 } as const;
 
-function FullAddress({ address }: { address: Address }) {
+function getFullAddress(address: Address) {
     return [
         address.addressLine1,
         address.addressLine2,
@@ -49,23 +52,26 @@ export default function AddressSummary({
 }: AddressSummaryProps) {
     const typeInfo = typeConfig[address.type] ?? typeConfig.Home;
     const TypeIcon = typeInfo.icon;
-    const fullAddress = FullAddress({ address });
+    const fullAddress = getFullAddress(address);
 
     if (compact) {
         return (
-            <div className="flex items-center justify-between gap-4">
-                <div className="flex items-start gap-3 sm:gap-4">
-                    <div className="mt-0.5 rounded-full bg-emerald-100 p-1.5 text-emerald-600 sm:p-2">
-                        <CheckCircle2 size={16} className="sm:h-[18px] sm:w-[18px]" />
-                    </div>
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                    <span className="mt-0.5 shrink-0 rounded-full bg-emerald-100 p-1.5 text-emerald-600 sm:p-2">
+                        <CheckCircle2 size={17} />
+                    </span>
+
                     <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 sm:text-[11px]">
                             Delivering To
                         </p>
+
                         <div className="mt-1 flex flex-wrap items-center gap-2">
                             <h4 className="text-sm font-semibold text-foreground sm:text-base">
                                 {address.fullName}
                             </h4>
+
                             <span
                                 className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${typeInfo.color}`}
                             >
@@ -73,7 +79,8 @@ export default function AddressSummary({
                                 {address.type}
                             </span>
                         </div>
-                        <p className="mt-1 line-clamp-2 text-xs leading-6 text-muted-foreground sm:text-sm">
+
+                        <p className="mt-1 line-clamp-2 break-words text-xs leading-6 text-muted-foreground sm:text-sm">
                             {fullAddress}
                         </p>
                     </div>
@@ -84,7 +91,7 @@ export default function AddressSummary({
                     onClick={onChange}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className="shrink-0 rounded-xl border border-border px-3 py-1.5 text-xs font-medium transition hover:border-foreground hover:bg-foreground hover:text-white sm:px-4 sm:py-2 sm:text-sm"
+                    className="min-h-10 shrink-0 rounded-xl border border-border px-3 py-1.5 text-xs font-medium transition hover:border-foreground hover:bg-foreground hover:text-white sm:px-4 sm:text-sm"
                 >
                     Change
                 </motion.button>
@@ -101,12 +108,12 @@ export default function AddressSummary({
             transition={{ duration: 0.25 }}
             className="overflow-hidden rounded-2xl border border-border bg-card sm:rounded-3xl"
         >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-subtle/80 to-card px-5 py-4 sm:px-6 sm:py-5">
+            <div className="flex items-center justify-between gap-3 border-b border-border bg-gradient-to-r from-subtle/80 to-card px-4 py-4 sm:px-6 sm:py-5">
                 <div className="flex items-center gap-3">
-                    <div className="rounded-full bg-emerald-100 p-1.5 text-emerald-600 sm:p-2">
-                        <CheckCircle2 size={18} className="sm:h-[20px] sm:w-[20px]" />
-                    </div>
+                    <span className="rounded-full bg-emerald-100 p-1.5 text-emerald-600 sm:p-2">
+                        <CheckCircle2 size={19} />
+                    </span>
+
                     <div>
                         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 sm:text-[11px]">
                             Delivery Address
@@ -122,23 +129,22 @@ export default function AddressSummary({
                     onClick={onChange}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-1.5 text-xs font-medium transition hover:border-foreground hover:bg-foreground hover:text-white sm:px-4 sm:py-2 sm:text-sm"
+                    className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-border px-3 py-1.5 text-xs font-medium transition hover:border-foreground hover:bg-foreground hover:text-white sm:px-4 sm:text-sm"
                 >
                     <Pencil size={14} />
                     Change
                 </motion.button>
             </div>
 
-            {/* Body */}
-            <div className="space-y-5 p-5 sm:p-6">
-                {/* Name & Type */}
+            <div className="space-y-5 p-4 sm:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h4 className="text-lg font-semibold text-foreground sm:text-xl">
                             {address.fullName}
                         </h4>
+
                         {address.isDefault && (
-                            <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-foreground px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+                            <span className="mt-1.5 inline-flex rounded-full bg-foreground px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
                                 Default
                             </span>
                         )}
@@ -152,26 +158,25 @@ export default function AddressSummary({
                     </span>
                 </div>
 
-                {/* Details Grid */}
                 <div className="grid gap-5 sm:grid-cols-2">
-                    <div className="flex gap-3">
+                    <div className="flex min-w-0 gap-3">
                         <MapPinned
                             size={18}
-                            className="mt-0.5 shrink-0 text-muted-foreground sm:mt-1"
+                            className="mt-0.5 shrink-0 text-muted-foreground"
                         />
-                        <div>
+
+                        <div className="min-w-0">
                             <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground sm:text-[11px]">
                                 Delivery Address
                             </p>
-                            <div className="mt-1.5 text-sm leading-6 text-muted-foreground sm:leading-7">
+
+                            <div className="mt-1.5 break-words text-sm leading-6 text-muted-foreground sm:leading-7">
                                 <p className="font-medium text-foreground">
                                     {address.addressLine1}
                                 </p>
                                 {address.addressLine2 && <p>{address.addressLine2}</p>}
-                                {address.landmark && (
-                                    <p className="text-muted-foreground">📍 {address.landmark}</p>
-                                )}
-                                <p className="text-muted-foreground">
+                                {address.landmark && <p>📍 {address.landmark}</p>}
+                                <p>
                                     {address.city}, {address.state}
                                 </p>
                                 <p className="font-semibold text-foreground">
@@ -184,15 +189,18 @@ export default function AddressSummary({
                     <div className="flex gap-3">
                         <Phone
                             size={18}
-                            className="mt-0.5 shrink-0 text-muted-foreground sm:mt-1"
+                            className="mt-0.5 shrink-0 text-muted-foreground"
                         />
+
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground sm:text-[11px]">
                                 Contact
                             </p>
+
                             <p className="mt-1.5 font-medium text-foreground">
                                 {address.phone}
                             </p>
+
                             {address.alternatePhone && (
                                 <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
                                     Alt: {address.alternatePhone}
@@ -205,4 +213,3 @@ export default function AddressSummary({
         </motion.div>
     );
 }
-

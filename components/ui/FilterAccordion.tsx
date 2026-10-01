@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface FilterAccordionProps {
     icon: ReactNode;
@@ -51,16 +52,17 @@ export default function FilterAccordion({
                 className,
             )}
         >
-            <button
+            <Button
                 type="button"
+                variant="ghost"
+                size="sm"
+                rounded="none"
                 onClick={() => setOpen((p) => !p)}
                 aria-expanded={open}
                 className={cn(
-                    "group flex w-full items-center gap-3 px-4 text-left",
+                    "group flex w-full items-center justify-start gap-3 px-4 text-left",
                     "min-h-10 md:min-h-11",
                     "transition-colors duration-200 hover:bg-muted/60 dark:hover:bg-muted/40",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
-                    "dark:focus-visible:ring-white/20",
                 )}
             >
                 {/* Leading icon — never shrinks */}
@@ -91,7 +93,7 @@ export default function FilterAccordion({
                         <ChevronDown size={16} className="h-4 w-4" />
                     </motion.span>
                 </span>
-            </button>
+            </Button>
 
             <AnimatePresence initial={false}>
                 {open && (

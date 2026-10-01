@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Ruler } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { controlTransition, controlFocusRing } from "@/components/ui/control.styles";
 
 /**
@@ -129,22 +130,23 @@ export default function MeasurementFilter() {
                         {m.buckets.map((bucket) => {
                             const active = selected === bucket.value;
                             return (
-                                <button
+                                <Button
                                     key={bucket.value}
                                     type="button"
+                                    variant={active ? "primary" : "outline"}
+                                    size="sm"
+                                    rounded="md"
                                     onClick={() => toggleBucket(m, bucket.value)}
                                     aria-pressed={active}
                                     className={cn(
                                         controlTransition,
                                         controlFocusRing,
-                                        "rounded-lg border px-2 py-1.5 text-sm font-medium transition-colors",
-                                        active
-                                            ? "border-foreground bg-foreground text-background"
-                                            : "border-border bg-card text-muted-foreground hover:border-foreground/50 hover:text-foreground dark:bg-card",
+                                        "h-8 min-w-0 px-2 text-label",
+                                        !active && "text-muted-foreground hover:border-foreground/50 hover:text-foreground",
                                     )}
                                 >
                                     {bucket.label}
-                                </button>
+                                </Button>
                             );
                         })}
                     </div>

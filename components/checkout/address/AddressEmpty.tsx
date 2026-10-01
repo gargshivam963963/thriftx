@@ -14,11 +14,10 @@ export default function AddressEmpty({ onAdd }: AddressEmptyProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.25 }}
-            className="flex flex-col items-center rounded-3xl border border-dashed border-border bg-gradient-to-b from-subtle/80 to-card px-6 py-14 sm:px-8 sm:py-16"
+            className="flex flex-col items-center rounded-3xl border border-dashed border-border bg-gradient-to-b from-subtle/80 to-card px-5 py-12 text-center sm:px-8 sm:py-16"
         >
-            {/* Icon with spring animation */}
             <motion.div
-                initial={{ scale: 0 }}
+                initial={{ scale: 0.85 }}
                 animate={{ scale: 1 }}
                 transition={{
                     type: "spring",
@@ -31,49 +30,27 @@ export default function AddressEmpty({ onAdd }: AddressEmptyProps) {
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-foreground text-white shadow-lg sm:h-20 sm:w-20">
                     <MapPin size={28} className="sm:h-[34px] sm:w-[34px]" />
                 </div>
-                <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{
-                        delay: 0.25,
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 12,
-                    }}
-                    className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md"
-                >
+
+                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
                     <Plus size={14} />
-                </motion.div>
+                </span>
             </motion.div>
 
-            <motion.h3
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.3 }}
-                className="mt-6 font-bold text-xl font-semibold tracking-tight text-foreground sm:mt-7 sm:text-2xl"
-            >
+            <h3 className="mt-6 text-xl font-bold tracking-tight text-foreground sm:mt-7 sm:text-2xl">
                 Add your delivery address
-            </motion.h3>
+            </h3>
 
-            <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.3 }}
-                className="mt-3 max-w-sm text-center text-sm leading-6 text-muted-foreground sm:leading-7"
-            >
-                Save your address once for a faster checkout next time. We ensure safe
-                and timely delivery to your doorstep.
-            </motion.p>
+            <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground sm:leading-7">
+                Save your address once for a faster checkout next time. We’ll show
+                delivery benefits based on your selected location.
+            </p>
 
             <motion.button
                 type="button"
                 onClick={onAdd}
                 whileHover={{ y: -3, scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25, duration: 0.3 }}
-                className="group mt-8 inline-flex items-center gap-3 rounded-2xl bg-foreground px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-foreground/20 transition-all duration-300 hover:shadow-xl hover:shadow-foreground/30 sm:mt-10 sm:px-8 sm:py-4"
+                className="group mt-8 inline-flex min-h-12 items-center gap-3 rounded-2xl bg-foreground px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-foreground/20 transition-all duration-300 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:mt-10 sm:px-8"
             >
                 <Plus size={18} />
                 Add Address
@@ -85,4 +62,3 @@ export default function AddressEmpty({ onAdd }: AddressEmptyProps) {
         </motion.div>
     );
 }
-

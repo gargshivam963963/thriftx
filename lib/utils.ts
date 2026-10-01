@@ -1,6 +1,124 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { extendTailwindMerge } from "tailwind-merge";
+
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        {
+          text: [
+            "display-xl",
+            "display-lg",
+            "display-md",
+            "display",
+            "hero",
+            "heading-1",
+            "h1",
+            "heading-2",
+            "h2",
+            "heading-3",
+            "h3",
+            "heading-4",
+            "h4",
+            "title",
+            "subtitle",
+            "body-lg",
+            "body",
+            "body-md",
+            "body-sm",
+            "small",
+            "caption",
+            "label",
+            "button",
+            "price",
+            "badge",
+          ],
+        },
+      ],
+      "text-color": [
+        {
+          text: [
+            "bg",
+            "background",
+            "foreground",
+            "card-foreground",
+            "popover-foreground",
+            "primary",
+            "primary-foreground",
+            "secondary",
+            "secondary-foreground",
+            "muted",
+            "muted-foreground",
+            "accent",
+            "accent-foreground",
+            "destructive",
+            "destructive-foreground",
+            "success",
+            "success-foreground",
+            "warning",
+            "warning-foreground",
+            "error",
+            "error-foreground",
+            "info",
+            "info-foreground",
+            "text",
+            "text-secondary",
+            "text-muted",
+            "text-inverse",
+          ],
+        },
+      ],
+      "bg-color": [
+        {
+          bg: [
+            "bg",
+            "bg-card",
+            "bg-elevated",
+            "bg-muted",
+            "bg-subtle",
+            "background",
+            "foreground",
+            "card",
+            "popover",
+            "primary",
+            "secondary",
+            "muted",
+            "accent",
+            "destructive",
+            "success",
+            "success-bg",
+            "warning",
+            "warning-bg",
+            "error",
+            "error-bg",
+            "info",
+            "info-bg",
+            "glass",
+            "subtle",
+            "elevated",
+          ],
+        },
+      ],
+      "border-color": [
+        {
+          border: [
+            "border",
+            "border-light",
+            "border-active",
+            "foreground",
+            "background",
+            "error",
+            "error-bg",
+            "success",
+            "warning",
+            "info",
+          ],
+        },
+      ],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }

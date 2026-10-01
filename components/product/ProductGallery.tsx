@@ -202,15 +202,17 @@ export default function ProductGallery({
                         {gallery.map((img, index) => {
                             const active = index === selectedIndex;
                             return (
-                                <button
+                                <Button
                                     key={`${img}-${index}`}
                                     type="button"
+                                    variant={active ? "primary" : "outline"}
+                                    size="iconXl"
+                                    rounded="xl"
                                     onClick={() => setSelectedIndex(index)}
                                     aria-label={`View image ${index + 1}`}
                                     aria-current={active}
                                     className={cn(
-                                        "group relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-2xl border bg-card transition-all duration-300 lg:h-[88px] lg:w-[88px]",
-                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30",
+                                        "group relative h-20 w-20 shrink-0 overflow-hidden border bg-card p-0 transition-all duration-300 lg:h-[88px] lg:w-[88px]",
                                         active
                                             ? "border-foreground shadow-lg ring-2 ring-foreground/10"
                                             : "border-border hover:border-foreground/50 hover:shadow-md",
@@ -225,7 +227,7 @@ export default function ProductGallery({
                                         blurDataURL={BLUR_PLACEHOLDER}
                                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
-                                </button>
+                                </Button>
                             );
                         })}
                     </div>
@@ -332,61 +334,45 @@ export default function ProductGallery({
                         aria-label="Fullscreen gallery"
                     >
                         {/* ── Close ── */}
-                        <button
+                        <Button
                             type="button"
+                            variant="glass"
+                            size="iconMd"
+                            rounded="full"
                             onClick={() => {
                                 setFullscreen(false);
                                 setZoomed(false);
                                 setZoomScale(2);
                             }}
                             aria-label="Close fullscreen"
-                            className={cn(
-                                "absolute right-5 top-5 z-40",
-                                "flex h-12 w-12 items-center justify-center",
-                                "rounded-full border border-white/20",
-                                "bg-black/40 text-white",
-                                "backdrop-blur-md",
-                                "shadow-lg shadow-black/20",
-                                "transition-all duration-200",
-                                "hover:scale-105 hover:bg-white/15 hover:text-white",
-                                "active:scale-95",
-                                "focus-visible:outline-none",
-                                "focus-visible:ring-2 focus-visible:ring-white/60",
-                                "focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                            )}
+                            className="absolute right-5 top-5 z-40 border-white/20 bg-black/40 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/15 hover:text-white focus-visible:ring-white/80 focus-visible:ring-offset-black"
                         >
                             <X size={22} strokeWidth={2} />
-                        </button>
+                        </Button>
 
                         {/* ── Zoom controls ── */}
                         <div className="absolute bottom-5 right-5 z-40 flex items-center gap-2">
-                            <button
+                            <Button
                                 type="button"
+                                variant="glass"
+                                size="iconMd"
+                                rounded="full"
                                 onClick={() => {
                                     setZoomed(true);
                                     setZoomScale((z) => Math.min(z + 0.25, 4));
                                 }}
                                 disabled={zoomed && zoomScale >= 4}
                                 aria-label="Zoom in"
-                                className={cn(
-                                    "flex h-11 w-11 items-center justify-center",
-                                    "rounded-full border border-white/20",
-                                    "bg-black/40 text-white",
-                                    "backdrop-blur-md",
-                                    "shadow-lg shadow-black/20",
-                                    "transition-all duration-200",
-                                    "hover:scale-105 hover:bg-white/15 hover:text-white",
-                                    "active:scale-95",
-                                    "focus-visible:outline-none",
-                                    "focus-visible:ring-2 focus-visible:ring-white/60",
-                                    "disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:scale-100"
-                                )}
+                                className="border-white/20 bg-black/40 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/15 hover:text-white focus-visible:ring-white/80 focus-visible:ring-offset-black disabled:opacity-35"
                             >
                                 <ZoomIn size={20} strokeWidth={2} />
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button
                                 type="button"
+                                variant="glass"
+                                size="iconMd"
+                                rounded="full"
                                 onClick={() => {
                                     setZoomScale((z) => {
                                         const nextScale = Math.max(z - 0.25, 1);
@@ -400,70 +386,38 @@ export default function ProductGallery({
                                 }}
                                 disabled={!zoomed || zoomScale <= 1}
                                 aria-label="Zoom out"
-                                className={cn(
-                                    "flex h-11 w-11 items-center justify-center",
-                                    "rounded-full border border-white/20",
-                                    "bg-black/40 text-white",
-                                    "backdrop-blur-md",
-                                    "shadow-lg shadow-black/20",
-                                    "transition-all duration-200",
-                                    "hover:scale-105 hover:bg-white/15 hover:text-white",
-                                    "active:scale-95",
-                                    "focus-visible:outline-none",
-                                    "focus-visible:ring-2 focus-visible:ring-white/60",
-                                    "disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:scale-100"
-                                )}
+                                className="border-white/20 bg-black/40 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/15 hover:text-white focus-visible:ring-white/80 focus-visible:ring-offset-black disabled:opacity-35"
                             >
                                 <ZoomOut size={20} strokeWidth={2} />
-                            </button>
+                            </Button>
                         </div>
 
                         {/* ── Previous / Next ── */}
                         {galleryLength > 1 && (
                             <>
-                                <button
+                                <Button
                                     type="button"
+                                    variant="glass"
+                                    size="iconMd"
+                                    rounded="full"
                                     onClick={previous}
                                     aria-label="Previous image"
-                                    className={cn(
-                                        "absolute left-5 top-1/2 z-40 -translate-y-1/2",
-                                        "flex h-12 w-12 items-center justify-center",
-                                        "rounded-full border border-white/20",
-                                        "bg-black/40 text-white",
-                                        "backdrop-blur-md",
-                                        "shadow-lg shadow-black/20",
-                                        "transition-all duration-200",
-                                        "hover:scale-105 hover:bg-white/15 hover:text-white",
-                                        "active:scale-95",
-                                        "focus-visible:outline-none",
-                                        "focus-visible:ring-2 focus-visible:ring-white/60",
-                                        "focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                                    )}
+                                    className="absolute left-5 top-1/2 z-40 -translate-y-1/2 border-white/20 bg-black/40 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/15 hover:text-white focus-visible:ring-white/80 focus-visible:ring-offset-black"
                                 >
                                     <ChevronLeft size={24} strokeWidth={2} />
-                                </button>
+                                </Button>
 
-                                <button
+                                <Button
                                     type="button"
+                                    variant="glass"
+                                    size="iconMd"
+                                    rounded="full"
                                     onClick={next}
                                     aria-label="Next image"
-                                    className={cn(
-                                        "absolute right-5 top-1/2 z-40 -translate-y-1/2",
-                                        "flex h-12 w-12 items-center justify-center",
-                                        "rounded-full border border-white/20",
-                                        "bg-black/40 text-white",
-                                        "backdrop-blur-md",
-                                        "shadow-lg shadow-black/20",
-                                        "transition-all duration-200",
-                                        "hover:scale-105 hover:bg-white/15 hover:text-white",
-                                        "active:scale-95",
-                                        "focus-visible:outline-none",
-                                        "focus-visible:ring-2 focus-visible:ring-white/60",
-                                        "focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                                    )}
+                                    className="absolute right-5 top-1/2 z-40 -translate-y-1/2 border-white/20 bg-black/40 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/15 hover:text-white focus-visible:ring-white/80 focus-visible:ring-offset-black"
                                 >
                                     <ChevronRight size={24} strokeWidth={2} />
-                                </button>
+                                </Button>
                             </>
                         )}
 

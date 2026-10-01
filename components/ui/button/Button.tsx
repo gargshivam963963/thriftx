@@ -83,7 +83,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 shadow,
             }),
             fullWidth && "w-full",
-            !isIconOnly && !asChild && "relative overflow-hidden",
             className
         );
 
@@ -128,10 +127,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     ref={ref}
                     aria-disabled={isDisabled}
                     aria-busy={loading}
-                    className={cn(
-                        variantClasses,
-                        "relative isolate overflow-hidden"
-                    )}
+                    className={variantClasses}
                     {...(domProps as React.HTMLAttributes<HTMLElement>)}
                 >
                     {content}
@@ -147,34 +143,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 disabled={isDisabled}
                 aria-disabled={isDisabled}
                 aria-busy={loading}
-                whileHover={
-                    whileHover ?? {
-                        scale: 1.03,
-                        y: -2,
-                    }
-                }
-                whileTap={
-                    whileTap ?? {
-                        scale: 0.975,
-                    }
-                }
-                transition={
-                    transition ?? {
-                        duration: 0.16,
-                        ease: "easeOut",
-                    }
-                }
+                whileHover={whileHover}
+                whileTap={whileTap ?? { scale: 0.98 }}
+                transition={transition ?? { duration: 0.16, ease: "easeOut" }}
                 className={variantClasses}
                 {...props}
             >
-                {/* Shine effect on hover */}
-                {!isIconOnly && (
-                    <span
-                        className="absolute inset-0 -translate-x-full rounded-[inherit] bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-[400ms] group-hover:translate-x-full"
-                        aria-hidden="true"
-                    />
-                )}
-
                 {loading ? (
                     <>
                         <ButtonIcon>

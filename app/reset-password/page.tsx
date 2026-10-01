@@ -1,35 +1,53 @@
+
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Loader2, ShieldCheck, X } from "lucide-react";
+import {
+    ArrowRight,
+    CheckCircle2,
+    ShieldCheck,
+    X,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { FormField, PasswordField } from "@/components/ui/form";
 import { authClient } from "@/lib/auth-client";
 import { getFriendlyError } from "@/lib/errors";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
     const router = useRouter();
     const params = useSearchParams();
     const token = params.get("token");
+
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
+    const [success, setSuccess] = useState(false);
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         if (!token) {
-            setError("This reset link is missing a valid token.");
+            setError("This password reset link is missing its token. Request a new link to continue.");
+            return;
+        }
+
+        if (password.length < 8) {
+            setError("Your password must contain at least 8 characters.");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError("The passwords do not match.");
             return;
         }
 
         setLoading(true);
         setError("");
-        setSuccess("");
 
         try {
             const response = await authClient.resetPassword({
@@ -41,65 +59,210 @@ export default function ResetPasswordPage() {
                 throw response.error;
             }
 
-            setSuccess("Your password has been reset. Redirecting to login...");
-            setTimeout(() => router.replace("/login"), 1500);
+            setSuccess(true);
+            setPassword("");
+            setConfirmPassword("");
         } catch (err) {
-            setError(getFriendlyError(err, "Unable to reset password."));
+            setError(
+                getFriendlyError(
+                    err,
+                    "We couldn't reset your password. The link may have expired."
+                )
+            );
         } finally {
             setLoading(false);
         }
     };
 
+    if (success) {
+        return (
+            <div className="container-tight mx-auto flex min-h-[70svh] items-center justify-center px-4 py-12">
+                <motion.div
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-center shadow-modal sm:p-8"
+                >
+                    <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-success/10 text-success">
+                        <CheckCircle2 size={27} aria-hidden="true" />
+                    </div>
+
+                    <h1 className="text-heading-2 text-foreground">
+                        Password updated
+                    </h1>
+
+                    <p className="mt-3 text-body-sm text-muted-foreground">
+                        Your password has been changed. You can now sign in
+                        using your new password.
+                    </p>
+
+                    <Button
+                        type="button"
+                        size="lg"
+                        fullWidth
+                        className="mt-7"
+                        rightIcon={<ArrowRight size={17} />}
+                        onClick={() => router.replace("/login")}
+                    >
+                        Continue to Login
+                    </Button>
+                </motion.div>
+            </div>
+        );
+    }
+
     return (
-        <div className="container-tight mx-auto flex min-h-[70vh] items-center justify-center px-4 py-12">
+        <div className="container-tight mx-auto flex min-h-[70svh] items-center justify-center px-4 py-12">
             <motion.div
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 22 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
                 className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-modal sm:p-8"
             >
-                <div className="mb-6 text-center">
+                <div className="mb-7 text-center">
                     <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-background">
-                        <ShieldCheck size={24} />
+                        <ShieldCheck size={24} aria-hidden="true" />
                     </div>
-                    <h1 className="text-heading-2 text-foreground">Reset Password</h1>
-                    <p className="mt-2 text-subtitle">Choose a new secure password for your account.</p>
+
+                    <h1 className="text-heading-2 text-foreground">
+                        Reset Password
+                    </h1>
+
+                    <p className="mt-2 text-subtitle">
+                        Choose a new password to secure your THRIFTX account.
+                    </p>
                 </div>
 
                 {error && (
-                    <div className="mb-5 flex items-start gap-3 rounded-xl border border-error/30 bg-error-bg p-4 text-body-sm text-error-foreground">
-                        <X size={16} className="mt-0.5 shrink-0" />
+                    <div
+                        role="alert"
+                        className="mb-5 flex items-start gap-3 rounded-xl border border-error/30 bg-error-bg p-4 text-body-sm text-error-foreground"
+                    >
+                        <X
+                            size={16}
+                            className="mt-0.5 shrink-0"
+                            aria-hidden="true"
+                        />
                         <span>{error}</span>
                     </div>
                 )}
 
-                {success && (
-                    <div className="mb-5 rounded-xl border border-success/30 bg-success/10 p-4 text-body-sm text-success">
-                        {success}
+                {!token ? (
+                    <div className="rounded-xl border border-border bg-muted/40 p-4 text-center">
+                        <p className="text-body-sm text-muted-foreground">
+                            This reset link is incomplete or invalid. Request
+                            a new password reset link to continue.
+                        </p>
+
+                        <Button
+                            asChild
+                            variant="outline"
+                            fullWidth
+                            className="mt-4"
+                        >
+                            <Link href="/forgot-password">
+                                Request a New Link
+                            </Link>
+                        </Button>
                     </div>
+                ) : (
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-5"
+                        noValidate
+                    >
+                        <FormField
+                            label="New Password"
+                            htmlFor="new-password"
+                            required
+                            helper="Use at least 8 characters."
+                        >
+                            <PasswordField
+                                id="new-password"
+                                name="newPassword"
+                                autoComplete="new-password"
+                                placeholder="Enter your new password"
+                                value={password}
+                                onChange={(event) => {
+                                    setPassword(event.target.value);
+                                    setError("");
+                                }}
+                                required
+                                minLength={8}
+                                maxLength={128}
+                                disabled={loading}
+                            />
+                        </FormField>
+
+                        <FormField
+                            label="Confirm New Password"
+                            htmlFor="confirm-password"
+                            required
+                        >
+                            <PasswordField
+                                id="confirm-password"
+                                name="confirmPassword"
+                                autoComplete="new-password"
+                                placeholder="Re-enter your new password"
+                                value={confirmPassword}
+                                onChange={(event) => {
+                                    setConfirmPassword(event.target.value);
+                                    setError("");
+                                }}
+                                required
+                                minLength={8}
+                                maxLength={128}
+                                disabled={loading}
+                            />
+                        </FormField>
+
+                        <Button
+                            type="submit"
+                            size="lg"
+                            fullWidth
+                            loading={loading}
+                            loadingText="Updating Password..."
+                            rightIcon={<ArrowRight size={17} />}
+                            disabled={
+                                loading ||
+                                !password ||
+                                !confirmPassword ||
+                                password !== confirmPassword
+                            }
+                        >
+                            Set New Password
+                        </Button>
+                    </form>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <FormField label="New Password" htmlFor="password" required>
-                        <PasswordField
-                            id="password"
-                            autoComplete="new-password"
-                            placeholder="Enter your new password"
-                            value={password}
-                            onChange={(event) => setPassword(event.target.value)}
-                        />
-                    </FormField>
-
-                    <Button type="submit" size="lg" fullWidth loading={loading} loadingText="Resetting..." rightIcon={<ArrowRight size={17} />}>
-                        Set New Password
-                    </Button>
-                </form>
-
-                {!token && (
-                    <p className="mt-4 text-center text-body-sm text-muted-foreground">
-                        This reset page needs a valid token from your email link.
-                    </p>
-                )}
+                <p className="mt-6 text-center text-body-sm text-muted-foreground">
+                    Remembered your password?{" "}
+                    <Link
+                        href="/login"
+                        className="font-medium text-foreground underline-offset-4 transition-colors hover:underline"
+                    >
+                        Back to Login
+                    </Link>
+                </p>
             </motion.div>
         </div>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="container-tight mx-auto flex min-h-[70svh] items-center justify-center px-4 py-12">
+                    <div
+                        className="h-8 w-8 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground"
+                        role="status"
+                        aria-label="Loading password reset"
+                    />
+                </div>
+            }
+        >
+            <ResetPasswordForm />
+        </Suspense>
     );
 }

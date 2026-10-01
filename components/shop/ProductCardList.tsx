@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import Link from "next/link";
+import { Button } from '@/components/ui/button'; import Link from "next/link";
 import { useState } from "react";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -56,6 +56,7 @@ interface ProductCardListProps {
     material?: string;
     description?: string;
     onlyOneLeft?: boolean;
+    priority?: boolean;
 }
 
 export default function ProductCardList({
@@ -73,6 +74,7 @@ export default function ProductCardList({
     material,
     description,
     onlyOneLeft = false,
+    priority = false,
 }: ProductCardListProps) {
     const [wishlistLoading, setWishlistLoading] = useState(false);
     const { wishlisted, toggle } = useWishlistProduct(id);
@@ -115,7 +117,9 @@ export default function ProductCardList({
                                 src={image || "/images/placeholder.jpg"}
                                 alt={title}
                                 fill
-                                sizes="(max-width: 640px) 100vw, 240px"
+                                priority={priority}
+                                quality={70}
+                                sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 767px) 240px, 260px"
                                 className="object-cover transition-all duration-1000 ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.08]"
                             />
 

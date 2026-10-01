@@ -1,9 +1,9 @@
 "use client";
 
-
-import { Button } from '@/components/ui/button'; import Link from "next/link";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 import {
     LayoutDashboard,
     Package,
@@ -95,32 +95,42 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
     const { logout } = useAuth();
 
     const sidebarContent = (
-        <div className="flex h-full flex-col">
+        <div className="flex h-dvh min-h-0 flex-col bg-card font-sans text-card-foreground">
             {/* Logo */}
-            <div className="flex h-16 items-center gap-3 border-b border-border px-6">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-sm font-bold text-accent-foreground shadow-lg">
+            <Link
+                href="/admin/dashboard"
+                onClick={onClose}
+                aria-label="THRIFTX Admin dashboard"
+                className="flex h-[76px] shrink-0 items-center gap-3.5 border-b border-border px-5 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+            >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-foreground text-sm font-bold leading-none tracking-tight text-background">
                     T
-                </div>
-                <div>
-                    <h1 className="text-base font-bold tracking-tight text-foreground">
+                </span>
+                <span className="flex min-w-0 flex-col gap-1">
+                    <span className="truncate text-lg font-bold leading-none tracking-tight text-foreground">
                         THRIFTX
-                    </h1>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    </span>
+                    <span className="text-caption text-muted-foreground">
                         Admin Panel
-                    </p>
-                </div>
-            </div>
+                    </span>
+                </span>
+            </Link>
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto px-4 py-6">
+            <nav
+                aria-label="Admin navigation"
+                className="min-h-0 flex-1 overflow-y-auto px-4 py-6"
+            >
                 {NAV_ITEMS.map((section) => (
-                    <div key={section.section} className="mb-6">
-                        <p className="mb-2 px-2 text-badge font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div key={section.section} className="mb-7 last:mb-0">
+                        <p className="mb-3 px-3 text-caption text-muted-foreground">
                             {section.section}
                         </p>
                         <div className="space-y-1">
                             {section.items.map((item) => {
-                                const isActive = pathname === item.href;
+                                const isActive =
+                                    pathname === item.href ||
+                                    pathname.startsWith(`${item.href}/`);
                                 const Icon = item.icon;
 
                                 return (
@@ -128,19 +138,21 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                                         key={item.href}
                                         href={item.href}
                                         onClick={onClose}
+                                        aria-current={isActive ? "page" : undefined}
                                         className={cn(
-                                            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                                            "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium leading-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                                             isActive
-                                                ? "bg-accent text-accent-foreground shadow-md"
+                                                ? "bg-accent text-accent-foreground shadow-sm"
                                                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
                                         )}
                                     >
-                                        <Icon size={18} />
-                                        <span>{item.label}</span>
+                                        <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
+                                        <span className="min-w-0 flex-1 truncate">{item.label}</span>
                                         {isActive && (
                                             <motion.div
                                                 layoutId="activeTab"
-                                                className="ml-auto h-2 w-2 rounded-full bg-current opacity-60"
+                                                aria-hidden="true"
+                                                className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-70"
                                             />
                                         )}
                                     </Link>
@@ -152,27 +164,30 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
             </nav>
 
             {/* Bottom */}
-            <div className="border-t border-border p-4 space-y-2">
-                <div className="flex items-center justify-between px-2">
+            <div className="shrink-0 space-y-1 border-t border-border p-4">
+                <div className="mb-2 flex min-h-10 items-center justify-between rounded-xl px-3">
+                    <span className="text-sm font-medium text-muted-foreground">Appearance</span>
                     <ThemeToggle size="sm" />
                 </div>
 
                 <Link
                     href="/"
+                    onClick={onClose}
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
                 >
-                    <ArrowLeft size={18} />
+                    <ArrowLeft size={18} strokeWidth={1.8} aria-hidden="true" />
                     <span>Back to Store</span>
                 </Link>
 
                 <Button
+                    variant="ghost"
                     onClick={async () => {
                         await logout();
                         window.location.href = "/";
                     }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-500 transition-all hover:bg-red-50 dark:hover:bg-red-950/30"
+                    className="flex min-h-11 w-full items-center justify-start gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive"
                 >
-                    <LogOut size={18} />
+                    <LogOut size={18} strokeWidth={1.8} aria-hidden="true" />
                     <span>Sign Out</span>
                 </Button>
             </div>
@@ -182,14 +197,20 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
     return (
         <>
             {/* Desktop sidebar */}
-            <aside className="fixed left-0 top-0 z-50 hidden h-full w-[280px] border-r border-border bg-card shadow-xl lg:block">
+            <aside
+                aria-label="Admin sidebar"
+                className="fixed left-0 top-0 z-50 hidden h-dvh w-[280px] border-r border-border bg-card lg:block"
+            >
                 {sidebarContent}
             </aside>
 
             {/* Mobile sidebar */}
             <aside
+                aria-label="Admin sidebar"
+                aria-hidden={!isOpen}
+                inert={!isOpen}
                 className={cn(
-                    "fixed left-0 top-0 z-50 h-full w-[280px] border-r border-border bg-card shadow-2xl transition-transform duration-300 lg:hidden",
+                    "fixed left-0 top-0 z-50 h-dvh w-[280px] border-r border-border bg-card shadow-2xl transition-transform duration-300 lg:hidden",
                     isOpen ? "translate-x-0" : "-translate-x-full",
                 )}
             >
@@ -198,4 +219,3 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
         </>
     );
 }
-

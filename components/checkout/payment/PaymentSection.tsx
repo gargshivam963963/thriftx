@@ -2,21 +2,19 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
+    BadgeCheck,
+    Banknote,
+    Check,
+    CheckCircle2,
     ChevronDown,
     ChevronRight,
     CreditCard,
-    ShieldCheck,
-    LockKeyhole,
-    BadgeCheck,
-    CheckCircle2,
     Lock,
-    IndianRupee,
+    LockKeyhole,
+    ShieldCheck,
     Wallet,
-    Banknote,
-    Sparkles,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import type { PaymentMethod } from "@/lib/types/order";
 
 interface PaymentSectionProps {
@@ -29,179 +27,190 @@ interface PaymentSectionProps {
     selectedMethod: PaymentMethod | null;
 }
 
-function TrustBadge({
+function PaymentTrustItem({
     icon,
     title,
-    subtitle,
+    description,
 }: {
     icon: React.ReactNode;
     title: string;
-    subtitle: string;
+    description: string;
 }) {
     return (
-        <motion.div
-            whileHover={{ y: -2 }}
-            className="rounded-xl border border-border bg-card p-3 transition hover:border-border hover:shadow-sm sm:rounded-2xl sm:p-4"
-        >
-            <div className="mb-2 inline-flex rounded-lg bg-muted p-2 sm:rounded-xl sm:p-2.5">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:block sm:rounded-2xl sm:p-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground sm:mb-3">
                 {icon}
             </div>
-            <h4 className="text-xs font-semibold text-foreground sm:text-sm">
-                {title}
-            </h4>
-            <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
-                {subtitle}
-            </p>
-        </motion.div>
-    );
-}
 
-// ─── Consistent icon wrapper ───────────────────────────────────────────────────
+            <div className="min-w-0">
+                <h4 className="text-xs font-semibold text-foreground sm:text-sm">
+                    {title}
+                </h4>
 
-function IconBox({ children, selected }: { children: React.ReactNode; selected: boolean }) {
-    return (
-        <div
-            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-14 sm:w-14 sm:rounded-2xl ${selected ? "bg-card/10" : "bg-muted"
-                }`}
-        >
-            {children}
+                <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
+                    {description}
+                </p>
+            </div>
         </div>
     );
 }
 
-interface PaymentOptionProps {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    badge: string;
-    badgeColor: string;
-    features: string[];
-    selected: boolean;
-    onClick: () => void;
-    loading: boolean;
-    canPay: boolean;
-}
-
 function PaymentOption({
-    icon,
+    method,
     title,
     description,
     badge,
-    badgeColor,
     features,
     selected,
-    onClick,
     loading,
     canPay,
-}: PaymentOptionProps) {
+    onSelect,
+}: {
+    method: PaymentMethod;
+    title: string;
+    description: string;
+    badge: string;
+    features: string[];
+    selected: boolean;
+    loading: boolean;
+    canPay: boolean;
+    onSelect: () => void;
+}) {
+    const isCod = method === "cod";
+
+    const Icon = isCod ? Banknote : Wallet;
+
     return (
-        <motion.div
+        <motion.button
+            type="button"
             layout
-            whileHover={selected ? undefined : { y: -2, scale: 1.005 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={canPay ? onClick : undefined}
-            className={`w-full overflow-hidden rounded-2xl border text-left transition-all sm:rounded-3xl ${selected
-                ? "border-foreground bg-foreground text-white shadow-xl"
-                : "border-border bg-card hover:border-foreground hover:shadow-md"
-                } ${!canPay ? "opacity-50" : "cursor-pointer"}`}
+            onClick={onSelect}
+            disabled={!canPay || loading}
+            aria-pressed={selected}
+            whileHover={
+                canPay && !loading
+                    ? { y: -1 }
+                    : undefined
+            }
+            whileTap={
+                canPay && !loading
+                    ? { scale: 0.995 }
+                    : undefined
+            }
+            className={[
+                "relative w-full min-w-0 overflow-hidden rounded-2xl border p-4 text-left transition-all duration-200 sm:rounded-3xl sm:p-5",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2",
+                selected
+                    ? "border-emerald-500 bg-emerald-50/50 shadow-sm ring-1 ring-emerald-500/20 dark:bg-emerald-950/20"
+                    : "border-border bg-card hover:border-foreground/25 hover:bg-muted/20 hover:shadow-sm",
+                !canPay || loading
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer",
+            ].join(" ")}
         >
-            <div className="flex items-start justify-between p-4 sm:p-6">
-                <div className="flex gap-3 sm:gap-4">
-                    <IconBox selected={selected}>{icon}</IconBox>
+            <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                <div
+                    className={[
+                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-12 sm:w-12 sm:rounded-2xl",
+                        selected
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                            : "bg-muted text-muted-foreground",
+                    ].join(" ")}
+                >
+                    <Icon
+                        size={21}
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                    />
+                </div>
 
-                    <div>
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                            <h3 className="text-sm font-semibold sm:text-lg">
-                                {title}
-                            </h3>
-                            <span
-                                className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${selected
-                                    ? "bg-card/20 text-white"
-                                    : badgeColor
-                                    }`}
-                            >
-                                {badge}
-                            </span>
-                        </div>
+                <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-semibold leading-snug text-foreground sm:text-base">
+                            {title}
+                        </h3>
 
-                        <p
-                            className={`mt-1.5 text-xs leading-5 sm:mt-2 sm:text-sm sm:leading-6 ${selected ? "text-muted-foreground" : "text-muted-foreground"
-                                }`}
+                        <span
+                            className={[
+                                "rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
+                                isCod
+                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
+                                    : "bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300",
+                            ].join(" ")}
                         >
-                            {description}
-                        </p>
+                            {badge}
+                        </span>
+                    </div>
 
-                        {/* Features */}
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 sm:mt-3">
-                            {features.map((feature, i) => (
-                                <span
-                                    key={i}
-                                    className={`inline-flex items-center gap-1 text-[11px] sm:text-xs ${selected ? "text-muted-foreground" : "text-muted-foreground"
-                                        }`}
-                                >
-                                    <CheckCircle2
-                                        size={11}
-                                        className={
-                                            selected
-                                                ? "text-emerald-400"
-                                                : "text-emerald-500"
-                                        }
-                                    />
-                                    {feature}
-                                </span>
-                            ))}
-                        </div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                        {description}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                        {features.map((feature) => (
+                            <span
+                                key={feature}
+                                className="inline-flex items-center gap-1.5 text-[11px] leading-relaxed text-muted-foreground sm:text-xs"
+                            >
+                                <Check
+                                    size={12}
+                                    className="shrink-0 text-emerald-600 dark:text-emerald-400"
+                                    aria-hidden="true"
+                                />
+                                {feature}
+                            </span>
+                        ))}
                     </div>
                 </div>
 
-                {selected && (
-                    <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 15,
-                        }}
-                    >
-                        <CheckCircle2
-                            className="shrink-0 text-emerald-400"
-                            size={22}
-                        />
-                    </motion.div>
-                )}
+                <div
+                    className={[
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors",
+                        selected
+                            ? "border-emerald-600 bg-emerald-600 text-white"
+                            : "border-border bg-background",
+                    ].join(" ")}
+                    aria-hidden="true"
+                >
+                    {selected && (
+                        <Check size={12} strokeWidth={3} />
+                    )}
+                </div>
             </div>
 
-            {/* Inline Payment Button */}
             {selected && (
                 <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    className="border-t border-white/10 bg-card/[0.03] px-4 py-4 sm:px-6 sm:py-5"
+                    initial={{
+                        opacity: 0,
+                        y: 5,
+                    }}
+                    animate={{
+                        opacity: 1,
+                        y: 0,
+                    }}
+                    className="mt-4 flex items-center gap-2 border-t border-emerald-200/70 pt-3 text-xs font-medium text-emerald-800 dark:border-emerald-900/50 dark:text-emerald-300"
                 >
-                    <Button
-                        type="button"
-                        onClick={onClick}
-                        loading={loading}
-                        disabled={!canPay}
-                        fullWidth
-                        size="lg"
-                        leftIcon={
-                            title.includes("COD") ? (
-                                <Banknote className="h-4 w-4" />
-                            ) : (
-                                <Lock className="h-4 w-4" />
-                            )
-                        }
-                        className="rounded-xl bg-card text-foreground shadow-lg hover:bg-muted sm:rounded-2xl"
-                    >
-                        {title.includes("COD")
-                            ? "Place Order (Pay on Delivery)"
-                            : "Continue to Payment"}
-                    </Button>
+                    <CheckCircle2
+                        size={15}
+                        aria-hidden="true"
+                    />
+                    Selected payment method
                 </motion.div>
             )}
-        </motion.div>
+
+            {loading && (
+                <div
+                    className="absolute inset-0 flex items-center justify-center bg-background/75 backdrop-blur-[2px]"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                        Processing...
+                    </span>
+                </div>
+            )}
+        </motion.button>
     );
 }
 
@@ -214,187 +223,293 @@ export default function PaymentSection({
     disabled = false,
     selectedMethod,
 }: PaymentSectionProps) {
+    const paymentLabel =
+        selectedMethod === "cod"
+            ? "Cash on Delivery"
+            : selectedMethod === "razorpay"
+                ? "Online Payment (Razorpay)"
+                : "Choose a payment method";
+
+    const paymentDescription =
+        selectedMethod === "cod"
+            ? "Pay when your order arrives"
+            : selectedMethod === "razorpay"
+                ? "UPI · Cards · Net Banking · Wallets"
+                : "Select how you would like to pay";
+
     return (
         <motion.section
             layout
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            className={`overflow-hidden rounded-2xl border bg-card shadow-sm sm:rounded-3xl ${disabled ? "border-border opacity-60" : "border-border"
-                }`}
+            transition={{
+                duration: 0.28,
+                ease: "easeOut",
+            }}
+            className={[
+                "min-w-0 overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow duration-200 sm:rounded-3xl",
+                disabled
+                    ? "border-border/70 opacity-70"
+                    : "border-border hover:shadow-md",
+            ].join(" ")}
         >
-            <Button
+            {/* Payment section header */}
+            <button
                 type="button"
                 onClick={disabled ? undefined : onOpen}
                 disabled={disabled}
-                className="flex w-full items-center justify-between px-4 py-4 sm:px-6 sm:py-5 disabled:cursor-not-allowed"
+                aria-expanded={open}
+                aria-controls="checkout-payment-content"
+                className={[
+                    "group flex w-full min-w-0 items-center justify-between gap-3",
+                    "bg-card px-4 py-4 text-left transition-colors sm:px-6 sm:py-5",
+                    "hover:bg-muted/30 focus-visible:outline-none",
+                    "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-foreground",
+                    "disabled:cursor-not-allowed disabled:hover:bg-card",
+                ].join(" ")}
             >
-                <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                     <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 sm:h-12 sm:w-12 sm:rounded-2xl ${open
-                            ? "bg-foreground text-white shadow-lg shadow-foreground/20"
-                            : "bg-muted text-muted-foreground"
-                            }`}
+                        className={[
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-12 sm:w-12 sm:rounded-2xl",
+                            selectedMethod
+                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                : open
+                                    ? "bg-foreground text-background"
+                                    : "bg-muted text-muted-foreground",
+                        ].join(" ")}
                     >
-                        <CreditCard size={18} className="sm:h-[20px] sm:w-[20px]" />
+                        {selectedMethod ? (
+                            <CheckCircle2
+                                size={20}
+                                aria-hidden="true"
+                            />
+                        ) : (
+                            <CreditCard
+                                size={19}
+                                aria-hidden="true"
+                            />
+                        )}
                     </div>
-                    <div className="text-left">
-                        <div className="flex items-center gap-2">
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-white sm:h-6 sm:w-6 sm:text-xs">
-                                3
+
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span
+                                className={[
+                                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold sm:h-6 sm:w-6 sm:text-xs",
+                                    selectedMethod
+                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                                        : "bg-muted text-muted-foreground",
+                                ].join(" ")}
+                            >
+                                {selectedMethod ? (
+                                    <Check size={12} />
+                                ) : (
+                                    "3"
+                                )}
                             </span>
-                            <h2 className="text-sm font-semibold text-foreground sm:text-base sm:text-lg">
+
+                            <h2 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">
                                 Payment
                             </h2>
+
+                            {selectedMethod && (
+                                <span className="hidden rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 sm:inline-flex">
+                                    Selected
+                                </span>
+                            )}
                         </div>
-                        <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+
+                        <p className="mt-1 truncate text-xs leading-relaxed text-muted-foreground sm:text-sm">
                             {disabled
                                 ? "Select shipping first"
-                                : selectedMethod === "cod"
-                                    ? "Pay with cash on delivery"
-                                    : "Secure checkout with Razorpay"}
+                                : selectedMethod
+                                    ? paymentDescription
+                                    : "Choose a secure payment method"}
                         </p>
                     </div>
                 </div>
 
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors group-hover:border-foreground/20 group-hover:text-foreground sm:h-9 sm:w-9">
                     {open ? (
-                        <ChevronDown size={18} className="text-muted-foreground" />
+                        <ChevronDown size={17} aria-hidden="true" />
                     ) : (
-                        <ChevronRight size={18} className="text-muted-foreground" />
+                        <ChevronRight size={17} aria-hidden="true" />
                     )}
-                </div>
-            </Button>
+                </span>
+            </button>
 
+            {/* Payment options */}
             <AnimatePresence initial={false}>
                 {open && !disabled && (
                     <motion.div
-                        layout
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        id="checkout-payment-content"
+                        key="payment-body"
+                        initial={{
+                            opacity: 0,
+                            height: 0,
+                        }}
+                        animate={{
+                            opacity: 1,
+                            height: "auto",
+                        }}
+                        exit={{
+                            opacity: 0,
+                            height: 0,
+                        }}
+                        transition={{
+                            duration: 0.25,
+                            ease: "easeInOut",
+                        }}
                         className="overflow-hidden border-t border-border"
                     >
-                        <div className="space-y-4 p-4 sm:p-6">
-                            {/* COD */}
-                            <PaymentOption
-                                icon={<Banknote size={22} />}
-                                title="Cash on Delivery"
-                                description="Pay when your order arrives at your doorstep. No online payment needed."
-                                badge="Pay Later"
-                                badgeColor="bg-amber-100 text-amber-700"
-                                features={[
-                                    "No advance payment",
-                                    "Pay in cash at delivery",
-                                    "Inspect before you pay",
-                                ]}
-                                selected={selectedMethod === "cod"}
-                                onClick={() => onPay("cod")}
-                                loading={paymentLoading && selectedMethod === "cod"}
-                                canPay={canPay}
-                            />
+                        <div className="space-y-4 p-4 sm:space-y-5 sm:p-6">
+                            <div>
+                                <h3 className="text-sm font-semibold text-foreground">
+                                    Choose payment method
+                                </h3>
 
-                            {/* Razorpay */}
-                            <PaymentOption
-                                icon={<Wallet size={22} />}
-                                title="Pay Online (Razorpay)"
-                                description="Fast & secure payment via UPI, Cards, Net Banking & Wallets."
-                                badge="Instant"
-                                badgeColor="bg-blue-100 text-blue-700"
-                                features={[
-                                    "UPI • GPay • PhonePe",
-                                    "Credit & Debit Cards",
-                                    "Net Banking • Wallets",
-                                ]}
-                                selected={selectedMethod === "razorpay"}
-                                onClick={() => onPay("razorpay")}
-                                loading={
-                                    paymentLoading && selectedMethod === "razorpay"
-                                }
-                                canPay={canPay}
-                            />
+                                <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                                    Select how you want to complete your
+                                    THRIFTX order.
+                                </p>
+                            </div>
 
-                            {/* Trust Badges */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.15 }}
-                                className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3"
-                            >
-                                <TrustBadge
-                                    icon={<ShieldCheck size={15} />}
-                                    title="100% Secure"
-                                    subtitle="Encrypted checkout"
+                            <div className="space-y-3">
+                                <PaymentOption
+                                    method="cod"
+                                    title="Cash on Delivery"
+                                    description="Pay when your order arrives at your doorstep. No online payment is needed."
+                                    badge="Pay Later"
+                                    features={[
+                                        "No advance payment",
+                                        "Pay at delivery",
+                                    ]}
+                                    selected={selectedMethod === "cod"}
+                                    onSelect={() => onPay("cod")}
+                                    loading={
+                                        paymentLoading &&
+                                        selectedMethod === "cod"
+                                    }
+                                    canPay={canPay}
                                 />
-                                <TrustBadge
-                                    icon={<LockKeyhole size={15} />}
-                                    title="Razorpay"
-                                    subtitle="Trusted gateway"
-                                />
-                                <TrustBadge
-                                    icon={<BadgeCheck size={15} />}
-                                    title="Buyer Protection"
-                                    subtitle="Covered purchase"
-                                />
-                            </motion.div>
 
-                            {/* Security Note */}
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.2 }}
-                                className="flex items-center gap-2.5 rounded-xl bg-subtle px-4 py-3 text-xs text-muted-foreground sm:rounded-2xl sm:text-sm"
-                            >
-                                <Lock size={14} className="shrink-0 text-muted-foreground" />
-                                <span>
-                                    Your payment info is encrypted and processed securely by
-                                    Razorpay. We never store card details.
-                                </span>
-                            </motion.div>
+                                <PaymentOption
+                                    method="razorpay"
+                                    title="Pay Online (Razorpay)"
+                                    description="Secure online payment using UPI, cards, net banking, or supported wallets."
+                                    badge="Online"
+                                    features={[
+                                        "UPI · GPay · PhonePe",
+                                        "Credit & Debit Cards",
+                                        "Net Banking · Wallets",
+                                    ]}
+                                    selected={
+                                        selectedMethod === "razorpay"
+                                    }
+                                    onSelect={() => onPay("razorpay")}
+                                    loading={
+                                        paymentLoading &&
+                                        selectedMethod === "razorpay"
+                                    }
+                                    canPay={canPay}
+                                />
+                            </div>
+
+                            {/* Security information */}
+                            <div className="rounded-2xl border border-border bg-muted/30 p-4">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-background text-muted-foreground">
+                                        <LockKeyhole
+                                            size={17}
+                                            aria-hidden="true"
+                                        />
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <h4 className="text-sm font-semibold text-foreground">
+                                            Secure Checkout
+                                        </h4>
+
+                                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                                            Online payments are processed
+                                            through Razorpay. THRIFTX does
+                                            not store your card details.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Trust indicators */}
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
+                                <PaymentTrustItem
+                                    icon={<ShieldCheck size={17} />}
+                                    title="Secure Payment"
+                                    description="Protected payment flow"
+                                />
+
+                                <PaymentTrustItem
+                                    icon={<Lock size={17} />}
+                                    title="Encrypted"
+                                    description="Secure transaction"
+                                />
+
+                                <PaymentTrustItem
+                                    icon={<BadgeCheck size={17} />}
+                                    title="Order Protection"
+                                    description="Quality checked before dispatch"
+                                />
+                            </div>
+
+                            {!canPay && (
+                                <p
+                                    role="status"
+                                    className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-300"
+                                >
+                                    Complete your address and shipping
+                                    selection before continuing.
+                                </p>
+                            )}
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {!open && !disabled && (
+            {/* Collapsed selected payment */}
+            {!open && !disabled && selectedMethod && (
                 <div className="border-t border-border px-4 py-4 sm:px-6 sm:py-5">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-start gap-3">
-                            <div className="mt-0.5 rounded-full bg-emerald-100 p-1.5 text-emerald-600 sm:p-2">
+                    <div className="flex min-w-0 items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-start gap-3">
+                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
                                 <CheckCircle2
-                                    size={16}
-                                    className="sm:h-[18px] sm:w-[18px]"
+                                    size={18}
+                                    aria-hidden="true"
                                 />
                             </div>
-                            <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 sm:text-[11px]">
+
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400 sm:text-[11px]">
                                     Payment Method
                                 </p>
-                                <h4 className="mt-0.5 text-sm font-semibold text-foreground sm:text-base">
-                                    {selectedMethod === "cod"
-                                        ? "Cash on Delivery"
-                                        : "Online Payment (Razorpay)"}
-                                </h4>
-                                <p className="text-xs text-muted-foreground sm:text-sm">
-                                    {selectedMethod === "cod"
-                                        ? "Pay cash at your doorstep"
-                                        : "UPI • Cards • Net Banking • Wallets"}
+
+                                <h3 className="mt-0.5 truncate text-sm font-semibold text-foreground sm:text-base">
+                                    {paymentLabel}
+                                </h3>
+
+                                <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                                    {paymentDescription}
                                 </p>
                             </div>
                         </div>
 
-                        <motion.button
+                        <button
                             type="button"
                             onClick={onOpen}
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            className="shrink-0 rounded-xl border border-border px-3 py-1.5 text-xs font-medium transition hover:border-foreground hover:bg-foreground hover:text-white sm:px-4 sm:py-2 sm:text-sm"
+                            className="min-h-10 shrink-0 rounded-xl border border-border px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground sm:px-4 sm:text-sm"
                         >
                             Change
-                        </motion.button>
+                        </button>
                     </div>
                 </div>
             )}
         </motion.section>
     );
 }
-

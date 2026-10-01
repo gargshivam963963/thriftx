@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ArrowUpDown, Check, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
     controlBase,
     controlIcon,
@@ -52,8 +53,10 @@ export default function SortDropdown({
 
     return (
         <div ref={ref} className="relative shrink-0">
-            <button
+            <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => setOpen((p) => !p)}
                 aria-haspopup="listbox"
                 aria-expanded={open}
@@ -79,7 +82,7 @@ export default function SortDropdown({
                         open && "rotate-180",
                     )}
                 />
-            </button>
+            </Button>
 
             <AnimatePresence>
                 {open && (
@@ -95,25 +98,24 @@ export default function SortDropdown({
                             {sortOptions.map((opt) => {
                                 const active = defaultValue === opt.value;
                                 return (
-                                    <button
+                                    <Button
                                         key={opt.value}
+                                        variant={active ? "primary" : "ghost"}
+                                        size="sm"
+                                        fullWidth
                                         role="option"
                                         aria-selected={active}
-                                        type="button"
                                         onClick={() => handleSelect(opt.value)}
                                         className={cn(
-                                            "flex w-full items-center justify-between gap-2 rounded-lg px-3.5 py-2.5 text-left text-sm font-medium transition-colors duration-150",
-                                            controlFocusRing,
-                                            active
-                                                ? "bg-foreground text-background"
-                                                : "text-foreground hover:bg-muted dark:hover:bg-card",
+                                            "justify-between rounded-lg px-3.5 py-2.5 text-left",
+                                            !active && "text-foreground hover:bg-muted dark:hover:bg-card",
                                         )}
                                     >
                                         <span className="truncate">{opt.label}</span>
                                         {active && (
                                             <Check size={15} strokeWidth={3} className="h-4 w-4 shrink-0" />
                                         )}
-                                    </button>
+                                    </Button>
                                 );
                             })}
                         </div>

@@ -54,6 +54,7 @@ interface ProductCardGridProps {
     waist?: string;
     length?: string;
     onlyOneLeft?: boolean;
+    priority?: boolean;
 }
 
 export default function ProductCardGrid({
@@ -69,6 +70,7 @@ export default function ProductCardGrid({
     waist,
     length,
     onlyOneLeft = false,
+    priority = false,
 }: ProductCardGridProps) {
     const [wishlistLoading, setWishlistLoading] = useState(false);
     const { wishlisted, toggle } = useWishlistProduct(id);
@@ -109,7 +111,9 @@ export default function ProductCardGrid({
                             src={image || "/images/placeholder.jpg"}
                             alt={title}
                             fill
-                            sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                            priority={priority}
+                            quality={70}
+                            sizes="(max-width: 639px) calc(50vw - 22px), (max-width: 767px) calc(50vw - 34px), (max-width: 1023px) calc(33.333vw - 32px), (max-width: 1279px) calc(33.333vw - 125px), (max-width: 1439px) calc(33.333vw - 141px), (max-width: 1535px) 339px, 227px"
                             className="object-cover transition-all duration-500 group-hover:scale-105"
                         />
 

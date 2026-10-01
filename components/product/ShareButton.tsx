@@ -122,28 +122,34 @@ export default function ShareButton({ title, price }: ShareButtonProps) {
                         className="absolute right-0 top-full z-[70] mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-float"
                     >
                         {options.map((opt) => (
-                            <button
+                            <Button
                                 key={opt.kind}
                                 type="button"
+                                variant="ghost"
+                                size="sm"
+                                fullWidth
                                 role="menuitem"
                                 onClick={() => openSocial(opt.kind)}
-                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-foreground transition hover:bg-muted"
+                                className="justify-start rounded-xl px-3 text-foreground"
                             >
                                 <opt.icon className="h-4 w-4 text-muted-foreground" />
                                 {opt.label}
-                            </button>
+                            </Button>
                         ))}
                         <div className="my-1.5 h-px bg-border" />
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
+                            size="sm"
+                            fullWidth
                             role="menuitem"
                             onClick={copyLink}
-                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm font-medium text-foreground transition hover:bg-muted"
+                            className="justify-start rounded-xl px-3 text-foreground"
                         >
                             <Link2 className="h-4 w-4 text-muted-foreground" />
                             Copy Link
                             <Check className="ml-auto h-3.5 w-3.5 text-success" />
-                        </button>
+                        </Button>
                     </motion.div>
                 )}
             </AnimatePresence>

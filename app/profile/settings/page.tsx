@@ -1,675 +1,495 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
     ArrowLeft,
-    User,
-    Lock,
-    Eye,
-    EyeOff,
-    Save,
-    AlertTriangle,
+    CheckCircle2,
+    LockKeyhole,
     LogOut,
-    Check,
     ShieldCheck,
-    Bell,
-    Sparkles,
-    Trash2,
+    UserRound,
+    X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@/components/ui/button";
-import FloatingInput from "@/components/ui/FloatingInput";
+import { FormField, Input, PasswordField } from "@/components/ui/form";
 import { useAuth } from "@/lib/AuthContext";
+import { authClient } from "@/lib/auth-client";
+import { getFriendlyError } from "@/lib/errors";
 import { useTheme } from "@/lib/ThemeContext";
-import { cn } from "@/lib/utils";
-
-// ─── Schemas ──────────────────────────────────────────────────────────────────
-
-const profileSchema = z.object({
-    name: z.string().trim().min(2, "Name must be at least 2 characters"),
-    email: z.string().trim().email("Please enter a valid email"),
-    phone: z
-        .string()
-        .trim()
-        .regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian phone number")
-        .or(z.literal("")),
-});
-
-const passwordSchema = z
-    .object({
-        currentPassword: z
-            .string()
-            .min(6, "Password must be at least 6 characters"),
-        newPassword: z
-            .string()
-            .min(8, "Password must be at least 8 characters")
-            .regex(
-                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                "Must contain uppercase, lowercase & number",
-            ),
-        confirmPassword: z.string(),
-    })
-    .refine((data) => data.newPassword === data.confirmPassword, {
-        message: "Passwords don't match",
-        path: ["confirmPassword"],
-    });
-
-type ProfileFormValues = z.infer<typeof profileSchema>;
-type PasswordFormValues = z.infer<typeof passwordSchema>;
-
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
-function SettingsSkeleton() {
-    return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
-                <div className="h-5 w-40 animate-pulse rounded bg-muted" />
-            </div>
-            {[1, 2, 3].map((i) => (
-                <div
-                    key={i}
-                    className="h-48 animate-pulse rounded-2xl bg-muted"
-                />
-            ))}
-        </div>
-    );
-}
-
-// ─── Section Card ─────────────────────────────────────────────────────────────
-
-function SectionCard({
-    icon,
-    title,
-    subtitle,
-    children,
-    className,
-}: {
-    icon: React.ReactNode;
-    title: string;
-    subtitle?: string;
-    children: React.ReactNode;
-    className?: string;
-}) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={cn(
-                "overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:shadow-modal",
-                className,
-            )}
-        >
-            <div className="flex items-center gap-3 border-b border-border px-5 py-4 sm:px-6 sm:py-5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background sm:h-10 sm:w-10">
-                    {icon}
-                </div>
-                <div>
-                    <h3 className="text-body-sm font-semibold text-foreground sm:text-body">
-                        {title}
-                    </h3>
-                    {subtitle && (
-                        <p className="text-small text-muted-foreground sm:text-body-sm">
-                            {subtitle}
-                        </p>
-                    )}
-                </div>
-            </div>
-            <div className="px-5 py-5 sm:px-6 sm:py-6">{children}</div>
-        </motion.div>
-    );
-}
-
-// ─── Toggle Switch ────────────────────────────────────────────────────────────
-
-function ToggleSwitch({
-    enabled,
-    onChange,
-    label,
-    description,
-}: {
-    enabled: boolean;
-    onChange: (v: boolean) => void;
-    label: string;
-    description: string;
-}) {
-    return (
-        <div className="flex items-center justify-between gap-4">
-            <div>
-                <p className="text-body-sm font-medium text-foreground">{label}</p>
-                <p className="text-small text-muted-foreground">{description}</p>
-            </div>
-            <Button
-                type="button"
-                variant="ghost"
-                size="iconSm"
-                onClick={() => onChange(!enabled)}
-                className={cn(
-                    "relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors p-0",
-                    enabled ? "bg-foreground" : "bg-muted",
-                )}
-            >
-                <span
-                    className={cn(
-                        "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition-transform",
-                        enabled ? "translate-x-5" : "translate-x-0",
-                    )}
-                />
-            </Button>
-        </div>
-    );
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
     const router = useRouter();
-    const { user, loading: authLoading, logout } = useAuth();
+    const { user, loading: authLoading, logout, refreshUser } = useAuth();
     const { theme, setTheme } = useTheme();
 
-    const [showCurrentPw, setShowCurrentPw] = useState(false);
-    const [showNewPw, setShowNewPw] = useState(false);
-    const [showConfirmPw, setShowConfirmPw] = useState(false);
-    const [passwordSaving, setPasswordSaving] = useState(false);
+    const [name, setName] = useState("");
     const [profileSaving, setProfileSaving] = useState(false);
+    const [passwordSaving, setPasswordSaving] = useState(false);
+    const [loggingOut, setLoggingOut] = useState(false);
 
-    // Notifications / preferences
-    const [emailNotifs, setEmailNotifs] = useState(true);
-    const [smsNotifs, setSmsNotifs] = useState(false);
-    const [darkMode, setDarkMode] = useState(theme === "dark");
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
 
-    // Delete account confirmation
-    const [deleteConfirm, setDeleteConfirm] = useState(false);
-    const [deleteText, setDeleteText] = useState("");
-
-    // ── Profile Form ──────────────────────────────────────────────────────────
-    const {
-        register: registerProfile,
-        handleSubmit: handleProfileSubmit,
-        reset: resetProfile,
-        formState: { errors: profileErrors, isDirty: profileDirty },
-    } = useForm<ProfileFormValues>({
-        resolver: zodResolver(profileSchema),
-        defaultValues: {
-            name: "",
-            email: "",
-            phone: "",
-        },
-    });
+    const [profileError, setProfileError] = useState("");
+    const [passwordError, setPasswordError] = useState("");
 
     useEffect(() => {
-        if (user) {
-            resetProfile({
-                name: user.name || "",
-                email: user.email || "",
-                phone: user.phone || "",
-            });
-        }
-    }, [user, resetProfile]);
+        if (user) setName(user.name || "");
+    }, [user]);
 
     useEffect(() => {
-        setDarkMode(theme === "dark");
-    }, [theme]);
-
-    useEffect(() => {
-        setTheme(darkMode ? "dark" : "light");
-    }, [darkMode, setTheme]);
-
-    // ── Password Form ─────────────────────────────────────────────────────────
-    const {
-        register: registerPw,
-        handleSubmit: handlePwSubmit,
-        reset: resetPw,
-        formState: { errors: pwErrors },
-    } = useForm<PasswordFormValues>({
-        resolver: zodResolver(passwordSchema),
-    });
-
-    // ── Redirect if not logged in ─────────────────────────────────────────────
-    useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
+        if (!authLoading && !user) {
             router.replace("/login?redirect=/profile/settings");
         }
     }, [authLoading, user, router]);
 
-    // ── Handlers ──────────────────────────────────────────────────────────────
-    const onProfileSave = async (data: ProfileFormValues) => {
+    const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        const normalizedName = name.trim();
+
+        if (normalizedName.length < 2) {
+            setProfileError("Name must be at least 2 characters.");
+            return;
+        }
+
+        setProfileSaving(true);
+        setProfileError("");
+
         try {
-            setProfileSaving(true);
-            // Simulate API call
-            await new Promise((r) => setTimeout(r, 1200));
-            toast.success("Profile updated successfully!");
-        } catch {
-            toast.error("Failed to update profile.");
+            const response = await authClient.updateUser({
+                name: normalizedName,
+            });
+
+            if (response.error) throw response.error;
+
+            await refreshUser();
+            toast.success("Profile updated.");
+        } catch (err) {
+            setProfileError(
+                getFriendlyError(err, "Unable to update your profile.")
+            );
         } finally {
             setProfileSaving(false);
         }
     };
 
-    const onPasswordChange = async (data: PasswordFormValues) => {
+    const changePassword = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (newPassword.length < 8) {
+            setPasswordError("New password must contain at least 8 characters.");
+            return;
+        }
+
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+            setPasswordError(
+                "Use at least one uppercase letter, lowercase letter, and number."
+            );
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            setPasswordError("The new passwords do not match.");
+            return;
+        }
+
+        setPasswordSaving(true);
+        setPasswordError("");
+
         try {
-            setPasswordSaving(true);
-            await new Promise((r) => setTimeout(r, 1200));
-            toast.success("Password changed successfully!");
-            resetPw();
-        } catch {
-            toast.error("Failed to change password.");
+            const response = await authClient.changePassword({
+                currentPassword,
+                newPassword,
+                revokeOtherSessions: true,
+            });
+
+            if (response.error) throw response.error;
+
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+
+            toast.success("Password changed successfully.");
+        } catch (err) {
+            setPasswordError(
+                getFriendlyError(
+                    err,
+                    "Unable to change your password. Check your current password and try again."
+                )
+            );
         } finally {
             setPasswordSaving(false);
         }
     };
 
     const handleLogout = async () => {
+        setLoggingOut(true);
+
         try {
             await logout();
-            toast.success("Signed out successfully.");
-            router.push("/");
-        } catch {
-            toast.error("Failed to sign out.");
+            router.replace("/");
+        } catch (err) {
+            toast.error(getFriendlyError(err, "Unable to sign out."));
+        } finally {
+            setLoggingOut(false);
         }
     };
 
-    const handleDeleteAccount = async () => {
-        if (deleteText !== "DELETE") return;
-        try {
-            toast.success("Account deleted. We're sorry to see you go.");
-            await logout();
-            router.push("/");
-        } catch {
-            toast.error("Failed to delete account.");
-        }
-    };
-
-    if (authLoading) {
+    if (authLoading || !user) {
         return (
-            <main className="min-h-screen bg-background">
-                <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
-                    <SettingsSkeleton />
+            <main className="min-h-[60svh] bg-background px-4 py-10">
+                <div className="mx-auto max-w-3xl space-y-5">
+                    <div className="h-8 w-48 animate-pulse rounded-lg bg-muted" />
+                    <div className="h-52 animate-pulse rounded-2xl bg-muted" />
+                    <div className="h-72 animate-pulse rounded-2xl bg-muted" />
                 </div>
             </main>
         );
     }
 
-    if (!user) return null;
-
     return (
-        <main className="min-h-screen bg-background">
-            <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
-                {/* ── Header ────────────────────────────────────────────── */}
-                <motion.div
+        <main className="min-h-screen bg-background px-4 py-7 sm:px-6 sm:py-10">
+            <div className="mx-auto w-full max-w-3xl">
+                <motion.header
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 flex items-center justify-between"
+                    className="mb-7 flex items-center gap-3"
                 >
-                    <div className="flex items-center gap-3">
-                        <Link
-                            href="/profile"
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card transition hover:border-foreground hover:bg-foreground hover:text-background"
-                        >
-                            <ArrowLeft size={16} />
-                        </Link>
+                    <Link
+                        href="/profile"
+                        aria-label="Back to profile"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card transition-colors hover:bg-muted"
+                    >
+                        <ArrowLeft size={17} aria-hidden="true" />
+                    </Link>
+
+                    <div>
+                        <h1 className="text-heading-3 font-bold text-foreground">
+                            Account Settings
+                        </h1>
+                        <p className="text-body-sm text-muted-foreground">
+                            Manage your profile and account security.
+                        </p>
+                    </div>
+                </motion.header>
+
+                <motion.section
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="overflow-hidden rounded-2xl border border-border bg-card shadow-card"
+                >
+                    <div className="flex items-center gap-3 border-b border-border px-5 py-4 sm:px-6">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground text-background">
+                            <UserRound size={18} aria-hidden="true" />
+                        </div>
+
                         <div>
-                            <h1 className="font-display text-heading-4 font-bold text-foreground">
-                                Account Settings
-                            </h1>
-                            <p className="text-small text-muted-foreground sm:text-body-sm">
-                                Manage your profile, security &amp; preferences
+                            <h2 className="text-body font-semibold text-foreground">
+                                Profile Information
+                            </h2>
+                            <p className="text-small text-muted-foreground">
+                                Update your account name.
                             </p>
                         </div>
                     </div>
-                </motion.div>
 
-                {/* ── Profile Information ─────────────────────────────────── */}
-                <form onSubmit={handleProfileSubmit(onProfileSave)}>
-                    <SectionCard
-                        icon={<User size={18} />}
-                        title="Profile Information"
-                        subtitle="Update your name, email & contact details"
+                    <form
+                        onSubmit={saveProfile}
+                        className="space-y-5 p-5 sm:p-6"
                     >
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-4 pb-4">
-                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-foreground to-foreground/80 text-xl font-bold text-background shadow-lg sm:h-16 sm:w-16 sm:text-2xl">
-                                    {(user.name || user.email || "U")
-                                        .charAt(0)
-                                        .toUpperCase()}
-                                </div>
-                                <div>
-                                    <p className="text-body-sm font-semibold text-foreground">
-                                        {user.name || "User"}
-                                    </p>
-                                    <p className="text-small text-muted-foreground">
-                                        {user.email || ""}
-                                    </p>
-                                </div>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-lg font-semibold text-foreground">
+                                {(user.name || user.email || "U")
+                                    .charAt(0)
+                                    .toUpperCase()}
                             </div>
 
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <FloatingInput
-                                    label="Full Name"
-                                    error={profileErrors.name?.message}
-                                    {...registerProfile("name")}
-                                />
-                                <FloatingInput
-                                    label="Email Address"
-                                    type="email"
-                                    error={profileErrors.email?.message}
-                                    {...registerProfile("email")}
-                                />
-                            </div>
-
-                            <FloatingInput
-                                label="Phone Number"
-                                type="tel"
-                                maxLength={10}
-                                error={profileErrors.phone?.message}
-                                {...registerProfile("phone")}
-                            />
-
-                            <div className="flex justify-end border-t border-border pt-4">
-                                <Button
-                                    type="submit"
-                                    loading={profileSaving}
-                                    disabled={!profileDirty}
-                                    leftIcon={<Save size={16} />}
-                                    className="rounded-xl"
-                                >
-                                    {profileSaving ? "Saving..." : "Save Changes"}
-                                </Button>
-                            </div>
-                        </div>
-                    </SectionCard>
-                </form>
-
-                {/* ── Change Password ─────────────────────────────────────── */}
-                <form onSubmit={handlePwSubmit(onPasswordChange)}>
-                    <SectionCard
-                        icon={<Lock size={18} />}
-                        title="Change Password"
-                        subtitle="Update your account password"
-                        className="mt-4 sm:mt-5"
-                    >
-                        <div className="space-y-4">
-                            <div className="relative">
-                                <FloatingInput
-                                    label="Current Password"
-                                    type={showCurrentPw ? "text" : "password"}
-                                    error={pwErrors.currentPassword?.message}
-                                    {...registerPw("currentPassword")}
-                                />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="iconSm"
-                                    onClick={() =>
-                                        setShowCurrentPw(!showCurrentPw)
-                                    }
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                >
-                                    {showCurrentPw ? (
-                                        <EyeOff size={16} />
-                                    ) : (
-                                        <Eye size={16} />
-                                    )}
-                                </Button>
-                            </div>
-
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="relative">
-                                    <FloatingInput
-                                        label="New Password"
-                                        type={showNewPw ? "text" : "password"}
-                                        error={pwErrors.newPassword?.message}
-                                        {...registerPw("newPassword")}
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="iconSm"
-                                        onClick={() => setShowNewPw(!showNewPw)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                    >
-                                        {showNewPw ? (
-                                            <EyeOff size={16} />
-                                        ) : (
-                                            <Eye size={16} />
-                                        )}
-                                    </Button>
-                                </div>
-                                <div className="relative">
-                                    <FloatingInput
-                                        label="Confirm Password"
-                                        type={
-                                            showConfirmPw ? "text" : "password"
-                                        }
-                                        error={
-                                            pwErrors.confirmPassword?.message
-                                        }
-                                        {...registerPw("confirmPassword")}
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="iconSm"
-                                        onClick={() =>
-                                            setShowConfirmPw(!showConfirmPw)
-                                        }
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                    >
-                                        {showConfirmPw ? (
-                                            <EyeOff size={16} />
-                                        ) : (
-                                            <Eye size={16} />
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Password requirements hint */}
-                            <div className="rounded-xl bg-muted px-4 py-3 text-small text-muted-foreground">
-                                <p className="mb-1 font-medium text-foreground">
-                                    Password must contain:
+                            <div className="min-w-0">
+                                <p className="truncate text-body-sm font-medium text-foreground">
+                                    {user.name}
                                 </p>
-                                <ul className="space-y-0.5">
-                                    <li className="flex items-center gap-1.5">
-                                        <Check size={10} className="text-success" />
-                                        At least 8 characters
-                                    </li>
-                                    <li className="flex items-center gap-1.5">
-                                        <Check size={10} className="text-success" />
-                                        One uppercase letter
-                                    </li>
-                                    <li className="flex items-center gap-1.5">
-                                        <Check size={10} className="text-success" />
-                                        One lowercase letter
-                                    </li>
-                                    <li className="flex items-center gap-1.5">
-                                        <Check size={10} className="text-success" />
-                                        One number
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <div className="flex justify-end border-t border-border pt-4">
-                                <Button
-                                    type="submit"
-                                    loading={passwordSaving}
-                                    leftIcon={<Lock size={16} />}
-                                    className="rounded-xl"
-                                >
-                                    {passwordSaving
-                                        ? "Updating..."
-                                        : "Update Password"}
-                                </Button>
+                                <p className="truncate text-small text-muted-foreground">
+                                    {user.email}
+                                </p>
                             </div>
                         </div>
-                    </SectionCard>
-                </form>
 
-                {/* ── Preferences ──────────────────────────────────────────── */}
-                <SectionCard
-                    icon={<Bell size={18} />}
-                    title="Preferences"
-                    subtitle="Notification & display settings"
-                    className="mt-4 sm:mt-5"
-                >
-                    <div className="space-y-5">
-                        <ToggleSwitch
-                            enabled={emailNotifs}
-                            onChange={setEmailNotifs}
-                            label="Email Notifications"
-                            description="Receive order updates & offers via email"
-                        />
-                        <div className="h-px bg-border" />
-                        <ToggleSwitch
-                            enabled={smsNotifs}
-                            onChange={setSmsNotifs}
-                            label="SMS Notifications"
-                            description="Get delivery updates on your phone"
-                        />
-                        <div className="h-px bg-border" />
-                        <ToggleSwitch
-                            enabled={darkMode}
-                            onChange={setDarkMode}
-                            label="Dark Mode"
-                            description="Use dark theme across the app"
-                        />
-                    </div>
-                </SectionCard>
-
-                {/* ── Account Actions ──────────────────────────────────────── */}
-                <SectionCard
-                    icon={<ShieldCheck size={18} />}
-                    title="Account Actions"
-                    subtitle="Sign out or manage your account"
-                    className="mt-4 sm:mt-5"
-                >
-                    <div className="space-y-4">
-                        <Button
-                            type="button"
-                            onClick={handleLogout}
-                            variant="outline"
-                            fullWidth
-                            leftIcon={<LogOut size={16} />}
-                            className="rounded-xl"
+                        <FormField
+                            label="Full Name"
+                            htmlFor="profile-name"
+                            required
                         >
-                            Sign Outsf sdf
-                        </Button>
-                    </div>
-                </SectionCard>
+                            <Input
+                                id="profile-name"
+                                name="name"
+                                autoComplete="name"
+                                value={name}
+                                onChange={(event) => {
+                                    setName(event.target.value);
+                                    setProfileError("");
+                                }}
+                                minLength={2}
+                                maxLength={100}
+                                required
+                                disabled={profileSaving}
+                            />
+                        </FormField>
 
-                {/* ── Danger Zone ──────────────────────────────────────────── */}
-                <SectionCard
-                    icon={<AlertTriangle size={18} />}
-                    title="Danger Zone"
-                    subtitle="Irreversible actions"
-                    className="mt-4 border-error/30 sm:mt-5"
+                        <FormField
+                            label="Email Address"
+                            htmlFor="profile-email"
+                        >
+                            <Input
+                                id="profile-email"
+                                type="email"
+                                value={user.email || ""}
+                                readOnly
+                                disabled
+                            />
+                            <p className="mt-1 text-small text-muted-foreground">
+                                Email changes require a separate verification
+                                flow.
+                            </p>
+                        </FormField>
+
+                        {profileError && (
+                            <p role="alert" className="text-body-sm text-error">
+                                {profileError}
+                            </p>
+                        )}
+
+                        <div className="flex justify-end border-t border-border pt-4">
+                            <Button
+                                type="submit"
+                                loading={profileSaving}
+                                loadingText="Saving..."
+                                disabled={
+                                    profileSaving ||
+                                    name.trim().length < 2 ||
+                                    name.trim() === user.name
+                                }
+                            >
+                                Save Changes
+                            </Button>
+                        </div>
+                    </form>
+                </motion.section>
+
+                <motion.section
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 }}
+                    className="mt-5 overflow-hidden rounded-2xl border border-border bg-card shadow-card"
                 >
-                    <div className="space-y-4">
-                        <AnimatePresence>
-                            {!deleteConfirm ? (
-                                <motion.div
-                                    key="delete-btn"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                >
-                                    <Button
-                                        type="button"
-                                        variant="danger"
-                                        fullWidth
-                                        leftIcon={<Trash2 size={16} />}
-                                        className="rounded-xl"
-                                        onClick={() => setDeleteConfirm(true)}
-                                    >
-                                        Delete Account
-                                    </Button>
-                                </motion.div>
-                            ) : (
-                                <motion.div
-                                    key="delete-confirm"
-                                    initial={{ opacity: 0, y: -8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -8 }}
-                                    className="space-y-3 rounded-2xl border border-error/30 bg-error-bg p-4"
-                                >
-                                    <div className="flex items-start gap-2">
-                                        <AlertTriangle
-                                            size={16}
-                                            className="mt-0.5 shrink-0 text-error-foreground"
-                                        />
-                                        <div>
-                                            <p className="text-sm font-semibold text-error-foreground">
-                                                Are you absolutely sure?
-                                            </p>
-                                            <p className="mt-1 text-xs text-error-foreground">
-                                                This will permanently delete your
-                                                account and all associated data.
-                                                This action cannot be undone.
-                                            </p>
-                                        </div>
-                                    </div>
+                    <div className="flex items-center gap-3 border-b border-border px-5 py-4 sm:px-6">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground text-background">
+                            <ShieldCheck size={18} aria-hidden="true" />
+                        </div>
 
-                                    <FloatingInput
-                                        label='Type "DELETE" to confirm'
-                                        value={deleteText}
-                                        onChange={(e) =>
-                                            setDeleteText(e.target.value)
-                                        }
-                                    />
-
-                                    <div className="flex gap-2">
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            fullWidth
-                                            className="rounded-xl"
-                                            onClick={() => {
-                                                setDeleteConfirm(false);
-                                                setDeleteText("");
-                                            }}
-                                        >
-                                            Cancel
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="danger"
-                                            fullWidth
-                                            disabled={deleteText !== "DELETE"}
-                                            className="rounded-xl"
-                                            onClick={handleDeleteAccount}
-                                        >
-                                            <Trash2 size={14} />
-                                            Delete Forever
-                                        </Button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        <div>
+                            <h2 className="text-body font-semibold text-foreground">
+                                Security
+                            </h2>
+                            <p className="text-small text-muted-foreground">
+                                Change your account password.
+                            </p>
+                        </div>
                     </div>
-                </SectionCard>
 
-                {/* ── Brand Footer ─────────────────────────────────────────── */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="mt-8 text-center text-small text-muted-foreground"
+                    <form
+                        onSubmit={changePassword}
+                        className="space-y-5 p-5 sm:p-6"
+                    >
+                        <FormField
+                            label="Current Password"
+                            htmlFor="current-password"
+                            required
+                        >
+                            <PasswordField
+                                id="current-password"
+                                name="currentPassword"
+                                autoComplete="current-password"
+                                value={currentPassword}
+                                onChange={(event) => {
+                                    setCurrentPassword(event.target.value);
+                                    setPasswordError("");
+                                }}
+                                required
+                                disabled={passwordSaving}
+                            />
+                        </FormField>
+
+                        <FormField
+                            label="New Password"
+                            htmlFor="new-password"
+                            required
+                            helper="At least 8 characters, including uppercase, lowercase, and a number."
+                        >
+                            <PasswordField
+                                id="new-password"
+                                name="newPassword"
+                                autoComplete="new-password"
+                                value={newPassword}
+                                onChange={(event) => {
+                                    setNewPassword(event.target.value);
+                                    setPasswordError("");
+                                }}
+                                minLength={8}
+                                maxLength={128}
+                                required
+                                disabled={passwordSaving}
+                            />
+                        </FormField>
+
+                        <FormField
+                            label="Confirm New Password"
+                            htmlFor="confirm-password"
+                            required
+                        >
+                            <PasswordField
+                                id="confirm-password"
+                                name="confirmPassword"
+                                autoComplete="new-password"
+                                value={confirmPassword}
+                                onChange={(event) => {
+                                    setConfirmPassword(event.target.value);
+                                    setPasswordError("");
+                                }}
+                                minLength={8}
+                                maxLength={128}
+                                required
+                                disabled={passwordSaving}
+                            />
+                        </FormField>
+
+                        {passwordError && (
+                            <p role="alert" className="text-body-sm text-error">
+                                {passwordError}
+                            </p>
+                        )}
+
+                        <div className="flex justify-end border-t border-border pt-4">
+                            <Button
+                                type="submit"
+                                loading={passwordSaving}
+                                loadingText="Updating Password..."
+                                leftIcon={<LockKeyhole size={16} />}
+                                disabled={
+                                    passwordSaving ||
+                                    !currentPassword ||
+                                    newPassword.length < 8 ||
+                                    !confirmPassword
+                                }
+                            >
+                                Update Password
+                            </Button>
+                        </div>
+                    </form>
+                </motion.section>
+
+                <motion.section
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="mt-5 overflow-hidden rounded-2xl border border-border bg-card shadow-card"
                 >
-                    <Sparkles size={12} className="mx-auto mb-1" />
-                    <p>
-                        Premium Thrift Fashion &mdash; THRIFTX &middot; v1.0
+                    <div className="flex items-center gap-3 border-b border-border px-5 py-4 sm:px-6">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground text-background">
+                            <CheckCircle2 size={18} aria-hidden="true" />
+                        </div>
+
+                        <div>
+                            <h2 className="text-body font-semibold text-foreground">
+                                Appearance
+                            </h2>
+                            <p className="text-small text-muted-foreground">
+                                Choose your preferred theme.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
+                        <div>
+                            <p className="text-body-sm font-medium text-foreground">
+                                Dark Mode
+                            </p>
+                            <p className="text-small text-muted-foreground">
+                                Apply the dark theme across THRIFTX.
+                            </p>
+                        </div>
+
+                        <div
+                            role="group"
+                            aria-label="Theme preference"
+                            className="flex rounded-xl border border-border bg-muted/50 p-1"
+                        >
+                            <button
+                                type="button"
+                                aria-pressed={theme === "light"}
+                                onClick={() => setTheme("light")}
+                                className={`rounded-lg px-4 py-2 text-body-sm transition-colors ${theme === "light"
+                                    ? "bg-card text-foreground shadow-sm"
+                                    : "text-muted-foreground hover:text-foreground"
+                                    }`}
+                            >
+                                Light
+                            </button>
+
+                            <button
+                                type="button"
+                                aria-pressed={theme === "dark"}
+                                onClick={() => setTheme("dark")}
+                                className={`rounded-lg px-4 py-2 text-body-sm transition-colors ${theme === "dark"
+                                    ? "bg-card text-foreground shadow-sm"
+                                    : "text-muted-foreground hover:text-foreground"
+                                    }`}
+                            >
+                                Dark
+                            </button>
+                        </div>
+                    </div>
+                </motion.section>
+
+                <motion.section
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="mt-5 rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6"
+                >
+                    <h2 className="text-body font-semibold text-foreground">
+                        Sign Out
+                    </h2>
+
+                    <p className="mt-1 text-body-sm text-muted-foreground">
+                        Sign out of your THRIFTX account on this device.
                     </p>
-                </motion.div>
+
+                    <Button
+                        type="button"
+                        variant="outline"
+                        fullWidth
+                        className="mt-5"
+                        leftIcon={<LogOut size={16} />}
+                        loading={loggingOut}
+                        loadingText="Signing Out..."
+                        onClick={handleLogout}
+                    >
+                        Sign Out
+                    </Button>
+                </motion.section>
+
+                <p className="mt-8 text-center text-small text-muted-foreground">
+                    THRIFTX · Account Security
+                </p>
             </div>
         </main>
     );
 }
-

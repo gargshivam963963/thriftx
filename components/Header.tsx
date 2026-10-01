@@ -368,6 +368,8 @@ function UserDropdown({
 
               <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setOpen(false);
                   logout();
@@ -381,12 +383,10 @@ function UserDropdown({
                   gap-3
                   rounded-xl
                   px-3
-                  py-2.5
-                  text-body-sm
-                  font-medium
                   text-error
                   transition
                   hover:bg-error-bg/50
+                  hover:text-error
                 "
               >
                 <LogOut size={17} />
@@ -668,21 +668,21 @@ function MobileMenu({
 
                       <Button
                         type="button"
+                        variant="ghost"
+                        size="lg"
                         onClick={() => {
                           logout();
                           onClose();
                         }}
                         className="
                           flex
-                          min-h-12
                           w-full
                           items-center
+                          justify-start
                           gap-4
+                          min-h-12
                           rounded-2xl
                           px-4
-                          py-3.5
-                          text-base
-                          font-semibold
                           text-error
                           transition
                           hover:bg-error-bg/50

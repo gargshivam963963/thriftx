@@ -31,9 +31,9 @@ export const buttonVariants = cva(
     // Accessibility
     "focus-visible:outline-none",
     "focus-visible:ring-2",
-    "focus-visible:ring-black/20",
+    "focus-visible:ring-ring",
     "focus-visible:ring-offset-2",
-    "dark:focus-visible:ring-white/20",
+    "focus-visible:ring-offset-background",
 
     // Disabled
     "disabled:pointer-events-none",
@@ -63,9 +63,6 @@ export const buttonVariants = cva(
           // Semantic theme-aware colors
           "bg-[color:var(--foreground)]",
           "text-[color:var(--background)]",
-
-          // Prevent global button styles from overriding the design system
-          "!text-[color:var(--background)]",
 
           "border border-transparent",
 

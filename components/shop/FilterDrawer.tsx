@@ -157,16 +157,19 @@ export default function FilterDrawer({
                                             const isExpanded = expandedGender === g.slug;
                                             return (
                                                 <div key={g.id} className="flex flex-col">
-                                                    <button
+                                                    <Button
                                                         type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        fullWidth
                                                         onClick={() =>
                                                             setExpandedGender(isExpanded ? null : g.slug)
                                                         }
-                                                        className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-card"
+                                                        className="justify-between rounded-lg px-3 text-left text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-card"
                                                     >
                                                         <span className="truncate">{g.name}</span>
                                                         <ChevronR />
-                                                    </button>
+                                                    </Button>
                                                     {isExpanded && genderCategories.length > 0 && (
                                                         <div className="ml-3 mt-1 flex flex-col gap-0.5 border-l border-border pl-3">
                                                             {genderCategories.map((c) => (

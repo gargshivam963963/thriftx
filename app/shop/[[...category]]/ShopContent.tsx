@@ -1687,6 +1687,7 @@ export default function ShopContent({
                                             {products.map(
                                                 (
                                                     product,
+                                                    index,
                                                 ) => (
                                                     <ProductCardGrid
                                                         key={
@@ -1731,6 +1732,7 @@ export default function ShopContent({
                                                         onlyOneLeft={
                                                             false
                                                         }
+                                                        priority={index < 2}
                                                     />
                                                 ),
                                             )}
@@ -1756,6 +1758,7 @@ export default function ShopContent({
                                             {products.map(
                                                 (
                                                     product,
+                                                    index,
                                                 ) => (
                                                     <ProductCardList
                                                         key={
@@ -1806,6 +1809,7 @@ export default function ShopContent({
                                                         onlyOneLeft={
                                                             false
                                                         }
+                                                        priority={index === 0}
                                                     />
                                                 ),
                                             )}

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
@@ -73,26 +74,8 @@ function MenuRow({
     onClick?: () => void;
     danger?: boolean;
 }) {
-    const router = useRouter();
-    const handleAction = () => {
-        if (href) {
-            router.push(href);
-            return;
-        }
-        onClick?.();
-    };
-
-    return (
-        <button
-            type="button"
-            onClick={handleAction}
-            className={cn(
-                "flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-left transition hover:shadow-card",
-                danger
-                    ? "hover:border-error-bg hover:bg-error-bg/50"
-                    : "hover:border-border hover:bg-muted",
-            )}
-        >
+    const rowContent = (
+        <>
             <div className="flex items-center gap-3">
                 <div
                     className={cn(
@@ -110,7 +93,34 @@ function MenuRow({
                 </div>
             </div>
             <ChevronRight size={18} className={cn("shrink-0", danger ? "text-error" : "text-muted-foreground")} />
-        </button>
+        </>
+    );
+
+    const rowClassName = cn(
+        "h-auto min-h-16 w-full justify-between rounded-2xl p-4 text-left",
+        danger
+            ? "text-error hover:bg-error-bg/50 hover:text-error"
+            : "border border-border bg-card hover:bg-muted",
+    );
+
+    if (href) {
+        return (
+            <Button asChild variant={danger ? "ghost" : "outline"} size="lg" className={rowClassName}>
+                <Link href={href}>{rowContent}</Link>
+            </Button>
+        );
+    }
+
+    return (
+        <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            onClick={onClick}
+            className={rowClassName}
+        >
+            {rowContent}
+        </Button>
     );
 }
 

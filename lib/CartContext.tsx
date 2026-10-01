@@ -1,7 +1,14 @@
-'use client';
 
-import type { Product } from '@/lib/services/products';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+"use client";
+
+import type { Product } from "@/lib/services/products";
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 
 export type CartItem = Product & { quantity: number };
 
@@ -25,9 +32,32 @@ const CartContext = createContext<CartContextType>({
     clearCart: () => { },
 });
 
-const STORAGE_KEY = 'thriftx_cart';
+const STORAGE_KEY = "thriftx_cart";
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+function normalizeCart(items: CartItem[]): CartItem[] {
+    const uniqueItems = new Map<string, CartItem>();
+
+    for (const item of items) {
+        if (!item || typeof item.id !== "string" || !item.id) {
+            continue;
+        }
+
+        if (!uniqueItems.has(item.id)) {
+            uniqueItems.set(item.id, {
+                ...item,
+                quantity: 1,
+            });
+        }
+    }
+
+    return Array.from(uniqueItems.values());
+}
+
+export function CartProvider({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
     const [cartItems, setCartItems] = useState<CartItem[]>(() => {
         if (typeof window === "undefined") {
             return [];
@@ -36,68 +66,93 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         try {
             const stored = window.localStorage.getItem(STORAGE_KEY);
 
-            return stored
-                ? (JSON.parse(stored) as CartItem[])
-                : [];
+            if (!stored) {
+                return [];
+            }
+
+            const parsed: unknown = JSON.parse(stored);
+
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+
+            return normalizeCart(parsed as CartItem[]);
         } catch {
             return [];
         }
     });
 
     useEffect(() => {
-        if (typeof window === 'undefined') return;
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems));
+        try {
+            window.localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify(cartItems),
+            );
+        } catch {
+            // Cart remains usable for the current session if storage is unavailable.
+        }
     }, [cartItems]);
 
-    const addToCart = (product: Product, quantity = 1) => {
+    const addToCart = (product: Product) => {
         setCartItems((current) => {
-            const existingItem = current.find((item) => item.id === product.id);
-            if (existingItem) {
-                return current.map((item) =>
-                    item.id === product.id
-                        ? { ...item, quantity: item.quantity + quantity }
-                        : item
-                );
+            const alreadyAdded = current.some(
+                (item) => item.id === product.id,
+            );
+
+            if (alreadyAdded) {
+                return current;
             }
 
-            return [...current, { ...product, quantity }];
+            return [
+                ...current,
+                {
+                    ...product,
+                    quantity: 1,
+                },
+            ];
         });
     };
 
     const removeFromCart = (id: string) => {
-        setCartItems((current) => current.filter((item) => item.id !== id));
+        setCartItems((current) =>
+            current.filter((item) => item.id !== id),
+        );
     };
 
     const updateQuantity = (id: string, quantity: number) => {
-        setCartItems((current) =>
-            current
-                .map((item) => (item.id === id ? { ...item, quantity } : item))
-                .filter((item) => item.quantity > 0)
-        );
+        if (quantity <= 0) {
+            removeFromCart(id);
+        }
+
+        // Unique thrift products always remain quantity 1.
     };
 
     const clearCart = () => {
         setCartItems([]);
     };
 
-    const totalItems = useMemo(
-        () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
-        [cartItems]
-    );
+    const totalItems = cartItems.length;
 
     const subtotal = useMemo(
         () =>
             cartItems.reduce(
-                (sum, item) =>
-                    sum + item.price * item.quantity,
-                0
+                (sum, item) => sum + item.price,
+                0,
             ),
-        [cartItems]
+        [cartItems],
     );
 
     return (
         <CartContext.Provider
-            value={{ cartItems, totalItems, subtotal, addToCart, removeFromCart, updateQuantity, clearCart }}
+            value={{
+                cartItems,
+                totalItems,
+                subtotal,
+                addToCart,
+                removeFromCart,
+                updateQuantity,
+                clearCart,
+            }}
         >
             {children}
         </CartContext.Provider>

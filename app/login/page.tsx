@@ -1,8 +1,9 @@
+
 "use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import {
     ArrowRight,
@@ -15,7 +16,11 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@/components/ui/button";
-import { FormField, Input, PasswordField } from "@/components/ui/form";
+import {
+    FormField,
+    Input,
+    PasswordField,
+} from "@/components/ui/form";
 import { useAuth } from "@/lib/AuthContext";
 import { authClient } from "@/lib/auth-client";
 import { getFriendlyError } from "@/lib/errors";
@@ -34,11 +39,16 @@ type RootMessage = {
 
 export default function Login() {
     const router = useRouter();
-    const { user, loading: authLoading, refreshUser } = useAuth();
+    const {
+        user,
+        loading: authLoading,
+        refreshUser,
+    } = useAuth();
 
     const [remember, setRemember] = useState(true);
     const [googleLoading, setGoogleLoading] = useState(false);
-    const [rootMessage, setRootMessage] = useState<RootMessage | null>(null);
+    const [rootMessage, setRootMessage] =
+        useState<RootMessage | null>(null);
 
     const {
         register,
@@ -97,20 +107,19 @@ export default function Login() {
             await refreshUser();
             router.replace("/");
         } catch (err) {
+            const message = getFriendlyError(
+                err,
+                "Incorrect email or password.",
+            );
+
             setError("root", {
                 type: "manual",
-                message: getFriendlyError(
-                    err,
-                    "Incorrect email or password.",
-                ),
+                message,
             });
 
             setRootMessage({
                 type: "error",
-                message: getFriendlyError(
-                    err,
-                    "Incorrect email or password.",
-                ),
+                message,
             });
         }
     };
@@ -118,7 +127,7 @@ export default function Login() {
     const handleForgotPassword = async () => {
         clearRootMessage();
 
-        const email = getValues("email");
+        const email = getValues("email").trim();
 
         if (!email) {
             setError("email", {
@@ -128,19 +137,17 @@ export default function Login() {
             return;
         }
 
+        const emailValidation = z.string().email().safeParse(email);
+
+        if (!emailValidation.success) {
+            setError("email", {
+                type: "manual",
+                message: "Please enter a valid email.",
+            });
+            return;
+        }
+
         try {
-            const configResponse = await fetch(
-                "/api/auth/config-status",
-            );
-
-            const authConfig = await configResponse.json();
-
-            if (!authConfig.emailDeliveryConfigured) {
-                throw new Error(
-                    "Password reset email is not configured. Set RESEND_API_KEY and EMAIL_FROM on the server.",
-                );
-            }
-
             const response = await authClient.requestPasswordReset({
                 email,
                 redirectTo: `${window.location.origin}/reset-password`,
@@ -173,18 +180,6 @@ export default function Login() {
         setGoogleLoading(true);
 
         try {
-            const configResponse = await fetch(
-                "/api/auth/config-status",
-            );
-
-            const authConfig = await configResponse.json();
-
-            if (!authConfig.googleConfigured) {
-                throw new Error(
-                    "Google sign-in is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET on the server.",
-                );
-            }
-
             const response = await authClient.signIn.social({
                 provider: "google",
                 callbackURL: "/",
@@ -226,7 +221,6 @@ export default function Login() {
 
     return (
         <div className="relative min-h-[calc(100vh-var(--header-height,0px))] overflow-hidden">
-            {/* Subtle ambient background */}
             <div
                 className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
                 aria-hidden="true"
@@ -248,7 +242,6 @@ export default function Login() {
                     aria-labelledby="login-title"
                 >
                     <div className="rounded-2xl border border-border bg-card p-6 shadow-modal sm:p-8 md:p-9">
-                        {/* Header */}
                         <div className="mb-7 text-center sm:mb-8">
                             <motion.div
                                 initial={{
@@ -284,7 +277,6 @@ export default function Login() {
                             </p>
                         </div>
 
-                        {/* Root feedback */}
                         <AnimatePresence initial={false}>
                             {rootMessage && (
                                 <motion.div
@@ -303,9 +295,7 @@ export default function Login() {
                                         height: 0,
                                         y: -8,
                                     }}
-                                    transition={{
-                                        duration: 0.2,
-                                    }}
+                                    transition={{ duration: 0.2 }}
                                     className="mb-5 overflow-hidden"
                                 >
                                     <div
@@ -333,15 +323,12 @@ export default function Login() {
                                             />
                                         )}
 
-                                        <span>
-                                            {rootMessage.message}
-                                        </span>
+                                        <span>{rootMessage.message}</span>
                                     </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
 
-                        {/* Google */}
                         <Button
                             type="button"
                             variant="outline"
@@ -382,7 +369,6 @@ export default function Login() {
                             {!googleLoading && "Continue with Google"}
                         </Button>
 
-                        {/* Divider */}
                         <div
                             className="relative my-5 sm:my-6"
                             aria-hidden="true"
@@ -398,7 +384,6 @@ export default function Login() {
                             </div>
                         </div>
 
-                        {/* Email/password */}
                         <form
                             onSubmit={handleSubmit(onSubmit)}
                             className="space-y-5 sm:space-y-6"
@@ -451,7 +436,6 @@ export default function Login() {
                                 />
                             </FormField>
 
-                            {/* Remember / security */}
                             <div className="flex items-center justify-between gap-4">
                                 <label className="flex min-h-11 cursor-pointer items-center gap-2.5">
                                     <input
@@ -480,7 +464,6 @@ export default function Login() {
                                 </span>
                             </div>
 
-                            {/* Submit */}
                             <Button
                                 type="submit"
                                 size="lg"
@@ -502,7 +485,6 @@ export default function Login() {
                             </Button>
                         </form>
 
-                        {/* Create account */}
                         <div className="my-7 flex items-center gap-4 sm:my-8">
                             <div className="h-px flex-1 bg-border" />
 

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
     controlHeight,
     controlRadius,
@@ -92,25 +93,26 @@ export default function FilterOptionList({
                     {visible.map((option) => {
                         const active = selected === option;
                         return (
-                            <button
+                            <Button
                                 key={option}
                                 type="button"
+                                variant={active ? "primary" : "outline"}
+                                size="xs"
+                                rounded="full"
                                 onClick={() => onSelect(option)}
                                 aria-pressed={active}
                                 className={cn(
                                     controlTransition,
                                     controlFocusRing,
-                                    "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm font-medium",
-                                    active
-                                        ? "border-foreground bg-foreground text-background shadow-card"
-                                        : "border-border bg-card text-foreground hover:border-foreground/50 hover:bg-muted dark:bg-card dark:hover:bg-muted",
+                                    "h-8 gap-1.5 px-3 text-badge",
+                                    !active && "hover:border-foreground/50 hover:bg-muted dark:hover:bg-muted",
                                 )}
                             >
                                 {active && (
                                     <Check size={12} strokeWidth={3} className="h-3 w-3" />
                                 )}
                                 <span className="truncate">{option}</span>
-                            </button>
+                            </Button>
                         );
                     })}
                 </div>
@@ -119,18 +121,19 @@ export default function FilterOptionList({
                     {visible.map((option) => {
                         const active = selected === option;
                         return (
-                            <button
+                            <Button
                                 key={option}
                                 type="button"
+                                variant={active ? "primary" : "ghost"}
+                                size="md"
+                                fullWidth
                                 onClick={() => onSelect(option)}
                                 aria-pressed={active}
                                 className={cn(
                                     controlTransition,
                                     controlFocusRing,
-                                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium",
-                                    active
-                                        ? "bg-foreground text-background"
-                                        : "text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-card",
+                                    "justify-start rounded-lg px-3 text-left",
+                                    !active && "text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-card",
                                 )}
                             >
                                 <span
@@ -152,24 +155,27 @@ export default function FilterOptionList({
                                     )}
                                 </span>
                                 <span className="truncate">{option}</span>
-                            </button>
+                            </Button>
                         );
                     })}
                 </div>
             )}
 
             {searchable && hasMore && (
-                <button
+                <Button
                     type="button"
+                    variant="ghost"
+                    size="md"
+                    fullWidth
                     onClick={() => setShowAll((s) => !s)}
                     className={cn(
                         controlTransition,
                         controlFocusRing,
-                        "w-full rounded-lg py-2 text-center text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-card",
+                        "justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-card",
                     )}
                 >
                     {showAll ? "Show less" : `+ ${filtered.length - visibleLimit} more`}
-                </button>
+                </Button>
             )}
         </div>
     );

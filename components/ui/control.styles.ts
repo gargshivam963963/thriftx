@@ -35,7 +35,7 @@ export const controlTransition = "transition-all duration-200 ease-out";
 
 /** Standard focus-visible ring (theme aware). */
 export const controlFocusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20 focus-visible:ring-offset-2 dark:focus-visible:ring-white/20";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 /** Standard disabled state. */
 export const controlDisabled =
@@ -82,8 +82,7 @@ export const chipBase = [
   "shadow-card",
   "transition-all duration-200 ease-out",
   "hover:border-foreground/60 hover:bg-muted dark:hover:bg-card",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
-  "dark:focus-visible:ring-white/20",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 ].join(" ");
 
 /** Filter-chip remove (X) icon button. */
@@ -92,6 +91,5 @@ export const chipRemove = [
   "text-muted-foreground",
   "transition-colors duration-150",
   "hover:text-foreground hover:opacity-90",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
-  "dark:focus-visible:ring-white/20",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 ].join(" ");

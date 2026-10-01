@@ -7,146 +7,90 @@ import {
   Grid,
   ShoppingBag,
   Heart,
-  User,
-  LogOut,
   Sun,
   Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
 import { Button } from "@/components/ui/button";
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
   const { theme, toggleTheme, mounted } = useTheme();
 
   // Hide bottom nav on admin routes
   if (pathname?.startsWith("/admin")) return null;
 
-  const navItems: Array<
-    | {
-      href: string;
-      icon: React.ElementType;
-      label: string;
-      tooltip: string;
-      badge?: boolean;
-    }
-    | {
-      onClick: () => void;
-      icon: React.ElementType;
-      label: string;
-      tooltip: string;
-    }
-  > = [
-      {
-        href: "/",
-        icon: Home,
-        label: "Home",
-        tooltip: "Go to homepage",
-      },
-      {
-        href: "/shop",
-        icon: Grid,
-        label: "Shop",
-        tooltip: "Browse all products",
-      },
-      {
-        href: "/cart",
-        icon: ShoppingBag,
-        label: "Cart",
-        tooltip: "View shopping cart",
-        badge: true,
-      },
-      {
-        href: "/profile/wishlist",
-        icon: Heart,
-        label: "Wishlist",
-        tooltip: "View your wishlist",
-      },
-      user
-        ? {
-          onClick: logout,
-          icon: LogOut,
-          label: "Logout",
-          tooltip: "Sign out of your account",
-        }
-        : {
-          href: "/login",
-          icon: User,
-          label: "Profile",
-          tooltip: "Sign in to your account",
-        },
-    ];
+  const navItems = [
+    { href: "/", icon: Home, label: "Home", tooltip: "Go to homepage" },
+    { href: "/shop", icon: Grid, label: "Shop", tooltip: "Browse products" },
+    { href: "/cart", icon: ShoppingBag, label: "Cart", tooltip: "View cart", badge: true },
+    { href: "/profile/wishlist", icon: Heart, label: "Wishlist", tooltip: "View wishlist" },
+  ];
+  const ThemeIcon = !mounted || theme === "light" ? Moon : Sun;
+  const themeAction = theme === "dark" ? "Light" : "Dark";
 
   return (
-    <nav className="md:hidden bg-card/80 backdrop-blur-xl fixed bottom-0 w-full z-50 rounded-t-2xl border-t border-border dark:border-border dark:bg-card/80 flex items-center h-16 px-2 pb-[max(0.45rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+    <nav
+      aria-label="Primary navigation"
+      className="fixed inset-x-0 bottom-0 z-50 grid h-16 grid-cols-5 items-stretch border-t border-border bg-card/95 px-1 pb-[max(0.45rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] backdrop-blur-xl md:hidden"
+    >
       {navItems.map((item) => {
-        const isActive = "href" in item && pathname === item.href;
+        const isWishlist = item.href === "/profile/wishlist";
+        const isProfile = item.href === "/profile";
+        const isActive =
+          pathname === item.href ||
+          (item.href === "/shop" && pathname.startsWith("/shop/")) ||
+          (isWishlist && pathname.startsWith("/profile/wishlist")) ||
+          (isProfile &&
+            pathname.startsWith("/profile") &&
+            !pathname.startsWith("/profile/wishlist"));
         const Icon = item.icon;
 
         const iconClass = cn(
-          "h-5 w-5 mb-0.5 transition-all duration-200 shrink-0",
+          "h-5 w-5 shrink-0 transition-colors duration-200",
           isActive
-            ? "text-foreground scale-110"
-            : "text-muted-foreground group-hover:scale-110 group-hover:text-foreground",
+            ? "text-foreground"
+            : "text-muted-foreground group-hover:text-foreground",
         );
-        const labelClass = cn(
-          "text-badge font-semibold tracking-wide uppercase transition-colors whitespace-nowrap",
-          isActive ? "text-foreground" : "text-muted-foreground",
-        );
-
-        if ("onClick" in item) {
-          return (
-            <Button
-              key={item.label}
-              onClick={item.onClick}
-              title={item.tooltip}
-              className="group relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1"
-            >
-              <Icon className={iconClass} strokeWidth={isActive ? 2.5 : 2} />
-              <span className={labelClass}>{item.label}</span>
-            </Button>
-          );
-        }
 
         return (
           <Link
             key={item.label}
-            href={item.href || "#"}
+            href={item.href}
+            aria-label={item.tooltip}
+            aria-current={isActive ? "page" : undefined}
             title={item.tooltip}
-            className="group relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1"
+            className={cn(
+              "group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold uppercase leading-none tracking-normal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+            )}
           >
             {item.badge && (
-              <div className="absolute top-1 right-[calc(50%-16px)] h-2 w-2 rounded-full bg-error border border-background" />
+              <span className="absolute left-1/2 top-2 ml-3 h-2 w-2 rounded-full border border-background bg-error" />
             )}
-            <Icon className={iconClass} strokeWidth={isActive ? 2.5 : 2} />
-            <span className={labelClass}>{item.label}</span>
+            <Icon className={iconClass} strokeWidth={isActive ? 2.25 : 1.9} aria-hidden="true" />
+            <span className="block max-w-full truncate">{item.label}</span>
           </Link>
         );
       })}
-
-      {/* Theme toggle as extra nav item — gated on mounted to avoid hydration mismatch */}
       <Button
-        onClick={toggleTheme}
+        type="button"
+        variant="ghost"
+        size="sm"
+        rounded="lg"
+        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        aria-pressed={theme === "dark"}
         title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-        className="group relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1"
+        onClick={toggleTheme}
+        className="group flex h-full w-full min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold uppercase leading-none tracking-normal"
       >
-        {!mounted || theme === "light" ? (
-          <Moon
-            className="h-5 w-5 mb-0.5 text-muted-foreground group-hover:scale-110 group-hover:text-foreground transition-all duration-200 shrink-0"
-            strokeWidth={2}
-          />
-        ) : (
-          <Sun
-            className="h-5 w-5 mb-0.5 text-muted-foreground group-hover:scale-110 group-hover:text-foreground transition-all duration-200 shrink-0"
-            strokeWidth={2}
-          />
-        )}
-        <span className="text-badge font-semibold tracking-wide uppercase text-muted-foreground transition-colors whitespace-nowrap">
-          {!mounted || theme === "light" ? "Dark" : "Light"}
-        </span>
+        <ThemeIcon
+          className="h-5 w-5 shrink-0 transition-colors duration-200"
+          strokeWidth={1.9}
+          aria-hidden="true"
+        />
+        <span className="block max-w-full truncate">{themeAction}</span>
       </Button>
     </nav>
   );

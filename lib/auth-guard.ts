@@ -11,8 +11,19 @@ type AuthenticatedUser = {
   role?: string;
 };
 
+export class AuthGuardError extends Error {
+  constructor(
+    message: string,
+    readonly status: 401 | 403,
+  ) {
+    super(message);
+    this.name = "AuthGuardError";
+  }
+}
+
 export async function requireUser(): Promise<AuthenticatedUser> {
   const headerStore = await headers();
+
   const session = await auth.api.getSession({
     headers: headerStore,
   });
@@ -34,15 +45,6 @@ export async function requireAdmin(): Promise<AuthenticatedUser> {
   return user;
 }
 
-export class AuthGuardError extends Error {
-  constructor(
-    message: string,
-    readonly status: 401 | 403,
-  ) {
-    super(message);
-  }
-}
-
 export async function adminAuthErrorResponse(): Promise<NextResponse | null> {
   try {
     await requireAdmin();
@@ -50,14 +52,32 @@ export async function adminAuthErrorResponse(): Promise<NextResponse | null> {
   } catch (error) {
     if (error instanceof AuthGuardError) {
       return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.status },
+        {
+          success: false,
+          message: error.message,
+        },
+        {
+          status: error.status,
+          headers: {
+            "Cache-Control": "private, no-store",
+          },
+        },
       );
     }
 
+    console.error("[auth-guard] Authorization check failed");
+
     return NextResponse.json(
-      { success: false, message: "Unable to verify authorization" },
-      { status: 500 },
+      {
+        success: false,
+        message: "Unable to verify authorization",
+      },
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "private, no-store",
+        },
+      },
     );
   }
 }

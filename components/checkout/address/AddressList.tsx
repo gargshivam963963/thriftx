@@ -28,26 +28,18 @@ export default function AddressList({
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center rounded-3xl border border-dashed border-border bg-muted p-10 text-center"
+                className="flex flex-col items-center rounded-3xl border border-dashed border-border bg-muted px-5 py-10 text-center sm:p-10"
             >
-                <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{
-                        type: "spring",
-                        stiffness: 260,
-                        damping: 18,
-                    }}
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-background shadow-md"
-                >
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-background shadow-md">
                     <MapPinPlus size={26} />
-                </motion.div>
+                </div>
 
-                <h3 className="mt-5 font-bold text-heading-4 text-foreground">
+                <h3 className="mt-5 text-heading-4 font-bold text-foreground">
                     No Saved Addresses
                 </h3>
+
                 <p className="mx-auto mt-2 max-w-sm text-body leading-6 text-muted-foreground">
-                    Add your first delivery address to continue with your checkout.
+                    Add your first delivery address to continue with checkout.
                 </p>
 
                 <motion.button
@@ -55,7 +47,7 @@ export default function AddressList({
                     onClick={onAdd}
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.97 }}
-                    className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-foreground px-6 py-3 text-body-sm font-medium text-background shadow-lg transition hover:opacity-90"
+                    className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-foreground px-6 py-3 text-body-sm font-medium text-background shadow-lg transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                     <Plus size={18} />
                     Add Address
@@ -66,8 +58,7 @@ export default function AddressList({
 
     return (
         <div className="space-y-4 sm:space-y-5">
-            {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
                 <div>
                     <h3 className="text-heading-4 font-semibold text-foreground">
                         Saved Addresses
@@ -82,42 +73,43 @@ export default function AddressList({
                     onClick={onAdd}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-body-sm font-medium transition hover:border-foreground hover:bg-foreground hover:text-background sm:px-4 sm:py-2.5"
+                    aria-label="Add a new address"
+                    className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-border px-3 py-2 text-body-sm font-medium transition hover:border-foreground hover:bg-foreground hover:text-background sm:px-4"
                 >
                     <Plus size={16} />
                     <span className="hidden sm:inline">Add New</span>
                 </motion.button>
             </div>
 
-            {/* Address Cards */}
-            <AnimatePresence mode="popLayout">
-                {addresses.map((address) => (
-                    <motion.div
-                        key={address.$id}
-                        layout
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -16, scale: 0.95 }}
-                        transition={{ duration: 0.25 }}
-                    >
-                        <AddressCard
-                            address={address}
-                            selected={selectedId === address.$id}
-                            onSelect={() => onSelect(address)}
-                            onEdit={() => onEdit(address)}
-                            onDelete={() => onDelete(address)}
-                        />
-                    </motion.div>
-                ))}
-            </AnimatePresence>
+            <div className="space-y-4">
+                <AnimatePresence mode="popLayout">
+                    {addresses.map((address) => (
+                        <motion.div
+                            key={address.$id}
+                            layout
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -12, scale: 0.98 }}
+                            transition={{ duration: 0.22 }}
+                        >
+                            <AddressCard
+                                address={address}
+                                selected={selectedId === address.$id}
+                                onSelect={() => onSelect(address)}
+                                onEdit={() => onEdit(address)}
+                                onDelete={() => onDelete(address)}
+                            />
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
 
-            {/* Add Another Button */}
             <motion.button
                 type="button"
                 onClick={onAdd}
                 whileHover={{ y: -1 }}
                 whileTap={{ scale: 0.99 }}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted py-3.5 text-body-sm font-medium text-muted-foreground transition hover:border-foreground hover:bg-foreground hover:text-background sm:rounded-3xl sm:py-4"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted py-3.5 text-body-sm font-medium text-muted-foreground transition hover:border-foreground hover:bg-foreground hover:text-background sm:rounded-3xl"
             >
                 <Plus size={18} />
                 Add Another Address
@@ -125,4 +117,3 @@ export default function AddressList({
         </div>
     );
 }
-

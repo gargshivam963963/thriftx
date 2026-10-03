@@ -87,7 +87,7 @@ function CartErrorState({ onRetry }: { onRetry: () => void }) {
       </div>
 
       <h2 className="text-heading-4 font-bold text-foreground">
-        We couldn't load your cart
+        We couldn&apos;t load your cart
       </h2>
 
       <p className="mt-2 max-w-sm text-body-sm text-muted-foreground">

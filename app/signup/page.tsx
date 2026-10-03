@@ -158,6 +158,8 @@ function PasswordStrengthBar({
 
 export default function Signup() {
   const router = useRouter();
+  const searchParams = new URL(typeof window !== "undefined" ? window.location.href : "").searchParams;
+  const referralCodeParam = searchParams.get("ref");
 
   const {
     user,
@@ -167,6 +169,7 @@ export default function Signup() {
 
   const [verificationNotice, setVerificationNotice] =
     useState("");
+  const [referralCode, setReferralCode] = useState<string | null>(referralCodeParam);
 
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -215,6 +218,24 @@ export default function Signup() {
 
       if (response.error) {
         throw response.error;
+      }
+
+      // Record referral if code provided
+      if (referralCode && response.data?.user?.id) {
+        try {
+          await fetch("/api/marketing/referrals/record", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              referralCode,
+              newUserId: response.data.user.id,
+              newUserEmail: values.email,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to record referral:", error);
+          // Don't fail signup if referral recording fails
+        }
       }
 
       if (!response.data?.token) {

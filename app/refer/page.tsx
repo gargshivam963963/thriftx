@@ -1,379 +1,262 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import {
-    Gift,
-    Share2,
-    Copy,
-    ArrowLeft,
-    Users,
-    IndianRupee,
-    Sparkles,
-    Check,
-} from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
-import { toast } from "sonner";
-import type { Referral } from "@/lib/marketing/types";
-import { cn } from "@/lib/utils";
+import { useEffect, useState, useCallback } from "react";
+import { Loader2, Copy, Check, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-// ─── Referral Stats ──────────────────────────────────────────────────────────
-
-function ReferralStat({
-    icon,
-    label,
-    value,
-    color,
-}: {
-    icon: React.ReactNode;
-    label: string;
-    value: string;
-    color: string;
-}) {
-    return (
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-card">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${color}`}>
-                {icon}
-            </div>
-            <div>
-                <p className="text-caption font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                    {label}
-                </p>
-                <p className="font-display text-heading-4 font-bold text-foreground">
-                    {value}
-                </p>
-            </div>
-        </div>
-    );
+interface Referral {
+  $id: string;
+  code?: string;
+  referredEmail?: string;
+  referredUserId?: string;
+  orderId?: string;
+  status?: string;
+  completedAt?: string;
 }
 
-// ─── Step Card ───────────────────────────────────────────────────────────────
-
-function StepCard({
-    number,
-    title,
-    description,
-}: {
-    number: number;
-    title: string;
-    description: string;
-}) {
-    return (
-        <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-foreground text-body-sm font-bold text-background">
-                {number}
-            </div>
-            <div>
-                <h3 className="text-body-sm font-semibold text-foreground">{title}</h3>
-                <p className="mt-1 text-body-sm leading-6 text-muted-foreground">
-                    {description}
-                </p>
-            </div>
-        </div>
-    );
+interface WalletInfo {
+  balance: number;
+  totalEarned: number;
 }
-
-// ─── Main Referral Page ──────────────────────────────────────────────────────
 
 export default function ReferPage() {
-    const { user } = useAuth();
+  const { user, loading } = useAuth();
 
-    const [copied, setCopied] = useState(false);
-    const [referralCode, setReferralCode] = useState("THRIFTX-GUEST");
-    const [referrals, setReferrals] = useState<Referral[]>([]);
-    const [loading, setLoading] = useState(true);
+  const [referralCode, setReferralCode] = useState("");
+  const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  const [loadingData, setLoadingData] = useState(true);
+  const [copied, setCopied] = useState(false);
 
-    useEffect(() => {
-        if (!user) return;
-        let active = true;
-        (async () => {
-            try {
-                const res = await fetch("/api/marketing/referrals");
-                const data = await res.json();
-                if (active && data.success) {
-                    setReferralCode(data.code || `THRIFTX-${user.id.slice(0, 6).toUpperCase()}`);
-                    setReferrals(data.referrals || []);
-                }
-            } catch (error) {
-                console.error("Failed to load referral data:", error);
-            } finally {
-                if (active) setLoading(false);
-            }
-        })();
-        return () => {
-            active = false;
-        };
-    }, [user]);
+  const fetchReferralData = useCallback(async () => {
+    try {
+      setLoadingData(true);
 
-    const referralLink = `https://thriftx.in/refer?code=${referralCode}`;
-    const referralCount = referrals.length;
-    const creditEarned = referrals
-        .filter((r) => r.status === "completed")
-        .reduce((sum, r) => sum + r.rewardAmount, 0);
+      const [codeResponse, walletResponse] = await Promise.all([
+        fetch("/api/marketing/referrals"),
+        fetch("/api/marketing/credits/wallet"),
+      ]);
 
-    const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(referralLink);
-            setCopied(true);
-            toast.success("Referral link copied!");
-            setTimeout(() => setCopied(false), 2000);
-        } catch {
-            toast.error("Could not copy link.");
+      if (codeResponse.ok) {
+        const codeData = await codeResponse.json();
+        if (codeData.code) {
+          setReferralCode(codeData.code);
         }
-    };
-
-    const handleShare = async () => {
-        const text = `🎉 Get ₹100 OFF on your first premium thrift order!\n\nUse my referral code: ${referralCode}\n\nShop now → ${referralLink}\n\nTHRIFTX — Premium Thrift Fashion. Quality checked. Fast delivery.`;
-
-        if (navigator.share) {
-            await navigator.share({
-                title: "THRIFTX - Refer & Earn",
-                text,
-            });
-        } else {
-            await navigator.clipboard.writeText(text);
-            toast.success("Referral message copied!");
+        if (codeData.referrals) {
+          setReferrals(codeData.referrals || []);
         }
-    };
+      }
 
+      if (walletResponse.ok) {
+        const walletData = await walletResponse.json();
+        setWallet(walletData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch referral data:", error);
+    } finally {
+      setLoadingData(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (!user) {
+      return;
+    }
+
+    fetchReferralData();
+  }, [user, loading, fetchReferralData]);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const generateShareLink = () => {
+    if (!referralCode) return "";
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    return `${baseUrl}/signup?ref=${referralCode}`;
+  };
+
+  const shareLink = generateShareLink();
+
+  if (loading || !user) {
     return (
-        <main className="min-h-screen bg-background">
-            <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
-                {/* Back */}
-                <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                >
-                    <Link
-                        href={user ? "/profile" : "/"}
-                        className="group mb-6 inline-flex items-center gap-2 text-body-sm font-medium text-muted-foreground transition hover:text-foreground"
-                    >
-                        <div className="rounded-full border border-border bg-card p-1.5 transition group-hover:border-foreground group-hover:bg-foreground group-hover:text-background">
-                            <ArrowLeft size={14} />
-                        </div>
-                        {user ? "Profile" : "Home"}
-                    </Link>
-                </motion.div>
-
-                {/* ── Hero ─────────────────────────────────────────────────── */}
-                <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="overflow-hidden rounded-3xl bg-gradient-to-br from-foreground via-muted-foreground to-foreground p-8 text-center text-background shadow-float sm:p-12"
-                >
-                    {/* Decorative */}
-                    <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-warning/10 blur-3xl" />
-                    <div className="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-success/10 blur-3xl" />
-
-                    <div className="relative z-10">
-                        <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{
-                                type: "spring",
-                                stiffness: 300,
-                                damping: 15,
-                            }}
-                            className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-warning text-warning-foreground shadow-lg"
-                        >
-                            <Gift size={28} />
-                        </motion.div>
-
-                        <h1 className="mt-5 font-display text-heading-2 font-bold tracking-tight">
-                            Refer & Earn ₹100
-                        </h1>
-                        <p className="mx-auto mt-3 max-w-md text-body-sm leading-7 text-background/60">
-                            Invite your friends to THRIFTX. They get{" "}
-                            <strong className="text-background">₹100 OFF</strong> on
-                            their first order, and you get{" "}
-                            <strong className="text-background">₹100 store credit</strong>.
-                        </p>
-                    </div>
-                </motion.div>
-
-                {/* ── Stats ──────────────────────────────────────────────────── */}
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="mt-6 grid grid-cols-2 gap-3"
-                >
-                    <ReferralStat
-                        icon={<Users size={18} className="text-background" />}
-                        label="Friends Referred"
-                        value={loading ? "..." : String(referralCount)}
-                        color="bg-foreground text-background"
-                    />
-                    <ReferralStat
-                        icon={<IndianRupee size={18} className="text-background" />}
-                        label="Credit Earned"
-                        value={loading ? "..." : `₹${creditEarned.toLocaleString("en-IN")}`}
-                        color="bg-success text-background"
-                    />
-                </motion.div>
-
-                {/* ── Referral Code ──────────────────────────────────────────── */}
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="mt-6 overflow-hidden rounded-3xl border border-border bg-card shadow-card"
-                >
-                    <div className="border-b border-border px-6 py-4">
-                        <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                            Your Referral Code
-                        </p>
-                    </div>
-
-                    <div className="px-6 py-6">
-                        <div className="flex items-center justify-between rounded-2xl border-2 border-dashed border-border bg-muted px-5 py-4">
-                            <span className="font-mono text-heading-4 font-bold tracking-wider text-foreground">
-                                {referralCode}
-                            </span>
-                            <motion.button
-                                whileTap={{ scale: 0.9 }}
-                                onClick={handleCopy}
-                                className="flex items-center gap-2 rounded-xl bg-foreground px-4 py-2 text-body-sm font-medium text-background transition hover:opacity-90"
-                            >
-                                {copied ? (
-                                    <>
-                                        <Check size={16} />
-                                        Copied
-                                    </>
-                                ) : (
-                                    <>
-                                        <Copy size={16} />
-                                        Copy
-                                    </>
-                                )}
-                            </motion.button>
-                        </div>
-                    </div>
-
-                    {/* Share Buttons */}
-                    <div className="border-t border-border px-6 py-5">
-                        <Button
-                            fullWidth
-                            size="lg"
-                            leftIcon={<Share2 size={18} />}
-                            onClick={handleShare}
-                            className="h-13 rounded-xl text-body shadow-lg shadow-foreground/20"
-                        >
-                            Share with Friends
-                        </Button>
-                    </div>
-                </motion.div>
-
-                {/* ── Referral History ────────────────────────────────────────── */}
-                {!loading && referrals.length > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.17 }}
-                        className="mt-6 overflow-hidden rounded-3xl border border-border bg-card shadow-card"
-                    >
-                        <div className="border-b border-border px-6 py-4">
-                            <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                                Referral History
-                            </p>
-                        </div>
-                        <div className="divide-y divide-border">
-                            {referrals.map((ref, idx) => (
-                                <div
-                                    key={ref.id || idx}
-                                    className="flex items-center justify-between gap-3 px-6 py-4"
-                                >
-                                    <div className="min-w-0">
-                                        <p className="text-body-sm font-semibold text-foreground">
-                                            {ref.referredEmail || "Friend"}
-                                        </p>
-                                        <p className="text-small text-muted-foreground">
-                                            {ref.$createdAt
-                                                ? new Intl.DateTimeFormat("en-IN", {
-                                                    dateStyle: "medium",
-                                                }).format(new Date(ref.$createdAt))
-                                                : "Invited"}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span
-                                            className={cn(
-                                                "rounded-full px-2.5 py-1 text-badge font-bold uppercase tracking-wider",
-                                                ref.status === "completed"
-                                                    ? "bg-success-bg text-success-foreground"
-                                                    : ref.status === "pending"
-                                                        ? "bg-warning-bg text-warning-foreground"
-                                                        : "bg-muted text-muted-foreground",
-                                            )}
-                                        >
-                                            {ref.status}
-                                        </span>
-                                        <span className="text-body-sm font-bold text-foreground">
-                                            ₹{ref.rewardAmount || 0}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* ── How It Works ──────────────────────────────────────────── */}
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="mt-6 overflow-hidden rounded-3xl border border-border bg-card shadow-card"
-                >
-                    <div className="border-b border-border px-6 py-4">
-                        <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                            How It Works
-                        </p>
-                    </div>
-
-                    <div className="space-y-6 px-6 py-6">
-                        <StepCard
-                            number={1}
-                            title="Share your referral code"
-                            description="Send your unique referral link or code to your friends via WhatsApp, Instagram, or any platform."
-                        />
-                        <StepCard
-                            number={2}
-                            title="Friend signs up & orders"
-                            description="They enter your code at checkout and get ₹100 OFF on their first order."
-                        />
-                        <StepCard
-                            number={3}
-                            title="You earn ₹100 credit"
-                            description="Once their order is delivered, ₹100 store credit is added to your account."
-                        />
-                    </div>
-
-                    <div className="border-t border-border bg-muted px-6 py-4">
-                        <div className="flex items-center gap-2 text-small text-muted-foreground">
-                            <Sparkles size={12} />
-                            <span>No limit on referrals. Earn unlimited credit!</span>
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* ── Terms ───────────────────────────────────────────────────── */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="mt-6 text-center text-small text-muted-foreground"
-                >
-                    <p>
-                        Terms apply. ₹100 OFF for first-time customers on minimum
-                        order of ₹499. Store credit valid for 6 months.
-                    </p>
-                </motion.div>
-            </div>
-        </main>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="animate-spin" size={40} />
+      </div>
     );
-}
+  }
 
+  const completedReferrals = referrals.filter((r) => r.status === "completed" || r.status === "reward-issued");
+  const pendingReferrals = referrals.filter((r) => r.status === "first-order-placed");
+
+  return (
+    <main className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Wallet Card */}
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-6 mb-8">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Your Wallet Balance</p>
+              <h2 className="text-4xl font-bold text-primary">₹{wallet?.balance || 0}</h2>
+              <p className="text-sm text-muted-foreground mt-2">
+                Total Earned: ₹{wallet?.totalEarned || 0}
+              </p>
+            </div>
+            <TrendingUp className="text-primary/50" size={32} />
+          </div>
+        </div>
+
+        {/* Referral Code Section */}
+        <div className="bg-card border border-border rounded-lg p-6 mb-8">
+          <h3 className="text-lg font-semibold mb-4">Your Referral Code</h3>
+
+          {loadingData ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="animate-spin" />
+            </div>
+          ) : referralCode ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+                <code className="font-mono text-lg font-semibold flex-1">
+                  {referralCode}
+                </code>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard(referralCode)}
+                  className="flex items-center gap-2"
+                >
+                  {copied ? (
+                    <>
+                      <Check size={16} />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={16} />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {shareLink && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm text-muted-foreground">Share this link with friends:</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={shareLink}
+                      readOnly
+                      className="flex-1 px-3 py-2 bg-muted border border-border rounded text-sm"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyToClipboard(shareLink)}
+                      className="flex items-center gap-2"
+                    >
+                      <Copy size={16} />
+                      Copy Link
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
+                💡 Share your code with friends. They&apos;ll get ₹100 off their first order, and you&apos;ll get ₹100 credit when they complete their purchase.
+              </p>
+            </div>
+          ) : (
+            <p className="text-muted-foreground">Unable to load your referral code.</p>
+          )}
+        </div>
+
+        {/* Referrals Summary */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="bg-card border border-border rounded-lg p-4">
+            <p className="text-sm text-muted-foreground">Pending Referrals</p>
+            <p className="text-3xl font-bold">{pendingReferrals.length}</p>
+          </div>
+          <div className="bg-card border border-border rounded-lg p-4">
+            <p className="text-sm text-muted-foreground">Completed Referrals</p>
+            <p className="text-3xl font-bold">{completedReferrals.length}</p>
+          </div>
+        </div>
+
+        {/* Pending Referrals */}
+        {pendingReferrals.length > 0 && (
+          <div className="bg-card border border-border rounded-lg p-6 mb-8">
+            <h3 className="text-lg font-semibold mb-4">
+              Pending Referrals ({pendingReferrals.length})
+            </h3>
+            <div className="space-y-3">
+              {pendingReferrals.map((referral) => (
+                <div
+                  key={referral.$id}
+                  className="flex items-center justify-between p-3 bg-muted rounded"
+                >
+                  <div>
+                    <p className="font-medium">{referral.referredEmail}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Order placed • Awaiting delivery
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold text-warning">Pending</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Completed Referrals */}
+        {completedReferrals.length > 0 && (
+          <div className="bg-card border border-border rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">
+              Completed Referrals ({completedReferrals.length})
+            </h3>
+            <div className="space-y-3">
+              {completedReferrals.map((referral) => (
+                <div
+                  key={referral.$id}
+                  className="flex items-center justify-between p-3 bg-muted rounded"
+                >
+                  <div>
+                    <p className="font-medium">{referral.referredEmail}</p>
+                    <p className="text-sm text-muted-foreground">
+                      ✓ Reward earned
+                      {referral.completedAt && (
+                        <span>
+                          {" "}
+                          on{" "}
+                          {new Date(referral.completedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold text-success">
+                    +₹100
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {referrals.length === 0 && !loadingData && (
+          <div className="bg-card border border-dashed border-border rounded-lg p-12 text-center">
+            <p className="text-muted-foreground mb-4">No referrals yet</p>
+            <p className="text-sm text-muted-foreground">
+              Share your code to start earning rewards!
+            </p>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}

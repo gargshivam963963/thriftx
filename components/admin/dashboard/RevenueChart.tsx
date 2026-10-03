@@ -1,8 +1,9 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface RevenueChartProps {
     data: { date: string; revenue: number; orders: number }[];
@@ -75,6 +76,15 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
         [filteredData, totalRevenue],
     );
 
+    const tickLabels = useMemo(() => {
+        const pts = chartData?.points ?? [];
+        if (!pts.length) return [] as string[];
+        const count = Math.min(5, pts.length);
+        return Array.from({ length: count }, (_, i) =>
+            pts[Math.round((i / Math.max(count - 1, 1)) * (pts.length - 1))].label,
+        );
+    }, [chartData]);
+
     if (loading) {
         return (
             <div className="admin-card p-6">
@@ -125,18 +135,27 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
                         Avg. ₹{avgRevenue.toLocaleString("en-IN")}/day • {filteredData.length} days
                     </p>
                 </div>
-                <div className="flex gap-1 rounded-xl border border-border bg-muted p-1">
+                <div
+                    role="tablist"
+                    aria-label="Revenue period"
+                    className="inline-flex gap-1 rounded-xl border border-border bg-muted p-1"
+                >
                     {(["7d", "30d"] as Period[]).map((p) => (
-                        <Button
+                        <button
                             key={p}
+                            type="button"
+                            role="tab"
+                            aria-selected={period === p}
                             onClick={() => setPeriod(p)}
-                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${period === p
-                                ? "bg-accent text-white dark:bg-white dark:text-black"
-                                : "text-muted-foreground hover:text-foreground"
-                                }`}
+                            className={cn(
+                                "min-w-12 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                                period === p
+                                    ? "bg-foreground text-background shadow-sm"
+                                    : "text-muted-foreground hover:text-foreground",
+                            )}
                         >
                             {p}
-                        </Button>
+                        </button>
                     ))}
                 </div>
             </div>
@@ -145,83 +164,48 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
             <div className="relative">
                 <svg
                     viewBox="0 0 100 180"
-                    className="w-full"
+                    className="h-[220px] w-full"
                     preserveAspectRatio="none"
-                    style={{ height: "180px" }}
+                    role="img"
+                    aria-label="Revenue trend"
                 >
-                    {/* Gradient */}
                     <defs>
                         <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.15" />
-                            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0.02" />
+                            <stop offset="0%" stopColor="var(--color-foreground)" stopOpacity="0.18" />
+                            <stop offset="100%" stopColor="var(--color-foreground)" stopOpacity="0" />
                         </linearGradient>
                     </defs>
 
-                    {/* Grid lines */}
-                    {[0, 25, 50, 75, 100].map((pct) => {
-                        const y = (pct / 100) * 180;
-                        return (
-                            <line
-                                key={pct}
-                                x1="0"
-                                y1={y}
-                                x2="100"
-                                y2={y}
-                                stroke="var(--color-border)"
-                                strokeWidth="0.3"
-                            />
-                        );
-                    })}
+                    {[0, 25, 50, 75, 100].map((pct) => (
+                        <line
+                            key={pct}
+                            x1="0"
+                            x2="100"
+                            y1={(pct / 100) * 180}
+                            y2={(pct / 100) * 180}
+                            stroke="var(--color-border)"
+                            strokeWidth="1"
+                            strokeDasharray="3 3"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                    ))}
 
-                    {/* Area */}
                     <path d={chartData.areaPath} fill="url(#revenueGradient)" />
-
-                    {/* Line */}
                     <path
                         d={chartData.pathD}
                         fill="none"
-                        stroke="var(--color-accent)"
-                        strokeWidth="1.2"
+                        stroke="var(--color-foreground)"
+                        strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
+                        vectorEffect="non-scaling-stroke"
                     />
-
-                    {/* Dots */}
-                    {(chartData.points as { x: number; y: number; revenue: number; orders: number; date: string; label: string }[]).map((p, i) => (
-                        <circle
-                            key={i}
-                            cx={p.x}
-                            cy={p.y}
-                            r="1.2"
-                            fill="var(--color-accent)"
-                            className="transition-all duration-200"
-                        />
-                    ))}
                 </svg>
 
-                {/* Hover tooltip area - CSS only */}
-                <div className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-0">
-                    {(chartData.points as { x: number; y: number; revenue: number; orders: number; date: string; label: string }[]).slice(0, 7).map((p, i) => {
-                        const idx = Math.floor((i / 7) * chartData.points.length);
-                        const dp = chartData.points[idx];
-                        if (!dp) return null;
-                        return (
-                            <div
-                                key={i}
-                                className="group relative cursor-pointer pt-1"
-                            >
-                                <div className="mx-auto h-1 w-1 rounded-full bg-accent opacity-30" />
-                                <div className="absolute -top-28 left-1/2 hidden -translate-x-1/2 rounded-lg border border-border bg-card px-2 py-1.5 shadow-lg group-hover:block">
-                                    <p className="whitespace-nowrap text-[10px] font-semibold text-foreground">
-                                        ₹{dp.revenue.toLocaleString("en-IN")}
-                                    </p>
-                                    <p className="text-badge text-muted-foreground">
-                                        {dp.label} • {dp.orders} orders
-                                    </p>
-                                </div>
-                            </div>
-                        );
-                    })}
+                <div className="mt-3 flex justify-between text-xs text-muted-foreground">
+                    {tickLabels.map((label, i) => (
+                        <span key={i}>{label}</span>
+                    ))}
                 </div>
             </div>
         </motion.div>

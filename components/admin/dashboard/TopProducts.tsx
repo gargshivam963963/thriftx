@@ -100,7 +100,7 @@ export default function TopProducts({ products, loading = false }: TopProductsPr
                             <p className="text-sm font-bold text-foreground">
                                 {product.totalSold}
                             </p>
-                            <p className="text-[10px] text-muted-foreground">sold</p>
+                            <p className="text-xs text-muted-foreground">sold</p>
                         </div>
                     </div>
                 ))}

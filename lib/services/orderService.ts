@@ -85,6 +85,29 @@ export async function createOrder(
 ) {
   if (!isDocumentStoreConfigured) return null;
 
+  // For Razorpay orders, check for existing orders with same paymentId to prevent duplicates
+  if (data.paymentId) {
+    try {
+      const existingOrders = await documentStore.listDocuments(
+        "thriftx",
+        "orders",
+        [
+          DocumentQuery.equal("userId", user.id),
+          DocumentQuery.equal("paymentId", data.paymentId),
+        ],
+      );
+
+      if (existingOrders.documents.length > 0) {
+        console.warn(
+          `Order creation blocked: duplicate paymentId ${data.paymentId} for user ${user.id}`,
+        );
+        return existingOrders.documents[0];
+      }
+    } catch (error) {
+      console.error("Error checking for duplicate orders:", error);
+    }
+  }
+
   return documentStore.createDocument(
     "thriftx",
     "orders",

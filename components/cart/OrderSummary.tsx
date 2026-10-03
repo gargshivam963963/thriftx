@@ -1,7 +1,8 @@
+
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
     ArrowRight,
     TicketPercent,
@@ -10,12 +11,16 @@ import {
     Sparkles,
     Zap,
     Clock,
-    ChevronDown,
+    Check,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { getShippingRates } from "@/lib/shipping/api";
 import type { ShippingRate } from "@/lib/shipping/types";
-import { FALLBACK_SHIPPING_RATES, SHIPPING_DEFAULTS } from "@/lib/shipping/constants";
+import {
+    FALLBACK_SHIPPING_RATES,
+    SHIPPING_DEFAULTS,
+} from "@/lib/shipping/constants";
 
 interface OrderSummaryProps {
     itemCount: number;
@@ -29,7 +34,11 @@ interface OrderSummaryProps {
     onApplyCoupon: (code: string) => void;
 }
 
-const FREE_SHIPPING_THRESHOLD = SHIPPING_DEFAULTS.freeShippingAmount;
+const FREE_SHIPPING_THRESHOLD =
+    SHIPPING_DEFAULTS.freeShippingAmount;
+
+const formatINR = (amount: number) =>
+    `₹${amount.toLocaleString("en-IN")}`;
 
 export default function OrderSummary({
     itemCount,
@@ -44,39 +53,51 @@ export default function OrderSummary({
 }: OrderSummaryProps) {
     const [couponInput, setCouponInput] = useState(appliedCoupon);
     const [couponError, setCouponError] = useState("");
-    const [shippingMethod, setShippingMethod] = useState<string>("standard");
+    const [shippingMethod, setShippingMethod] =
+        useState<string>("standard");
     const [shippingCost, setShippingCost] = useState(0);
     const [ratesLoading, setRatesLoading] = useState(false);
     const [ratesError, setRatesError] = useState("");
-
-    // Shipping rates (attempt live, fallback to preset)
-    const [availableRates, setAvailableRates] = useState<ShippingRate[]>([]);
+    const [availableRates, setAvailableRates] =
+        useState<ShippingRate[]>([]);
 
     useEffect(() => {
+        let active = true;
+
         async function loadRates() {
             setRatesLoading(true);
             setRatesError("");
+
             try {
-                const result = await getShippingRates("132103", SHIPPING_DEFAULTS.defaultWeight);
-                if (result.rates && result.rates.length > 0) {
+                const result = await getShippingRates(
+                    "132103",
+                    SHIPPING_DEFAULTS.defaultWeight
+                );
+
+                if (!active) return;
+
+                if (result.rates?.length) {
                     setAvailableRates(result.rates);
                 } else {
-                    // Use fallback rates
                     setAvailableRates([
                         {
                             courierId: "fallback_standard",
-                            courierName: FALLBACK_SHIPPING_RATES.courier.standard.name,
+                            courierName:
+                                FALLBACK_SHIPPING_RATES.courier.standard.name,
                             method: "standard",
-                            amount: FALLBACK_SHIPPING_RATES.courier.standard.price,
+                            amount:
+                                FALLBACK_SHIPPING_RATES.courier.standard.price,
                             estimatedDays: 5,
                             codAvailable: true,
                             trackingAvailable: true,
                         },
                         {
                             courierId: "fallback_express",
-                            courierName: FALLBACK_SHIPPING_RATES.courier.express.name,
+                            courierName:
+                                FALLBACK_SHIPPING_RATES.courier.express.name,
                             method: "express",
-                            amount: FALLBACK_SHIPPING_RATES.courier.express.price,
+                            amount:
+                                FALLBACK_SHIPPING_RATES.courier.express.price,
                             estimatedDays: 3,
                             codAvailable: true,
                             trackingAvailable: true,
@@ -84,295 +105,526 @@ export default function OrderSummary({
                     ]);
                 }
             } catch {
-                // Fallback rates
+                if (!active) return;
+
+                setRatesError(
+                    "Live rates are temporarily unavailable. Showing estimated rates."
+                );
+
                 setAvailableRates([
                     {
                         courierId: "fallback_standard",
-                        courierName: FALLBACK_SHIPPING_RATES.courier.standard.name,
+                        courierName:
+                            FALLBACK_SHIPPING_RATES.courier.standard.name,
                         method: "standard",
-                        amount: FALLBACK_SHIPPING_RATES.courier.standard.price,
+                        amount:
+                            FALLBACK_SHIPPING_RATES.courier.standard.price,
                         estimatedDays: 5,
                         codAvailable: true,
                         trackingAvailable: true,
                     },
                     {
                         courierId: "fallback_express",
-                        courierName: FALLBACK_SHIPPING_RATES.courier.express.name,
+                        courierName:
+                            FALLBACK_SHIPPING_RATES.courier.express.name,
                         method: "express",
-                        amount: FALLBACK_SHIPPING_RATES.courier.express.price,
+                        amount:
+                            FALLBACK_SHIPPING_RATES.courier.express.price,
                         estimatedDays: 3,
                         codAvailable: true,
                         trackingAvailable: true,
                     },
                 ]);
             } finally {
-                setRatesLoading(false);
+                if (active) setRatesLoading(false);
             }
         }
+
         loadRates();
+
+        return () => {
+            active = false;
+        };
     }, []);
 
-    // Update shipping cost when method changes
     useEffect(() => {
         if (subtotal >= FREE_SHIPPING_THRESHOLD) {
             setShippingCost(0);
             return;
         }
-        const rate = availableRates.find((r) => r.method === shippingMethod);
+
+        const rate = availableRates.find(
+            (item) => item.method === shippingMethod
+        );
+
         setShippingCost(rate?.amount ?? 0);
     }, [shippingMethod, availableRates, subtotal]);
 
     const finalTotal = total + shippingCost;
-    const remainingForFree = FREE_SHIPPING_THRESHOLD - subtotal;
-    const qualifiesForFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+    const remainingForFree =
+        Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
+
+    const qualifiesForFreeShipping =
+        subtotal >= FREE_SHIPPING_THRESHOLD;
 
     function handleApplyCoupon() {
         const code = couponInput.trim().toUpperCase();
+
         if (!code) {
-            setCouponError("Please enter a coupon code");
+            setCouponError("Please enter a coupon code.");
             return;
         }
+
         setCouponError("");
         onApplyCoupon(code);
     }
 
-    function handleMethodSelect(method: string) {
-        setShippingMethod(method);
-    }
-
     return (
-        <motion.div
+        <motion.aside
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className="overflow-hidden rounded-xl border border-border bg-card shadow-card"
+            transition={{ duration: 0.3 }}
+            aria-label="Order summary"
+            className="
+                overflow-hidden rounded-2xl
+                border border-border
+                bg-card text-card-foreground
+                shadow-card
+            "
         >
             <div className="p-4 sm:p-5">
                 {/* Header */}
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-5 flex items-center justify-between">
                     <div>
-                        <p className="text-caption font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                            Summary
+                        <p className="text-caption font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            Order summary
                         </p>
-                        <h2 className="mt-0.5 text-heading-4 font-bold text-foreground">
-                            Order
+
+                        <h2 className="mt-1 text-heading-4 font-bold text-foreground">
+                            Your order
                         </h2>
                     </div>
-                    <span className="rounded-lg border border-border px-2.5 py-1 text-badge font-medium text-muted-foreground">
-                        {itemCount} {itemCount === 1 ? "Item" : "Items"}
+
+                    <span className="rounded-full border border-border bg-muted px-3 py-1 text-badge font-medium text-foreground">
+                        {itemCount} {itemCount === 1 ? "item" : "items"}
                     </span>
                 </div>
 
-                {/* Free shipping progress */}
+                {/* Shipping progress */}
                 {remainingForFree > 0 && subtotal > 0 && (
-                    <div className="mb-4 rounded-lg border border-warning-bg bg-warning-bg px-3 py-2.5">
-                        <div className="flex items-center gap-2 text-small text-warning-foreground">
-                            <Truck size={14} className="shrink-0" />
-                            <span>
-                                Add <strong>₹{remainingForFree.toLocaleString("en-IN")}</strong> more for{" "}
-                                <strong>FREE shipping</strong>
-                            </span>
+                    <div className="mb-5 rounded-xl border border-border bg-muted/60 p-3">
+                        <div className="flex items-start gap-2.5">
+                            <Truck
+                                size={16}
+                                className="mt-0.5 shrink-0 text-foreground"
+                                aria-hidden="true"
+                            />
+
+                            <p className="text-small leading-relaxed text-foreground">
+                                Add{" "}
+                                <strong>
+                                    {formatINR(remainingForFree)}
+                                </strong>{" "}
+                                more to unlock free shipping.
+                            </p>
                         </div>
-                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-warning">
+
+                        <div
+                            className="mt-3 h-1.5 overflow-hidden rounded-full bg-border"
+                            role="progressbar"
+                            aria-label="Free shipping progress"
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={Math.min(
+                                100,
+                                (subtotal / FREE_SHIPPING_THRESHOLD) * 100
+                            )}
+                        >
                             <motion.div
                                 initial={{ width: 0 }}
-                                animate={{ width: `${Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }}
-                                className="h-full rounded-full bg-warning-foreground"
+                                animate={{
+                                    width: `${Math.min(
+                                        100,
+                                        (subtotal / FREE_SHIPPING_THRESHOLD) * 100
+                                    )}%`,
+                                }}
+                                transition={{ duration: 0.45 }}
+                                className="h-full rounded-full bg-foreground"
                             />
                         </div>
                     </div>
                 )}
+
+                {/* Free shipping confirmation */}
                 {qualifiesForFreeShipping && subtotal > 0 && (
-                    <div className="mb-4 rounded-lg border border-success-bg bg-success-bg px-3 py-2.5">
-                        <div className="flex items-center gap-2 text-small font-semibold text-success-foreground">
-                            <Truck size={14} className="shrink-0" />
-                            <span>🎉 You qualify for FREE shipping!</span>
-                        </div>
+                    <div
+                        role="status"
+                        className="
+                            mb-5 flex items-center gap-2
+                            rounded-lg border border-success/30
+                            bg-success/10 px-3 py-2.5
+                            text-small font-medium text-success
+                        "
+                    >
+                        <Check
+                            size={15}
+                            className="shrink-0"
+                            aria-hidden="true"
+                        />
+                        Free shipping unlocked
                     </div>
                 )}
 
-                {/* ── Shipping Method Selector ── */}
+                {/* Delivery method */}
                 {subtotal > 0 && (
-                    <div className="mb-4">
-                        <div className="mb-2 flex items-center gap-2">
-                            <Truck size={13} className="text-muted-foreground" />
-                            <span className="text-badge font-semibold text-muted-foreground">Delivery Method</span>
+                    <section className="mb-5">
+                        <div className="mb-3 flex items-center gap-2">
+                            <Truck
+                                size={15}
+                                className="text-muted-foreground"
+                                aria-hidden="true"
+                            />
+
+                            <h3 className="text-small font-semibold text-foreground">
+                                Delivery method
+                            </h3>
                         </div>
+
                         {ratesLoading ? (
-                            <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-3 text-small text-muted-foreground">
-                                <div className="h-3 w-3 animate-spin rounded-full border-2 border-border border-t-foreground" />
-                                Loading shipping rates...
+                            <div
+                                className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-4"
+                                role="status"
+                            >
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
+
+                                <span className="text-small text-muted-foreground">
+                                    Loading delivery options…
+                                </span>
                             </div>
                         ) : (
-                            <div className="space-y-1.5">
+                            <div className="space-y-2">
                                 {availableRates.map((rate) => {
-                                    const selected = shippingMethod === rate.method;
-                                    const isFree = qualifiesForFreeShipping || rate.amount === 0;
+                                    const selected =
+                                        shippingMethod === rate.method;
+
+                                    const isFree =
+                                        qualifiesForFreeShipping ||
+                                        rate.amount === 0;
 
                                     return (
-                                        <Button
+                                        <button
                                             key={rate.courierId}
                                             type="button"
-                                            onClick={() => handleMethodSelect(rate.method)}
-                                            className={`w-full rounded-lg border p-2.5 text-left transition-all ${selected
-                                                ? "border-foreground bg-foreground text-background"
-                                                : "border-border hover:border-muted-foreground"
-                                                }`}
+                                            aria-pressed={selected}
+                                            onClick={() =>
+                                                setShippingMethod(rate.method)
+                                            }
+                                            className={`
+                                                w-full rounded-xl border
+                                                p-3 text-left
+                                                transition-colors duration-150
+                                                focus-visible:outline-none
+                                                focus-visible:ring-2
+                                                focus-visible:ring-ring
+                                                focus-visible:ring-offset-2
+                                                focus-visible:ring-offset-background
+                                                ${selected
+                                                    ? "border-foreground bg-foreground text-background"
+                                                    : "border-border bg-card text-foreground hover:border-muted-foreground"
+                                                }
+                                            `}
                                         >
-                                            <div className="flex items-center justify-between gap-2">
-                                                <div className="flex items-center gap-2">
-                                                    <div
-                                                        className={`rounded-md p-1.5 ${selected
-                                                            ? "bg-background/10 text-background"
-                                                            : "bg-muted text-muted-foreground"
-                                                            }`}
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex min-w-0 items-center gap-3">
+                                                    <span
+                                                        className={`
+                                                            flex h-9 w-9 shrink-0
+                                                            items-center justify-center
+                                                            rounded-lg
+                                                            ${selected
+                                                                ? "bg-background/15 text-background"
+                                                                : "bg-muted text-foreground"
+                                                            }
+                                                        `}
                                                     >
-                                                        {rate.method === "express" ? <Zap size={12} /> : <Truck size={12} />}
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-small font-semibold">{rate.courierName}</span>
-                                                        <div className="flex items-center gap-1.5 text-badge text-muted-foreground">
-                                                            <Clock size={9} />
-                                                            <span>{rate.estimatedDays} days</span>
-                                                        </div>
-                                                    </div>
+                                                        {rate.method === "express" ? (
+                                                            <Zap size={16} />
+                                                        ) : (
+                                                            <Truck size={16} />
+                                                        )}
+                                                    </span>
+
+                                                    <span className="min-w-0">
+                                                        <span className="block text-small font-semibold">
+                                                            {rate.courierName}
+                                                        </span>
+
+                                                        <span
+                                                            className={`
+                                                                mt-1 flex items-center gap-1.5
+                                                                text-badge
+                                                                ${selected
+                                                                    ? "text-background/80"
+                                                                    : "text-muted-foreground"
+                                                                }
+                                                            `}
+                                                        >
+                                                            <Clock
+                                                                size={12}
+                                                                aria-hidden="true"
+                                                            />
+
+                                                            {rate.estimatedDays}{" "}
+                                                            {rate.estimatedDays === 1
+                                                                ? "day"
+                                                                : "days"}
+                                                        </span>
+                                                    </span>
                                                 </div>
-                                                <span className={`text-small font-bold ${isFree ? "text-success" : ""}`}>
-                                                    {isFree ? "FREE" : `₹${rate.amount}`}
+
+                                                <span
+                                                    className={`
+                                                        shrink-0 text-small font-bold
+                                                        ${selected
+                                                            ? "text-background"
+                                                            : isFree
+                                                                ? "text-success"
+                                                                : "text-foreground"
+                                                        }
+                                                    `}
+                                                >
+                                                    {isFree
+                                                        ? "FREE"
+                                                        : formatINR(rate.amount)}
                                                 </span>
                                             </div>
-                                        </Button>
+                                        </button>
                                     );
                                 })}
                             </div>
                         )}
+
                         {ratesError && (
-                            <p className="mt-1 text-badge text-error">{ratesError}</p>
+                            <p
+                                role="status"
+                                className="mt-2 text-caption text-muted-foreground"
+                            >
+                                {ratesError}
+                            </p>
                         )}
-                    </div>
+                    </section>
                 )}
 
                 {/* Price breakdown */}
-                <div className="space-y-2.5 text-body-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Subtotal</span>
-                        <span className="font-medium text-foreground">
-                            ₹{subtotal.toLocaleString("en-IN")}
+                <div className="space-y-3 text-body-sm">
+                    <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">
+                            Subtotal
+                        </span>
+
+                        <span className="font-medium tabular-nums text-foreground">
+                            {formatINR(subtotal)}
                         </span>
                     </div>
+
                     {savings > 0 && (
-                        <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Savings</span>
-                            <span className="font-semibold text-success">
-                                −₹{savings.toLocaleString("en-IN")}
+                        <div className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">
+                                Product savings
+                            </span>
+
+                            <span className="font-medium tabular-nums text-success">
+                                −{formatINR(savings)}
                             </span>
                         </div>
                     )}
+
                     {discount > 0 && (
-                        <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Discount</span>
-                            <span className="font-semibold text-success">
-                                −₹{discount.toLocaleString("en-IN")}
+                        <div className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">
+                                Coupon discount
+                            </span>
+
+                            <span className="font-medium tabular-nums text-success">
+                                −{formatINR(discount)}
                             </span>
                         </div>
                     )}
-                    <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Shipping</span>
-                        <span className="text-small font-medium text-muted-foreground">
-                            {shippingCost === 0 ? "FREE" : `₹${shippingCost}`}
+
+                    <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">
+                            Shipping
+                        </span>
+
+                        <span className="font-medium tabular-nums text-foreground">
+                            {shippingCost === 0
+                                ? "FREE"
+                                : formatINR(shippingCost)}
                         </span>
                     </div>
                 </div>
 
-                <div className="my-4 h-px bg-border" />
+                <div className="my-5 h-px bg-border" />
 
                 {/* Coupon */}
-                <div className="mb-4">
-                    <div className="mb-2 flex items-center gap-2">
-                        <TicketPercent size={13} className="text-muted-foreground" />
-                        <span className="text-badge font-semibold text-muted-foreground">
-                            Have a coupon?
-                        </span>
-                    </div>
+                <section className="mb-5">
+                    <label
+                        htmlFor="cart-coupon"
+                        className="mb-2.5 flex items-center gap-2 text-small font-medium text-foreground"
+                    >
+                        <TicketPercent
+                            size={15}
+                            className="text-muted-foreground"
+                            aria-hidden="true"
+                        />
+
+                        Have a coupon?
+                    </label>
+
                     <div className="flex gap-2">
                         <input
+                            id="cart-coupon"
                             value={couponInput}
-                            onChange={(e) => {
-                                setCouponInput(e.target.value.toUpperCase());
+                            onChange={(event) => {
+                                setCouponInput(
+                                    event.target.value.toUpperCase()
+                                );
                                 setCouponError("");
                             }}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") handleApplyCoupon();
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    event.preventDefault();
+                                    handleApplyCoupon();
+                                }
                             }}
                             placeholder="Enter code"
-                            aria-label="Coupon code"
-                            className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-small font-medium text-foreground outline-none transition focus:border-foreground focus:ring-1 focus:ring-foreground placeholder:text-muted-foreground"
+                            autoComplete="off"
+                            aria-invalid={Boolean(couponError)}
+                            aria-describedby={
+                                couponError ? "cart-coupon-error" : undefined
+                            }
+                            className="
+                                min-w-0 flex-1 rounded-xl
+                                border border-input bg-background
+                                px-3 py-2.5 text-small
+                                text-foreground
+                                placeholder:text-muted-foreground
+                                outline-none
+                                transition
+                                focus-visible:border-ring
+                                focus-visible:ring-2
+                                focus-visible:ring-ring/30
+                            "
                         />
+
                         <Button
                             type="button"
                             onClick={handleApplyCoupon}
-                            className="rounded-lg bg-foreground px-4 py-2 text-small font-semibold text-background transition hover:bg-muted-foreground"
+                            className="shrink-0 rounded-xl px-4"
                         >
                             Apply
                         </Button>
                     </div>
+
                     {couponError && (
-                        <p className="mt-1.5 text-badge font-medium text-error">{couponError}</p>
-                    )}
-                    {appliedCoupon && discount > 0 && (
-                        <p className="mt-1.5 flex items-center gap-1 text-badge font-medium text-success">
-                            <span>✓</span> {appliedCoupon} applied — ₹{discount.toLocaleString("en-IN")} off
+                        <p
+                            id="cart-coupon-error"
+                            role="alert"
+                            className="mt-2 text-caption font-medium text-error"
+                        >
+                            {couponError}
                         </p>
                     )}
-                </div>
 
-                <div className="my-4 h-px bg-border" />
+                    {appliedCoupon && discount > 0 && (
+                        <p
+                            role="status"
+                            className="mt-2 flex items-center gap-1.5 text-caption font-medium text-success"
+                        >
+                            <Check size={13} aria-hidden="true" />
+
+                            {appliedCoupon} applied —{" "}
+                            {formatINR(discount)} off
+                        </p>
+                    )}
+                </section>
+
+                <div className="my-5 h-px bg-border" />
 
                 {/* Total */}
-                <div className="mb-5 flex items-end justify-between">
+                <div className="mb-5 flex items-end justify-between gap-3">
                     <div>
-                        <p className="text-body-sm font-medium text-muted-foreground">You Pay</p>
-                        <p className="text-badge text-muted-foreground">Inclusive of all taxes</p>
+                        <p className="text-body-sm font-semibold text-foreground">
+                            You pay
+                        </p>
+
+                        <p className="mt-0.5 text-caption text-muted-foreground">
+                            Inclusive of all taxes
+                        </p>
                     </div>
-                    <span className="text-heading-3 font-bold tracking-tight text-foreground">
-                        ₹{finalTotal.toLocaleString("en-IN")}
+
+                    <span className="text-heading-3 font-bold tracking-tight tabular-nums text-foreground">
+                        {formatINR(finalTotal)}
                     </span>
                 </div>
 
-                {/* Checkout button */}
+                {/* Checkout */}
                 <Button
                     type="button"
                     onClick={onCheckout}
                     loading={paymentLoading}
+                    disabled={paymentLoading || itemCount === 0}
                     fullWidth
                     size="lg"
                     rightIcon={<ArrowRight size={16} />}
-                    className="h-12 rounded-xl text-body-sm font-bold shadow-card"
+                    className="h-12 rounded-xl text-body-sm font-semibold"
                 >
                     Proceed to Checkout
                 </Button>
 
-                {/* Trust badges */}
+                {/* Trust details */}
                 <div className="mt-4 grid grid-cols-3 gap-2">
-                    <div className="flex flex-col items-center gap-1 rounded-lg bg-muted py-2.5">
-                        <ShieldCheck size={14} className="text-success" />
-                        <span className="text-badge font-medium text-muted-foreground">Authenticated</span>
+                    <div className="flex min-w-0 flex-col items-center gap-1.5 rounded-xl bg-muted/60 px-1 py-3 text-center">
+                        <ShieldCheck
+                            size={16}
+                            className="text-success"
+                            aria-hidden="true"
+                        />
+
+                        <span className="text-[10px] font-medium leading-tight text-muted-foreground sm:text-badge">
+                            Authenticated
+                        </span>
                     </div>
-                    <div className="flex flex-col items-center gap-1 rounded-lg bg-muted py-2.5">
-                        <Sparkles size={14} className="text-info" />
-                        <span className="text-badge font-medium text-muted-foreground">Quality Checked</span>
+
+                    <div className="flex min-w-0 flex-col items-center gap-1.5 rounded-xl bg-muted/60 px-1 py-3 text-center">
+                        <Sparkles
+                            size={16}
+                            className="text-foreground"
+                            aria-hidden="true"
+                        />
+
+                        <span className="text-[10px] font-medium leading-tight text-muted-foreground sm:text-badge">
+                            Quality checked
+                        </span>
                     </div>
-                    <div className="flex flex-col items-center gap-1 rounded-lg bg-muted py-2.5">
-                        <Truck size={14} className="text-warning" />
-                        <span className="text-badge font-medium text-muted-foreground">Fast Dispatch</span>
+
+                    <div className="flex min-w-0 flex-col items-center gap-1.5 rounded-xl bg-muted/60 px-1 py-3 text-center">
+                        <Truck
+                            size={16}
+                            className="text-foreground"
+                            aria-hidden="true"
+                        />
+
+                        <span className="text-[10px] font-medium leading-tight text-muted-foreground sm:text-badge">
+                            Fast dispatch
+                        </span>
                     </div>
                 </div>
 
-                <p className="mt-3 text-center text-badge text-muted-foreground">
+                <p className="mt-4 text-center text-caption text-muted-foreground">
                     Secure payment powered by Razorpay
                 </p>
             </div>
-        </motion.div>
+        </motion.aside>
     );
 }
-

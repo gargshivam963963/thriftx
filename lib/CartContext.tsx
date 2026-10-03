@@ -1,56 +1,76 @@
 
 "use client";
 
-import type { Product } from "@/lib/services/products";
 import {
     createContext,
+    useCallback,
     useContext,
     useEffect,
     useMemo,
+    useRef,
     useState,
 } from "react";
 
-export type CartItem = Product & { quantity: number };
+import type { Product } from "@/lib/services/products";
+import type { CartProduct } from "@/lib/services/cartProducts";
+import {
+    addToCart as persistAddToCart,
+    removeCartItem as persistRemoveCartItem,
+    clearCart as persistClearCart,
+} from "@/lib/services/cart";
+import { useAuth } from "@/lib/AuthContext";
+
+export type CartItem = CartProduct;
 
 interface CartContextType {
     cartItems: CartItem[];
     totalItems: number;
     subtotal: number;
-    addToCart: (product: Product, quantity?: number) => void;
-    removeFromCart: (id: string) => void;
-    updateQuantity: (id: string, quantity: number) => void;
-    clearCart: () => void;
+    loading: boolean;
+    error: string | null;
+    refreshCart: () => Promise<void>;
+    addToCart: (product: Product, quantity?: number) => Promise<void>;
+    removeFromCart: (id: string) => Promise<void>;
+    updateQuantity: (id: string, quantity: number) => Promise<void>;
+    clearCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType>({
     cartItems: [],
     totalItems: 0,
     subtotal: 0,
-    addToCart: () => { },
-    removeFromCart: () => { },
-    updateQuantity: () => { },
-    clearCart: () => { },
+    loading: true,
+    error: null,
+    refreshCart: async () => { },
+    addToCart: async () => { },
+    removeFromCart: async () => { },
+    updateQuantity: async () => { },
+    clearCart: async () => { },
 });
 
-const STORAGE_KEY = "thriftx_cart";
+async function fetchServerCart(): Promise<CartItem[]> {
+    const response = await fetch("/api/shop/cart-products", {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: {
+            Accept: "application/json",
+        },
+    });
 
-function normalizeCart(items: CartItem[]): CartItem[] {
-    const uniqueItems = new Map<string, CartItem>();
+    const result = (await response.json()) as {
+        success?: boolean;
+        message?: string;
+        products?: CartItem[];
+    };
 
-    for (const item of items) {
-        if (!item || typeof item.id !== "string" || !item.id) {
-            continue;
-        }
-
-        if (!uniqueItems.has(item.id)) {
-            uniqueItems.set(item.id, {
-                ...item,
-                quantity: 1,
-            });
-        }
+    if (!response.ok || !result.success || !Array.isArray(result.products)) {
+        throw new Error(
+            result.message || "Unable to load your cart. Please retry.",
+        );
     }
 
-    return Array.from(uniqueItems.values());
+    return result.products;
 }
 
 export function CartProvider({
@@ -58,87 +78,133 @@ export function CartProvider({
 }: {
     children: React.ReactNode;
 }) {
-    const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-        if (typeof window === "undefined") {
-            return [];
+    const { user, loading: authLoading } = useAuth();
+
+    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const requestVersion = useRef(0);
+
+    const refreshCart = useCallback(async () => {
+        const version = ++requestVersion.current;
+
+        if (authLoading) return;
+
+        if (!user) {
+            setCartItems([]);
+            setError(null);
+            setLoading(false);
+            return;
         }
+
+        setLoading(true);
+        setError(null);
 
         try {
-            const stored = window.localStorage.getItem(STORAGE_KEY);
+            const serverItems = await fetchServerCart();
 
-            if (!stored) {
-                return [];
+            if (version !== requestVersion.current) return;
+
+            // A product is one-of-a-kind: one cart row per product.
+            const unique = new Map<string, CartItem>();
+
+            for (const item of serverItems) {
+                if (
+                    item &&
+                    typeof item.id === "string" &&
+                    typeof item.cartId === "string" &&
+                    !unique.has(item.id)
+                ) {
+                    unique.set(item.id, {
+                        ...item,
+                        quantity: 1,
+                    });
+                }
             }
 
-            const parsed: unknown = JSON.parse(stored);
+            setCartItems(Array.from(unique.values()));
+        } catch (err) {
+            if (version !== requestVersion.current) return;
 
-            if (!Array.isArray(parsed)) {
-                return [];
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Unable to load your cart.",
+            );
+
+            // Do not replace the cart with [] on a network/API failure.
+        } finally {
+            if (version === requestVersion.current) {
+                setLoading(false);
             }
-
-            return normalizeCart(parsed as CartItem[]);
-        } catch {
-            return [];
         }
-    });
+    }, [authLoading, user]);
 
     useEffect(() => {
-        try {
-            window.localStorage.setItem(
-                STORAGE_KEY,
-                JSON.stringify(cartItems),
-            );
-        } catch {
-            // Cart remains usable for the current session if storage is unavailable.
-        }
-    }, [cartItems]);
+        void refreshCart();
 
-    const addToCart = (product: Product) => {
-        setCartItems((current) => {
-            const alreadyAdded = current.some(
-                (item) => item.id === product.id,
-            );
+        return () => {
+            requestVersion.current += 1;
+        };
+    }, [refreshCart]);
 
-            if (alreadyAdded) {
-                return current;
+    const addToCart = useCallback(
+        async (product: Product, quantity = 1) => {
+            if (!user) {
+                throw new Error("Please sign in to save items to your cart.");
             }
 
-            return [
-                ...current,
-                {
-                    ...product,
-                    quantity: 1,
-                },
-            ];
-        });
-    };
+            if (quantity !== 1) {
+                throw new Error("This one-of-a-kind item has a quantity of 1.");
+            }
 
-    const removeFromCart = (id: string) => {
-        setCartItems((current) =>
-            current.filter((item) => item.id !== id),
-        );
-    };
+            await persistAddToCart(product.id, 1);
+            await refreshCart();
 
-    const updateQuantity = (id: string, quantity: number) => {
-        if (quantity <= 0) {
-            removeFromCart(id);
-        }
+            if (requestVersion.current > 0 && error) {
+                throw new Error(error);
+            }
+        },
+        [user, refreshCart, error],
+    );
 
-        // Unique thrift products always remain quantity 1.
-    };
+    const removeFromCart = useCallback(
+        async (productId: string) => {
+            const item = cartItems.find((entry) => entry.id === productId);
 
-    const clearCart = () => {
-        setCartItems([]);
-    };
+            if (!item) {
+                throw new Error("Cart item is no longer available.");
+            }
+
+            await persistRemoveCartItem(item.cartId);
+            await refreshCart();
+        },
+        [cartItems, refreshCart],
+    );
+
+    const updateQuantity = useCallback(
+        async (productId: string, quantity: number) => {
+            if (quantity > 1) {
+                throw new Error("This one-of-a-kind item has a quantity of 1.");
+            }
+
+            if (quantity <= 0) {
+                await removeFromCart(productId);
+            }
+        },
+        [removeFromCart],
+    );
+
+    const clearCart = useCallback(async () => {
+        await persistClearCart();
+        await refreshCart();
+    }, [refreshCart]);
 
     const totalItems = cartItems.length;
 
     const subtotal = useMemo(
-        () =>
-            cartItems.reduce(
-                (sum, item) => sum + item.price,
-                0,
-            ),
+        () => cartItems.reduce((sum, item) => sum + item.price, 0),
         [cartItems],
     );
 
@@ -148,6 +214,9 @@ export function CartProvider({
                 cartItems,
                 totalItems,
                 subtotal,
+                loading,
+                error,
+                refreshCart,
                 addToCart,
                 removeFromCart,
                 updateQuantity,

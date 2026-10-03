@@ -110,22 +110,45 @@ export async function completeReferral(referralId: string) {
       referralId,
     );
 
-    if (referral.status === "completed") return;
+    // Check if already completed
+    if (referral.status === "completed") {
+      console.warn(
+        `completeReferral: Referral ${referralId} already completed. Preventing duplicate credit.`,
+      );
+      return;
+    }
+
+    // Check if completion is in progress (safeguard against race condition)
+    if (referral.status === "completing") {
+      console.warn(
+        `completeReferral: Referral ${referralId} completion already in progress.`,
+      );
+      return;
+    }
+
+    // Atomically mark as "completing" to prevent concurrent calls
+    await documentStore.updateDocument("thriftx", "referrals", referralId, {
+      status: "completing",
+    });
 
     const reward = Number(referral.rewardAmount || REFERRAL_REWARD);
 
-    await documentStore.updateDocument("thriftx", "referrals", referralId, {
-      status: "completed",
-      completedAt: new Date().toISOString(),
-    });
-
+    // Award credit
     await addCredit(
       String(referral.referrerUserId ?? ""),
       reward,
       `Referral reward (${referral.code})`,
     );
+
+    // Mark as completed after credit is awarded
+    await documentStore.updateDocument("thriftx", "referrals", referralId, {
+      status: "completed",
+      completedAt: new Date().toISOString(),
+    });
   } catch (error) {
     console.error("completeReferral:", error);
+    // Important: do not silently swallow errors; mark status back if needed
+    throw error;
   }
 }
 

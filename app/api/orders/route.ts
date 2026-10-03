@@ -152,10 +152,13 @@ export async function POST(request: NextRequest) {
 
     // All product, price, shipping, and address data is rebuilt
     // from trusted server-side records.
+    // Promotions (welcome offer, referral, coupon) calculated server-side
     const quote = await getCheckoutPricing(
       user.id,
       checkout.addressId,
       checkout.deliveryMethod,
+      (body as Record<string, unknown>)?.appliedCouponCode as string | undefined,
+      (body as Record<string, unknown>)?.referralCode as string | undefined,
     );
 
     let orderData: OrderData;
@@ -181,15 +184,18 @@ export async function POST(request: NextRequest) {
 
       const paidSubtotal = Number(payment.notes.subtotal);
       const paidShipping = Number(payment.notes.shipping);
+      const paidDiscount = Number(payment.notes.discount || "0");
       const paidTotal = Number(payment.notes.total);
 
       const paymentMatchesQuote =
         Number.isFinite(paidSubtotal) &&
         Number.isFinite(paidShipping) &&
+        Number.isFinite(paidDiscount) &&
         Number.isFinite(paidTotal) &&
         payment.amount === Math.round(quote.total * 100) &&
         paidSubtotal === quote.subtotal &&
         paidShipping === quote.shipping &&
+        paidDiscount === quote.discount &&
         paidTotal === quote.total &&
         payment.notes.deliveryMethod === quote.deliveryMethod &&
         payment.notes.addressId === quote.addressId;
@@ -211,8 +217,7 @@ export async function POST(request: NextRequest) {
         paymentId: checkout.paymentId,
         orderId: checkout.orderId,
         signature: checkout.signature,
-        discount: 0,
-        couponCode: "",
+        couponCode: quote.appliedPromotion === "coupon" ? (body as Record<string, unknown>)?.appliedCouponCode as string || "" : "",
         creditUsed: 0,
       };
     } else {
@@ -222,8 +227,8 @@ export async function POST(request: NextRequest) {
         paymentId: undefined,
         orderId: undefined,
         signature: undefined,
-        discount: 0,
-        couponCode: "",
+        // Discount is already in quote (calculated server-side)
+        couponCode: quote.appliedPromotion === "coupon" ? (body as Record<string, unknown>)?.appliedCouponCode as string || "" : "",
         creditUsed: 0,
       };
     }

@@ -2,49 +2,133 @@ import type { Product } from "./products";
 
 export interface CartProduct extends Product {
   cartId: string;
-  quantity: number;
+  quantity: 1;
+}
+
+interface CartProductsResponse {
+  success?: boolean;
+  products?: CartProduct[];
+  message?: string;
+  error?: string;
+}
+
+export class CartProductsError extends Error {
+  readonly status: number;
+  readonly code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "CartProductsError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+function isCartProduct(value: unknown): value is CartProduct {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const product = value as Partial<CartProduct>;
+
+  return (
+    typeof product.id === "string" &&
+    product.id.length > 0 &&
+    typeof product.cartId === "string" &&
+    product.cartId.length > 0 &&
+    product.quantity === 1 &&
+    typeof product.price === "number" &&
+    Number.isFinite(product.price) &&
+    product.price >= 0
+  );
+}
+
+async function readResponse(response: Response): Promise<CartProductsResponse> {
+  try {
+    return (await response.json()) as CartProductsResponse;
+  } catch {
+    throw new CartProductsError(
+      "The cart service returned an invalid response. Please try again.",
+      response.status,
+      "INVALID_RESPONSE",
+    );
+  }
 }
 
 /**
- * Client-safe `getCartProducts`.
+ * Retrieves the current server-authoritative cart.
  *
- * Used by "use client" pages (cart, checkout). It only imports the `Product`
- * type (erased at build time) and fetches product data via the
- * `/api/shop/cart-products` route handler. It does NOT import `./products`
- * at runtime, so the Prisma / pg (Postgres) stack is never bundled for the
- * browser.
- *
- * Product reads happen server-side through:
- *   Route Handler → Repository Layer → Prisma → PostgreSQL
- *
- * Returns an empty array on any failure so the UI can render a graceful
- * empty/loading state instead of crashing.
+ * Important:
+ * - A failed request throws an error; it never becomes an empty cart.
+ * - The API response is not trusted until its basic shape is validated.
+ * - Quantity is fixed at 1 because THRIFTX products are one-of-a-kind.
+ * - The server remains authoritative for cart ownership and availability.
  */
-export async function getCartProducts(): Promise<CartProduct[]> {
+export async function getCartProducts(
+  signal?: AbortSignal,
+): Promise<CartProduct[]> {
+  let response: Response;
+
   try {
-    const res = await fetch("/api/shop/cart-products", {
+    response = await fetch("/api/shop/cart-products", {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Accept: "application/json",
+      },
       cache: "no-store",
+      credentials: "same-origin",
+      signal,
     });
-
-    if (!res.ok) {
-      console.error("[cartProducts] route handler returned", res.status);
-      return [];
-    }
-
-    const data = (await res.json()) as {
-      success: boolean;
-      products?: CartProduct[];
-    };
-
-    if (!data.success || !Array.isArray(data.products)) {
-      return [];
-    }
-
-    return data.products;
   } catch (error) {
-    console.error("[cartProducts] failed to fetch cart products:", error);
-    return [];
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
+    }
+
+    throw new CartProductsError(
+      "Unable to connect to your cart. Check your connection and try again.",
+      0,
+      "NETWORK_ERROR",
+    );
   }
+
+  const data = await readResponse(response);
+
+  if (!response.ok || !data.success) {
+    throw new CartProductsError(
+      data.message ||
+        data.error ||
+        "We couldn't load your cart. Please try again.",
+      response.status,
+      "CART_REQUEST_FAILED",
+    );
+  }
+
+  if (!Array.isArray(data.products)) {
+    throw new CartProductsError(
+      "The cart service returned unexpected data. Please try again.",
+      response.status,
+      "INVALID_CART_DATA",
+    );
+  }
+
+  if (!data.products.every(isCartProduct)) {
+    throw new CartProductsError(
+      "Some cart items could not be verified. Please refresh your cart.",
+      response.status,
+      "INVALID_CART_ITEM",
+    );
+  }
+
+  const uniqueProducts = new Map<string, CartProduct>();
+
+  for (const product of data.products) {
+    if (!uniqueProducts.has(product.id)) {
+      uniqueProducts.set(product.id, {
+        ...product,
+        quantity: 1,
+      });
+    }
+  }
+
+  return Array.from(uniqueProducts.values());
 }

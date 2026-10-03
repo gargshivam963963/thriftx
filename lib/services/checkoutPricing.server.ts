@@ -9,6 +9,7 @@ import {
 } from "@/lib/shipping/checkout-options";
 import { SHIPPING_DEFAULTS } from "@/lib/shipping/constants";
 import type { ShippingRate } from "@/lib/shipping/types";
+import { calculatePromotion } from "@/lib/marketing/promotions.server";
 
 export class CheckoutPricingError extends Error {
   constructor(
@@ -19,11 +20,32 @@ export class CheckoutPricingError extends Error {
   }
 }
 
+export interface CheckoutPricing {
+  addressId: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  deliveryMethod: string;
+  subtotal: number;
+  products: string;
+  shipping: number;
+  discount: number;
+  discountReason: string;
+  appliedPromotion: "welcome" | "referral" | "coupon" | "none";
+  total: number;
+}
+
 export async function getCheckoutPricing(
   userId: string,
   addressId: string,
   deliveryMethod: string,
-) {
+  appliedCouponCode?: string,
+  referralCode?: string,
+): Promise<CheckoutPricing> {
   if (!addressId.trim() || !deliveryMethod.trim()) {
     throw new CheckoutPricingError("Invalid delivery details.", 400);
   }
@@ -89,6 +111,17 @@ export async function getCheckoutPricing(
   const shipping = shippingMethod.price;
   const nameParts = address.fullName.trim().split(/\s+/);
 
+  // SECURITY: Calculate promotion server-side only
+  const promotion = await calculatePromotion(
+    userId,
+    subtotal,
+    appliedCouponCode,
+    referralCode,
+  );
+
+  // Total = subtotal + shipping - discount (must be >= 0)
+  const total = Math.max(0, subtotal + shipping - promotion.discount);
+
   return {
     addressId,
     firstName: nameParts[0] ?? "",
@@ -104,6 +137,9 @@ export async function getCheckoutPricing(
     subtotal,
     products,
     shipping,
-    total: subtotal + shipping,
+    discount: promotion.discount,
+    discountReason: promotion.discountReason,
+    appliedPromotion: promotion.appliedPromotion,
+    total,
   };
 }

@@ -880,6 +880,8 @@ export default function Header() {
   const iconSize = 20;
   const iconStroke = 2;
 
+  console.log(totalItems, "totalItems");
+
   return (
     <>
       <AnnouncementBar />
@@ -1152,7 +1154,7 @@ export default function Header() {
             <Tooltip
               label={
                 totalItems > 0
-                  ? `${totalItems} in cart`
+                  ? `${totalItems} in carts`
                   : "Cart"
               }
             >

@@ -113,7 +113,7 @@ export default function RecentOrders({ orders, loading = false }: RecentOrdersPr
                                     <p className="truncate text-sm font-semibold text-foreground">
                                         {order.firstName} {order.lastName}
                                     </p>
-                                    <span className="shrink-0 text-[10px] text-muted-foreground">
+                                    <span className="shrink-0 text-xs text-muted-foreground">
                                         #{order.orderId?.slice(0, 8).toUpperCase() || order.$id.slice(0, 8).toUpperCase()}
                                     </span>
                                 </div>

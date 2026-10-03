@@ -1,47 +1,242 @@
-async function cartRequest<T>(
-  method: "POST" | "PATCH" | "DELETE",
+export interface CartMutationResponse {
+  success: true;
+  message?: string;
+  cartId?: string;
+}
+
+export class CartRequestError extends Error {
+  readonly status: number;
+  readonly code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "CartRequestError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+type CartMethod = "POST" | "PATCH" | "DELETE";
+
+interface CartApiResponse {
+  success?: boolean;
+  message?: string;
+  error?: string;
+  code?: string;
+  cartId?: string;
+}
+
+async function cartRequest(
+  method: CartMethod,
   body?: Record<string, string | number>,
-): Promise<T> {
-  const response = await fetch("/api/cart", {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const result = (await response.json()) as {
-    success?: boolean;
-    message?: string;
-    [key: string]: unknown;
-  };
+  signal?: AbortSignal,
+): Promise<CartMutationResponse> {
+  let response: Response;
 
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || "Cart request failed");
+  try {
+    response = await fetch("/api/cart", {
+      method,
+      headers: {
+        Accept: "application/json",
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      credentials: "same-origin",
+      cache: "no-store",
+      body: body ? JSON.stringify(body) : undefined,
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
+    }
+
+    throw new CartRequestError(
+      "Unable to connect to your cart. Please try again.",
+      0,
+      "NETWORK_ERROR",
+    );
   }
 
-  return result as T;
-}
+  let result: CartApiResponse;
 
-export async function addToCart(productId: string, quantity = 1) {
-  return cartRequest("POST", { productId, quantity });
-}
-
-export async function removeCartItem(id: string) {
-  const response = await fetch(`/api/cart?cartId=${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
-  const result = (await response.json()) as {
-    success?: boolean;
-    message?: string;
-  };
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || "Unable to remove cart item");
+  try {
+    result = (await response.json()) as CartApiResponse;
+  } catch {
+    throw new CartRequestError(
+      "The cart service returned an invalid response.",
+      response.status,
+      "INVALID_RESPONSE",
+    );
   }
-  return result;
+
+  if (!response.ok || result.success !== true) {
+    throw new CartRequestError(
+      result.message ||
+        result.error ||
+        "Your cart could not be updated. Please try again.",
+      response.status,
+      result.code,
+    );
+  }
+
+  return {
+    success: true,
+    ...(result.message ? { message: result.message } : {}),
+    ...(result.cartId ? { cartId: result.cartId } : {}),
+  };
 }
 
-export async function updateCartQuantity(id: string, quantity: number) {
-  return cartRequest("PATCH", { cartId: id, quantity });
+/**
+ * Adds a unique THRIFTX product.
+ * Quantity is deliberately restricted to one.
+ */
+export async function addToCart(
+  productId: string,
+  quantity = 1,
+  signal?: AbortSignal,
+): Promise<CartMutationResponse> {
+  if (!productId.trim()) {
+    throw new CartRequestError(
+      "A valid product is required.",
+      400,
+      "INVALID_PRODUCT_ID",
+    );
+  }
+
+  if (quantity !== 1) {
+    throw new CartRequestError(
+      "Only one piece of each THRIFTX product is available.",
+      400,
+      "INVALID_QUANTITY",
+    );
+  }
+
+  return cartRequest(
+    "POST",
+    {
+      productId: productId.trim(),
+      quantity: 1,
+    },
+    signal,
+  );
 }
 
-export async function clearCart() {
-  return cartRequest("DELETE");
+/**
+ * Removes a cart entry by its server-issued cart ID.
+ */
+
+/**
+ * Removes only the selected cart entry by its server-issued cart ID.
+ */
+
+export async function removeCartItem(
+  id: string,
+  signal?: AbortSignal,
+): Promise<CartMutationResponse> {
+  const cartId = id.trim();
+
+  if (!cartId) {
+    throw new CartRequestError(
+      "A valid cart item is required.",
+      400,
+      "INVALID_CART_ID",
+    );
+  }
+
+  let response: Response;
+
+  try {
+    response = await fetch(`/api/cart?cartId=${encodeURIComponent(cartId)}`, {
+      method: "DELETE",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+      },
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
+    }
+
+    throw new CartRequestError(
+      "Unable to connect to your cart. Please try again.",
+      0,
+      "NETWORK_ERROR",
+    );
+  }
+
+  let result: CartApiResponse;
+
+  try {
+    result = (await response.json()) as CartApiResponse;
+  } catch {
+    throw new CartRequestError(
+      "The cart service returned an invalid response.",
+      response.status,
+      "INVALID_RESPONSE",
+    );
+  }
+
+  if (!response.ok || result.success !== true) {
+    throw new CartRequestError(
+      result.message || result.error || "Unable to remove this item.",
+      response.status,
+      result.code,
+    );
+  }
+
+  return {
+    success: true,
+    ...(result.message ? { message: result.message } : {}),
+  };
+}
+
+/**
+ * Quantity changes are not supported for one-of-a-kind products.
+ * A quantity of zero removes the item.
+ */
+export async function updateCartQuantity(
+  id: string,
+  quantity: number,
+  signal?: AbortSignal,
+): Promise<CartMutationResponse> {
+  if (!Number.isInteger(quantity) || quantity < 0) {
+    throw new CartRequestError(
+      "Invalid cart quantity.",
+      400,
+      "INVALID_QUANTITY",
+    );
+  }
+
+  if (quantity === 0) {
+    return removeCartItem(id, signal);
+  }
+
+  if (quantity !== 1) {
+    throw new CartRequestError(
+      "Only one piece of each THRIFTX product is available.",
+      400,
+      "INVALID_QUANTITY",
+    );
+  }
+
+  return cartRequest(
+    "PATCH",
+    {
+      cartId: id,
+      quantity: 1,
+    },
+    signal,
+  );
+}
+
+/**
+ * Clears the current server-side cart.
+ */
+export async function clearCart(
+  signal?: AbortSignal,
+): Promise<CartMutationResponse> {
+  return cartRequest("DELETE", undefined, signal);
 }

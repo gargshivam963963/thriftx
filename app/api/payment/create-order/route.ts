@@ -60,6 +60,8 @@ export async function POST(request: Request) {
         userId: user.id,
         subtotal: String(quote.subtotal),
         shipping: String(quote.shipping),
+        discount: String(quote.discount),
+        discountReason: quote.discountReason,
         total: String(quote.total),
         deliveryMethod: quote.deliveryMethod,
         addressId: quote.addressId,

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { AnimatePresence } from "framer-motion";
@@ -14,20 +15,44 @@ interface CartItemsProps {
     onRemove: (cartId: string) => Promise<void>;
 }
 
-const skeletons = Array.from({ length: 3 });
+const skeletons = [0, 1, 2];
 
-export default function CartItems({ items, loading, onIncrease, onDecrease, onRemove }: CartItemsProps) {
+export default function CartItems({
+    items,
+    loading,
+    onIncrease,
+    onDecrease,
+    onRemove,
+}: CartItemsProps) {
     if (loading) {
         return (
-            <div className="space-y-3">
-                {skeletons.map((_, i) => (
-                    <div key={i} className="h-[120px] animate-pulse rounded-xl border border-border bg-card" />
+            <div
+                className="space-y-3"
+                role="status"
+                aria-label="Loading cart items"
+                aria-live="polite"
+            >
+                <span className="sr-only">Loading your cart items…</span>
+
+                {skeletons.map((index) => (
+                    <div
+                        key={index}
+                        className="flex min-h-[132px] gap-4 overflow-hidden rounded-xl border border-border bg-card p-3"
+                    >
+                        <div className="h-28 w-28 shrink-0 animate-pulse rounded-lg bg-muted sm:h-32 sm:w-32" />
+
+                        <div className="flex min-w-0 flex-1 flex-col gap-3 py-2">
+                            <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                            <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+                            <div className="mt-auto h-5 w-20 animate-pulse rounded bg-muted" />
+                        </div>
+                    </div>
                 ))}
             </div>
         );
     }
 
-    if (!items.length) {
+    if (items.length === 0) {
         return (
             <EmptyState
                 title="Your cart is empty"
@@ -35,7 +60,7 @@ export default function CartItems({ items, loading, onIncrease, onDecrease, onRe
             >
                 <Link
                     href="/shop"
-                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-foreground px-6 py-3 text-body-sm font-semibold text-background transition hover:bg-muted-foreground"
+                    className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-foreground px-6 py-3 text-body-sm font-semibold text-background transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                     Continue Shopping
                 </Link>

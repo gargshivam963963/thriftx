@@ -1,9 +1,9 @@
+
 "use client";
 
 import { useState, useCallback, useRef } from "react";
 import { ShoppingBag, Zap, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 
 import type { Product } from "@/lib/services/products";
@@ -17,66 +17,77 @@ interface ProductActionsProps {
   product: Product;
 }
 
-/**
- * ProductActions — Add to Cart + Buy Now with optimistic UI.
- *
- * - Add to Cart: optimistic cart update (no wait), prevents duplicate clicks,
- *   shows loading, then navigates to cart.
- * - Buy Now: adds to cart then routes straight to checkout.
- * - Both gate on auth (redirect to login) and guard against sold-out products.
- */
 export default function ProductActions({ product }: ProductActionsProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { addToCart } = useCart();
   const { trackAddToCart } = useAnalytics();
 
-  const [cartLoading, setCartLoading] = useState<"none" | "add" | "buy">("none");
+  const [cartLoading, setCartLoading] = useState<"none" | "add" | "buy">(
+    "none",
+  );
   const busyRef = useRef(false);
 
-  const soldOut = product.status === "sold" || product.isActive === false;
+  const soldOut =
+    product.status === "sold" || product.isActive === false;
 
   const ensureAuth = useCallback(() => {
     if (!user) {
       toast.error("Please sign in to continue");
-      router.push(`/login?redirect=/product/${product.slug}`);
+      router.push(
+        `/login?redirect=${encodeURIComponent(`/product/${product.slug}`)}`,
+      );
       return false;
     }
+
     return true;
   }, [user, router, product.slug]);
 
+  const persistProduct = useCallback(async () => {
+    if (user) {
+      await persistAddToCart(product.id, 1);
+    }
+  }, [product.id, user]);
+
+  const trackProduct = useCallback(() => {
+    trackAddToCart(product.id, {
+      title: product.title,
+      brand: product.brand || "",
+      category: product.category || "",
+      price: product.price,
+      slug: product.slug,
+    });
+  }, [product, trackAddToCart]);
+
   const handleAddToCart = useCallback(async () => {
     if (busyRef.current || soldOut) return;
+
     busyRef.current = true;
     setCartLoading("add");
 
     try {
-      // Optimistic local cart update (instant UI)
+      await persistProduct();
+
       addToCart(product, 1);
-
-      // Persist the cart update so the cart page reflects it (ignore if not logged in)
-      if (user) {
-        await persistAddToCart(product.id, 1);
-      }
-
-      trackAddToCart(product.id, {
-        title: product.title,
-        brand: product.brand || "",
-        category: product.category || "",
-        price: product.price,
-        slug: product.slug,
-      });
+      trackProduct();
 
       toast.success("Added to cart");
-      // Brief pause so the user sees the optimistic state before navigating
-      setTimeout(() => router.push("/cart"), 350);
-    } catch {
-      toast.error("Unable to add product to cart");
+      router.push("/cart");
+    } catch (error) {
+      console.error("[ProductActions] Add to cart failed:", error);
+      toast.error("Unable to add this item. Please try again.");
       setCartLoading("none");
     } finally {
       busyRef.current = false;
     }
-  }, [addToCart, product, router, soldOut, trackAddToCart, user]);
+  }, [
+    addToCart,
+    persistProduct,
+    product,
+    router,
+    soldOut,
+    trackProduct,
+  ]);
 
   const handleBuyNow = useCallback(async () => {
     if (busyRef.current || soldOut) return;
@@ -86,28 +97,28 @@ export default function ProductActions({ product }: ProductActionsProps) {
     setCartLoading("buy");
 
     try {
-      // Add to cart then immediately go to checkout
-      addToCart(product, 1);
-      if (user) {
-        await persistAddToCart(product.id, 1);
-      }
+      await persistProduct();
 
-      trackAddToCart(product.id, {
-        title: product.title,
-        brand: product.brand || "",
-        category: product.category || "",
-        price: product.price,
-        slug: product.slug,
-      });
+      addToCart(product, 1);
+      trackProduct();
 
       router.push("/checkout");
-    } catch {
-      toast.error("Unable to start checkout");
+    } catch (error) {
+      console.error("[ProductActions] Buy now failed:", error);
+      toast.error("Unable to start checkout. Please try again.");
       setCartLoading("none");
     } finally {
       busyRef.current = false;
     }
-  }, [addToCart, ensureAuth, product, router, soldOut, trackAddToCart, user]);
+  }, [
+    addToCart,
+    ensureAuth,
+    persistProduct,
+    product,
+    router,
+    soldOut,
+    trackProduct,
+  ]);
 
   if (soldOut) {
     return (

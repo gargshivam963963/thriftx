@@ -84,41 +84,39 @@ export default function AdminDashboardPage() {
     }, [loadData]);
 
     return (
-        <div className="space-y-6">
+        <div className="mx-auto w-full max-w-[1600px] space-y-8">
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
             >
                 <div>
                     <div className="flex items-center gap-2">
-                        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
                             {greeting}, Admin
                         </h1>
-                        <Sparkles size={20} className="text-amber-400" />
+                        <Sparkles size={20} className="text-amber-400" aria-hidden="true" />
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-2 text-sm text-muted-foreground">
                         Here&apos;s what&apos;s happening with your store today.
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="flex h-2 w-2 rounded-full bg-emerald-500" />
-                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    <span className="text-xs font-medium text-foreground">
                         All systems operational
                     </span>
                 </div>
             </motion.div>
 
             {/* Stats Grid */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
                 <StatsCard
                     title="Total Revenue"
                     value={stats ? `₹${stats.totalRevenue.toLocaleString("en-IN")}` : "—"}
                     subtitle="All time"
                     icon={<DollarSign size={18} />}
-                    trend={12.5}
-                    trendLabel="vs last month"
                     delay={0}
                     loading={loading}
                 />
@@ -127,8 +125,6 @@ export default function AdminDashboardPage() {
                     value={stats?.totalOrders ?? "—"}
                     subtitle="All orders placed"
                     icon={<ShoppingCart size={18} />}
-                    trend={8.2}
-                    trendLabel="vs last month"
                     delay={1}
                     loading={loading}
                 />
@@ -137,8 +133,6 @@ export default function AdminDashboardPage() {
                     value={stats?.activeProducts ?? "—"}
                     subtitle={`${stats?.totalProducts ?? 0} total products`}
                     icon={<Package size={18} />}
-                    trend={-2.1}
-                    trendLabel="vs last month"
                     delay={2}
                     loading={loading}
                 />
@@ -147,8 +141,6 @@ export default function AdminDashboardPage() {
                     value={stats ? `₹${stats.averageOrderValue.toLocaleString("en-IN")}` : "—"}
                     subtitle="Per order"
                     icon={<TrendingUp size={18} />}
-                    trend={5.3}
-                    trendLabel="vs last month"
                     delay={3}
                     loading={loading}
                 />
@@ -157,8 +149,6 @@ export default function AdminDashboardPage() {
                     value={stats?.totalUsers ?? "—"}
                     subtitle={`${stats?.newUsersThisMonth ?? 0} new this month`}
                     icon={<Users size={18} />}
-                    trend={15.8}
-                    trendLabel="vs last month"
                     delay={4}
                     loading={loading}
                 />
@@ -167,15 +157,13 @@ export default function AdminDashboardPage() {
                     value={stats ? `${stats.conversionRate}%` : "—"}
                     subtitle="Visit to purchase"
                     icon={<Activity size={18} />}
-                    trend={0.8}
-                    trendLabel="vs last month"
                     delay={5}
                     loading={loading}
                 />
             </div>
 
             {/* Charts Row */}
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-2">
                 <RevenueChart
                     data={analytics?.dailySales ?? []}
                     loading={loading}
@@ -187,7 +175,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Products + Orders */}
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-2">
                 <TopProducts
                     products={analytics?.topProducts ?? []}
                     loading={loading}
@@ -199,7 +187,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Status + Insights */}
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-2">
                 <OrderStatusChart
                     data={analytics?.statusDistribution ?? []}
                     loading={loading}

@@ -61,6 +61,7 @@ export default function ProductActions({ product }: ProductActionsProps) {
 
   const handleAddToCart = useCallback(async () => {
     if (busyRef.current || soldOut) return;
+    if (!ensureAuth()) return;
 
     busyRef.current = true;
     setCartLoading("add");
@@ -82,6 +83,7 @@ export default function ProductActions({ product }: ProductActionsProps) {
     }
   }, [
     addToCart,
+    ensureAuth,
     persistProduct,
     product,
     router,

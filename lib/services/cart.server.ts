@@ -6,6 +6,7 @@ import {
   DocumentQuery,
   isDocumentStoreConfigured,
 } from "@/lib/document-store";
+import { getProductById } from "@/lib/services/products";
 
 export interface CartItem {
   id: string;
@@ -73,6 +74,11 @@ export async function addToCart(
 
   const normalizedUserId = userId.trim();
   const normalizedProductId = productId.trim();
+
+  const product = await getProductById(normalizedProductId);
+  if (!product) {
+    throw new Error("Product is no longer available");
+  }
 
   const existing = await findUserProduct(normalizedUserId, normalizedProductId);
 

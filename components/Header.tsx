@@ -728,12 +728,12 @@ function MobileMenu({
             </nav>
 
             <div className="border-t border-border px-5 py-5 sm:px-6">
-              <div className="flex items-center justify-between">
+              <div className="space-y-2">
                 <span className="text-body-sm font-medium text-muted-foreground">
                   Appearance
                 </span>
 
-                <ThemeToggle size="md" />
+                <ThemeToggle variant="segmented" size="md" className="w-full" />
               </div>
             </div>
           </motion.div>
@@ -1125,9 +1125,7 @@ export default function Header() {
             "
           >
             <div className="hidden md:block">
-              <Tooltip label="Toggle theme">
-                <ThemeToggle size="md" />
-              </Tooltip>
+              <ThemeToggle size="md" />
             </div>
 
             <Tooltip label="Search products">

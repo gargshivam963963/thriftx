@@ -2,16 +2,13 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    BadgeCheck,
     Banknote,
     Check,
     CheckCircle2,
     ChevronDown,
     ChevronRight,
     CreditCard,
-    Lock,
     LockKeyhole,
-    ShieldCheck,
     Wallet,
 } from "lucide-react";
 
@@ -20,39 +17,11 @@ import type { PaymentMethod } from "@/lib/types/order";
 interface PaymentSectionProps {
     open: boolean;
     onOpen: () => void;
-    onPay: (method: PaymentMethod) => void;
+    onPaymentMethodChange: (method: PaymentMethod) => void;
     paymentLoading: boolean;
     canPay: boolean;
     disabled?: boolean;
     selectedMethod: PaymentMethod | null;
-}
-
-function PaymentTrustItem({
-    icon,
-    title,
-    description,
-}: {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-}) {
-    return (
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:block sm:rounded-2xl sm:p-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground sm:mb-3">
-                {icon}
-            </div>
-
-            <div className="min-w-0">
-                <h4 className="text-xs font-semibold text-foreground sm:text-sm">
-                    {title}
-                </h4>
-
-                <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
-                    {description}
-                </p>
-            </div>
-        </div>
-    );
 }
 
 function PaymentOption({
@@ -217,7 +186,7 @@ function PaymentOption({
 export default function PaymentSection({
     open,
     onOpen,
-    onPay,
+    onPaymentMethodChange,
     paymentLoading,
     canPay,
     disabled = false,
@@ -384,7 +353,7 @@ export default function PaymentSection({
                                         "Pay at delivery",
                                     ]}
                                     selected={selectedMethod === "cod"}
-                                    onSelect={() => onPay("cod")}
+                                    onSelect={() => onPaymentMethodChange("cod")}
                                     loading={
                                         paymentLoading &&
                                         selectedMethod === "cod"
@@ -405,7 +374,7 @@ export default function PaymentSection({
                                     selected={
                                         selectedMethod === "razorpay"
                                     }
-                                    onSelect={() => onPay("razorpay")}
+                                    onSelect={() => onPaymentMethodChange("razorpay")}
                                     loading={
                                         paymentLoading &&
                                         selectedMethod === "razorpay"
@@ -436,27 +405,6 @@ export default function PaymentSection({
                                         </p>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Trust indicators */}
-                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
-                                <PaymentTrustItem
-                                    icon={<ShieldCheck size={17} />}
-                                    title="Secure Payment"
-                                    description="Protected payment flow"
-                                />
-
-                                <PaymentTrustItem
-                                    icon={<Lock size={17} />}
-                                    title="Encrypted"
-                                    description="Secure transaction"
-                                />
-
-                                <PaymentTrustItem
-                                    icon={<BadgeCheck size={17} />}
-                                    title="Order Protection"
-                                    description="Quality checked before dispatch"
-                                />
                             </div>
 
                             {!canPay && (

@@ -17,8 +17,8 @@ import {
   DocumentQuery,
   isDocumentStoreConfigured,
 } from "@/lib/document-store";
-import { validateCoupon, type CouponValidation } from "./offers";
-import { getWalletBalance, fetchCoupons } from "./data";
+import { validateCoupon } from "./offers";
+import type { Coupon } from "./types";
 
 export interface PromotionSettings {
   welcomeOffer: {
@@ -72,15 +72,38 @@ async function getPromotionSettings(): Promise<PromotionSettings> {
   try {
     const doc = await documentStore.getDocument(
       "thriftx",
+      "settings",
       "promotion-settings",
-      "global",
     );
 
     if (doc && typeof doc === "object") {
-      return { ...DEFAULT_SETTINGS, ...doc };
+      return {
+        ...DEFAULT_SETTINGS,
+        ...doc,
+        welcomeOffer: {
+          ...DEFAULT_SETTINGS.welcomeOffer,
+          ...(doc.welcomeOffer as Partial<PromotionSettings["welcomeOffer"]>),
+        },
+        referralProgram: {
+          ...DEFAULT_SETTINGS.referralProgram,
+          ...(doc.referralProgram as Partial<
+            PromotionSettings["referralProgram"]
+          >),
+        },
+        stackingRules: {
+          ...DEFAULT_SETTINGS.stackingRules,
+          ...(doc.stackingRules as Partial<
+            PromotionSettings["stackingRules"]
+          >),
+        },
+      };
     }
-  } catch {
-    // Document doesn't exist, use defaults
+  } catch (error) {
+    if (error instanceof Error && error.message === "Document not found") {
+      return DEFAULT_SETTINGS;
+    }
+    console.error("Unable to load promotion settings:", error);
+    throw error;
   }
 
   return DEFAULT_SETTINGS;
@@ -92,28 +115,16 @@ async function getPromotionSettings(): Promise<PromotionSettings> {
  */
 async function isFirstOrder(userId: string): Promise<boolean> {
   if (!isDocumentStoreConfigured) {
-    return true; // Assume first order if no DB
+    return false;
   }
 
-  try {
-    const result = await documentStore.listDocuments(
-      "thriftx",
-      "orders",
-      [
-        DocumentQuery.equal("userId", userId),
-        DocumentQuery.limit(1),
-      ],
-    );
+  const result = await documentStore.listDocuments("thriftx", "orders", [
+    DocumentQuery.equal("userId", userId),
+  ]);
 
-    // Filter out cancelled orders
-    const validOrders = result.documents.filter(
-      (doc) => doc.status && doc.status !== "Cancelled",
-    );
-
-    return validOrders.length === 0;
-  } catch {
-    return true; // Assume first order if query fails
-  }
+  return !result.documents.some(
+    (doc) => String(doc.status ?? "").toLowerCase() !== "cancelled",
+  );
 }
 
 /**
@@ -132,47 +143,52 @@ async function validateReferralCode(
     return { valid: false };
   }
 
-  try {
-    // Find referral document by code
-    const result = await documentStore.listDocuments(
-      "thriftx",
-      "referrals",
-      [
-        DocumentQuery.equal("code", referralCode.trim()),
-        DocumentQuery.limit(1),
-      ],
-    );
+  // Find referral document by code
+  const result = await documentStore.listDocuments(
+    "thriftx",
+    "referrals",
+    [
+      DocumentQuery.equal("code", referralCode.trim()),
+      DocumentQuery.limit(1),
+    ],
+  );
 
-    if (result.documents.length === 0) {
-      return { valid: false, error: "Referral code not found" };
-    }
-
-    const referral = result.documents[0];
-
-    // Prevent self-referrals
-    if (referral.referrerUserId === userId) {
-      return { valid: false, error: "Cannot use your own referral code" };
-    }
-
-    // Check if already used by this user (prevent duplicate rewards)
-    const existingReferral = await documentStore.getDocument(
-      "thriftx",
-      "referrals",
-      `${referralCode}:${userId}`,
-    );
-
-    if (existingReferral) {
-      return {
-        valid: false,
-        error: "You have already used this referral code",
-      };
-    }
-
-    return { valid: true, referrerUserId: String(referral.referrerUserId) };
-  } catch (error) {
-    console.error("validateReferralCode error:", error);
-    return { valid: false, error: "Unable to validate referral code" };
+  if (result.documents.length === 0) {
+    return { valid: false, error: "Referral code not found" };
   }
+
+  const referral = result.documents[0];
+
+  // Prevent self-referrals
+  if (referral.referrerUserId === userId) {
+    return { valid: false, error: "Cannot use your own referral code" };
+  }
+
+  // Check if already used by this user (prevent duplicate rewards)
+  const existingReferral = await documentStore.listDocuments(
+    "thriftx",
+    "referrals",
+    [
+      DocumentQuery.equal("referralCode", referralCode.trim()),
+      DocumentQuery.equal("referredUserId", userId),
+      DocumentQuery.limit(1),
+    ],
+  );
+
+  const existingSignup = existingReferral.documents[0];
+  if (existingSignup && existingSignup.status !== "signup-recorded") {
+    return {
+      valid: false,
+      error: "You have already used this referral code",
+    };
+  }
+
+  return {
+    valid: true,
+    referrerUserId: String(
+      existingSignup?.referrerUserId ?? referral.referrerUserId,
+    ),
+  };
 }
 
 /**
@@ -246,21 +262,52 @@ export async function calculatePromotion(
 
   // Candidate 3: Coupon Code
   if (appliedCouponCode) {
-    try {
-      const coupons = await fetchCoupons();
-      const coupon = coupons.find(
-        (c) => c.code && c.code.toLowerCase() === appliedCouponCode.toLowerCase(),
+    if (isDocumentStoreConfigured) {
+      const { documents } = await documentStore.listDocuments(
+        "thriftx",
+        "coupons",
       );
+      const couponDocument = documents.find(
+        (coupon) =>
+          typeof coupon.code === "string" &&
+          coupon.code.toLowerCase() === appliedCouponCode.trim().toLowerCase(),
+      );
+      const coupon: Coupon | undefined = couponDocument
+        ? {
+            id: String(couponDocument.id ?? couponDocument.$id),
+            code: String(couponDocument.code),
+            discountType:
+              couponDocument.discountType === "percent" ? "percent" : "flat",
+            discountValue: Number(couponDocument.discountValue),
+            minOrderValue: Number(couponDocument.minOrderValue ?? 0),
+            maxDiscount:
+              couponDocument.maxDiscount == null
+                ? undefined
+                : Number(couponDocument.maxDiscount),
+            expiresAt:
+              typeof couponDocument.expiresAt === "string"
+                ? couponDocument.expiresAt
+                : undefined,
+            usageLimit:
+              couponDocument.usageLimit == null
+                ? undefined
+                : Number(couponDocument.usageLimit),
+            usedCount: Number(couponDocument.usedCount ?? 0),
+            description:
+              typeof couponDocument.description === "string"
+                ? couponDocument.description
+                : "",
+            isActive: couponDocument.isActive === true,
+          }
+        : undefined;
       const couponValidation = validateCoupon(coupon, subtotal);
 
-      if (couponValidation.valid && couponValidation.discount) {
+      if (couponValidation.valid && couponValidation.discount > 0) {
         candidates.push({
           type: "coupon",
-          discount: couponValidation.discount,
+          discount: Math.min(couponValidation.discount, subtotal),
         });
       }
-    } catch {
-      // Invalid coupon, skip
     }
   }
 

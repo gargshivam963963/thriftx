@@ -1,12 +1,20 @@
 import Razorpay from "razorpay";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-const razorpay = new Razorpay({
-  key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+let razorpayClient: Razorpay | null = null;
 
-export default razorpay;
+export default function getRazorpayClient(): Razorpay {
+  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (!keyId || !keySecret) {
+    throw new Error("Razorpay credentials are not configured");
+  }
+  razorpayClient ??= new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret,
+  });
+  return razorpayClient;
+}
 
 export async function verifyCapturedRazorpayPayment({
   userId,
@@ -31,6 +39,7 @@ export async function verifyCapturedRazorpayPayment({
 
   if (!timingSafeEqual(expectedSignature, providedSignature)) return null;
 
+  const razorpay = getRazorpayClient();
   const [order, payment] = await Promise.all([
     razorpay.orders.fetch(orderId),
     razorpay.payments.fetch(paymentId),
@@ -46,6 +55,9 @@ export async function verifyCapturedRazorpayPayment({
     notes.userId !== userId ||
     !Number.isSafeInteger(amount) ||
     (expectedAmount !== undefined && amount !== expectedAmount) ||
+    order.currency !== "INR" ||
+    payment.currency !== "INR" ||
+    Number(payment.amount) !== amount ||
     payment.order_id !== orderId ||
     payment.status !== "captured"
   ) {

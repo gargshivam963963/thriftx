@@ -74,10 +74,6 @@ interface CheckoutAccordionProps {
     paymentLoading: boolean;
     canPay: boolean;
 
-    onPay: (
-        method: PaymentMethod,
-    ) => void;
-
     paymentMethod: PaymentMethod | null;
 
     onPaymentMethodChange: (
@@ -391,7 +387,6 @@ export default function CheckoutAccordion({
 
     paymentLoading,
     canPay,
-    onPay,
     paymentMethod,
     onPaymentMethodChange,
 
@@ -581,17 +576,6 @@ export default function CheckoutAccordion({
         ],
     );
 
-    const handlePaymentSelect = useCallback(
-        (method: PaymentMethod) => {
-            onPaymentMethodChange(method);
-            onPay(method);
-        },
-        [
-            onPaymentMethodChange,
-            onPay,
-        ],
-    );
-
     if (addressesLoading) {
         return <CheckoutLoading />;
     }
@@ -644,7 +628,7 @@ export default function CheckoutAccordion({
                     onOpen={() =>
                         onStepChange("payment")
                     }
-                    onPay={handlePaymentSelect}
+                    onPaymentMethodChange={onPaymentMethodChange}
                     paymentLoading={paymentLoading}
                     canPay={canPay}
                     disabled={

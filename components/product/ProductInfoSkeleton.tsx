@@ -9,33 +9,33 @@ export default function ProductInfoSkeleton() {
         <div className="space-y-6">
             {/* Brand + title */}
             <div className="space-y-3">
-                <div className="h-3 w-24 animate-pulse rounded bg-muted" />
-                <div className="h-8 w-3/4 animate-pulse rounded bg-muted" />
+                <div className="skeleton-glass h-3 w-24 rounded" />
+                <div className="skeleton-glass h-8 w-3/4 rounded-lg" />
                 <div className="flex gap-2">
-                    <div className="h-6 w-20 animate-pulse rounded-full bg-muted" />
-                    <div className="h-6 w-24 animate-pulse rounded-full bg-muted" />
+                    <div className="skeleton-glass h-6 w-20 rounded-full" />
+                    <div className="skeleton-glass h-6 w-24 rounded-full" />
                 </div>
             </div>
 
             {/* Price */}
             <div className="space-y-2">
-                <div className="h-10 w-40 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-56 animate-pulse rounded bg-muted" />
+                <div className="skeleton-glass h-10 w-40 rounded-xl" />
+                <div className="skeleton-glass h-4 w-56 rounded" />
             </div>
 
             {/* Actions */}
             <div className="space-y-3">
-                <div className="h-14 w-full animate-pulse rounded-xl bg-muted" />
-                <div className="h-14 w-full animate-pulse rounded-xl bg-muted" />
+                <div className="skeleton-glass h-14 w-full rounded-xl" />
+                <div className="skeleton-glass h-14 w-full rounded-xl" />
             </div>
 
             {/* Details card */}
             <div className="space-y-3 rounded-2xl border border-border bg-card p-6">
-                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                <div className="skeleton-glass h-4 w-32 rounded" />
                 {[0, 1, 2, 3, 4].map((i) => (
                     <div key={i} className="flex items-center justify-between py-2">
-                        <div className="h-3 w-20 animate-pulse rounded bg-muted" />
-                        <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+                        <div className="skeleton-glass h-3 w-20 rounded" />
+                        <div className="skeleton-glass h-3 w-24 rounded" />
                     </div>
                 ))}
             </div>

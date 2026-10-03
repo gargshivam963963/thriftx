@@ -103,14 +103,14 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                 aria-label="THRIFTX Admin dashboard"
                 className="flex h-[76px] shrink-0 items-center gap-3.5 border-b border-border px-5 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
             >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-foreground text-sm font-bold leading-none tracking-tight text-background">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-foreground text-sm font-bold leading-normal tracking-tight text-background">
                     T
                 </span>
-                <span className="flex min-w-0 flex-col gap-1">
-                    <span className="truncate text-lg font-bold leading-none tracking-tight text-foreground">
+                <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="truncate text-lg font-bold leading-normal tracking-tight text-foreground">
                         THRIFTX
                     </span>
-                    <span className="text-caption text-muted-foreground">
+                    <span className="text-caption text-muted-foreground leading-normal">
                         Admin Panel
                     </span>
                 </span>
@@ -140,14 +140,14 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                                         onClick={onClose}
                                         aria-current={isActive ? "page" : undefined}
                                         className={cn(
-                                            "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium leading-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+                                            "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium leading-normal transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                                             isActive
                                                 ? "bg-accent text-accent-foreground shadow-sm"
                                                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
                                         )}
                                     >
                                         <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
-                                        <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                                        <span className="min-w-0 flex-1 truncate py-0.5">{item.label}</span>
                                         {isActive && (
                                             <motion.div
                                                 layoutId="activeTab"
@@ -164,10 +164,10 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
             </nav>
 
             {/* Bottom */}
-            <div className="shrink-0 space-y-1 border-t border-border p-4">
-                <div className="mb-2 flex min-h-10 items-center justify-between rounded-xl px-3">
-                    <span className="text-sm font-medium text-muted-foreground">Appearance</span>
-                    <ThemeToggle size="sm" />
+            <div className="shrink-0 space-y-2 border-t border-border p-4">
+                <div className="space-y-1.5 px-1">
+                    <span className="text-xs font-semibold text-muted-foreground">Appearance</span>
+                    <ThemeToggle variant="segmented" size="sm" />
                 </div>
 
                 <Link

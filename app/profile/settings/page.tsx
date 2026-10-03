@@ -22,6 +22,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { authClient } from "@/lib/auth-client";
 import { getFriendlyError } from "@/lib/errors";
 import { useTheme } from "@/lib/ThemeContext";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -419,41 +420,15 @@ export default function SettingsPage() {
                     <div className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
                         <div>
                             <p className="text-body-sm font-medium text-foreground">
-                                Dark Mode
+                                Theme Preference
                             </p>
                             <p className="text-small text-muted-foreground">
-                                Apply the dark theme across THRIFTX.
+                                Choose between System (follows device), Light, or Dark mode.
                             </p>
                         </div>
 
-                        <div
-                            role="group"
-                            aria-label="Theme preference"
-                            className="flex rounded-xl border border-border bg-muted/50 p-1"
-                        >
-                            <button
-                                type="button"
-                                aria-pressed={theme === "light"}
-                                onClick={() => setTheme("light")}
-                                className={`rounded-lg px-4 py-2 text-body-sm transition-colors ${theme === "light"
-                                    ? "bg-card text-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground"
-                                    }`}
-                            >
-                                Light
-                            </button>
-
-                            <button
-                                type="button"
-                                aria-pressed={theme === "dark"}
-                                onClick={() => setTheme("dark")}
-                                className={`rounded-lg px-4 py-2 text-body-sm transition-colors ${theme === "dark"
-                                    ? "bg-card text-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground"
-                                    }`}
-                            >
-                                Dark
-                            </button>
+                        <div className="w-full sm:w-auto">
+                            <ThemeToggle variant="segmented" size="md" />
                         </div>
                     </div>
                 </motion.section>

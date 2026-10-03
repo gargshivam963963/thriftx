@@ -26,6 +26,14 @@ import { useAuth } from "@/lib/AuthContext";
 
 type CartStatus = "loading" | "ready" | "error";
 
+interface CartQuote {
+  subtotal: number;
+  discount: number;
+  discountReason: string;
+  appliedPromotion: "welcome" | "referral" | "coupon" | "none";
+  total: number;
+}
+
 function CartLoadingSkeleton() {
   return (
     <div
@@ -114,9 +122,13 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartProduct[]>([]);
   const [status, setStatus] = useState<CartStatus>("loading");
   const [couponCode, setCouponCode] = useState("");
-  const [discount, setDiscount] = useState(0);
+  const [referralCode, setReferralCode] = useState("");
+  const [cartQuote, setCartQuote] = useState<CartQuote | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState("");
 
   const requestId = useRef(0);
+  const quoteRequestId = useRef(0);
 
   const loadCart = useCallback(async () => {
     if (authLoading) return;
@@ -149,6 +161,12 @@ export default function CartPage() {
   useEffect(() => {
     if (authLoading) return;
 
+    setCouponCode(
+      window.sessionStorage.getItem("thriftx:checkout-coupon") ?? "",
+    );
+    setReferralCode(
+      window.localStorage.getItem("thriftx:referral-code") ?? "",
+    );
     void loadCart();
 
     return () => {
@@ -156,12 +174,69 @@ export default function CartPage() {
     };
   }, [authLoading, loadCart]);
 
-  const subtotal = useMemo(() => {
-    return cartItems.reduce((total, item) => {
-      const price = Number(String(item.price).replace(/[^\d.]/g, ""));
-      return total + price * item.quantity;
-    }, 0);
-  }, [cartItems]);
+  useEffect(() => {
+    if (status !== "ready" || !user || cartItems.length === 0) {
+      setCartQuote(null);
+      setQuoteLoading(false);
+      setQuoteError("");
+      return;
+    }
+
+    const currentRequest = ++quoteRequestId.current;
+    const controller = new AbortController();
+    setCartQuote(null);
+    setQuoteLoading(true);
+    setQuoteError("");
+
+    void fetch("/api/cart/quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      signal: controller.signal,
+      body: JSON.stringify({
+        ...(couponCode ? { couponCode } : {}),
+        ...(referralCode ? { referralCode } : {}),
+      }),
+    })
+      .then(async (response) => {
+        const result = (await response.json()) as {
+          success?: boolean;
+          message?: string;
+          quote?: CartQuote;
+        };
+        if (!response.ok || !result.success || !result.quote) {
+          throw new Error(result.message || "Unable to calculate cart total.");
+        }
+        if (currentRequest === quoteRequestId.current) {
+          setCartQuote(result.quote);
+        }
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        if (currentRequest === quoteRequestId.current) {
+          console.error("Cart quote failed:", error);
+          setCartQuote(null);
+          setQuoteError(
+            error instanceof Error
+              ? error.message
+              : "Unable to confirm your cart total.",
+          );
+        }
+      })
+      .finally(() => {
+        if (currentRequest === quoteRequestId.current) {
+          setQuoteLoading(false);
+        }
+      });
+
+    return () => {
+      controller.abort();
+      quoteRequestId.current += 1;
+    };
+  }, [cartItems, couponCode, referralCode, status, user]);
+
+  const authoritativeSubtotal = cartQuote?.subtotal ?? 0;
+  const discount = cartQuote?.discount ?? 0;
 
   const savings = useMemo(() => {
     return cartItems.reduce((total, item) => {
@@ -170,7 +245,7 @@ export default function CartPage() {
     }, 0);
   }, [cartItems]);
 
-  const total = Math.max(0, subtotal - discount);
+  const total = cartQuote?.total ?? 0;
 
   const increaseQuantity = async (cartId: string) => {
     try {
@@ -190,7 +265,7 @@ export default function CartPage() {
       await removeCartItem(cartId);
 
       setCouponCode("");
-      setDiscount(0);
+      window.sessionStorage.removeItem("thriftx:checkout-coupon");
 
       toast.success("Item removed from cart");
       await loadCart();
@@ -229,7 +304,7 @@ export default function CartPage() {
       const res = await fetch("/api/marketing/coupons/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: coupon, subtotal }),
+        body: JSON.stringify({ code: coupon }),
       });
 
       if (!res.ok) {
@@ -240,14 +315,12 @@ export default function CartPage() {
 
       if (data.success && data.valid) {
         setCouponCode(data.code);
-        setDiscount(data.discount);
+        window.sessionStorage.setItem("thriftx:checkout-coupon", data.code);
 
-        toast.success(
-          `Coupon applied — ₹${data.discount.toLocaleString("en-IN")} off!`
-        );
+        toast.success("Coupon accepted. Your total is being recalculated.");
       } else {
         setCouponCode("");
-        setDiscount(0);
+        window.sessionStorage.removeItem("thriftx:checkout-coupon");
         toast.error(data.message || "Invalid coupon code");
       }
     } catch (error) {
@@ -276,6 +349,15 @@ export default function CartPage() {
     if (cartItems.some((item) => !item.price || item.price <= 0)) {
       toast.error("Some items have invalid pricing");
       return;
+    }
+
+    if (quoteLoading || !cartQuote || quoteError) {
+      toast.error("Please wait while we confirm your cart total.");
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("thriftx:checkout-coupon", couponCode);
     }
 
     router.push("/checkout");
@@ -392,13 +474,18 @@ export default function CartPage() {
               ) : (
                 <OrderSummary
                   itemCount={cartItems.length}
-                  subtotal={subtotal}
+                  subtotal={authoritativeSubtotal}
                   total={total}
                   savings={savings}
                   paymentLoading={false}
                   onCheckout={handleCheckout}
                   appliedCoupon={couponCode}
                   discount={discount}
+                  discountReason={cartQuote?.discountReason ?? ""}
+                  appliedPromotion={cartQuote?.appliedPromotion ?? "none"}
+                  pricingLoading={quoteLoading}
+                  pricingError={quoteError}
+                  onRetryPricing={() => void loadCart()}
                   onApplyCoupon={applyCoupon}
                 />
               )}

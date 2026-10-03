@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
     controlHeight,
@@ -37,7 +37,7 @@ export function ToolbarSearch({
                 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             />
             <input
-                type="search"
+                type="text"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
@@ -47,7 +47,7 @@ export function ToolbarSearch({
                     controlRadius,
                     controlTransition,
                     controlFocusRing,
-                    "w-full border border-border bg-card pl-10 pr-4 text-sm text-foreground",
+                    "w-full border border-border bg-card pl-10 pr-9 text-sm text-foreground",
                     "placeholder:text-muted-foreground",
                     "focus:border-foreground/60",
                     "dark:border-border dark:bg-card dark:text-foreground",
@@ -55,6 +55,16 @@ export function ToolbarSearch({
                     "disabled:cursor-not-allowed disabled:opacity-50",
                 )}
             />
+            {value && (
+                <button
+                    type="button"
+                    onClick={() => onChange("")}
+                    aria-label="Clear search"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                    <X size={15} />
+                </button>
+            )}
         </div>
     );
 }

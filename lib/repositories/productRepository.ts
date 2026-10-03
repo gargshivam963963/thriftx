@@ -1,6 +1,7 @@
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { createProductImageUrl } from "@/lib/storage/r2Download";
 import { getBrands as getBrandNames } from "./brandRepository";
+import type { Prisma } from "@/generated/prisma/client";
 import type { Product, ProductFilters } from "@/lib/services/products";
 
 /**
@@ -12,19 +13,160 @@ import type { Product, ProductFilters } from "@/lib/services/products";
  * so the app never crashes during the migration window.
  */
 
-type ProductRow = Exclude<Awaited<ReturnType<typeof getRows>>, null>[number];
+const PRODUCT_SELECT = {
+  id: true,
+  title: true,
+  brand: true,
+  slug: true,
+  category: true,
+  categorySlug: true,
+  gender: true,
+  price: true,
+  retailPrice: true,
+  condition: true,
+  size: true,
+  chest: true,
+  waist: true,
+  length: true,
+  inseam: true,
+  color: true,
+  material: true,
+  description: true,
+  shippingInfo: true,
+  isActive: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+  images: {
+    orderBy: { position: "asc" as const },
+    select: { url: true, position: true },
+  },
+} as const;
+
+type ProductRow = Prisma.ProductGetPayload<{ select: typeof PRODUCT_SELECT }>;
 
 export type ProductImport = Omit<Product, "id"> & { id: string };
+
+function availableInventoryWhere() {
+  return {
+    OR: [
+      { reservationExpiresAt: null },
+      { reservationExpiresAt: { lte: new Date() } },
+    ],
+  };
+}
+
+function isMissingReservationColumns(error: unknown): boolean {
+  if (
+    typeof error !== "object" ||
+    error === null ||
+    !("code" in error) ||
+    error.code !== "P2022"
+  ) {
+    return false;
+  }
+
+  const meta =
+    "meta" in error && typeof error.meta === "object" && error.meta !== null
+      ? error.meta
+      : null;
+  const adapterError =
+    meta &&
+    "driverAdapterError" in meta &&
+    typeof meta.driverAdapterError === "object" &&
+    meta.driverAdapterError !== null
+      ? meta.driverAdapterError
+      : null;
+  const cause =
+    adapterError &&
+    "cause" in adapterError &&
+    typeof adapterError.cause === "object" &&
+    adapterError.cause !== null
+      ? adapterError.cause
+      : null;
+  const column =
+    (cause && "column" in cause && typeof cause.column === "string"
+      ? cause.column
+      : "") ||
+    (meta && "column" in meta && typeof meta.column === "string"
+      ? meta.column
+      : "");
+
+  return (
+    column.includes("reservedBy") ||
+    column.includes("reservationId") ||
+    column.includes("reservationExpiresAt")
+  );
+}
+
+function withAvailability(
+  where: Prisma.ProductWhereInput,
+): Prisma.ProductWhereInput {
+  const existingAnd = where.AND
+    ? Array.isArray(where.AND)
+      ? where.AND
+      : [where.AND]
+    : [];
+
+  return {
+    ...where,
+    isActive: true,
+    status: "active",
+    AND: [...existingAnd, availableInventoryWhere()],
+  };
+}
+
+async function findManyAvailable(
+  where: Prisma.ProductWhereInput,
+  options: {
+    orderBy?: Prisma.ProductOrderByWithRelationInput;
+    skip?: number;
+    take?: number;
+  } = {},
+): Promise<ProductRow[]> {
+  const query = {
+    select: PRODUCT_SELECT,
+    ...options,
+  };
+
+  try {
+    return await prisma!.product.findMany({
+      ...query,
+      where: withAvailability(where),
+    });
+  } catch (error) {
+    if (!isMissingReservationColumns(error)) throw error;
+
+    console.warn(
+      "Product reservation migration is not applied; using legacy product availability.",
+    );
+    return prisma!.product.findMany({ ...query, where });
+  }
+}
+
+async function findFirstAvailable(
+  where: Prisma.ProductWhereInput,
+): Promise<ProductRow | null> {
+  try {
+    return await prisma!.product.findFirst({
+      where: withAvailability(where),
+      select: PRODUCT_SELECT,
+    });
+  } catch (error) {
+    if (!isMissingReservationColumns(error)) throw error;
+
+    console.warn(
+      "Product reservation migration is not applied; using legacy product availability.",
+    );
+    return prisma!.product.findFirst({ where, select: PRODUCT_SELECT });
+  }
+}
 
 async function getRows() {
   if (!isDatabaseConfigured) return null;
   try {
-    return await prisma!.product.findMany({
-      where: { isActive: true, status: "active" },
-      include: { images: { orderBy: { position: "asc" } } },
-    });
+    return await findManyAvailable({ isActive: true, status: "active" });
   } catch (error) {
-    // Table may not exist yet (migration not applied) — return null gracefully.
     console.error("getRows error:", error);
     return null;
   }
@@ -32,9 +174,7 @@ async function getRows() {
 
 async function mapProduct(row: ProductRow): Promise<Product> {
   const images = await Promise.all(
-    [...row.images]
-      .sort((a, b) => a.position - b.position)
-      .map((image) => createProductImageUrl(image.url)),
+    row.images.map((image) => createProductImageUrl(image.url)),
   );
 
   return {
@@ -77,7 +217,7 @@ export async function getProductsByFilters(
 ): Promise<Product[]> {
   if (!isDatabaseConfigured) return [];
 
-  const where: Record<string, unknown> = {
+  const where: Prisma.ProductWhereInput = {
     isActive: true,
     status: "active",
   };
@@ -152,7 +292,7 @@ export async function getProductsByFilters(
     }
   }
 
-  let orderBy: Record<string, unknown> = { title: "asc" };
+  let orderBy: Prisma.ProductOrderByWithRelationInput = { title: "asc" };
   switch (filters.sort) {
     case "newest":
     case "popular":
@@ -170,15 +310,11 @@ export async function getProductsByFilters(
   const requested = filters.limit ?? 48;
   const take = Math.min(Math.max(1, requested), MAX_LIMIT);
 
-  const rows = await prisma!.product
-    .findMany({
-      where,
+  const rows = await findManyAvailable(where, {
       orderBy,
-      include: { images: { orderBy: { position: "asc" } } },
       skip: Math.max(0, filters.offset ?? 0),
       take,
-    })
-    .catch((error) => {
+    }).catch((error: unknown) => {
       console.error("getProductsByFilters error:", error);
       return [];
     });
@@ -189,9 +325,10 @@ export async function getProductsByFilters(
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   if (!isDatabaseConfigured) return null;
   try {
-    const row = await prisma!.product.findFirst({
-      where: { slug, isActive: true, status: "active" },
-      include: { images: { orderBy: { position: "asc" } } },
+    const row = await findFirstAvailable({
+      slug,
+      isActive: true,
+      status: "active",
     });
     if (!row) return null;
     return mapProduct(row);
@@ -204,9 +341,10 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 export async function getProductById(id: string): Promise<Product | null> {
   if (!isDatabaseConfigured) return null;
   try {
-    const row = await prisma!.product.findFirst({
-      where: { id, isActive: true, status: "active" },
-      include: { images: { orderBy: { position: "asc" } } },
+    const row = await findFirstAvailable({
+      id,
+      isActive: true,
+      status: "active",
     });
     if (!row) return null;
     return mapProduct(row);
@@ -218,13 +356,10 @@ export async function getProductById(id: string): Promise<Product | null> {
 
 export async function getProductsByIds(ids: string[]): Promise<Product[]> {
   if (!isDatabaseConfigured || ids.length === 0) return [];
-  const rows = await prisma!.product.findMany({
-    where: {
+  const rows = await findManyAvailable({
       id: { in: [...new Set(ids)] },
       isActive: true,
       status: "active",
-    },
-    include: { images: { orderBy: { position: "asc" } } },
   });
   return Promise.all(rows.map(mapProduct));
 }
@@ -235,16 +370,14 @@ export async function getSimilarProducts(
 ): Promise<Product[]> {
   if (!isDatabaseConfigured) return [];
 
-  const candidates = await prisma!.product
-    .findMany({
-      where: {
+  const candidates = await findManyAvailable(
+      {
         isActive: true,
         status: "active",
         id: { not: product.id },
       },
-      include: { images: { orderBy: { position: "asc" } } },
-      take: 200,
-    })
+      { take: 200 },
+    )
     .catch((error) => {
       console.error("getSimilarProducts error:", error);
       return [];
@@ -302,10 +435,26 @@ export async function getProductsForSitemap(): Promise<
 > {
   if (!isDatabaseConfigured) return [];
   try {
-    const rows = await prisma!.product.findMany({
-      where: { isActive: true, status: "active" },
-      select: { slug: true, updatedAt: true },
-    });
+    const where: Prisma.ProductWhereInput = {
+        isActive: true,
+        status: "active",
+      };
+    let rows: { slug: string; updatedAt: Date }[];
+    try {
+      rows = await prisma!.product.findMany({
+        where: withAvailability(where),
+        select: { slug: true, updatedAt: true },
+      });
+    } catch (error) {
+      if (!isMissingReservationColumns(error)) throw error;
+      console.warn(
+        "Product reservation migration is not applied; using legacy sitemap availability.",
+      );
+      rows = await prisma!.product.findMany({
+        where,
+        select: { slug: true, updatedAt: true },
+      });
+    }
     return rows.map((r) => ({
       slug: r.slug,
       updatedAt: r.updatedAt.toISOString(),
@@ -552,28 +701,27 @@ export async function searchProducts(
   const q = query.trim().toLowerCase();
   if (!q) return [];
 
-  const rows = await prisma!.product
-    .findMany({
-      where: {
-        isActive: true,
-        status: "active",
-        OR: [
-          { title: { contains: q, mode: "insensitive" } },
-          { brand: { contains: q, mode: "insensitive" } },
-          { category: { contains: q, mode: "insensitive" } },
-          { description: { contains: q, mode: "insensitive" } },
-          { color: { contains: q, mode: "insensitive" } },
-          { material: { contains: q, mode: "insensitive" } },
-        ],
-      },
-      include: { images: { orderBy: { position: "asc" } } },
+  const rows = await findManyAvailable(
+    {
+      isActive: true,
+      status: "active",
+      OR: [
+        { title: { contains: q, mode: "insensitive" } },
+        { brand: { contains: q, mode: "insensitive" } },
+        { category: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { color: { contains: q, mode: "insensitive" } },
+        { material: { contains: q, mode: "insensitive" } },
+      ],
+    },
+    {
       take: limit,
       orderBy: { createdAt: "desc" },
-    })
-    .catch((error) => {
-      console.error("searchProducts error:", error);
-      return [];
-    });
+    },
+  ).catch((error) => {
+    console.error("searchProducts error:", error);
+    return [];
+  });
 
   return Promise.all(rows.map(mapProduct));
 }

@@ -12,15 +12,20 @@ import {
 import PremiumImage from "@/components/ui/PremiumImage";
 import { Button } from "@/components/ui/button";
 import type { CartProduct } from "@/lib/services/cartProducts";
+import type { PaymentMethod } from "@/lib/types/order";
 
 interface CheckoutOrderSummaryProps {
     items: CartProduct[];
     subtotal: number;
     shippingCost: number;
     total: number;
+    discount?: number;
+    discountReason?: string;
+    pricingLoading?: boolean;
     paymentLoading: boolean;
     canPay: boolean;
-    onPay: () => void;
+    selectedMethod: PaymentMethod | null;
+    onPay: (method: PaymentMethod) => void;
 }
 
 interface RowProps {
@@ -64,16 +69,21 @@ export default function CheckoutOrderSummary({
     subtotal,
     shippingCost,
     total,
+    discount = 0,
+    discountReason = "",
+    pricingLoading = false,
     paymentLoading,
     canPay,
+    selectedMethod,
     onPay,
 }: CheckoutOrderSummaryProps) {
     const isFreeShipping = shippingCost === 0;
+    const canConfirm = canPay && selectedMethod !== null;
 
     return (
         <aside
             aria-label="Order summary"
-            className="h-fit xl:sticky xl:top-24"
+            className="h-fit lg:sticky lg:top-24"
         >
             <motion.div
                 layout
@@ -180,17 +190,26 @@ export default function CheckoutOrderSummary({
                             highlight={isFreeShipping}
                         />
 
-                        {/* Coupon information */}
-                        <div className="flex items-center gap-2 rounded-xl bg-subtle px-3 py-2.5">
-                            <Tag
-                                aria-hidden="true"
-                                className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                        {discount > 0 ? (
+                            <Row
+                                label={discountReason || "Promotion"}
+                                value={`−${formatCurrency(discount)}`}
+                                highlight
                             />
+                        ) : (
+                            <div className="flex items-center gap-2 rounded-xl bg-subtle px-3 py-2.5">
+                                <Tag
+                                    aria-hidden="true"
+                                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                                />
 
-                            <span className="text-xs text-muted-foreground">
-                                Have a coupon? Apply it in your cart.
-                            </span>
-                        </div>
+                                <span className="text-xs text-muted-foreground">
+                                    {pricingLoading
+                                        ? "Confirming your server-calculated total…"
+                                        : "Have a coupon? Apply it in your cart."}
+                                </span>
+                            </div>
+                        )}
 
                         <div
                             aria-hidden="true"
@@ -209,18 +228,20 @@ export default function CheckoutOrderSummary({
                             </div>
 
                             <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                                {formatCurrency(total)}
+                                {pricingLoading || !canPay
+                                    ? "—"
+                                    : formatCurrency(total)}
                             </span>
                         </div>
                     </div>
 
                     {/* Desktop payment action */}
-                    <div className="hidden xl:block">
+                    <div className="hidden lg:block">
                         <Button
                             type="button"
-                            onClick={onPay}
+                            onClick={() => onPay(selectedMethod ?? "razorpay")}
                             loading={paymentLoading}
-                            disabled={!canPay || paymentLoading}
+                            disabled={!canConfirm || paymentLoading}
                             fullWidth
                             size="lg"
                             leftIcon={<Lock className="h-5 w-5" />}
@@ -229,16 +250,19 @@ export default function CheckoutOrderSummary({
                             }
                             className="mt-5 h-14 rounded-2xl text-base shadow-lg shadow-foreground/10 sm:mt-6"
                         >
-                            Pay Securely
+                            {selectedMethod === "cod"
+                                ? "Place COD order"
+                                : "Pay securely"}
                         </Button>
 
-                        {!canPay && (
+                        {!canConfirm && (
                             <p
                                 role="status"
                                 className="mt-3 text-center text-xs text-amber-600"
                             >
-                                Complete your address and shipping selection
-                                to continue.
+                                {canPay
+                                    ? "Choose a payment method to continue."
+                                    : "Complete your address and shipping selection to continue."}
                             </p>
                         )}
                     </div>

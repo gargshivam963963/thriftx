@@ -22,7 +22,7 @@ export const controlRadius = "rounded-xl";
 export const controlPadding = "px-4";
 
 /** Standard font size + weight for control labels. */
-export const controlText = "font-medium text-sm leading-none";
+export const controlText = "font-medium text-sm leading-normal";
 
 /** Standard gap between icon and label (8px). */
 export const controlGap = "gap-2";

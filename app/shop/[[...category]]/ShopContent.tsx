@@ -291,6 +291,12 @@ export default function ShopContent({
             initialSearch ?? "",
         );
 
+    const [isSearching, setIsSearching] =
+        useState(false);
+
+    const searchAbortRef =
+        useRef<AbortController | null>(null);
+
     const baseUrl = gender
         ? `/shop/${gender}${clothingCategory
             ? `/${clothingCategory}`
@@ -403,7 +409,7 @@ export default function ShopContent({
 
     /*
      * ---------------------------------------------------------
-     * Search
+     * Search (Queries whole database across all products)
      * ---------------------------------------------------------
      */
 
@@ -422,50 +428,137 @@ export default function ShopContent({
         }
 
         debounceRef.current =
-            setTimeout(() => {
+            setTimeout(async () => {
                 const query =
-                    searchInput
-                        .trim()
-                        .toLowerCase();
+                    searchInput.trim();
+
+                if (searchAbortRef.current) {
+                    searchAbortRef.current.abort();
+                }
 
                 if (!query) {
                     setProducts(
                         initialProducts,
                     );
+                    setOffset(
+                        ITEMS_PER_PAGE,
+                    );
+                    setHasMore(
+                        initialProducts.length >=
+                        ITEMS_PER_PAGE,
+                    );
+                    setTotalCount(
+                        initialProducts.length,
+                    );
+                    setIsSearching(false);
                     return;
                 }
 
-                const filtered =
-                    initialProducts.filter(
-                        (product) => {
-                            const searchableText =
-                                [
-                                    product.title,
-                                    product.brand,
-                                    product.description,
-                                    product.category,
-                                    product.material,
-                                    product.color,
-                                    product.size,
-                                ]
-                                    .filter(
-                                        Boolean,
-                                    )
-                                    .join(
-                                        " ",
-                                    )
-                                    .toLowerCase();
+                setIsSearching(true);
+                const controller =
+                    new AbortController();
+                searchAbortRef.current =
+                    controller;
 
-                            return searchableText.includes(
-                                query,
-                            );
-                        },
+                try {
+                    const params =
+                        new URLSearchParams(
+                            searchParams.toString(),
+                        );
+
+                    params.set(
+                        "search",
+                        query,
+                    );
+                    params.set(
+                        "sort",
+                        initialSort,
+                    );
+                    params.set(
+                        "limit",
+                        String(
+                            ITEMS_PER_PAGE,
+                        ),
+                    );
+                    params.set(
+                        "offset",
+                        "0",
                     );
 
-                setProducts(
-                    filtered,
-                );
-            }, 300);
+                    if (gender) {
+                        params.set(
+                            "gender",
+                            gender,
+                        );
+                    }
+
+                    if (
+                        clothingCategory
+                    ) {
+                        params.set(
+                            "category",
+                            clothingCategory,
+                        );
+                    }
+
+                    const response =
+                        await fetch(
+                            `/api/shop/products?${params.toString()}`,
+                            {
+                                method: "GET",
+                                signal: controller.signal,
+                                cache: "no-store",
+                            },
+                        );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            "Search query failed",
+                        );
+                    }
+
+                    const data =
+                        await response.json();
+
+                    if (
+                        data.success &&
+                        Array.isArray(
+                            data.products,
+                        )
+                    ) {
+                        setProducts(
+                            data.products,
+                        );
+                        setOffset(
+                            ITEMS_PER_PAGE,
+                        );
+                        setHasMore(
+                            Boolean(
+                                data.hasMore,
+                            ),
+                        );
+                        setTotalCount(
+                            data.products
+                                .length,
+                        );
+                    }
+                } catch (error) {
+                    if (
+                        error instanceof
+                        Error &&
+                        error.name ===
+                        "AbortError"
+                    ) {
+                        return;
+                    }
+                    console.error(
+                        "Shop search error:",
+                        error,
+                    );
+                } finally {
+                    setIsSearching(false);
+                }
+            }, 350);
 
         return () => {
             if (debounceRef.current) {
@@ -477,6 +570,10 @@ export default function ShopContent({
     }, [
         searchInput,
         initialProducts,
+        searchParams,
+        initialSort,
+        gender,
+        clothingCategory,
     ]);
 
     /*
@@ -1526,10 +1623,10 @@ export default function ShopContent({
                         </div>
 
                         {/* =================================================
-                            INITIAL LOADING
+                            INITIAL LOADING & SEARCH SKELETON
                         ================================================== */}
 
-                        {loading ? (
+                        {loading || isSearching ? (
                             <ProductGridSkeleton
                                 list={
                                     viewMode ===

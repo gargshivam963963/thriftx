@@ -1,23 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AuthGuardError, requireUser } from "@/lib/auth-guard";
-import { createOrder, getUserOrders } from "@/lib/services/orderService";
+import {
+  createOrder,
+  getOrderByPaymentId,
+  getUserOrders,
+  OrderInventoryConflictError,
+} from "@/lib/services/orderService";
 import type { OrderData } from "@/lib/services/orderService";
 import { verifyCapturedRazorpayPayment } from "@/lib/razorpay";
 import {
   CheckoutPricingError,
   getCheckoutPricing,
 } from "@/lib/services/checkoutPricing.server";
+import { recordOrderForReferral } from "@/lib/marketing/promotions.server";
+import { getCheckoutPaymentIntent } from "@/lib/services/paymentIntent.server";
 
 const MAX_BODY_LENGTH = 16_384;
 
-type CheckoutRequest = {
-  paymentMethod: "cod" | "razorpay";
-  addressId: string;
-  deliveryMethod: string;
-  orderId?: string;
-  paymentId?: string;
-  signature?: string;
-};
+type CheckoutRequest =
+  | {
+      paymentMethod: "cod";
+      addressId: string;
+      deliveryMethod: string;
+      couponCode?: string;
+      referralCode?: string;
+      idempotencyKey: string;
+    }
+  | {
+      paymentMethod: "razorpay";
+      orderId: string;
+      paymentId: string;
+      signature: string;
+    };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -34,24 +48,42 @@ function isNonEmptyString(value: unknown, maxLength: number): value is string {
 function parseCheckoutRequest(value: unknown): CheckoutRequest | null {
   if (!isRecord(value)) return null;
 
-  const { paymentMethod, addressId, deliveryMethod } = value;
+  const { paymentMethod } = value;
 
   if (paymentMethod !== "cod" && paymentMethod !== "razorpay") {
     return null;
   }
 
-  if (
-    !isNonEmptyString(addressId, 128) ||
-    !isNonEmptyString(deliveryMethod, 80)
-  ) {
-    return null;
-  }
-
   if (paymentMethod === "cod") {
+    const { addressId, deliveryMethod } = value;
+    const optionalString = (key: string, maxLength: number) => {
+      const optional = value[key];
+      if (optional === undefined || optional === null || optional === "") {
+        return undefined;
+      }
+      return isNonEmptyString(optional, maxLength) ? optional.trim() : null;
+    };
+    const couponCode = optionalString("couponCode", 64);
+    const referralCode = optionalString("referralCode", 64);
+    const idempotencyKey = optionalString("idempotencyKey", 128);
+
+    if (
+      !isNonEmptyString(addressId, 128) ||
+      !isNonEmptyString(deliveryMethod, 80) ||
+      !idempotencyKey ||
+      couponCode === null ||
+      referralCode === null
+    ) {
+      return null;
+    }
+
     return {
       paymentMethod,
       addressId: addressId.trim(),
       deliveryMethod: deliveryMethod.trim(),
+      ...(couponCode ? { couponCode } : {}),
+      ...(referralCode ? { referralCode } : {}),
+      idempotencyKey,
     };
   }
 
@@ -68,10 +100,8 @@ function parseCheckoutRequest(value: unknown): CheckoutRequest | null {
 
   return {
     paymentMethod,
-    addressId: addressId.trim(),
-    deliveryMethod: deliveryMethod.trim(),
-    orderId,
-    paymentId,
+    orderId: orderId.trim(),
+    paymentId: paymentId.trim(),
     signature,
   };
 }
@@ -112,9 +142,13 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireUser();
 
-    const contentLength = Number(request.headers.get("content-length") ?? "0");
+    const contentLength = request.headers.get("content-length");
 
-    if (Number.isFinite(contentLength) && contentLength > MAX_BODY_LENGTH) {
+    if (
+      contentLength !== null &&
+      (!/^\d+$/.test(contentLength) ||
+        Number(contentLength) > MAX_BODY_LENGTH)
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -124,10 +158,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_LENGTH) {
+      return NextResponse.json(
+        { success: false, message: "Request is too large." },
+        { status: 413 },
+      );
+    }
+
     let body: unknown;
 
     try {
-      body = await request.json();
+      body = JSON.parse(rawBody);
     } catch {
       return NextResponse.json(
         {
@@ -150,26 +192,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // All product, price, shipping, and address data is rebuilt
-    // from trusted server-side records.
-    // Promotions (welcome offer, referral, coupon) calculated server-side
-    const quote = await getCheckoutPricing(
-      user.id,
-      checkout.addressId,
-      checkout.deliveryMethod,
-      (body as Record<string, unknown>)?.appliedCouponCode as string | undefined,
-      (body as Record<string, unknown>)?.referralCode as string | undefined,
-    );
+    if (checkout.paymentMethod === "razorpay") {
+      const existingOrder = await getOrderByPaymentId(
+        user.id,
+        checkout.paymentId,
+      );
+      if (existingOrder) {
+        return NextResponse.json(
+          { success: true, order: existingOrder },
+          { status: 200 },
+        );
+      }
+    }
 
     let orderData: OrderData;
+    let eligibleReferralCode: string | undefined;
 
     if (checkout.paymentMethod === "razorpay") {
       const payment = await verifyCapturedRazorpayPayment({
         userId: user.id,
-        orderId: checkout.orderId!,
-        paymentId: checkout.paymentId!,
-        signature: checkout.signature!,
-        expectedAmount: Math.round(quote.total * 100),
+        orderId: checkout.orderId,
+        paymentId: checkout.paymentId,
+        signature: checkout.signature,
       });
 
       if (!payment) {
@@ -182,12 +226,25 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const intent = await getCheckoutPaymentIntent(checkout.orderId);
+      if (!intent || intent.userId !== user.id) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "We could not confirm your payment details. Please contact support before retrying.",
+          },
+          { status: 409 },
+        );
+      }
+
+      const { quote } = intent;
       const paidSubtotal = Number(payment.notes.subtotal);
       const paidShipping = Number(payment.notes.shipping);
       const paidDiscount = Number(payment.notes.discount || "0");
       const paidTotal = Number(payment.notes.total);
 
-      const paymentMatchesQuote =
+      const paymentMatchesIntent =
         Number.isFinite(paidSubtotal) &&
         Number.isFinite(paidShipping) &&
         Number.isFinite(paidDiscount) &&
@@ -197,15 +254,20 @@ export async function POST(request: NextRequest) {
         paidShipping === quote.shipping &&
         paidDiscount === quote.discount &&
         paidTotal === quote.total &&
+        payment.notes.inventoryReservationId === intent.reservationId &&
+        payment.notes.couponCode === intent.couponCode &&
+        payment.notes.referralCode === intent.referralCode &&
+        payment.notes.discountReason === quote.discountReason &&
+        payment.notes.appliedPromotion === quote.appliedPromotion &&
         payment.notes.deliveryMethod === quote.deliveryMethod &&
         payment.notes.addressId === quote.addressId;
 
-      if (!paymentMatchesQuote) {
+      if (!paymentMatchesIntent) {
         return NextResponse.json(
           {
             success: false,
             message:
-              "Your cart or payment details changed. Please retry checkout.",
+              "We could not match this payment to its checkout details. Please contact support.",
           },
           { status: 409 },
         );
@@ -217,10 +279,23 @@ export async function POST(request: NextRequest) {
         paymentId: checkout.paymentId,
         orderId: checkout.orderId,
         signature: checkout.signature,
-        couponCode: quote.appliedPromotion === "coupon" ? (body as Record<string, unknown>)?.appliedCouponCode as string || "" : "",
+        couponCode: intent.couponCode,
         creditUsed: 0,
+        reservationId: intent.reservationId,
       };
+      if (quote.appliedPromotion === "referral") {
+        eligibleReferralCode = intent.referralCode;
+      }
     } else {
+      // COD orders are recalculated from current trusted cart, address,
+      // shipping, and promotion records at the point of order creation.
+      const quote = await getCheckoutPricing(
+        user.id,
+        checkout.addressId,
+        checkout.deliveryMethod,
+        checkout.couponCode,
+        checkout.referralCode,
+      );
       orderData = {
         ...quote,
         paymentMethod: "cod",
@@ -228,9 +303,14 @@ export async function POST(request: NextRequest) {
         orderId: undefined,
         signature: undefined,
         // Discount is already in quote (calculated server-side)
-        couponCode: quote.appliedPromotion === "coupon" ? (body as Record<string, unknown>)?.appliedCouponCode as string || "" : "",
+        couponCode:
+          quote.appliedPromotion === "coupon" ? checkout.couponCode ?? "" : "",
         creditUsed: 0,
+        idempotencyKey: checkout.idempotencyKey,
       };
+      if (quote.appliedPromotion === "referral") {
+        eligibleReferralCode = checkout.referralCode;
+      }
     }
 
     const order = await createOrder(orderData, {
@@ -246,6 +326,23 @@ export async function POST(request: NextRequest) {
         },
         { status: 503 },
       );
+    }
+
+    if (eligibleReferralCode) {
+      const orderDocumentId =
+        "$id" in order && typeof order.$id === "string" ? order.$id : "";
+      if (
+        !orderDocumentId ||
+        !(await recordOrderForReferral(
+          orderDocumentId,
+          user.id,
+          eligibleReferralCode,
+        ))
+      ) {
+        console.error(
+          "Failed to link the eligible referral to the created order.",
+        );
+      }
     }
 
     return NextResponse.json(
@@ -273,6 +370,15 @@ export async function POST(request: NextRequest) {
           message: error.message,
         },
         { status: error.status },
+      );
+    }
+    if (error instanceof OrderInventoryConflictError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "An item in your cart has just been sold. Please refresh your cart.",
+        },
+        { status: 409 },
       );
     }
 

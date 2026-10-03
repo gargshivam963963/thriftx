@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import {
-  Check,
   Clock,
   Facebook,
   Instagram,
@@ -15,18 +14,17 @@ import {
   Truck,
   RotateCcw,
   Lock,
-  Send,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/Container";
-import { Input } from "@/components/ui/form";
-import { cn } from "@/lib/utils";
 
 const BUSINESS_EMAIL = "support@thriftx.in";
 const WHATSAPP_NUMBER = "919876543210";
 const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
+const WHATSAPP_UPDATES_LINK = `${WHATSAPP_LINK}?text=${encodeURIComponent(
+  "Hi, I'd like to receive updates about new drops and offers.",
+)}`;
 
 const companyLinks = [
   { label: "About Us", href: "/about" },
@@ -87,7 +85,7 @@ function FooterHeading({
   children: ReactNode;
 }) {
   return (
-    <h2 id={id} className="text-caption text-foreground">
+    <h2 id={id} className="text-label font-bold uppercase tracking-wider text-foreground">
       {children}
     </h2>
   );
@@ -110,7 +108,7 @@ function FooterNav({
           <li key={link.href + link.label}>
             <Link
               href={link.href}
-              className="group inline-flex max-w-full items-center gap-1.5 text-body-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="group inline-flex max-w-full items-center gap-1.5 text-body text-muted-foreground transition-colors hover:text-foreground"
             >
               <span className="h-px w-0 shrink-0 bg-foreground transition-all duration-300 group-hover:w-3" />
               <span className="truncate">{link.label}</span>
@@ -124,31 +122,8 @@ function FooterNav({
 
 export default function Footer() {
   const pathname = usePathname();
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
 
   if (pathname?.startsWith("/admin")) return null;
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    const value = email.trim();
-
-    if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      setStatus("error");
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-
-    setStatus("loading");
-    setTimeout(() => {
-      setStatus("success");
-      setEmail("");
-      toast.success("You're subscribed! Check your inbox for a welcome note.");
-      setTimeout(() => setStatus("idle"), 4000);
-    }, 900);
-  };
 
   return (
     <footer className="relative w-full overflow-hidden border-t border-border bg-card">
@@ -159,9 +134,9 @@ export default function Footer() {
           {trustBadges.map(({ icon: Icon, label }) => (
             <div
               key={label}
-              className="flex min-w-0 items-center gap-3 border border-border bg-muted/60 px-4 py-4 radius-xl"
+              className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-foreground text-background radius-lg">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-foreground text-background dark:bg-muted dark:text-foreground">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </div>
               <span className="text-body-sm font-semibold text-foreground sm:text-body">
@@ -174,20 +149,20 @@ export default function Footer() {
         <div className="mt-12 grid grid-cols-4 gap-x-4 gap-y-10 border-t border-border pt-12 sm:gap-x-6 md:grid-cols-8 md:gap-y-12 lg:mt-16 lg:grid-cols-12 lg:gap-x-8 lg:pt-16">
           <div className="col-span-4 md:col-span-8 lg:col-span-4">
             <Link href="/" className="group inline-flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center bg-foreground text-body-lg font-bold text-background shadow-popover transition-transform group-hover:scale-105 radius-lg dark:bg-muted dark:text-foreground">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-foreground text-body-lg font-bold text-background shadow-popover transition-transform group-hover:scale-105 dark:bg-muted dark:text-foreground">
                 T
               </div>
               <div>
                 <span className="font-display text-heading-4 font-bold tracking-tight text-foreground">
                   THRIFTX
                 </span>
-                <span className="mt-0.5 block text-badge font-bold uppercase tracking-widest text-muted-foreground">
+                <span className="mt-0.5 block text-small font-bold uppercase tracking-widest text-muted-foreground">
                   Premium Branded Thrift Clothing
                 </span>
               </div>
             </Link>
 
-            <p className="mt-6 max-w-sm text-body-sm leading-relaxed text-muted-foreground">
+            <p className="mt-6 max-w-sm text-body leading-relaxed text-muted-foreground">
               Handpicked branded fashion that combines luxury, sustainability,
               and affordability. Every piece is quality checked before it
               reaches your wardrobe.
@@ -197,63 +172,28 @@ export default function Footer() {
               <FooterHeading id="footer-newsletter">
                 Get First Dibs
               </FooterHeading>
-              <p className="mt-1.5 text-body-sm text-muted-foreground">
-                Be the first to know about new drops and exclusive deals.
+              <p className="mt-1.5 text-body text-muted-foreground">
+                Message us on WhatsApp to hear about new drops and exclusive
+                deals.
               </p>
-
-              <form
-                onSubmit={handleSubscribe}
-                className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+              <Button
+                asChild
+                variant="primary"
+                size="lg"
+                className="mt-4 h-12 gap-2 px-5"
               >
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (status !== "idle") setStatus("idle");
-                  }}
-                  placeholder="Your email address"
-                  aria-label="Email address"
-                  aria-invalid={status === "error"}
-                  leftIcon={<Mail className="h-4 w-4" />}
-                  variant="lg"
-                  error={status === "error"}
-                  className={cn(
-                    "h-12",
-                    status === "success" &&
-                    "border-success bg-success-bg/40 focus:border-success focus:ring-success/20",
-                  )}
-                />
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  className="h-12 gap-2 px-5 sm:min-w-40"
-                  loading={status === "loading"}
-                  loadingText="Subscribing..."
-                  success={status === "success"}
-                  successText="Subscribed"
+                <a
+                  href={WHATSAPP_UPDATES_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <Send className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  Subscribe
-                </Button>
-              </form>
-
-              {status === "success" && (
-                <p className="mt-2.5 flex items-center gap-1.5 text-small font-medium text-success-foreground">
-                  <Check size={13} aria-hidden="true" /> You&apos;re in! Watch
-                  your inbox.
-                </p>
-              )}
-              {status === "error" && (
-                <p className="mt-2.5 text-small font-medium text-error">
-                  Please enter a valid email.
-                </p>
-              )}
-              <p className="mt-2.5 text-small text-muted-foreground">
-                No spam. Unsubscribe anytime.
-              </p>
+                  <MessageCircle
+                    className="h-4 w-4 shrink-0"
+                    aria-hidden="true"
+                  />
+                  Ask for drop updates
+                </a>
+              </Button>
             </div>
           </div>
 
@@ -281,7 +221,7 @@ export default function Footer() {
               <div className="mt-5 space-y-3">
                 <a
                   href={`mailto:${BUSINESS_EMAIL}`}
-                  className="flex items-start gap-2.5 text-body-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="flex items-start gap-2.5 text-body text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                   <span className="break-all">{BUSINESS_EMAIL}</span>
@@ -290,7 +230,7 @@ export default function Footer() {
                   href={WHATSAPP_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-start gap-2.5 text-body-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="flex items-start gap-2.5 text-body text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <MessageCircle
                     className="mt-0.5 h-4 w-4 shrink-0"
@@ -298,11 +238,11 @@ export default function Footer() {
                   />
                   WhatsApp Support
                 </a>
-                <p className="flex items-start gap-2.5 text-body-sm text-muted-foreground">
+                <p className="flex items-start gap-2.5 text-body text-muted-foreground">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                   Panipat, Haryana, India
                 </p>
-                <p className="flex items-start gap-2.5 text-body-sm text-muted-foreground">
+                <p className="flex items-start gap-2.5 text-body text-muted-foreground">
                   <Clock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                   <span>
                     Mon&ndash;Sat, 10 AM &ndash; 7 PM IST
@@ -321,7 +261,7 @@ export default function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="flex h-10 w-10 items-center justify-center border border-border bg-muted text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-foreground hover:bg-foreground hover:text-background radius-lg"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-foreground hover:bg-foreground hover:text-background"
                   >
                     <Icon className="h-4 w-4" />
                   </Link>
@@ -344,7 +284,7 @@ export default function Footer() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-body-sm text-muted-foreground transition-colors hover:text-foreground"
+                className="text-body text-muted-foreground transition-colors hover:text-foreground"
               >
                 {link.label}
               </Link>
@@ -355,7 +295,7 @@ export default function Footer() {
             {paymentMethods.map((method) => (
               <span
                 key={method}
-                className="border border-border bg-muted px-2.5 py-1 text-badge font-bold tracking-wider text-muted-foreground radius-md"
+                className="rounded-lg border border-border bg-muted/60 px-2.5 py-1 text-xs font-bold tracking-wider text-muted-foreground"
               >
                 {method}
               </span>

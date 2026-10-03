@@ -9,14 +9,14 @@ import {
   Heart,
   Sun,
   Moon,
+  Laptop,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/ThemeContext";
-import { Button } from "@/components/ui/button";
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { theme, toggleTheme, mounted } = useTheme();
+  const { preference, setTheme, mounted } = useTheme();
 
   // Hide bottom nav on admin routes
   if (pathname?.startsWith("/admin")) return null;
@@ -27,8 +27,26 @@ export default function BottomNav() {
     { href: "/cart", icon: ShoppingBag, label: "Cart", tooltip: "View cart", badge: true },
     { href: "/profile/wishlist", icon: Heart, label: "Wishlist", tooltip: "View wishlist" },
   ];
-  const ThemeIcon = !mounted || theme === "light" ? Moon : Sun;
-  const themeAction = theme === "dark" ? "Light" : "Dark";
+
+  const themeIcon =
+    !mounted || preference === "system"
+      ? Laptop
+      : preference === "dark"
+        ? Moon
+        : Sun;
+  const themeLabel =
+    !mounted || preference === "system"
+      ? "Auto"
+      : preference === "dark"
+        ? "Dark"
+        : "Light";
+  const ThemeIconComponent = themeIcon;
+
+  const cycleTheme = () => {
+    if (preference === "system") setTheme("light");
+    else if (preference === "light") setTheme("dark");
+    else setTheme("system");
+  };
 
   return (
     <nav
@@ -62,7 +80,7 @@ export default function BottomNav() {
             aria-current={isActive ? "page" : undefined}
             title={item.tooltip}
             className={cn(
-              "group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold uppercase leading-none tracking-normal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              "group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold uppercase leading-normal tracking-normal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
               isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -74,24 +92,16 @@ export default function BottomNav() {
           </Link>
         );
       })}
-      <Button
+      <button
         type="button"
-        variant="ghost"
-        size="sm"
-        rounded="lg"
-        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-        aria-pressed={theme === "dark"}
-        title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-        onClick={toggleTheme}
-        className="group flex h-full w-full min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold uppercase leading-none tracking-normal"
+        onClick={cycleTheme}
+        aria-label={`Theme: ${themeLabel}. Click to cycle theme`}
+        title={`Theme: ${themeLabel} (System / Light / Dark)`}
+        className="group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold uppercase leading-normal tracking-normal text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
-        <ThemeIcon
-          className="h-5 w-5 shrink-0 transition-colors duration-200"
-          strokeWidth={1.9}
-          aria-hidden="true"
-        />
-        <span className="block max-w-full truncate">{themeAction}</span>
-      </Button>
+        <ThemeIconComponent className="h-5 w-5 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:text-foreground" strokeWidth={1.9} aria-hidden="true" />
+        <span className="block max-w-full truncate">{themeLabel}</span>
+      </button>
     </nav>
   );
 }

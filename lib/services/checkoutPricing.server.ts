@@ -10,6 +10,10 @@ import {
 import { SHIPPING_DEFAULTS } from "@/lib/shipping/constants";
 import type { ShippingRate } from "@/lib/shipping/types";
 import { calculatePromotion } from "@/lib/marketing/promotions.server";
+import {
+  assertCheckoutInventoryAvailable,
+  InventoryUnavailableError,
+} from "./inventory.server";
 
 export class CheckoutPricingError extends Error {
   constructor(
@@ -65,6 +69,18 @@ export async function getCheckoutPricing(
   const cartItems = await getCartProductsForUser(userId);
   if (cartItems.length === 0) {
     throw new CheckoutPricingError("Your cart is empty.", 409);
+  }
+
+  try {
+    await assertCheckoutInventoryAvailable(
+      userId,
+      cartItems.map((item) => item.id),
+    );
+  } catch (error) {
+    if (error instanceof InventoryUnavailableError) {
+      throw new CheckoutPricingError(error.message, 409);
+    }
+    throw error;
   }
 
   const subtotal = cartItems.reduce(

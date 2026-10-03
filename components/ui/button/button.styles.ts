@@ -14,7 +14,7 @@ export const buttonVariants = cva(
     "group inline-flex items-center justify-center gap-2.5",
 
     // Typography
-    "font-medium leading-none",
+    "font-medium leading-normal",
     "whitespace-nowrap",
     "select-none",
 

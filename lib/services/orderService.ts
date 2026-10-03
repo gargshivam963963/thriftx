@@ -1,12 +1,26 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import {
   documentStore,
   DocumentID,
   DocumentQuery,
   isDocumentStoreConfigured,
 } from "@/lib/document-store";
+import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 import type { Order } from "@/lib/types/order";
+import {
+  claimCheckoutInventory,
+  InventoryUnavailableError,
+} from "./inventory.server";
+
+export class OrderInventoryConflictError extends Error {
+  constructor() {
+    super("One or more items in your cart have just been sold.");
+    this.name = "OrderInventoryConflictError";
+  }
+}
 
 export interface OrderData {
   addressId?: string;
@@ -20,6 +34,8 @@ export interface OrderData {
   paymentId?: string;
   orderId?: string;
   signature?: string;
+  idempotencyKey?: string;
+  reservationId?: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -83,36 +99,50 @@ export async function createOrder(
   data: OrderData,
   user: { id: string; email: string },
 ) {
-  if (!isDocumentStoreConfigured) return null;
+  if (!isDocumentStoreConfigured || !prisma) return null;
 
-  // For Razorpay orders, check for existing orders with same paymentId to prevent duplicates
   if (data.paymentId) {
-    try {
-      const existingOrders = await documentStore.listDocuments(
-        "thriftx",
-        "orders",
-        [
-          DocumentQuery.equal("userId", user.id),
-          DocumentQuery.equal("paymentId", data.paymentId),
-        ],
-      );
-
-      if (existingOrders.documents.length > 0) {
-        console.warn(
-          `Order creation blocked: duplicate paymentId ${data.paymentId} for user ${user.id}`,
-        );
-        return existingOrders.documents[0];
-      }
-    } catch (error) {
-      console.error("Error checking for duplicate orders:", error);
-    }
+    const existingOrder = await getOrderByPaymentId(user.id, data.paymentId);
+    if (existingOrder) return existingOrder;
   }
 
-  return documentStore.createDocument(
-    "thriftx",
-    "orders",
-    DocumentID.unique(),
-    {
+  const documentId = data.paymentId
+    ? `payment-${createHash("sha256").update(data.paymentId).digest("hex")}`
+    : data.idempotencyKey
+      ? `cod-${createHash("sha256")
+          .update(`${user.id}:${data.idempotencyKey}`)
+          .digest("hex")}`
+      : DocumentID.unique();
+
+  let productIds: string[];
+  try {
+    const parsed: unknown = JSON.parse(data.products);
+    if (!Array.isArray(parsed)) throw new Error("Invalid product snapshot");
+    productIds = parsed.map((item: unknown) => {
+      if (
+        typeof item !== "object" ||
+        item === null ||
+        !("id" in item) ||
+        typeof item.id !== "string" ||
+        !("quantity" in item) ||
+        item.quantity !== 1
+      ) {
+        throw new Error("Invalid product snapshot");
+      }
+      return item.id;
+    });
+  } catch {
+    throw new OrderInventoryConflictError();
+  }
+
+  if (
+    productIds.length === 0 ||
+    new Set(productIds).size !== productIds.length
+  ) {
+    throw new OrderInventoryConflictError();
+  }
+
+  const payload = {
       userId: user.id,
       email: user.email,
       subtotal: data.subtotal,
@@ -123,7 +153,9 @@ export async function createOrder(
       total: data.total,
       paymentMethod: data.paymentMethod,
       paymentId: data.paymentId ?? "",
-      orderId: data.orderId ?? `THRIFTX-${Date.now()}`,
+      orderId:
+        data.orderId ??
+        `THRIFTX-${documentId.slice(-12).toUpperCase()}`,
       signature: data.signature ?? "",
       status: data.paymentMethod === "cod" ? "Pending (COD)" : "Pending",
       firstName: data.firstName,
@@ -150,8 +182,69 @@ export async function createOrder(
       pickupId: data.pickupId ?? "",
       shippedAt: data.shippedAt ?? "",
       deliveredAt: data.deliveredAt ?? "",
-    },
-  );
+    } satisfies Record<string, Prisma.InputJsonValue>;
+
+  try {
+    return await prisma.$transaction(async (transaction) => {
+      const existing = await transaction.storedDocument.findUnique({
+        where: {
+          collectionKey_id: {
+            collectionKey: "orders",
+            id: documentId,
+          },
+        },
+      });
+      if (existing) {
+        const existingData = existing.data as Record<string, unknown>;
+        if (existingData.userId !== user.id) {
+          throw new Error("Order idempotency key belongs to another user");
+        }
+        return {
+          ...existingData,
+          $id: existing.id,
+          $createdAt: existing.createdAt.toISOString(),
+          $updatedAt: existing.updatedAt.toISOString(),
+        };
+      }
+
+      if (data.paymentMethod === "razorpay" && !data.reservationId) {
+        throw new OrderInventoryConflictError();
+      }
+      try {
+        await claimCheckoutInventory(
+          transaction,
+          user.id,
+          productIds,
+          data.paymentMethod === "razorpay" ? data.reservationId : undefined,
+        );
+      } catch (error) {
+        if (error instanceof InventoryUnavailableError) {
+          throw new OrderInventoryConflictError();
+        }
+        throw error;
+      }
+
+      const created = await transaction.storedDocument.create({
+        data: {
+          collectionKey: "orders",
+          id: documentId,
+          data: payload,
+        },
+      });
+      return {
+        ...payload,
+        $id: created.id,
+        $createdAt: created.createdAt.toISOString(),
+        $updatedAt: created.updatedAt.toISOString(),
+      };
+    });
+  } catch (error) {
+    const existing = await documentStore
+      .getDocument("thriftx", "orders", documentId)
+      .catch(() => null);
+    if (existing && existing.userId === user.id) return existing;
+    throw error;
+  }
 }
 
 export async function getUserOrders(userId: string): Promise<Order[]> {
@@ -161,6 +254,16 @@ export async function getUserOrders(userId: string): Promise<Order[]> {
   ]);
 
   return response.documents as unknown as Order[];
+}
+
+export async function getOrderByPaymentId(userId: string, paymentId: string) {
+  const response = await documentStore.listDocuments("thriftx", "orders", [
+    DocumentQuery.equal("userId", userId),
+    DocumentQuery.equal("paymentId", paymentId),
+    DocumentQuery.limit(1),
+  ]);
+
+  return response.documents[0] ?? null;
 }
 
 export async function getOrderById(documentId: string) {

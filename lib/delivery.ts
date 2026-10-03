@@ -15,51 +15,7 @@ const LOCAL_CITIES = new Set([
   "aggarsain colony panipat",
 ]);
 
-const LOCAL_PINCODE_PREFIXES = [
-  "132103",
-  "132104",
-  "132105",
-  "132106",
-  "132107",
-  "132108",
-  "132109",
-  "132110",
-  "132111",
-  "132112",
-  "132113",
-  "132114",
-  "132115",
-  "132116",
-  "132117",
-  "132118",
-  "132119",
-  "132120",
-  "132121",
-  "132122",
-  "132123",
-  "132124",
-  "132125",
-  "132126",
-  "132127",
-  "132128",
-  "132129",
-  "132130",
-  "132131",
-  "132132",
-  "132133",
-  "132134",
-  "132135",
-  "132136",
-  "132137",
-  "132138",
-  "132139",
-  "132140",
-  "132141",
-  "132142",
-  "132143",
-  "132144",
-  "132145",
-];
+const LOCAL_PINCODES = new Set(["132103", "132104"]);
 
 export type DeliveryZone = "local" | "courier";
 
@@ -78,17 +34,11 @@ export function detectDeliveryZone(
   pincode?: string,
 ): DeliveryZone {
   const normalizedCity = city.trim().toLowerCase();
-  if (LOCAL_CITIES.has(normalizedCity)) return "local";
-
-  if (pincode) {
-    const normalizedPincode = pincode.trim();
-    const match = LOCAL_PINCODE_PREFIXES.some((prefix) =>
-      normalizedPincode.startsWith(prefix),
-    );
-    if (match) return "local";
-  }
-
-  return "courier";
+  const cityMatches = LOCAL_CITIES.has(normalizedCity);
+  if (!pincode) return cityMatches ? "local" : "courier";
+  return cityMatches && LOCAL_PINCODES.has(pincode.trim())
+    ? "local"
+    : "courier";
 }
 
 export function isLocalDelivery(city: string, pincode?: string): boolean {

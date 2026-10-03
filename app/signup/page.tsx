@@ -223,15 +223,20 @@ export default function Signup() {
       // Record referral if code provided
       if (referralCode && response.data?.user?.id) {
         try {
-          await fetch("/api/marketing/referrals/record", {
+          const referralResponse = await fetch("/api/marketing/referrals/record", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               referralCode,
-              newUserId: response.data.user.id,
-              newUserEmail: values.email,
             }),
           });
+          const result = await referralResponse.json();
+          if (referralResponse.ok && result.success) {
+            window.localStorage.setItem(
+              "thriftx:referral-code",
+              referralCode,
+            );
+          }
         } catch (error) {
           console.error("Failed to record referral:", error);
           // Don't fail signup if referral recording fails

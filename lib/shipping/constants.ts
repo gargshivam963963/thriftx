@@ -51,7 +51,7 @@ export const SHIPPING_ESTIMATES = {
 export const SHIPPING_DEFAULTS = {
   currency: "INR",
 
-  freeShippingAmount: 999, // Free shipping on orders above ₹999
+  freeShippingAmount: 1199,
 
   defaultWeight: 0.5, // kg
 

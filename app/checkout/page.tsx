@@ -9,6 +9,8 @@ import {
     ShoppingBag,
     ArrowRight,
     LockKeyhole,
+    AlertCircle,
+    RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -139,12 +141,107 @@ function EmptyCheckout() {
     );
 }
 
+function CheckoutCartError({
+    message,
+    onRetry,
+}: {
+    message: string;
+    onRetry: () => void;
+}) {
+    return (
+        <main className="min-h-screen bg-background px-4 py-12 sm:px-6">
+            <section
+                className="mx-auto flex min-h-[50vh] max-w-xl flex-col items-center justify-center rounded-3xl border border-border bg-card p-8 text-center sm:p-12"
+                role="alert"
+            >
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-error-bg text-error">
+                    <AlertCircle aria-hidden="true" size={26} />
+                </span>
+                <h1 className="mt-5 text-heading-3 font-bold text-foreground">
+                    We couldn&apos;t verify your cart
+                </h1>
+                <p className="mt-2 max-w-md text-body-sm text-muted-foreground">
+                    {message} Your items have not been confirmed as missing.
+                </p>
+                <Button
+                    type="button"
+                    variant="primary"
+                    size="lg"
+                    leftIcon={<RefreshCw size={16} />}
+                    onClick={onRetry}
+                    className="mt-6"
+                >
+                    Retry
+                </Button>
+                <Link
+                    href="/cart"
+                    className="mt-4 text-body-sm font-semibold text-foreground underline underline-offset-4"
+                >
+                    Return to cart
+                </Link>
+            </section>
+        </main>
+    );
+}
+
+function CheckoutSessionError({
+    onRetry,
+}: {
+    onRetry: () => void;
+}) {
+    return (
+        <main className="min-h-screen bg-background px-4 py-12 sm:px-6">
+            <section
+                className="mx-auto flex min-h-[50vh] max-w-xl flex-col items-center justify-center rounded-3xl border border-border bg-card p-8 text-center sm:p-12"
+                role="alert"
+            >
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-warning-bg text-warning-foreground">
+                    <LockKeyhole aria-hidden="true" size={26} />
+                </span>
+                <h1 className="mt-5 text-heading-3 font-bold text-foreground">
+                    Sign-in check is taking longer than expected
+                </h1>
+                <p className="mt-2 max-w-md text-body-sm text-muted-foreground">
+                    We need to verify your account before loading checkout. Your
+                    order has not been placed.
+                </p>
+                <Button
+                    type="button"
+                    variant="primary"
+                    size="lg"
+                    leftIcon={<RefreshCw size={16} />}
+                    onClick={onRetry}
+                    className="mt-6"
+                >
+                    Retry sign-in check
+                </Button>
+                <Link
+                    href="/login?redirect=/checkout"
+                    className="mt-4 text-body-sm font-semibold text-foreground underline underline-offset-4"
+                >
+                    Sign in
+                </Link>
+            </section>
+        </main>
+    );
+}
+
 // ─── Main Checkout Page ───────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
     const router = useRouter();
-    const { user, loading: authLoading } = useAuth();
-    const { cartItems, loading: cartLoading, clearCart } = useCart();
+    const {
+        user,
+        loading: authLoading,
+        refreshUser,
+    } = useAuth();
+    const {
+        cartItems,
+        loading: cartLoading,
+        error: cartError,
+        refreshCart,
+        clearCart,
+    } = useCart();
     const analytics = useAnalytics();
 
     const {
@@ -157,6 +254,7 @@ export default function CheckoutPage() {
     } = useAddresses(user?.id ?? "");
 
     const [paymentLoading, setPaymentLoading] = useState(false);
+    const [authWaitExpired, setAuthWaitExpired] = useState(false);
     const [checkoutQuote, setCheckoutQuote] =
         useState<CheckoutQuote | null>(null);
     const [quoteLoading, setQuoteLoading] = useState(false);
@@ -166,6 +264,16 @@ export default function CheckoutPage() {
     const [referralCode, setReferralCode] = useState("");
     const quoteRequestRef = useRef(0);
     const codIdempotencyKeyRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (!authLoading) {
+            setAuthWaitExpired(false);
+            return;
+        }
+
+        const timeoutId = setTimeout(() => setAuthWaitExpired(true), 10_000);
+        return () => clearTimeout(timeoutId);
+    }, [authLoading]);
 
     const [activeStep, setActiveStep] = useState<CheckoutStep>("address");
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
@@ -298,7 +406,7 @@ export default function CheckoutPage() {
 
             codIdempotencyKeyRef.current ??= crypto.randomUUID();
 
-            await createOrder({
+            const order = await createOrder({
                 paymentMethod: "cod",
                 addressId: selectedAddress.$id,
                 deliveryMethod: shippingMethod.name,
@@ -308,7 +416,14 @@ export default function CheckoutPage() {
             });
 
             codIdempotencyKeyRef.current = null;
-            await clearCart();
+            try {
+                await clearCart();
+            } catch (error) {
+                console.error("Order created, but cart cleanup failed:", error);
+                toast.error(
+                    "Your order is confirmed, but your cart could not be cleared.",
+                );
+            }
             window.sessionStorage.removeItem("thriftx:checkout-coupon");
             window.localStorage.removeItem("thriftx:referral-code");
             toast.success("Order placed! Pay on delivery.");
@@ -328,7 +443,7 @@ export default function CheckoutPage() {
             });
 
             router.push(
-                `/success?city=${encodeURIComponent(selectedAddress.city)}&pincode=${selectedAddress.pincode}&items=${cartItems.length}`,
+                `/success?id=${encodeURIComponent(order.$id)}`,
             );
         } catch (error) {
             console.error(error);
@@ -411,14 +526,24 @@ export default function CheckoutPage() {
                 handler: async (paymentResponse: Record<string, string>) => {
                     paymentConfirmed = true;
                     try {
-                            await createOrder({
+                            const order = await createOrder({
                                 paymentMethod: "razorpay",
                                 paymentId: paymentResponse.razorpay_payment_id,
                                 orderId: paymentResponse.razorpay_order_id,
                                 signature: paymentResponse.razorpay_signature,
                             });
 
-                            await clearCart();
+                            try {
+                                await clearCart();
+                            } catch (error) {
+                                console.error(
+                                    "Order created, but cart cleanup failed:",
+                                    error,
+                                );
+                                toast.error(
+                                    "Your order is confirmed, but your cart could not be cleared.",
+                                );
+                            }
                             window.sessionStorage.removeItem("thriftx:checkout-coupon");
                             window.localStorage.removeItem("thriftx:referral-code");
                         toast.success("Order placed successfully!");
@@ -439,7 +564,7 @@ export default function CheckoutPage() {
                         });
 
                         router.push(
-                            `/success?city=${encodeURIComponent(selectedAddress.city)}&pincode=${selectedAddress.pincode}&items=${cartItems.length}`,
+                            `/success?id=${encodeURIComponent(order.$id)}`,
                         );
                     } catch (error) {
                         console.error(error);
@@ -558,6 +683,20 @@ export default function CheckoutPage() {
         }
     };
 
+    if (authWaitExpired && authLoading) {
+        return (
+            <CheckoutSessionError
+                onRetry={() => {
+                    setAuthWaitExpired(false);
+                    void refreshUser().catch((error: unknown) => {
+                        console.error("Checkout session refresh failed:", error);
+                        setAuthWaitExpired(true);
+                    });
+                }}
+            />
+        );
+    }
+
     if (authLoading || cartLoading) {
         return <CheckoutSkeleton />;
     }
@@ -566,12 +705,21 @@ export default function CheckoutPage() {
         return <CheckoutSkeleton />;
     }
 
+    if (cartError) {
+        return (
+            <CheckoutCartError
+                message={cartError}
+                onRetry={() => void refreshCart()}
+            />
+        );
+    }
+
     if (!cartItems.length) {
         return <EmptyCheckout />;
     }
 
     return (
-        <main className="min-h-screen bg-background pb-32 lg:pb-12">
+        <main className="min-h-screen bg-background pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-32 lg:pb-12">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
                 <header className="mb-6 border-b border-border pb-5 sm:mb-8 sm:pb-6">
                     <div className="flex flex-wrap items-center gap-2 text-caption font-medium text-muted-foreground">
@@ -659,7 +807,7 @@ export default function CheckoutPage() {
                 <motion.div
                     initial={{ y: 100 }}
                     animate={{ y: 0 }}
-                    className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl lg:hidden sm:px-6 sm:py-4"
+                    className="fixed inset-x-0 bottom-[var(--mobile-nav-height)] z-50 border-t border-border bg-card/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl md:bottom-0 lg:hidden sm:px-6 sm:py-4"
                 >
                     <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
                         <div>

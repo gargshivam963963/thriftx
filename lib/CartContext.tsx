@@ -12,7 +12,10 @@ import {
 } from "react";
 
 import type { Product } from "@/lib/services/products";
-import type { CartProduct } from "@/lib/services/cartProducts";
+import {
+    getCartProducts,
+    type CartProduct,
+} from "@/lib/services/cartProducts";
 import {
     addToCart as persistAddToCart,
     removeCartItem as persistRemoveCartItem,
@@ -48,31 +51,6 @@ const CartContext = createContext<CartContextType>({
     clearCart: async () => { },
 });
 
-async function fetchServerCart(): Promise<CartItem[]> {
-    const response = await fetch("/api/shop/cart-products", {
-        method: "GET",
-        credentials: "same-origin",
-        cache: "no-store",
-        headers: {
-            Accept: "application/json",
-        },
-    });
-
-    const result = (await response.json()) as {
-        success?: boolean;
-        message?: string;
-        products?: CartItem[];
-    };
-
-    if (!response.ok || !result.success || !Array.isArray(result.products)) {
-        throw new Error(
-            result.message || "Unable to load your cart. Please retry.",
-        );
-    }
-
-    return result.products;
-}
-
 export function CartProvider({
     children,
 }: {
@@ -102,7 +80,7 @@ export function CartProvider({
         setError(null);
 
         try {
-            const serverItems = await fetchServerCart();
+            const serverItems = await getCartProducts();
 
             if (version !== requestVersion.current) return;
 

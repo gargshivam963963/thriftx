@@ -116,20 +116,27 @@ const STATUS_FILTERS = [
 
 function OrdersSkeleton() {
     return (
-        <div className="space-y-4">
+        <div className="space-y-4" role="status" aria-label="Loading orders">
             {[1, 2, 3].map((i) => (
                 <div
                     key={i}
-                    className="h-36 animate-pulse rounded-2xl bg-muted sm:h-44 sm:rounded-3xl"
+                    className="skeleton-glass h-36 rounded-2xl sm:h-44 sm:rounded-3xl"
                 />
             ))}
+            <span className="sr-only">Loading your orders…</span>
         </div>
     );
 }
 
 // ─── State: Empty ────────────────────────────────────────────────────────────
 
-function OrdersEmpty() {
+function OrdersEmpty({
+    filtered,
+    onClearFilter,
+}: {
+    filtered: boolean;
+    onClearFilter: () => void;
+}) {
     return (
         <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -140,21 +147,33 @@ function OrdersEmpty() {
                 <PackageOpen size={24} className="text-muted-foreground sm:h-7 sm:w-7" />
             </div>
             <h2 className="mt-4 font-display text-heading-4 font-semibold text-foreground sm:mt-5">
-                No orders yet
+                {filtered ? "No matching orders" : "No orders yet"}
             </h2>
             <p className="mt-2 max-w-sm text-body-sm leading-6 text-muted-foreground">
-                Your order history will appear here once you make your first
-                purchase.
+                {filtered
+                    ? "No orders match this status. Try another filter."
+                    : "Your order history will appear here once you make your first purchase."}
             </p>
-            <Link href="/shop">
+            {filtered ? (
                 <Button
+                    type="button"
+                    variant="outline"
                     className="mt-6 rounded-xl"
-                    leftIcon={<ShoppingBag size={16} />}
-                    rightIcon={<ArrowRight size={16} />}
+                    onClick={onClearFilter}
                 >
-                    Start Shopping
+                    Clear status filter
                 </Button>
-            </Link>
+            ) : (
+                <Link href="/shop">
+                    <Button
+                        className="mt-6 rounded-xl"
+                        leftIcon={<ShoppingBag size={16} />}
+                        rightIcon={<ArrowRight size={16} />}
+                    >
+                        Start Shopping
+                    </Button>
+                </Link>
+            )}
         </motion.div>
     );
 }
@@ -283,7 +302,10 @@ export default function ProfileOrdersPage() {
 
                 {/* Empty */}
                 {!loading && !error && filteredOrders.length === 0 && (
-                    <OrdersEmpty />
+                    <OrdersEmpty
+                        filtered={orders.length > 0 && Boolean(statusFilter)}
+                        onClearFilter={() => setStatusFilter("")}
+                    />
                 )}
 
                 {/* Orders List */}
@@ -381,14 +403,26 @@ export default function ProfileOrdersPage() {
                                                 </div>
                                             </div>
 
-                                            <span
-                                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-badge font-medium sm:gap-1.5 sm:px-3 sm:py-1 sm:text-small ${status.bg} ${status.text}`}
-                                            >
+                                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                                {order.returnStatus && order.returnStatus !== "none" && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-warning-bg px-2 py-0.5 text-badge font-semibold text-warning-foreground sm:px-2.5 sm:py-1 sm:text-small">
+                                                        Return: {order.returnStatus}
+                                                    </span>
+                                                )}
+                                                {order.refundStatus && order.refundStatus !== "none" && order.returnStatus !== "refunded" && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-info-bg px-2 py-0.5 text-badge font-semibold text-info-foreground sm:px-2.5 sm:py-1 sm:text-small">
+                                                        Refund: {order.refundStatus}
+                                                    </span>
+                                                )}
                                                 <span
-                                                    className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
-                                                />
-                                                {status.label}
-                                            </span>
+                                                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-badge font-medium sm:gap-1.5 sm:px-3 sm:py-1 sm:text-small ${status.bg} ${status.text}`}
+                                                >
+                                                    <span
+                                                        className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
+                                                    />
+                                                    {status.label}
+                                                </span>
+                                            </div>
                                         </div>
 
                                         {/* Body */}

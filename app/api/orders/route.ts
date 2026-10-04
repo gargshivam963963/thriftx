@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { AuthGuardError, requireUser } from "@/lib/auth-guard";
 import {
   createOrder,
@@ -327,6 +328,8 @@ export async function POST(request: NextRequest) {
         { status: 503 },
       );
     }
+
+    revalidatePath("/product/[slug]", "page");
 
     if (eligibleReferralCode) {
       const orderDocumentId =

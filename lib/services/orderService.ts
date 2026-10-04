@@ -12,8 +12,10 @@ import type { Prisma } from "@/generated/prisma/client";
 import type { Order } from "@/lib/types/order";
 import {
   claimCheckoutInventory,
+  restoreOrderInventory,
   InventoryUnavailableError,
 } from "./inventory.server";
+import { revalidatePath } from "next/cache";
 
 export class OrderInventoryConflictError extends Error {
   constructor() {
@@ -270,8 +272,155 @@ export async function getOrderById(documentId: string) {
   return documentStore.getDocument("thriftx", "orders", documentId);
 }
 
+export async function getUserOrder(
+  userId: string,
+  documentId: string,
+): Promise<Order | null> {
+  if (!prisma || !isDocumentStoreConfigured) {
+    throw new Error("Order storage is not configured.");
+  }
+
+  const document = await prisma.storedDocument.findUnique({
+    where: {
+      collectionKey_id: {
+        collectionKey: "orders",
+        id: documentId,
+      },
+    },
+  });
+  if (
+    !document ||
+    typeof document.data !== "object" ||
+    document.data === null ||
+    Array.isArray(document.data)
+  ) {
+    return null;
+  }
+
+  const payload = document.data as Record<string, unknown>;
+  if (payload.userId !== userId) return null;
+
+  return {
+    ...payload,
+    $id: document.id,
+    $createdAt: document.createdAt.toISOString(),
+    $updatedAt: document.updatedAt.toISOString(),
+  } as unknown as Order;
+}
+
 export async function updateOrderStatus(documentId: string, status: string) {
-  return documentStore.updateDocument("thriftx", "orders", documentId, {
+  const existing = await getOrderById(documentId);
+  const updated = await documentStore.updateDocument("thriftx", "orders", documentId, {
     status,
   });
+
+  if (status === "Cancelled" && existing?.products) {
+    try {
+      const items = JSON.parse(existing.products as string);
+      if (Array.isArray(items)) {
+        const productIds = items
+          .map((i: { id?: string }) => i.id)
+          .filter((id): id is string => typeof id === "string" && Boolean(id));
+        if (productIds.length > 0) {
+          await restoreOrderInventory(productIds);
+          revalidatePath("/product/[slug]", "page");
+          revalidatePath("/shop", "page");
+        }
+      }
+    } catch (e) {
+      console.error("Failed to restore inventory on order cancellation:", e);
+    }
+  }
+
+  return updated;
+}
+
+export async function cancelUserOrder(
+  userId: string,
+  documentId: string,
+  reason = "Customer cancelled",
+): Promise<Order> {
+  const order = await getUserOrder(userId, documentId);
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  const cancellableStatuses = ["Pending", "Pending (COD)", "Processing"];
+  if (!cancellableStatuses.includes(order.status)) {
+    throw new Error(
+      `Orders in '${order.status}' status cannot be cancelled directly. Please contact support.`,
+    );
+  }
+
+  const updatedDoc = await documentStore.updateDocument(
+    "thriftx",
+    "orders",
+    documentId,
+    {
+      status: "Cancelled",
+      cancelReason: reason,
+      cancelledAt: new Date().toISOString(),
+      refundStatus: order.paymentMethod === "razorpay" ? "pending" : "none",
+    },
+  );
+
+  // Restore inventory
+  try {
+    const items = JSON.parse(order.products);
+    if (Array.isArray(items)) {
+      const productIds = items
+        .map((i: { id?: string }) => i.id)
+        .filter((id): id is string => typeof id === "string" && Boolean(id));
+      if (productIds.length > 0) {
+        await restoreOrderInventory(productIds);
+        revalidatePath("/product/[slug]", "page");
+        revalidatePath("/shop", "page");
+      }
+    }
+  } catch (e) {
+    console.error("Failed to restore inventory during customer cancellation:", e);
+  }
+
+  return updatedDoc as unknown as Order;
+}
+
+export async function requestOrderReturn(
+  userId: string,
+  documentId: string,
+  reason: string,
+): Promise<Order> {
+  const order = await getUserOrder(userId, documentId);
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  if (order.status !== "Delivered") {
+    throw new Error("Returns can only be requested for delivered orders.");
+  }
+
+  if (order.returnStatus && order.returnStatus !== "none") {
+    throw new Error(`A return has already been ${order.returnStatus} for this order.`);
+  }
+
+  // 7-day return policy check
+  const orderDate = new Date(order.deliveredAt || order.$createdAt);
+  const now = new Date();
+  const daysDiff = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysDiff > 7) {
+    throw new Error("Return window has closed. Returns must be requested within 7 days of delivery.");
+  }
+
+  const updatedDoc = await documentStore.updateDocument(
+    "thriftx",
+    "orders",
+    documentId,
+    {
+      returnStatus: "requested",
+      returnReason: reason.trim(),
+      returnRequestedAt: new Date().toISOString(),
+      refundStatus: "pending",
+    },
+  );
+
+  return updatedDoc as unknown as Order;
 }

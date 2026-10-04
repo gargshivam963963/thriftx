@@ -104,13 +104,14 @@ function parseProducts(products: string) {
 
 function OrdersSkeleton() {
     return (
-        <div className="space-y-4">
+        <div className="space-y-4" role="status" aria-label="Loading orders">
             {[1, 2, 3].map((i) => (
                 <div
                     key={i}
-                    className="h-44 animate-pulse rounded-3xl bg-muted sm:h-48"
+                    className="skeleton-glass h-44 rounded-3xl sm:h-48"
                 />
             ))}
+            <span className="sr-only">Loading your orders…</span>
         </div>
     );
 }
@@ -263,14 +264,26 @@ export default function OrdersPage() {
                                             </div>
                                         </div>
 
-                                        <span
-                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-small font-medium ${status.bg} ${status.text}`}
-                                        >
+                                        <div className="flex items-center gap-2">
+                                            {order.returnStatus && order.returnStatus !== "none" && (
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-warning-bg px-2.5 py-1 text-small font-semibold text-warning-foreground">
+                                                    Return: {order.returnStatus}
+                                                </span>
+                                            )}
+                                            {order.refundStatus && order.refundStatus !== "none" && order.returnStatus !== "refunded" && (
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-info-bg px-2.5 py-1 text-small font-semibold text-info-foreground">
+                                                    Refund: {order.refundStatus}
+                                                </span>
+                                            )}
                                             <span
-                                                className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
-                                            />
-                                            {status.label}
-                                        </span>
+                                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-small font-medium ${status.bg} ${status.text}`}
+                                            >
+                                                <span
+                                                    className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
+                                                />
+                                                {status.label}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {/* Body */}

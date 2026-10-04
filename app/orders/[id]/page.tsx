@@ -22,13 +22,15 @@ import {
     RefreshCw,
     ShoppingBag,
     ExternalLink,
+    RotateCcw,
+    ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import PremiumImage from "@/components/ui/PremiumImage";
 import { useAuth } from "@/lib/AuthContext";
-import { getUserOrders } from "@/lib/client/orders";
+import { getUserOrder, cancelOrder, requestOrderReturn } from "@/lib/client/orders";
 import { getDeliveryInfo, formatDeliveryTimeline } from "@/lib/delivery";
 import type { Order } from "@/lib/types/order";
 
@@ -98,10 +100,11 @@ function TrackingSkeleton() {
     return (
         <main className="min-h-screen bg-background">
             <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
-                <div className="space-y-4">
-                    <div className="h-12 w-48 animate-pulse rounded-xl bg-muted" />
-                    <div className="h-64 animate-pulse rounded-3xl bg-muted" />
-                    <div className="h-48 animate-pulse rounded-3xl bg-muted" />
+                <div className="space-y-4" role="status" aria-label="Loading order">
+                    <div className="skeleton-glass h-12 w-48 rounded-xl" />
+                    <div className="skeleton-glass h-64 rounded-3xl" />
+                    <div className="skeleton-glass h-48 rounded-3xl" />
+                    <span className="sr-only">Loading order details…</span>
                 </div>
             </div>
         </main>
@@ -200,7 +203,53 @@ export default function OrderTrackingPage() {
     const [liveTracking, setLiveTracking] = useState<TrackingStep[] | null>(null);
     const [trackingLoading, setTrackingLoading] = useState(false);
 
+    // Cancel state
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [cancelReason, setCancelReason] = useState("");
+    const [cancelling, setCancelling] = useState(false);
+
+    // Return state
+    const [showReturnModal, setShowReturnModal] = useState(false);
+    const [returnReason, setReturnReason] = useState("");
+    const [returning, setReturning] = useState(false);
+
     const documentId = params.id as string;
+
+    const handleCancelOrder = async () => {
+        if (!order) return;
+        setCancelling(true);
+        try {
+            const updated = await cancelOrder(documentId, cancelReason || "Cancelled by customer");
+            setOrder(updated);
+            setShowCancelModal(false);
+            toast.success("Order has been cancelled.");
+        } catch (err) {
+            console.error("Cancel order error:", err);
+            toast.error(err instanceof Error ? err.message : "Failed to cancel order.");
+        } finally {
+            setCancelling(false);
+        }
+    };
+
+    const handleReturnSubmit = async () => {
+        if (!order) return;
+        if (!returnReason.trim()) {
+            toast.error("Please enter a reason for your return.");
+            return;
+        }
+        setReturning(true);
+        try {
+            const updated = await requestOrderReturn(documentId, returnReason);
+            setOrder(updated);
+            setShowReturnModal(false);
+            toast.success("Return request submitted successfully.");
+        } catch (err) {
+            console.error("Return order error:", err);
+            toast.error(err instanceof Error ? err.message : "Failed to request return.");
+        } finally {
+            setReturning(false);
+        }
+    };
 
     const fetchLiveTracking = useCallback(async () => {
         if (!order?.awbNumber) return;
@@ -226,16 +275,13 @@ export default function OrderTrackingPage() {
         try {
             setLoading(true);
             setError(null);
-            const orders = await getUserOrders();
-            const found = orders.find((o) => o.$id === documentId);
-            if (!found) {
-                setError("Order not found.");
-                return;
-            }
+            const found = await getUserOrder(documentId);
             setOrder(found);
         } catch (err) {
             console.error(err);
-            setError("Failed to load order.");
+            setError(
+                err instanceof Error ? err.message : "Failed to load order.",
+            );
             toast.error("Could not load order details.");
         } finally {
             setLoading(false);
@@ -311,6 +357,12 @@ export default function OrderTrackingPage() {
         products = JSON.parse(order.products || "[]");
     } catch { }
 
+    const isCancellable = ["Pending", "Pending (COD)", "Processing"].includes(order.status);
+    const isDelivered = order.status === "Delivered";
+    const orderDeliveryDate = new Date(order.deliveredAt || order.$createdAt);
+    const daysSinceDelivery = Math.floor((Date.now() - orderDeliveryDate.getTime()) / (1000 * 60 * 60 * 24));
+    const isReturnEligible = isDelivered && daysSinceDelivery <= 7 && (!order.returnStatus || order.returnStatus === "none");
+
     return (
         <main className="min-h-screen bg-background">
             <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
@@ -331,6 +383,87 @@ export default function OrderTrackingPage() {
                 </motion.div>
 
                 <div className="space-y-5">
+                    {/* ── Return Status Banner ── */}
+                    {order.returnStatus && order.returnStatus !== "none" && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`rounded-2xl border p-4 sm:p-5 ${
+                                order.returnStatus === "requested"
+                                    ? "border-warning bg-warning-bg/60 text-warning-foreground"
+                                    : order.returnStatus === "approved" || order.returnStatus === "refunded"
+                                    ? "border-success bg-success-bg/60 text-success-foreground"
+                                    : order.returnStatus === "item_received"
+                                    ? "border-info bg-info-bg/60 text-info-foreground"
+                                    : "border-destructive bg-destructive/10 text-destructive"
+                            }`}
+                        >
+                            <div className="flex items-start gap-3">
+                                <div className="mt-0.5">
+                                    {order.returnStatus === "requested" && <RotateCcw size={20} />}
+                                    {order.returnStatus === "approved" && <CheckCircle2 size={20} />}
+                                    {order.returnStatus === "item_received" && <PackageCheck size={20} />}
+                                    {order.returnStatus === "refunded" && <BadgeCheck size={20} />}
+                                    {order.returnStatus === "rejected" && <XCircle size={20} />}
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-body">
+                                        {order.returnStatus === "requested" && "Return Request Submitted"}
+                                        {order.returnStatus === "approved" && "Return Request Approved"}
+                                        {order.returnStatus === "item_received" && "Returned Item Received"}
+                                        {order.returnStatus === "refunded" && "Refund Completed"}
+                                        {order.returnStatus === "rejected" && "Return Request Not Approved"}
+                                    </h3>
+                                    <p className="mt-1 text-body-sm opacity-90">
+                                        {order.returnStatus === "requested" &&
+                                            "Our team is reviewing your return request. We will update you with pickup details within 24-48 hours."}
+                                        {order.returnStatus === "approved" &&
+                                            "Your return is approved. Our courier partner will pick up the item. Please keep the tags intact."}
+                                        {order.returnStatus === "item_received" &&
+                                            "We have received your returned piece. Quality inspection is in progress."}
+                                        {order.returnStatus === "refunded" &&
+                                            "Your refund has been processed to your original payment method."}
+                                        {order.returnStatus === "rejected" &&
+                                            (order.returnAdminNotes || "This order does not qualify for return according to our 7-day policy.")}
+                                    </p>
+                                    {order.returnReason && (
+                                        <p className="mt-2 text-small opacity-80">
+                                            <strong>Reason:</strong> {order.returnReason}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* ── Refund Status Banner ── */}
+                    {order.refundStatus && order.refundStatus !== "none" && order.returnStatus !== "refunded" && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-sm"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-bg text-info">
+                                    <Clock size={18} />
+                                </div>
+                                <div>
+                                    <p className="text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                        Refund Status
+                                    </p>
+                                    <h4 className="font-semibold text-foreground">
+                                        {order.refundStatus === "pending" && "Refund Pending Approval"}
+                                        {order.refundStatus === "processing" && "Refund Processing (1-3 Business Days)"}
+                                        {order.refundStatus === "completed" && "Refund Successfully Credited"}
+                                        {order.refundStatus === "failed" && "Refund Encountered an Issue"}
+                                    </h4>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-muted px-3 py-1 text-small font-semibold text-foreground">
+                                ₹{order.total.toLocaleString("en-IN")}
+                            </span>
+                        </motion.div>
+                    )}
                     {/* ── Status Hero Card ────────────────────────────── */}
                     <motion.div
                         initial={{ opacity: 0, y: 12 }}
@@ -615,6 +748,51 @@ export default function OrderTrackingPage() {
                         </motion.div>
                     )}
 
+                    {/* ── Order Management (Cancel / Return) ── */}
+                    {(isCancellable || isReturnEligible) && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.18 }}
+                            className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm"
+                        >
+                            <div>
+                                <h3 className="font-semibold text-foreground">
+                                    {isCancellable ? "Need to make changes?" : "7-Day Return Available"}
+                                </h3>
+                                <p className="mt-1 text-body-sm text-muted-foreground">
+                                    {isCancellable
+                                        ? "You can cancel this order while it is still being prepared."
+                                        : `Delivered ${daysSinceDelivery} day${daysSinceDelivery !== 1 ? "s" : ""} ago. You have up to 7 days to request an easy return.`}
+                                </p>
+                            </div>
+                            <div className="flex gap-3">
+                                {isCancellable && (
+                                    <Button
+                                        variant="outline"
+                                        size="md"
+                                        leftIcon={<XCircle size={16} />}
+                                        onClick={() => setShowCancelModal(true)}
+                                        className="rounded-xl border-destructive/40 text-destructive hover:bg-destructive/10"
+                                    >
+                                        Cancel Order
+                                    </Button>
+                                )}
+                                {isReturnEligible && (
+                                    <Button
+                                        variant="outline"
+                                        size="md"
+                                        leftIcon={<RotateCcw size={16} />}
+                                        onClick={() => setShowReturnModal(true)}
+                                        className="rounded-xl border-warning/50 text-warning-foreground hover:bg-warning-bg/40"
+                                    >
+                                        Request Return
+                                    </Button>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+
                     {/* ── Actions ──────────────────────────────────────── */}
                     <motion.div
                         initial={{ opacity: 0, y: 12 }}
@@ -644,6 +822,133 @@ export default function OrderTrackingPage() {
                     </motion.div>
                 </div>
             </div>
+
+            {/* ── Cancellation Modal ── */}
+            {showCancelModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="cancel-title"
+                >
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl"
+                    >
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+                            <AlertCircle size={24} />
+                        </div>
+                        <h2 id="cancel-title" className="mt-4 text-heading-4 font-bold text-foreground">
+                            Cancel Order?
+                        </h2>
+                        <p className="mt-1 text-body-sm text-muted-foreground">
+                            Are you sure you want to cancel order #{order.orderId}? This unique piece will be released back to the store.
+                        </p>
+
+                        <div className="mt-4">
+                            <label htmlFor="cancel-reason" className="block text-caption font-semibold uppercase text-muted-foreground">
+                                Reason for Cancellation (Optional)
+                            </label>
+                            <textarea
+                                id="cancel-reason"
+                                value={cancelReason}
+                                onChange={(e) => setCancelReason(e.target.value)}
+                                placeholder="E.g., Ordered by mistake, found another item"
+                                className="mt-1.5 w-full rounded-xl border border-border bg-background p-3 text-body-sm outline-none focus:border-foreground focus:ring-1 focus:ring-foreground"
+                                rows={3}
+                                maxLength={300}
+                            />
+                        </div>
+
+                        <div className="mt-6 flex gap-3">
+                            <Button
+                                variant="outline"
+                                fullWidth
+                                onClick={() => setShowCancelModal(false)}
+                                disabled={cancelling}
+                                className="rounded-xl"
+                            >
+                                Keep Order
+                            </Button>
+                            <Button
+                                variant="danger"
+                                fullWidth
+                                loading={cancelling}
+                                loadingText="Cancelling…"
+                                onClick={handleCancelOrder}
+                                className="rounded-xl"
+                            >
+                                Confirm Cancel
+                            </Button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* ── Return Request Modal ── */}
+            {showReturnModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="return-title"
+                >
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl"
+                    >
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-warning-bg text-warning-foreground">
+                            <RotateCcw size={24} />
+                        </div>
+                        <h2 id="return-title" className="mt-4 text-heading-4 font-bold text-foreground">
+                            Request 7-Day Return
+                        </h2>
+                        <p className="mt-1 text-body-sm text-muted-foreground">
+                            Please explain why you wish to return order #{order.orderId}. Items must be unwashed, unworn, and have original tags intact.
+                        </p>
+
+                        <div className="mt-4">
+                            <label htmlFor="return-reason" className="block text-caption font-semibold uppercase text-muted-foreground">
+                                Reason for Return <span className="text-destructive">*</span>
+                            </label>
+                            <textarea
+                                id="return-reason"
+                                value={returnReason}
+                                onChange={(e) => setReturnReason(e.target.value)}
+                                placeholder="E.g., Size did not fit, item condition differs from description"
+                                className="mt-1.5 w-full rounded-xl border border-border bg-background p-3 text-body-sm outline-none focus:border-foreground focus:ring-1 focus:ring-foreground"
+                                rows={3}
+                                maxLength={500}
+                                required
+                            />
+                        </div>
+
+                        <div className="mt-6 flex gap-3">
+                            <Button
+                                variant="outline"
+                                fullWidth
+                                onClick={() => setShowReturnModal(false)}
+                                disabled={returning}
+                                className="rounded-xl"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="primary"
+                                fullWidth
+                                loading={returning}
+                                loadingText="Submitting…"
+                                onClick={handleReturnSubmit}
+                                className="rounded-xl"
+                            >
+                                Submit Return
+                            </Button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </main>
     );
 }

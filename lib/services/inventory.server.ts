@@ -294,3 +294,22 @@ export async function claimCheckoutInventory(
     throw new InventoryUnavailableError();
   }
 }
+
+export async function restoreOrderInventory(
+  productIds: string[],
+): Promise<void> {
+  if (!prisma) throw new Error("Database is not configured");
+  const ids = uniqueProductIds(productIds);
+  await prisma.product.updateMany({
+    where: {
+      id: { in: ids },
+    },
+    data: {
+      status: "active",
+      isActive: true,
+      reservedBy: null,
+      reservationId: null,
+      reservationExpiresAt: null,
+    },
+  });
+}

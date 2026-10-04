@@ -68,6 +68,19 @@ export async function getCartProducts(
   signal?: AbortSignal,
 ): Promise<CartProduct[]> {
   let response: Response;
+  const controller = new AbortController();
+  const forwardAbort = () => controller.abort();
+  let timedOut = false;
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, 10_000);
+
+  if (signal?.aborted) {
+    clearTimeout(timeoutId);
+    throw signal.reason ?? new DOMException("Aborted", "AbortError");
+  }
+  signal?.addEventListener("abort", forwardAbort, { once: true });
 
   try {
     response = await fetch("/api/shop/cart-products", {
@@ -77,18 +90,24 @@ export async function getCartProducts(
       },
       cache: "no-store",
       credentials: "same-origin",
-      signal,
+      signal: controller.signal,
     });
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
+    signal?.removeEventListener("abort", forwardAbort);
+    if (signal?.aborted || (error instanceof Error && error.name === "AbortError" && !timedOut)) {
       throw error;
     }
 
     throw new CartProductsError(
-      "Unable to connect to your cart. Check your connection and try again.",
+      timedOut
+        ? "Your cart took too long to load. Please retry."
+        : "Unable to connect to your cart. Check your connection and try again.",
       0,
-      "NETWORK_ERROR",
+      timedOut ? "TIMEOUT" : "NETWORK_ERROR",
     );
+  } finally {
+    clearTimeout(timeoutId);
+    signal?.removeEventListener("abort", forwardAbort);
   }
 
   const data = await readResponse(response);

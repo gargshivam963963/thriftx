@@ -272,6 +272,7 @@
 /* ─── THEME COLORS ───────────────────────────────────────────────────────── */
 
 :root {
+  --mobile-nav-height: calc(4rem + env(safe-area-inset-bottom));
   --color-bg: #f9f9f9;
   --color-bg-card: #ffffff;
   --color-bg-elevated: #ffffff;
@@ -703,6 +704,12 @@ a[aria-disabled="true"] {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+}
+
+@media (max-width: 767px) {
+  body {
+    padding-bottom: var(--mobile-nav-height);
+  }
 }
 
 /* Design-system aliases — all resolve to the single typeface */

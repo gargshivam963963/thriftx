@@ -21,8 +21,10 @@ import {
     MapPin,
     CreditCard,
     Package,
+    RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PremiumImage from "@/components/ui/PremiumImage";
 import { cn } from "@/lib/utils";
 import { shipOrder } from "@/lib/shipping/admin";
 import type { Order } from "@/lib/types/order";
@@ -40,6 +42,17 @@ async function apiUpdateOrderStatus(id: string, status: string): Promise<boolean
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
+    });
+    if (!res.ok) return false;
+    const json = await res.json();
+    return json?.success === true;
+}
+
+async function apiUpdateOrderDetails(id: string, updates: Record<string, unknown>): Promise<boolean> {
+    const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...updates }),
     });
     if (!res.ok) return false;
     const json = await res.json();
@@ -692,11 +705,16 @@ export default function AdminOrdersPage() {
                                                     >
                                                         <div className="flex items-center gap-3">
                                                             {(item.primaryImage || item.images?.[0]) && (
-                                                                <img
-                                                                    src={item.primaryImage || item.images?.[0]}
-                                                                    alt={item.title}
-                                                                    className="h-10 w-10 rounded-lg object-cover border border-border"
-                                                                />
+                                                                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-border">
+                                                                    <PremiumImage
+                                                                        src={item.primaryImage || item.images?.[0] || "/images/placeholder.jpg"}
+                                                                        alt={item.title}
+                                                                        fill
+                                                                        sizes="40px"
+                                                                        className="object-cover"
+                                                                        fallbackSrc="/images/placeholder.jpg"
+                                                                    />
+                                                                </div>
                                                             )}
                                                             <div>
                                                                 <p className="text-xs font-semibold text-foreground line-clamp-1">
@@ -753,6 +771,81 @@ export default function AdminOrdersPage() {
                                                 <span>Track Live Shipment</span>
                                             </a>
                                         )}
+                                    </div>
+                                )}
+
+                                {/* Return & Refund Management */}
+                                {selectedOrder.returnStatus && selectedOrder.returnStatus !== "none" && (
+                                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                                                <RotateCcw size={13} />
+                                                <span>Return Status: {selectedOrder.returnStatus}</span>
+                                            </div>
+                                            {selectedOrder.returnReason && (
+                                                <span className="text-[11px] text-muted-foreground truncate max-w-[200px]">
+                                                    Reason: {selectedOrder.returnReason}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            {selectedOrder.returnStatus === "requested" && (
+                                                <>
+                                                    <Button
+                                                        size="xs"
+                                                        variant="primary"
+                                                        onClick={async () => {
+                                                            await apiUpdateOrderDetails(selectedOrder.$id, { returnStatus: "approved" });
+                                                            setOrders((prev) => prev.map((o) => o.$id === selectedOrder.$id ? { ...o, returnStatus: "approved" } : o));
+                                                            setSelectedOrder((prev) => prev ? { ...prev, returnStatus: "approved" } : null);
+                                                            toast.success("Return approved. Courier pickup scheduled.");
+                                                        }}
+                                                    >
+                                                        Approve Return
+                                                    </Button>
+                                                    <Button
+                                                        size="xs"
+                                                        variant="outline"
+                                                        onClick={async () => {
+                                                            await apiUpdateOrderDetails(selectedOrder.$id, { returnStatus: "rejected", returnAdminNotes: "Rejected by admin" });
+                                                            setOrders((prev) => prev.map((o) => o.$id === selectedOrder.$id ? { ...o, returnStatus: "rejected" } : o));
+                                                            setSelectedOrder((prev) => prev ? { ...prev, returnStatus: "rejected" } : null);
+                                                            toast.info("Return request rejected.");
+                                                        }}
+                                                    >
+                                                        Reject
+                                                    </Button>
+                                                </>
+                                            )}
+                                            {selectedOrder.returnStatus === "approved" && (
+                                                <Button
+                                                    size="xs"
+                                                    variant="primary"
+                                                    onClick={async () => {
+                                                        await apiUpdateOrderDetails(selectedOrder.$id, { returnStatus: "item_received" });
+                                                        setOrders((prev) => prev.map((o) => o.$id === selectedOrder.$id ? { ...o, returnStatus: "item_received" } : o));
+                                                        setSelectedOrder((prev) => prev ? { ...prev, returnStatus: "item_received" } : null);
+                                                        toast.success("Item marked received.");
+                                                    }}
+                                                >
+                                                    Mark Item Received
+                                                </Button>
+                                            )}
+                                            {selectedOrder.returnStatus === "item_received" && (
+                                                <Button
+                                                    size="xs"
+                                                    variant="primary"
+                                                    onClick={async () => {
+                                                        await apiUpdateOrderDetails(selectedOrder.$id, { returnStatus: "refunded", refundStatus: "completed" });
+                                                        setOrders((prev) => prev.map((o) => o.$id === selectedOrder.$id ? { ...o, returnStatus: "refunded", refundStatus: "completed" } : o));
+                                                        setSelectedOrder((prev) => prev ? { ...prev, returnStatus: "refunded", refundStatus: "completed" } : null);
+                                                        toast.success("Return marked refunded & piece restored to inventory.");
+                                                    }}
+                                                >
+                                                    Complete & Issue Refund
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 

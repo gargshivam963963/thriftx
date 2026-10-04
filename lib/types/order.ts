@@ -16,6 +16,21 @@ export type ShipmentStatus =
 
 export type PickupStatus = "pending" | "scheduled" | "picked_up" | "failed";
 
+export type ReturnStatus =
+  | "none"
+  | "requested"
+  | "approved"
+  | "rejected"
+  | "item_received"
+  | "refunded";
+
+export type RefundStatus =
+  | "none"
+  | "pending"
+  | "processing"
+  | "completed"
+  | "failed";
+
 export interface Order {
   $id: string;
   $createdAt: string;
@@ -51,6 +66,26 @@ export interface Order {
   deliveryMethod: string;
 
   products: string;
+
+  // --------------------------
+  // Returns & Refunds
+  // --------------------------
+
+  returnStatus?: ReturnStatus;
+
+  returnReason?: string;
+
+  returnRequestedAt?: string;
+
+  returnAdminNotes?: string;
+
+  refundStatus?: RefundStatus;
+
+  refundAmount?: number;
+
+  refundId?: string;
+
+  refundedAt?: string;
 
   // --------------------------
   // Shipping

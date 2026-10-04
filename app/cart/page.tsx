@@ -49,12 +49,12 @@ function CartLoadingSkeleton() {
           key={item}
           className="flex min-h-[184px] gap-4 rounded-2xl border border-border bg-card p-4"
         >
-          <div className="h-32 w-32 shrink-0 animate-pulse rounded-xl bg-muted" />
+          <div className="skeleton-glass h-32 w-32 shrink-0 rounded-xl" />
 
           <div className="flex min-w-0 flex-1 flex-col gap-3 py-2">
-            <div className="h-5 w-3/4 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
-            <div className="mt-auto h-6 w-20 animate-pulse rounded bg-muted" />
+            <div className="skeleton-glass h-5 w-3/4 rounded" />
+            <div className="skeleton-glass h-4 w-1/2 rounded" />
+            <div className="skeleton-glass mt-auto h-6 w-20 rounded" />
           </div>
         </div>
       ))}
@@ -69,16 +69,16 @@ function SummaryLoadingSkeleton() {
       role="status"
       aria-label="Loading order summary"
     >
-      <div className="mb-6 h-5 w-24 animate-pulse rounded bg-muted" />
-      <div className="mb-8 h-8 w-36 animate-pulse rounded bg-muted" />
+      <div className="skeleton-glass mb-6 h-5 w-24 rounded" />
+      <div className="skeleton-glass mb-8 h-8 w-36 rounded" />
 
       <div className="space-y-5">
-        <div className="h-12 animate-pulse rounded-xl bg-muted" />
-        <div className="h-4 w-full animate-pulse rounded bg-muted" />
-        <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+        <div className="skeleton-glass h-12 rounded-xl" />
+        <div className="skeleton-glass h-4 w-full rounded" />
+        <div className="skeleton-glass h-4 w-3/4 rounded" />
         <div className="h-px bg-border" />
-        <div className="h-12 animate-pulse rounded-xl bg-muted" />
-        <div className="h-12 animate-pulse rounded-xl bg-muted" />
+        <div className="skeleton-glass h-12 rounded-xl" />
+        <div className="skeleton-glass h-12 rounded-xl" />
       </div>
     </div>
   );

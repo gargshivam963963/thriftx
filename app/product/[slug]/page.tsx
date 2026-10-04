@@ -154,7 +154,7 @@ export default async function ProductDetail({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <Section className="pt-8 pb-24 lg:pb-16">
+      <Section className="pt-8 pb-[calc(10rem+env(safe-area-inset-bottom))] md:pb-24 lg:pb-16">
         <div className="mx-auto w-full max-w-[1280px]">
           {/* ── Breadcrumb ── */}
           <nav

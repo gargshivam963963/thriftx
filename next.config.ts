@@ -4,6 +4,7 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  distDir: isProduction ? ".next" : ".next-dev",
 
   async headers() {
     return [

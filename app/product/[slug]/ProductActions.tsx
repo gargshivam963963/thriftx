@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import type { Product } from "@/lib/services/products";
 import { useCart } from "@/lib/CartContext";
 import { useAuth } from "@/lib/AuthContext";
-import { addToCart as persistAddToCart } from "@/lib/services/cart";
 import { Button } from "@/components/ui/button";
 import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
 
@@ -43,12 +42,6 @@ export default function ProductActions({ product }: ProductActionsProps) {
     return true;
   }, [user, router, product.slug]);
 
-  const persistProduct = useCallback(async () => {
-    if (user) {
-      await persistAddToCart(product.id, 1);
-    }
-  }, [product.id, user]);
-
   const trackProduct = useCallback(() => {
     trackAddToCart(product.id, {
       title: product.title,
@@ -67,16 +60,18 @@ export default function ProductActions({ product }: ProductActionsProps) {
     setCartLoading("add");
 
     try {
-      await persistProduct();
-
-      addToCart(product, 1);
+      await addToCart(product, 1);
       trackProduct();
 
       toast.success("Added to cart");
       router.push("/cart");
     } catch (error) {
       console.error("[ProductActions] Add to cart failed:", error);
-      toast.error("Unable to add this item. Please try again.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to add this item. Please try again.",
+      );
       setCartLoading("none");
     } finally {
       busyRef.current = false;
@@ -84,7 +79,6 @@ export default function ProductActions({ product }: ProductActionsProps) {
   }, [
     addToCart,
     ensureAuth,
-    persistProduct,
     product,
     router,
     soldOut,
@@ -99,15 +93,17 @@ export default function ProductActions({ product }: ProductActionsProps) {
     setCartLoading("buy");
 
     try {
-      await persistProduct();
-
-      addToCart(product, 1);
+      await addToCart(product, 1);
       trackProduct();
 
       router.push("/checkout");
     } catch (error) {
       console.error("[ProductActions] Buy now failed:", error);
-      toast.error("Unable to start checkout. Please try again.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to start checkout. Please try again.",
+      );
       setCartLoading("none");
     } finally {
       busyRef.current = false;
@@ -115,7 +111,6 @@ export default function ProductActions({ product }: ProductActionsProps) {
   }, [
     addToCart,
     ensureAuth,
-    persistProduct,
     product,
     router,
     soldOut,

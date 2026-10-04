@@ -152,11 +152,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 {loading ? (
                     <>
                         <ButtonIcon>
-                            <Loader2 className="animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                         </ButtonIcon>
 
                         {!isIconOnly && (
-                            <span className="truncate leading-none">
+                            <span
+                                className="min-w-0 truncate leading-normal"
+                                role="status"
+                            >
                                 {loadingText}
                             </span>
                         )}
@@ -168,7 +171,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                         </ButtonIcon>
 
                         {!isIconOnly && (
-                            <span className="truncate leading-none">
+                            <span className="min-w-0 truncate leading-normal">
                                 {successText}
                             </span>
                         )}

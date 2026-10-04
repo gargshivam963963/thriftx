@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getAllOrders,
   updateOrderStatus,
+  adminUpdateOrder,
   deleteOrder,
 } from "@/lib/services/adminService";
 
@@ -18,6 +19,23 @@ const ALLOWED_ORDER_STATUSES = new Set([
   "Shipped",
   "Delivered",
   "Cancelled",
+]);
+
+const ALLOWED_RETURN_STATUSES = new Set([
+  "none",
+  "requested",
+  "approved",
+  "rejected",
+  "item_received",
+  "refunded",
+]);
+
+const ALLOWED_REFUND_STATUSES = new Set([
+  "none",
+  "pending",
+  "processing",
+  "completed",
+  "failed",
 ]);
 
 function isValidId(value: unknown): value is string {
@@ -73,18 +91,54 @@ export async function PATCH(request: NextRequest) {
   }
 
   const record = body as Record<string, unknown>;
-  const { id, status } = record;
+  const { id, status, returnStatus, refundStatus, returnAdminNotes } = record;
 
   if (!isValidId(id)) {
     return jsonError("A valid order ID is required.", 400);
   }
 
-  if (typeof status !== "string" || !ALLOWED_ORDER_STATUSES.has(status)) {
-    return jsonError("Invalid order status.", 400);
+  const updates: Record<string, unknown> = {};
+
+  if (status !== undefined) {
+    if (typeof status !== "string" || !ALLOWED_ORDER_STATUSES.has(status)) {
+      return jsonError("Invalid order status.", 400);
+    }
+    updates.status = status;
+  }
+
+  if (returnStatus !== undefined) {
+    if (typeof returnStatus !== "string" || !ALLOWED_RETURN_STATUSES.has(returnStatus)) {
+      return jsonError("Invalid return status.", 400);
+    }
+    updates.returnStatus = returnStatus;
+    if (returnStatus === "refunded") {
+      updates.refundStatus = "completed";
+      updates.refundedAt = new Date().toISOString();
+    }
+  }
+
+  if (refundStatus !== undefined) {
+    if (typeof refundStatus !== "string" || !ALLOWED_REFUND_STATUSES.has(refundStatus)) {
+      return jsonError("Invalid refund status.", 400);
+    }
+    updates.refundStatus = refundStatus;
+    if (refundStatus === "completed") {
+      updates.refundedAt = new Date().toISOString();
+    }
+  }
+
+  if (returnAdminNotes !== undefined) {
+    if (typeof returnAdminNotes === "string") {
+      updates.returnAdminNotes = returnAdminNotes.slice(0, 500);
+    }
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return jsonError("No valid fields to update.", 400);
   }
 
   try {
-    const updated = await updateOrderStatus(id.trim(), status);
+    const updated = await adminUpdateOrder(id.trim(), updates);
 
     if (!updated) {
       return jsonError("Order could not be updated.", 404);
@@ -96,7 +150,7 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     console.error("[api/admin/orders] PATCH failed:", error);
 
-    return jsonError("Failed to update order status.", 500);
+    return jsonError("Failed to update order.", 500);
   }
 }
 

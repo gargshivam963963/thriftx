@@ -1,6 +1,9 @@
 import type { Order } from "@/lib/types/order";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { documentStore, DocumentQuery } from "@/lib/document-store";
+import { updateOrderStatus as serviceUpdateOrderStatus, getOrderById } from "./orderService";
+import { restoreOrderInventory } from "./inventory.server";
+import { revalidatePath } from "next/cache";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface DashboardStats {
@@ -414,12 +417,52 @@ export async function updateOrderStatus(
   status: string,
 ): Promise<boolean> {
   try {
-    await documentStore.updateDocument("thriftx", "orders", documentId, {
-      status,
-    });
-    return true;
+    const updated = await serviceUpdateOrderStatus(documentId, status);
+    return Boolean(updated);
   } catch (error) {
     console.error("updateOrderStatus error:", error);
+    return false;
+  }
+}
+
+export async function adminUpdateOrder(
+  documentId: string,
+  updates: Record<string, unknown>,
+): Promise<boolean> {
+  try {
+    const existing = await getOrderById(documentId);
+    if (!existing) return false;
+
+    await documentStore.updateDocument("thriftx", "orders", documentId, updates);
+
+    // If order was cancelled or return approved/refunded, ensure inventory restored
+    if (
+      (updates.status === "Cancelled" ||
+        updates.returnStatus === "approved" ||
+        updates.returnStatus === "item_received" ||
+        updates.returnStatus === "refunded") &&
+      existing.products
+    ) {
+      try {
+        const items = JSON.parse(existing.products as string);
+        if (Array.isArray(items)) {
+          const productIds = items
+            .map((i: { id?: string }) => i.id)
+            .filter((id): id is string => typeof id === "string" && Boolean(id));
+          if (productIds.length > 0) {
+            await restoreOrderInventory(productIds);
+            revalidatePath("/product/[slug]", "page");
+            revalidatePath("/shop", "page");
+          }
+        }
+      } catch (e) {
+        console.error("Failed to restore inventory on admin order update:", e);
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error("adminUpdateOrder error:", error);
     return false;
   }
 }

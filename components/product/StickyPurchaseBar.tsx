@@ -98,7 +98,7 @@ export default function StickyPurchaseBar({ product }: StickyPurchaseBarProps) {
             <motion.div
                 initial={{ y: 100 }}
                 animate={{ y: 0 }}
-                className="fixed inset-x-0 bottom-0 z-[60] border-t border-border bg-card/95 p-4 backdrop-blur-xl lg:hidden"
+                className="fixed inset-x-0 bottom-[var(--mobile-nav-height)] z-[60] border-t border-border bg-card/95 p-4 backdrop-blur-xl md:bottom-0 lg:hidden"
             >
                 <Button variant="secondary" size="lg" fullWidth disabled>
                     Sold Out
@@ -113,7 +113,7 @@ export default function StickyPurchaseBar({ product }: StickyPurchaseBarProps) {
             animate={{ y: 0 }}
             exit={{ y: 100 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed inset-x-0 bottom-0 z-[60] border-t border-border bg-card/95 px-4 py-3 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] lg:hidden"
+            className="fixed inset-x-0 bottom-[var(--mobile-nav-height)] z-[60] border-t border-border bg-card/95 px-4 py-3 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] md:bottom-0 lg:hidden"
         >
             <div className="mx-auto flex max-w-[1280px] items-center gap-3">
                 <div className="shrink-0">

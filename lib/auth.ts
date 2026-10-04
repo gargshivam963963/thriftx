@@ -13,7 +13,11 @@ if (!secret || secret.length < 32) {
   );
 }
 
-const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+const baseURL =
+  process.env.BETTER_AUTH_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
 
 const trustedOrigins = [
   "http://localhost:3000",

@@ -10,6 +10,7 @@ import {
   Mail,
   MapPin,
   MessageCircle,
+  Phone,
   ShieldCheck,
   Truck,
   RotateCcw,
@@ -18,11 +19,9 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/Container";
+import { contactInfo } from "@/lib/contact";
 
-const BUSINESS_EMAIL = "support@thriftx.in";
-const WHATSAPP_NUMBER = "919876543210";
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
-const WHATSAPP_UPDATES_LINK = `${WHATSAPP_LINK}?text=${encodeURIComponent(
+const WHATSAPP_UPDATES_LINK = `${contactInfo.whatsappUrl}?text=${encodeURIComponent(
   "Hi, I'd like to receive updates about new drops and offers.",
 )}`;
 
@@ -30,6 +29,7 @@ const companyLinks = [
   { label: "About Us", href: "/about" },
   { label: "Contact", href: "/contact" },
   { label: "FAQs", href: "/faqs" },
+  { label: "Journal", href: "/blog" },
   { label: "Careers", href: "/careers" },
 ];
 
@@ -56,16 +56,16 @@ const legalLinks = [
 const socialLinks = [
   {
     label: "Instagram",
-    href: "https://www.instagram.com/thriftxpanipat/",
+    href: contactInfo.instagramUrl,
     icon: Instagram,
   },
   {
     label: "Facebook",
-    href: "https://www.facebook.com/profile.php?id=100009105021343",
+    href: contactInfo.facebookUrl,
     icon: Facebook,
   },
-  { label: "Email", href: `mailto:${BUSINESS_EMAIL}`, icon: Mail },
-  { label: "WhatsApp", href: WHATSAPP_LINK, icon: MessageCircle },
+  { label: "Email", href: `mailto:${contactInfo.email}`, icon: Mail },
+  { label: "WhatsApp", href: contactInfo.whatsappUrl, icon: MessageCircle },
 ];
 
 const trustBadges = [
@@ -220,14 +220,24 @@ export default function Footer() {
               </FooterHeading>
               <div className="mt-5 space-y-3">
                 <a
-                  href={`mailto:${BUSINESS_EMAIL}`}
+                  href={`mailto:${contactInfo.email}`}
                   className="flex items-start gap-2.5 text-body text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                  <span className="break-all">{BUSINESS_EMAIL}</span>
+                  <span className="break-all">{contactInfo.email}</span>
                 </a>
                 <a
-                  href={WHATSAPP_LINK}
+                  href={contactInfo.phoneHref}
+                  className="flex items-start gap-2.5 text-body text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Phone
+                    className="mt-0.5 h-4 w-4 shrink-0"
+                    aria-hidden="true"
+                  />
+                  {contactInfo.phone}
+                </a>
+                <a
+                  href={contactInfo.whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-start gap-2.5 text-body text-muted-foreground transition-colors hover:text-foreground"

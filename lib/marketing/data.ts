@@ -262,7 +262,13 @@ export async function fetchActiveOffers(): Promise<Offer[]> {
 }
 
 export async function fetchAnnouncements(): Promise<Announcement[]> {
-  return fetchCollection<Announcement>("announcements", FALLBACK_ANNOUNCEMENTS);
+  const announcements = await fetchCollection<
+    Announcement & { $id?: string }
+  >("announcements", FALLBACK_ANNOUNCEMENTS);
+  return announcements.map(({ $id, ...announcement }) => ({
+    ...announcement,
+    id: announcement.id || $id || "",
+  }));
 }
 
 export async function fetchActiveAnnouncements(): Promise<Announcement[]> {

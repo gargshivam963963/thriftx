@@ -126,6 +126,9 @@ export function getFriendlyError(error: unknown, fallback?: string): string {
 function friendlyFromRaw(raw: string): string {
   const lower = raw.toLowerCase();
 
+  if (lower.includes("provider not found")) {
+    return "Google sign-in isn't available right now. Please use your email and password.";
+  }
   if (lower.includes("already exists") || lower.includes("already in use")) {
     return "This account already exists. Please sign in instead.";
   }

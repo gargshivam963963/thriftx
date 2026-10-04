@@ -15,6 +15,7 @@ import {
     StaggerItem,
 } from "@/components/animations";
 import { cn } from "@/lib/utils";
+import { contactInfo } from "@/lib/contact";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Instagram Community Section
@@ -42,7 +43,7 @@ interface InstagramFeedProps {
 }
 
 const INSTAGRAM_HANDLE = "ThriftX";
-const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/thriftxpanipat/";
+const INSTAGRAM_PROFILE_URL = contactInfo.instagramUrl;
 
 // Static fallback content — replace with live API data when available.
 const STATIC_POSTS: InstagramMediaItem[] = [

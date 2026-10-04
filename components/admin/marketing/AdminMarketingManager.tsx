@@ -198,6 +198,24 @@ const CONFIGS: Record<string, ResourceConfig> = {
     },
 };
 
+// Mirrors the storefront filter so admins see whether an item is really visible.
+function scheduleStatus(item: {
+    isActive?: boolean;
+    startsAt?: string;
+    endsAt?: string;
+    usedCount?: number;
+}): string {
+    if (!item.isActive) return "Inactive";
+    const now = Date.now();
+    if (item.endsAt && new Date(item.endsAt).getTime() < now) {
+        return "Expired — not shown to customers";
+    }
+    if (item.startsAt && new Date(item.startsAt).getTime() > now) {
+        return "Scheduled — not live yet";
+    }
+    return item.usedCount !== undefined ? "Active" : "Live";
+}
+
 // ─── Small building blocks ───────────────────────────────────────────────────
 
 function Field({
@@ -363,6 +381,21 @@ export default function AdminMarketingManager({
     };
 
     const handleSave = async () => {
+        if (resourceType === "announcement") {
+            const href = String(form.linkHref ?? "").trim();
+            if (href && !/^(\/|https?:\/\/)/i.test(href)) {
+                toast.error("Link URL must start with / or https://");
+                return;
+            }
+            if (
+                form.startsAt &&
+                form.endsAt &&
+                new Date(form.endsAt) <= new Date(form.startsAt)
+            ) {
+                toast.error("End date must be after the start date");
+                return;
+            }
+        }
         setSaving(true);
         try {
             const res = await fetch("/api/admin/marketing", {
@@ -504,7 +537,7 @@ export default function AdminMarketingManager({
                                         {config.summary(item)}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        {item.isActive ? "Active" : "Inactive"}
+                                        {scheduleStatus(item)}
                                         {item.usedCount !== undefined && ` • ${item.usedCount} used`}
                                     </p>
                                 </div>

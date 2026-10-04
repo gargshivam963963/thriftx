@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Menu,
   Search,
@@ -24,6 +24,7 @@ import { useCart } from "@/lib/CartContext";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import GlobalSearch from "@/components/search/GlobalSearch";
 import AnnouncementBar from "@/components/marketing/AnnouncementBar";
+import NotificationBell from "@/components/marketing/NotificationBell";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -33,19 +34,18 @@ interface NavCategory {
   href: string;
   icon: string;
   highlight?: boolean;
-  badge?: string;
 }
 
 const navCategories: NavCategory[] = [
   {
+    label: "Shop",
+    href: "/shop",
+    icon: "✳️",
+  },
+  {
     label: "New Arrivals",
     href: "/shop?sort=newest",
     icon: "🔥",
-  },
-  {
-    label: "Vintage",
-    href: "/shop/vintage",
-    icon: "✨",
   },
   {
     label: "Best Sellers",
@@ -57,7 +57,11 @@ const navCategories: NavCategory[] = [
     href: "/shop?sort=sale",
     icon: "🏷️",
     highlight: true,
-    badge: "UP TO 60%",
+  },
+  {
+    label: "Journal",
+    href: "/blog",
+    icon: "✎",
   },
 ];
 
@@ -549,7 +553,7 @@ function MobileMenu({
                       href={cat.href}
                       onClick={onClose}
                       className={cn(
-                        "flex min-h-12 items-center gap-4 rounded-2xl px-4 py-3.5 text-base font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        "flex min-h-12 items-center gap-4 rounded-2xl px-4 py-3.5 text-body-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         cat.highlight
                           ? "bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-300"
                           : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -566,11 +570,6 @@ function MobileMenu({
                         {cat.label}
                       </span>
 
-                      {cat.badge && (
-                        <span className="ml-auto rounded-full bg-amber-500 px-2.5 py-0.5 text-badge font-bold uppercase tracking-wider text-white">
-                          {cat.badge}
-                        </span>
-                      )}
                     </Link>
                   ),
                 )}
@@ -595,7 +594,7 @@ function MobileMenu({
                           rounded-2xl
                           px-4
                           py-3.5
-                          text-base
+                          text-body-sm
                           font-semibold
                           text-muted-foreground
                           transition
@@ -623,7 +622,7 @@ function MobileMenu({
                           rounded-2xl
                           px-4
                           py-3.5
-                          text-base
+                          text-body-sm
                           font-semibold
                           text-muted-foreground
                           transition
@@ -651,7 +650,7 @@ function MobileMenu({
                           rounded-2xl
                           px-4
                           py-3.5
-                          text-base
+                          text-body-sm
                           font-semibold
                           text-muted-foreground
                           transition
@@ -664,6 +663,58 @@ function MobileMenu({
                       >
                         <Heart size={22} />
                         Wishlist
+                      </Link>
+
+                      <Link
+                        href="/profile/addresses"
+                        onClick={onClose}
+                        className="
+                          flex
+                          min-h-12
+                          items-center
+                          gap-4
+                          rounded-2xl
+                          px-4
+                          py-3.5
+                          text-body-sm
+                          font-semibold
+                          text-muted-foreground
+                          transition
+                          hover:bg-muted
+                          hover:text-foreground
+                          focus-visible:outline-none
+                          focus-visible:ring-2
+                          focus-visible:ring-ring
+                        "
+                      >
+                        <MapPin size={22} />
+                        Addresses
+                      </Link>
+
+                      <Link
+                        href="/profile/settings"
+                        onClick={onClose}
+                        className="
+                          flex
+                          min-h-12
+                          items-center
+                          gap-4
+                          rounded-2xl
+                          px-4
+                          py-3.5
+                          text-body-sm
+                          font-semibold
+                          text-muted-foreground
+                          transition
+                          hover:bg-muted
+                          hover:text-foreground
+                          focus-visible:outline-none
+                          focus-visible:ring-2
+                          focus-visible:ring-ring
+                        "
+                      >
+                        <Settings size={22} />
+                        Settings
                       </Link>
 
                       <Button
@@ -770,27 +821,25 @@ function HeaderSkeleton() {
           xl:!px-10
         "
       >
-        <div className="flex items-center gap-4">
-          <div className="h-9 w-9 animate-pulse rounded-xl bg-muted md:hidden" />
+        <div className="h-11 w-11 animate-pulse rounded-xl bg-muted lg:hidden" />
 
-          <div className="hidden items-center gap-6 md:flex">
-            {[1, 2, 3, 4].map(
-              (item) => (
-                <div
-                  key={item}
-                  className="h-4 w-16 animate-pulse rounded bg-muted"
-                />
-              ),
-            )}
-          </div>
+        <div className="h-10 w-32 animate-pulse rounded-lg bg-muted sm:w-40" />
+
+        <div className="hidden items-center gap-2 lg:flex">
+          {[1, 2, 3, 4, 5].map((item) => (
+            <div
+              key={item}
+              className="h-10 w-16 animate-pulse rounded-xl bg-muted"
+            />
+          ))}
         </div>
 
-        <div className="h-9 w-36 animate-pulse rounded-lg bg-muted" />
-
         <div className="flex items-center gap-2">
-          <div className="h-9 w-9 animate-pulse rounded-xl bg-muted" />
-          <div className="h-9 w-9 animate-pulse rounded-xl bg-muted" />
-          <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
+          <div className="hidden h-11 w-11 animate-pulse rounded-xl bg-muted md:block" />
+          <div className="h-11 w-11 animate-pulse rounded-xl bg-muted" />
+          <div className="h-11 w-11 animate-pulse rounded-xl bg-muted" />
+          <div className="h-11 w-11 animate-pulse rounded-xl bg-muted" />
+          <div className="hidden h-10 w-10 animate-pulse rounded-full bg-muted md:block" />
         </div>
       </Container>
     </header>
@@ -837,9 +886,18 @@ function IconButton({
 }
 
 export default function Header() {
+  return (
+    <Suspense fallback={<HeaderSkeleton />}>
+      <HeaderContent />
+    </Suspense>
+  );
+}
+
+function HeaderContent() {
   const router = useRouter();
   const pathname =
     usePathname();
+  const searchParams = useSearchParams();
 
   const {
     user,
@@ -879,8 +937,6 @@ export default function Header() {
 
   const iconSize = 20;
   const iconStroke = 2;
-
-  console.log(totalItems, "totalItems");
 
   return (
     <>
@@ -981,16 +1037,17 @@ export default function Header() {
               T
             </div>
 
-            <div className="hidden sm:block">
+            <div className="min-w-0">
               <span
                 className="
                   block
                   font-display
-                  text-title
-                  font-bold
+                  text-body
+                  font-extrabold
                   leading-none
-                  tracking-tight
+                  tracking-[0.08em]
                   text-foreground
+                  sm:text-title
                 "
               >
                 THRIFTX
@@ -998,14 +1055,15 @@ export default function Header() {
 
               <span
                 className="
-                  mt-0.5
-                  block
+                  mt-1
+                  hidden
                   text-badge
-                  font-bold
+                  font-semibold
                   uppercase
                   leading-tight
-                  tracking-widest
+                  tracking-[0.14em]
                   text-muted-foreground
+                  sm:block
                 "
               >
                 Premium Thrift
@@ -1029,13 +1087,17 @@ export default function Header() {
                   cat.href.split(
                     "?",
                   )[0];
+                const query =
+                  cat.href.split("?")[1];
 
-                const active =
-                  pathname ===
-                  basePath ||
-                  pathname.startsWith(
-                    `${basePath}/`,
-                  );
+                const active = query
+                  ? pathname === basePath &&
+                    Array.from(
+                      new URLSearchParams(query).entries(),
+                    ).every(([key, value]) => searchParams.get(key) === value)
+                  : (pathname === basePath &&
+                      !searchParams.has("sort")) ||
+                    pathname.startsWith(`${basePath}/`);
 
                 return (
                   <Link
@@ -1070,25 +1132,6 @@ export default function Header() {
                     )}
                   >
                     {cat.label}
-
-                    {cat.badge && (
-                      <span
-                        className="
-                          ml-1.5
-                          rounded-full
-                          bg-amber-500
-                          px-1.5
-                          py-0.5
-                          text-badge
-                          font-bold
-                          uppercase
-                          tracking-wider
-                          text-white
-                        "
-                      >
-                        {cat.badge}
-                      </span>
-                    )}
 
                     {active && (
                       <motion.div
@@ -1148,6 +1191,8 @@ export default function Header() {
                 }
               />
             </Tooltip>
+
+            <NotificationBell />
 
             <Tooltip
               label={

@@ -24,6 +24,7 @@ import {
   PasswordField,
 } from "@/components/ui/form";
 import { useAuth } from "@/lib/AuthContext";
+import { useGoogleAuthEnabled } from "@/lib/useGoogleAuthEnabled";
 import { authClient } from "@/lib/auth-client";
 import { getFriendlyError } from "@/lib/errors";
 
@@ -172,6 +173,8 @@ export default function Signup() {
   const [referralCode, setReferralCode] = useState<string | null>(referralCodeParam);
 
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  const googleEnabled = useGoogleAuthEnabled();
 
   const {
     register,
@@ -397,7 +400,9 @@ export default function Signup() {
               </div>
             )}
 
-            <Button
+            {googleEnabled !== false && (
+<>
+<Button
               type="button"
               disabled={isSubmitting || googleLoading}
               loading={googleLoading}
@@ -453,6 +458,8 @@ export default function Signup() {
                 </span>
               </div>
             </div>
+</>
+)}
 
             <form
               onSubmit={handleSubmit(onSubmit)}

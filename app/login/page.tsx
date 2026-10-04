@@ -22,6 +22,7 @@ import {
     PasswordField,
 } from "@/components/ui/form";
 import { useAuth } from "@/lib/AuthContext";
+import { useGoogleAuthEnabled } from "@/lib/useGoogleAuthEnabled";
 import { authClient } from "@/lib/auth-client";
 import { getFriendlyError } from "@/lib/errors";
 
@@ -47,6 +48,7 @@ export default function Login() {
 
     const [remember, setRemember] = useState(true);
     const [googleLoading, setGoogleLoading] = useState(false);
+    const googleEnabled = useGoogleAuthEnabled();
     const [rootMessage, setRootMessage] =
         useState<RootMessage | null>(null);
 
@@ -329,7 +331,9 @@ export default function Login() {
                             )}
                         </AnimatePresence>
 
-                        <Button
+                        {googleEnabled !== false && (
+<>
+<Button
                             type="button"
                             variant="outline"
                             size="lg"
@@ -383,6 +387,8 @@ export default function Login() {
                                 </span>
                             </div>
                         </div>
+</>
+)}
 
                         <form
                             onSubmit={handleSubmit(onSubmit)}

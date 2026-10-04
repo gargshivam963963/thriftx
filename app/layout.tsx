@@ -12,6 +12,7 @@ import AnalyticsProviderWrapper from "@/components/AnalyticsProviderWrapper";
 import BottomNav from "@/components/BottomNav";
 import { Toaster } from "sonner";
 import { siteConfig } from "@/lib/seo";
+import { contactInfo } from "@/lib/contact";
 
 // ─── Design System: ONE premium font family ─────────────────────────────────
 // Plus Jakarta Sans is the single typeface for the entire THRIFTX design system.
@@ -81,9 +82,18 @@ const organizationJsonLd = {
   url: siteConfig.url,
   logo: `${siteConfig.url}/icon.jpg`,
   description: siteConfig.description,
+  email: contactInfo.email,
+  contactPoint: {
+    "@type": "ContactPoint",
+    telephone: `+91${contactInfo.phone}`,
+    email: contactInfo.email,
+    contactType: "customer support",
+    areaServed: "IN",
+    availableLanguage: ["English", "Hindi"],
+  },
   sameAs: [
-    "https://instagram.com/thriftx",
-    "https://twitter.com/thriftx",
+    contactInfo.instagramUrl,
+    contactInfo.facebookUrl,
   ],
 };
 

@@ -1277,3 +1277,14 @@ body {
 .dark .range-slider::-moz-range-thumb {
   border-color: var(--color-bg-card);
 }
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[shimmer_1\.8s_infinite\]::before {
+    animation: none !important;
+  }
+}

@@ -2,9 +2,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import {
     ArrowRight,
     Loader2,
@@ -38,7 +38,19 @@ type RootMessage = {
     message: string;
 };
 
-export default function Login() {
+/**
+ * Only allow same-origin, internal redirect targets.
+ * Blocks open-redirect attempts (e.g. `//evil.com`, `https://evil.com`).
+ */
+function getSafeRedirect(raw: string | null): string {
+    if (!raw) return "/";
+    if (!raw.startsWith("/")) return "/";
+    if (raw.startsWith("//")) return "/";
+    if (raw.includes(":")) return "/";
+    return raw;
+}
+
+function LoginForm() {
     const router = useRouter();
     const {
         user,
@@ -49,6 +61,8 @@ export default function Login() {
     const [remember, setRemember] = useState(true);
     const [googleLoading, setGoogleLoading] = useState(false);
     const googleEnabled = useGoogleAuthEnabled();
+    const searchParams = useSearchParams();
+    const redirectTo = getSafeRedirect(searchParams.get("redirect"));
     const [rootMessage, setRootMessage] =
         useState<RootMessage | null>(null);
 
@@ -69,9 +83,9 @@ export default function Login() {
 
     useEffect(() => {
         if (!authLoading && user) {
-            router.replace("/");
+            router.replace(redirectTo);
         }
-    }, [authLoading, user, router]);
+    }, [authLoading, user, router, redirectTo]);
 
     useEffect(() => {
         const savedEmail = localStorage.getItem("thriftx-email");
@@ -93,7 +107,7 @@ export default function Login() {
                 email: values.email,
                 password: values.password,
                 rememberMe: remember,
-                callbackURL: "/",
+                callbackURL: redirectTo,
             });
 
             if (response.error) {
@@ -107,7 +121,7 @@ export default function Login() {
             }
 
             await refreshUser();
-            router.replace("/");
+            router.replace(redirectTo);
         } catch (err) {
             const message = getFriendlyError(
                 err,
@@ -184,7 +198,7 @@ export default function Login() {
         try {
             const response = await authClient.signIn.social({
                 provider: "google",
-                callbackURL: "/",
+                callbackURL: redirectTo,
             });
 
             if (response.error) {
@@ -517,5 +531,19 @@ export default function Login() {
                 </motion.section>
             </main>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="flex min-h-screen items-center justify-center bg-background">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
+                </div>
+            }
+        >
+            <LoginForm />
+        </Suspense>
     );
 }

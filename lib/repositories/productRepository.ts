@@ -376,7 +376,7 @@ export async function getSimilarProducts(
         status: "active",
         id: { not: product.id },
       },
-      { take: 200 },
+      { take: 100 },
     )
     .catch((error) => {
       console.error("getSimilarProducts error:", error);

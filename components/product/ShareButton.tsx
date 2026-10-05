@@ -1,7 +1,22 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Share2, Link2, MessageCircle, Mail, Twitter, Instagram, Check } from "lucide-react";
+import {
+    useState,
+    useRef,
+    useEffect,
+    useCallback,
+} from "react";
+
+import {
+    Share2,
+    Link2,
+    MessageCircle,
+    Mail,
+    Smartphone,
+    Check,
+    X,
+} from "lucide-react";
+
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -12,143 +27,322 @@ interface ShareButtonProps {
     price: number;
 }
 
-/**
- * ShareButton — native sharing with graceful fallback menu.
- *
- * 1. Tries `navigator.share()` (native share sheet on mobile/desktop).
- * 2. If unavailable, opens an inline menu with Copy Link, WhatsApp,
- *    Twitter/X, Instagram, and Email options.
- */
-export default function ShareButton({ title, price }: ShareButtonProps) {
+export default function ShareButton({
+    title,
+    price,
+}: ShareButtonProps) {
     const [open, setOpen] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const [nativeSharing, setNativeSharing] = useState(false);
+
     const ref = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+        null,
+    );
+
+    const buildShareData = useCallback(() => {
+        const url = window.location.href;
+
+        const text = `${title} \n₹${price.toLocaleString(
+            "en-IN",
+        )
+            } \n\nA 1 - of - 1 curated find from THRIFTX.`;
+
+        return { url, text };
+    }, [title, price]);
 
     useEffect(() => {
-        function handleClickOutside(e: MouseEvent) {
-            if (ref.current && !ref.current.contains(e.target as Node)) {
+        function handlePointerDown(event: PointerEvent) {
+            if (
+                ref.current &&
+                !ref.current.contains(event.target as Node)
+            ) {
                 setOpen(false);
             }
         }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
 
-    const buildShareData = () => {
-        const url = window.location.href;
-        return {
-            url,
-            text: `${title}\n\n₹${price.toLocaleString("en-IN")}\n\n🔥 1-of-1 curated piece — Shop now on THRIFTX`,
-        };
-    };
-
-    async function handleShare() {
-        const { url, text } = buildShareData();
-
-        try {
-            if (navigator.share) {
-                await navigator.share({ title, text, url });
-                return;
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === "Escape") {
+                setOpen(false);
+                triggerRef.current?.focus();
             }
-            setOpen(true);
-        } catch {
-            // User cancelled native share — fall back to menu
-            setOpen(true);
         }
-    }
+
+        document.addEventListener("pointerdown", handlePointerDown);
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.removeEventListener("pointerdown", handlePointerDown);
+            document.removeEventListener("keydown", handleKeyDown);
+
+            if (copyTimeoutRef.current) {
+                clearTimeout(copyTimeoutRef.current);
+            }
+        };
+    }, []);
 
     async function copyLink() {
         const { url } = buildShareData();
+
         try {
-            await navigator.clipboard.writeText(url);
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(url);
+            } else {
+                const input = document.createElement("textarea");
+
+                input.value = url;
+                input.style.position = "fixed";
+                input.style.opacity = "0";
+
+                document.body.appendChild(input);
+                input.select();
+
+                const success = document.execCommand("copy");
+                input.remove();
+
+                if (!success) {
+                    throw new Error("Copy failed");
+                }
+            }
+
+            setCopied(true);
             toast.success("Product link copied");
-            setOpen(false);
+
+            copyTimeoutRef.current = setTimeout(() => {
+                setCopied(false);
+                setOpen(false);
+            }, 900);
         } catch {
-            toast.error("Unable to copy link");
+            toast.error("Unable to copy product link");
         }
     }
 
-    function openSocial(kind: "whatsapp" | "twitter" | "instagram" | "email") {
+    async function shareNative() {
         const { url, text } = buildShareData();
-        const encodedUrl = encodeURIComponent(url);
-        const encodedText = encodeURIComponent(text);
 
-        let href = "";
-        switch (kind) {
-            case "whatsapp":
-                href = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
-                break;
-            case "twitter":
-                href = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
-                break;
-            case "instagram":
-                href = `https://www.instagram.com/`;
-                break;
-            case "email":
-                href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodedText}%20${encodedUrl}`;
-                break;
+        if (!navigator.share) {
+            toast.error("Native sharing is not supported on this device");
+            return;
         }
+
+        try {
+            setNativeSharing(true);
+
+            await navigator.share({
+                title: `THRIFTX | ${title} `,
+                text,
+                url,
+            });
+
+            setOpen(false);
+        } catch (error) {
+            if (
+                error instanceof Error &&
+                error.name !== "AbortError"
+            ) {
+                toast.error("Unable to open sharing options");
+            }
+        } finally {
+            setNativeSharing(false);
+        }
+    }
+
+    function openSocial(kind: "whatsapp" | "email") {
+        const { url, text } = buildShareData();
+
+        const message = `${text} \n${url} `;
+
+        const href =
+            kind === "whatsapp"
+                ? `https://wa.me/?text=${encodeURIComponent(message)}`
+                : `mailto:?subject=${encodeURIComponent(
+                    `Check out ${title} on THRIFTX`,
+                )}&body=${encodeURIComponent(message)}`;
+
         window.open(href, "_blank", "noopener,noreferrer");
         setOpen(false);
     }
 
     const options = [
-        { kind: "whatsapp" as const, label: "WhatsApp", icon: MessageCircle },
-        { kind: "twitter" as const, label: "Twitter / X", icon: Twitter },
-        { kind: "instagram" as const, label: "Instagram", icon: Instagram },
-        { kind: "email" as const, label: "Email", icon: Mail },
+        {
+            label: "WhatsApp",
+            icon: MessageCircle,
+            action: () => openSocial("whatsapp"),
+        },
+        {
+            label: "Email",
+            icon: Mail,
+            action: () => openSocial("email"),
+        },
     ];
 
     return (
         <div className="relative" ref={ref}>
             <Button
-                variant="outline"
+                ref={triggerRef}
+                type="button"
+                variant="glass"
                 size="iconMd"
+                rounded="full"
+                shadow="sm"
                 aria-label="Share product"
-                aria-haspopup="menu"
+                aria-haspopup="dialog"
                 aria-expanded={open}
-                onClick={handleShare}
+                onClick={() => setOpen((previous) => !previous)}
+                className="
+          relative isolate h-11 w-11 shrink-0 overflow-hidden
+          border border-border/70
+          bg-card/75 text-foreground
+          shadow-sm backdrop-blur-xl
+          transition-[transform,border-color,background-color,box-shadow]
+          duration-300 ease-out
+          hover:-translate-y-0.5
+          hover:border-border
+          hover:shadow-md
+          active:translate-y-0 active:scale-90
+          motion-reduce:transform-none motion-reduce:transition-none
+        "
             >
-                <Share2 className="h-5 w-5" />
+                <motion.span
+                    animate={{
+                        rotate: open ? 12 : 0,
+                        scale: open ? 0.94 : 1,
+                    }}
+                    transition={{
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 22,
+                    }}
+                    className="flex items-center justify-center"
+                >
+                    {open ? (
+                        <X className="h-5 w-5" />
+                    ) : (
+                        <Share2 className="h-5 w-5" />
+                    )}
+                </motion.span>
             </Button>
 
             <AnimatePresence>
                 {open && (
                     <motion.div
-                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                        initial={{ opacity: 0, y: 8, scale: 0.97 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        transition={{ duration: 0.15 }}
-                        role="menu"
-                        className="absolute right-0 top-full z-[70] mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-float"
+                        exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 420,
+                            damping: 30,
+                        }}
+                        role="dialog"
+                        aria-label="Share this THRIFTX product"
+                        className="
+              absolute right-0 top-full z-[80] mt-3
+              w-[min(19rem,calc(100vw-2rem))]
+              origin-top-right overflow-hidden
+              rounded-2xl border border-border
+              bg-card p-3 text-card-foreground
+              shadow-xl backdrop-blur-2xl
+              ring-1 ring-foreground/[0.04]
+            "
                     >
-                        {options.map((opt) => (
-                            <Button
-                                key={opt.kind}
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                fullWidth
-                                role="menuitem"
-                                onClick={() => openSocial(opt.kind)}
-                                className="justify-start rounded-xl px-3 text-foreground"
-                            >
-                                <opt.icon className="h-4 w-4 text-muted-foreground" />
-                                {opt.label}
-                            </Button>
-                        ))}
-                        <div className="my-1.5 h-px bg-border" />
+                        <div className="px-2 pb-3 pt-1">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                THRIFTX
+                            </p>
+
+                            <p className="mt-1 text-sm font-semibold leading-snug text-card-foreground">
+                                Share this curated find
+                            </p>
+
+                            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                                {title} · ₹{price.toLocaleString("en-IN")}
+                            </p>
+                        </div>
+
+                        <div className="h-px bg-border" />
+
+                        <div className="space-y-1 py-2">
+                            {options.map((option) => {
+                                const Icon = option.icon;
+
+                                return (
+                                    <Button
+                                        key={option.label}
+                                        type="button"
+                                        variant="ghost"
+                                        size="lg"
+                                        fullWidth
+                                        onClick={option.action}
+                                        className="
+                      h-11 justify-start gap-3 rounded-xl
+                      px-3 text-foreground
+                      hover:bg-muted hover:text-foreground
+                    "
+                                    >
+                                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-foreground">
+                                            <Icon className="h-4 w-4" />
+                                        </span>
+
+                                        {option.label}
+                                    </Button>
+                                );
+                            })}
+
+                            {typeof navigator !== "undefined" &&
+                                typeof navigator.share === "function" && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="lg"
+                                        fullWidth
+                                        disabled={nativeSharing}
+                                        onClick={shareNative}
+                                        className="
+                      h-11 justify-start gap-3 rounded-xl
+                      px-3 text-foreground
+                      hover:bg-muted hover:text-foreground
+                    "
+                                    >
+                                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-foreground">
+                                            <Smartphone className="h-4 w-4" />
+                                        </span>
+
+                                        {nativeSharing
+                                            ? "Opening…"
+                                            : "More sharing options"}
+                                    </Button>
+                                )}
+                        </div>
+
+                        <div className="h-px bg-border" />
+
                         <Button
                             type="button"
-                            variant="ghost"
-                            size="sm"
+                            variant="secondary"
+                            size="lg"
                             fullWidth
-                            role="menuitem"
                             onClick={copyLink}
-                            className="justify-start rounded-xl px-3 text-foreground"
+                            className="
+                mt-2 h-11 justify-start gap-3 rounded-xl
+                border border-border
+                px-3 text-secondary-foreground
+              "
                         >
-                            <Link2 className="h-4 w-4 text-muted-foreground" />
-                            Copy Link
-                            <Check className="ml-auto h-3.5 w-3.5 text-success" />
+                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-background">
+                                {copied ? (
+                                    <Check className="h-4 w-4 text-emerald-500" />
+                                ) : (
+                                    <Link2 className="h-4 w-4" />
+                                )}
+                            </span>
+
+                            {copied ? "Link copied" : "Copy product link"}
+
+                            <span className="ml-auto text-xs text-muted-foreground">
+                                {copied ? "Done" : "Copy"}
+                            </span>
                         </Button>
                     </motion.div>
                 )}

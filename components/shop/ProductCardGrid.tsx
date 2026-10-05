@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button'; import { useState } from "react";
+import { Button } from '@/components/ui/button'; import { memo, useState } from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -57,7 +57,7 @@ interface ProductCardGridProps {
     priority?: boolean;
 }
 
-export default function ProductCardGrid({
+function ProductCardGrid({
     id,
     slug,
     brand,
@@ -201,3 +201,5 @@ export default function ProductCardGrid({
         </motion.div>
     );
 }
+
+export default memo(ProductCardGrid);

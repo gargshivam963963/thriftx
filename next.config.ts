@@ -53,6 +53,13 @@ const nextConfig: NextConfig = {
   },
 
   images: {
+    minimumCacheTTL: 60,
+    // Serve the smallest modern format the browser supports (AVIF > WebP).
+    formats: ["image/avif", "image/webp"],
+    // Only generate the quality levels actually used across the app.
+    qualities: [70, 75, 82, 85],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 192, 256, 320, 384],
     remotePatterns: [
       {
         protocol: "https",

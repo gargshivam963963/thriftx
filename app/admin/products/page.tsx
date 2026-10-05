@@ -569,13 +569,13 @@ export default function AdminProductsPage() {
                     )}
                 </motion.div>
             ) : viewMode === "grid" ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filteredProducts.map((product) => (
                         <motion.div
                             key={product.$id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-all hover:shadow-md dark:border-border/60"
+                            className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-all hover:shadow-md dark:border-border/60"
                         >
                             {/* Image - clickable to preview */}
                             <Button
@@ -584,15 +584,16 @@ export default function AdminProductsPage() {
                                     setPreviewProduct(product);
                                     setPreviewIndex(0);
                                 }}
-                                className="relative aspect-[4/3] w-full overflow-hidden bg-muted"
+                                className="relative aspect-[4/5] h-auto w-full overflow-hidden bg-muted p-0"
                             >
                                 {product.primaryImage ? (
                                     <Image
                                         src={product.primaryImage}
                                         alt={product.title}
                                         fill
-                                        className="object-cover transition duration-300 group-hover:scale-105"
-                                        unoptimized
+                                        sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 28vw, (min-width: 640px) 45vw, 92vw"
+                                        quality={70}
+                                        className="object-cover object-center transition duration-300 group-hover:scale-105"
                                     />
                                 ) : (
                                     <div className="flex h-full items-center justify-center">
@@ -612,7 +613,7 @@ export default function AdminProductsPage() {
                                             "rounded-md px-2 py-0.5 text-[10px] font-bold",
                                             product.isActive
                                                 ? "bg-emerald-500/90 text-white"
-                                                : "bg-subtle0/80 text-white"
+                                                : "bg-foreground/75 text-background"
                                         )}
                                     >
                                         {product.isActive ? "Active" : "Inactive"}
@@ -626,7 +627,7 @@ export default function AdminProductsPage() {
                             </Button>
 
                             {/* Info */}
-                            <div className="p-4">
+                            <div className="flex flex-1 flex-col p-4">
                                 <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
                                     {product.brand}
                                 </p>
@@ -653,13 +654,13 @@ export default function AdminProductsPage() {
                                 {/* Measurements - chest/waist left, length right */}
                                 {(product.chest || product.waist || product.length) && (
                                     <div className="mt-1.5 flex items-center justify-between gap-1">
-                                        <div className="flex flex-wrap items-center gap-1">
+                                        <div className="flex min-w-0 flex-wrap items-center gap-1">
                                             {getMeasurementValues(product)
                                                 ?.filter((m) => m.label !== "Length")
                                                 .map((m) => (
                                                     <span
                                                         key={m.label}
-                                                        className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-badge font-semibold text-muted-foreground"
+                                                        className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-badge font-semibold text-muted-foreground"
                                                         title={`${m.label}: ${m.value}`}
                                                     >
                                                         {m.label} {m.value}
@@ -671,7 +672,7 @@ export default function AdminProductsPage() {
                                             .map((m) => (
                                                 <span
                                                     key={m.label}
-                                                    className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-badge font-semibold text-muted-foreground"
+                                                    className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-badge font-semibold text-muted-foreground"
                                                 >
                                                     {m.label} {m.value}
                                                 </span>
@@ -679,8 +680,8 @@ export default function AdminProductsPage() {
                                     </div>
                                 )}
 
-                                {/* Actions */}
-                                <div className="mt-3 flex items-center gap-1.5 border-t border-border pt-3 dark:border-border">
+                                {/* Actions — pushed to the bottom so every card aligns */}
+                                <div className="mt-auto flex items-center gap-1.5 border-t border-border pt-3 dark:border-border">
                                     <Button
                                         variant="ghost"
                                         size="iconXs"
@@ -737,21 +738,53 @@ export default function AdminProductsPage() {
                                     setPreviewProduct(product);
                                     setPreviewIndex(0);
                                 }}
-                                className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted"
+                                className="group relative aspect-[4/5] h-auto w-20 shrink-0 overflow-hidden rounded-none bg-muted p-0 sm:w-24"
                             >
                                 {product.primaryImage ? (
                                     <Image
                                         src={product.primaryImage}
                                         alt={product.title}
                                         fill
-                                        className="object-cover"
-                                        unoptimized
+                                        sizes="(min-width: 640px) 96px, 80px"
+                                        quality={70}
+                                        className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                                     />
                                 ) : (
-                                    <div className="flex h-full items-center justify-center">
-                                        <Package size={18} className="text-muted-foreground" />
+                                    <div className="flex h-full w-full items-center justify-center">
+                                        <Package
+                                            size={32}
+                                            className="text-muted-foreground"
+                                            aria-hidden="true"
+                                        />
                                     </div>
                                 )}
+
+                                {/* Image count */}
+                                {product.images && product.images.length > 1 && (
+                                    <div className="absolute bottom-3 right-3 rounded-lg border border-white/20 bg-black/60 px-2 py-1 text-[10px] font-semibold text-white shadow-sm backdrop-blur-md">
+                                        +{product.images.length - 1}
+                                    </div>
+                                )}
+
+                                {/* Status + condition */}
+                                <div className="absolute left-3 top-3 flex items-center gap-1.5">
+                                    <span
+                                        className={cn(
+                                            "rounded-lg px-2.5 py-1 text-[10px] font-bold shadow-sm backdrop-blur-md",
+                                            product.isActive
+                                                ? "bg-emerald-500/90 text-white"
+                                                : "bg-foreground/75 text-background"
+                                        )}
+                                    >
+                                        {product.isActive ? "Active" : "Inactive"}
+                                    </span>
+
+                                    {product.condition && (
+                                        <span className="rounded-lg border border-white/30 bg-background/80 px-2.5 py-1 text-[10px] font-semibold text-foreground shadow-sm backdrop-blur-md">
+                                            {product.condition}
+                                        </span>
+                                    )}
+                                </div>
                             </Button>
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-bold text-foreground">
@@ -955,7 +988,7 @@ export default function AdminProductsPage() {
                                             src={currentImage}
                                             alt={`${previewProduct.title} image ${previewIndex + 1}`}
                                             fill
-                                            unoptimized
+                                            quality={85}
                                             className="object-contain"
                                             sizes="90vw"
                                         />

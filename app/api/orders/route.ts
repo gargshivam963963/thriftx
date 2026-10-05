@@ -1,3 +1,4 @@
+import { notifyOrderPlaced } from "@/lib/notifications/orderEvents";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { AuthGuardError, requireUser } from "@/lib/auth-guard";
@@ -330,6 +331,21 @@ export async function POST(request: NextRequest) {
     }
 
     revalidatePath("/product/[slug]", "page");
+
+    if ("$id" in order && typeof order.$id === "string") {
+      try {
+        await notifyOrderPlaced({
+          $id: order.$id,
+          userId: user.id,
+          orderId:
+            "orderId" in order && typeof order.orderId === "string"
+              ? order.orderId
+              : undefined,
+        });
+      } catch (notifyError) {
+        console.error("Order placed notification failed:", notifyError);
+      }
+    }
 
     if (eligibleReferralCode) {
       const orderDocumentId =

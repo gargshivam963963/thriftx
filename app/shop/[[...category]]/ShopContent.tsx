@@ -8,7 +8,7 @@ import {
     useRef,
 } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     LayoutGrid,
     List,
@@ -251,6 +251,7 @@ export default function ShopContent({
     initialSearch,
 }: ShopContentProps) {
     const searchParams = useSearchParams();
+    const router = useRouter();
 
     const [viewMode, setViewMode] =
         useState<"grid" | "list">("grid");
@@ -750,8 +751,7 @@ export default function ShopContent({
             ? `${baseUrl}?${queryString}`
             : baseUrl;
 
-        window.location.href =
-            url;
+        router.push(url);
     }
 
     function removeParam(
@@ -1538,8 +1538,9 @@ export default function ShopContent({
                                                     setSearchInput(
                                                         "",
                                                     );
-                                                    window.location.href =
-                                                        baseUrl;
+                                                    router.push(
+                                                        baseUrl,
+                                                    );
                                                 }}
                                                 className="
                                                 min-h-9

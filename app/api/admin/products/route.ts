@@ -1,5 +1,6 @@
 import { createProductImageUrl } from "@/lib/storage/r2Download";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { adminAuthErrorResponse } from "@/lib/auth-guard";
 import {
   getAllProducts,
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { productId } = await createProduct(body ?? {});
+    revalidateTag("products");
     return NextResponse.json({ success: true, productId }, { status: 201 });
   } catch (error) {
     console.error("[api/admin/products] POST failed:", error);
@@ -94,6 +96,7 @@ export async function PUT(request: NextRequest) {
       );
     }
     await updateProduct(id, data);
+    revalidateTag("products");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[api/admin/products] PUT failed:", error);
@@ -127,6 +130,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
     const ok = await toggleProductStatus(id, isActive);
+    revalidateTag("products");
     return NextResponse.json({ success: ok });
   } catch (error) {
     console.error("[api/admin/products] PATCH failed:", error);
@@ -151,6 +155,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
     const ok = await deleteProduct(id);
+    revalidateTag("products");
     return NextResponse.json({ success: ok });
   } catch (error) {
     console.error("[api/admin/products] DELETE failed:", error);

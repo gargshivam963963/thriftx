@@ -1,6 +1,10 @@
 import type { Order } from "@/lib/types/order";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { documentStore, DocumentQuery } from "@/lib/document-store";
+import {
+  notifyOrderChanges,
+  type OrderRef,
+} from "@/lib/notifications/orderEvents";
 import { updateOrderStatus as serviceUpdateOrderStatus, getOrderById } from "./orderService";
 import { restoreOrderInventory } from "./inventory.server";
 import { revalidatePath } from "next/cache";
@@ -434,6 +438,12 @@ export async function adminUpdateOrder(
     if (!existing) return false;
 
     await documentStore.updateDocument("thriftx", "orders", documentId, updates);
+
+    try {
+      await notifyOrderChanges(existing as unknown as OrderRef, updates);
+    } catch (notifyError) {
+      console.error("Order notification failed:", notifyError);
+    }
 
     // If order was cancelled or return approved/refunded, ensure inventory restored
     if (

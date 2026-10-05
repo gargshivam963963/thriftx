@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { seedProducts } from "@/lib/services/products";
 import { adminAuthErrorResponse } from "@/lib/auth-guard";
 
@@ -59,6 +60,8 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await seedProducts(body);
+
+    revalidateTag("products");
 
     return NextResponse.json(
       {

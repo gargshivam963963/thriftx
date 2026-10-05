@@ -1,17 +1,14 @@
 "use client";
 
 import {
-    useMemo,
-    useState,
-    useEffect,
     useCallback,
+    useEffect,
+    useMemo,
     useRef,
+    useState,
 } from "react";
-
 import Image from "next/image";
-
 import { AnimatePresence, motion } from "framer-motion";
-
 import {
     ChevronLeft,
     ChevronRight,
@@ -31,22 +28,20 @@ interface ProductGalleryProps {
     images?: string[];
 }
 
-/**
- * ProductGallery — premium, production-grade image gallery.
- *
- * - Sane, resilient image list (dedupes, filters empties)
- * - Keyboard navigation (← →, +/-, Escape) — always active, not just fullscreen
- * - Mouse drag + touch swipe on mobile
- * - Thumbnail selection
- * - Fullscreen mode with its own close button + Escape
- * - Blur-up loading with `blurDataURL`, `priority` hero, lazy non-hero images
- * - Responsive `sizes` to never load unnecessary resolutions
- */
 export default function ProductGallery({
     title,
     primaryImage,
     images = [],
 }: ProductGalleryProps) {
+    const gallery = useMemo(() => {
+        const sources = [primaryImage, ...images].filter(
+            (src): src is string =>
+                typeof src === "string" && src.trim().length > 0,
+        );
+
+        return [...new Set(sources)];
+    }, [primaryImage, images]);
+
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [fullscreen, setFullscreen] = useState(false);
     const [zoomed, setZoomed] = useState(false);
@@ -54,262 +49,290 @@ export default function ProductGallery({
     const [transformOrigin, setTransformOrigin] = useState("50% 50%");
 
     const dragStartX = useRef<number | null>(null);
-    const imageContainerRef = useRef<HTMLDivElement>(null);
     const lastTap = useRef(0);
-
-    const gallery = useMemo(() => {
-        const list = images.length > 0 ? images : [primaryImage];
-        return [...new Set(list.filter(Boolean))];
-    }, [primaryImage, images]);
+    const imageContainerRef = useRef<HTMLDivElement>(null);
 
     const galleryLength = gallery.length;
-    const currentImage = gallery[selectedIndex] ?? gallery[0];
+    const currentImage = gallery[selectedIndex] ?? primaryImage;
 
     const previous = useCallback(() => {
         setSelectedIndex((index) =>
-            galleryLength > 0 ? (index - 1 + galleryLength) % galleryLength : 0,
+            galleryLength > 1
+                ? (index - 1 + galleryLength) % galleryLength
+                : 0,
         );
+        setZoomed(false);
+        setZoomScale(2);
     }, [galleryLength]);
 
     const next = useCallback(() => {
         setSelectedIndex((index) =>
-            galleryLength > 0 ? (index + 1) % galleryLength : 0,
+            galleryLength > 1 ? (index + 1) % galleryLength : 0,
         );
+        setZoomed(false);
+        setZoomScale(2);
     }, [galleryLength]);
 
-    /* ── Keyboard navigation — active in both normal + fullscreen ── */
-    useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
-            switch (e.key) {
-                case "ArrowLeft":
-                    e.preventDefault();
-                    previous();
-                    break;
-                case "ArrowRight":
-                    e.preventDefault();
-                    next();
-                    break;
-                case "Escape":
-                    if (fullscreen) {
-                        setFullscreen(false);
-                        setZoomed(false);
-                        setZoomScale(2);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        };
+    const closeFullscreen = useCallback(() => {
+        setFullscreen(false);
+        setZoomed(false);
+        setZoomScale(2);
+    }, []);
 
-        window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
-    }, [previous, next, fullscreen]);
-
-    /* ── Lock body scroll while fullscreen ── */
     useEffect(() => {
         if (!fullscreen) return;
-        const prevOverflow = document.body.style.overflow;
+
+        const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
+
         return () => {
-            document.body.style.overflow = prevOverflow;
+            document.body.style.overflow = previousOverflow;
         };
     }, [fullscreen]);
 
-    /* ── Preload adjacent images ── */
     useEffect(() => {
-        if (galleryLength <= 1) return;
-        const nextIndex = (selectedIndex + 1) % galleryLength;
-        const previousIndex = (selectedIndex - 1 + galleryLength) % galleryLength;
-        [gallery[nextIndex], gallery[previousIndex]].forEach((src) => {
+        if (!fullscreen) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") closeFullscreen();
+            if (event.key === "ArrowLeft") previous();
+            if (event.key === "ArrowRight") next();
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [fullscreen, closeFullscreen, previous, next]);
+
+    useEffect(() => {
+        if (galleryLength < 2) return;
+
+        const adjacent = [
+            gallery[(selectedIndex + 1) % galleryLength],
+            gallery[(selectedIndex - 1 + galleryLength) % galleryLength],
+        ];
+
+        adjacent.forEach((src) => {
             if (!src) return;
-            const img = new window.Image();
-            img.src = src;
+            const image = new window.Image();
+            image.src = src;
         });
     }, [selectedIndex, gallery, galleryLength]);
 
-    /* ── Zoom handlers ── */
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const handleMouseMove = (
+        event: React.MouseEvent<HTMLDivElement>,
+    ) => {
         if (!zoomed || !imageContainerRef.current) return;
+
         const rect = imageContainerRef.current.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        const x = ((event.clientX - rect.left) / rect.width) * 100;
+        const y = ((event.clientY - rect.top) / rect.height) * 100;
+
         setTransformOrigin(`${x}% ${y}%`);
     };
 
-    const handleWheel = (e: React.WheelEvent) => {
+    const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
         if (!fullscreen) return;
-        e.preventDefault();
+
+        event.preventDefault();
         setZoomed(true);
-        setZoomScale((prev) => {
-            if (e.deltaY < 0) return Math.min(prev + 0.2, 4);
-            return Math.max(prev - 0.2, 1);
-        });
+
+        setZoomScale((scale) =>
+            event.deltaY < 0
+                ? Math.min(scale + 0.2, 4)
+                : Math.max(scale - 0.2, 1),
+        );
     };
 
-    const handleDoubleClick = () => {
-        setZoomed((z) => !z);
+    const toggleZoom = () => {
+        setZoomed((value) => !value);
         setZoomScale(2.5);
     };
 
-    const handleDoubleTap = () => {
+    const handleTouchStart = (event: React.TouchEvent) => {
+        dragStartX.current = event.touches[0]?.clientX ?? null;
+
         const now = Date.now();
+
         if (now - lastTap.current < 300) {
-            handleDoubleClick();
+            toggleZoom();
         }
+
         lastTap.current = now;
     };
 
-    /* ── Touch / drag swipe ── */
-    const onTouchStart = (e: React.TouchEvent) => {
-        dragStartX.current = e.targetTouches[0].clientX;
-        handleDoubleTap();
-    };
-
-    const onTouchEnd = (e: React.TouchEvent) => {
+    const handleTouchEnd = (event: React.TouchEvent) => {
         if (dragStartX.current === null) return;
-        const endX = e.changedTouches[0].clientX;
-        const distance = dragStartX.current - endX;
+
+        const distance =
+            dragStartX.current - (event.changedTouches[0]?.clientX ?? 0);
+
         dragStartX.current = null;
+
         if (Math.abs(distance) < 60) return;
+
         if (distance > 0) next();
         else previous();
     };
 
-    const onPointerDown = (e: React.PointerEvent) => {
-        dragStartX.current = e.clientX;
+    const handlePointerDown = (event: React.PointerEvent) => {
+        if (event.pointerType === "mouse") {
+            dragStartX.current = event.clientX;
+        }
     };
 
-    const onPointerUp = (e: React.PointerEvent) => {
-        if (dragStartX.current === null) return;
-        const distance = dragStartX.current - e.clientX;
+    const handlePointerUp = (event: React.PointerEvent) => {
+        if (event.pointerType !== "mouse" || dragStartX.current === null) {
+            return;
+        }
+
+        const distance = dragStartX.current - event.clientX;
         dragStartX.current = null;
+
         if (Math.abs(distance) < 60) return;
+
         if (distance > 0) next();
         else previous();
     };
 
-    const imageTransition = {
-        duration: 0.35,
-        ease: "easeOut" as const,
-    };
+    const imageSizes =
+        "(max-width: 639px) calc(100vw - 32px), " +
+        "(max-width: 1023px) calc(100vw - 64px), " +
+        "(max-width: 1279px) 58vw, 680px";
 
     return (
         <>
-            <div className="space-y-6">
-                <div className="grid gap-5 lg:grid-cols-[96px_1fr]">
-                    {/* ── Thumbnails ── */}
-                    <div className="order-2 flex gap-3 overflow-x-auto pb-2 lg:order-1 lg:flex-col lg:overflow-visible lg:pb-0">
-                        {gallery.map((img, index) => {
-                            const active = index === selectedIndex;
-                            return (
-                                <Button
-                                    key={`${img}-${index}`}
-                                    type="button"
-                                    variant={active ? "primary" : "outline"}
-                                    size="iconXl"
-                                    rounded="xl"
-                                    onClick={() => setSelectedIndex(index)}
-                                    aria-label={`View image ${index + 1}`}
-                                    aria-current={active}
-                                    className={cn(
-                                        "group relative h-20 w-20 shrink-0 overflow-hidden border bg-card p-0 transition-all duration-300 lg:h-[88px] lg:w-[88px]",
-                                        active
-                                            ? "border-foreground shadow-lg ring-2 ring-foreground/10"
-                                            : "border-border hover:border-foreground/50 hover:shadow-md",
-                                    )}
-                                >
-                                    <Image
-                                        src={img}
-                                        alt={`${title} — thumbnail ${index + 1}`}
-                                        fill
-                                        sizes="88px"
-                                        placeholder="blur"
-                                        blurDataURL={BLUR_PLACEHOLDER}
-                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                    />
-                                </Button>
-                            );
-                        })}
-                    </div>
+            <section className="w-full min-w-0 space-y-4 sm:space-y-5">
+                <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-[72px_minmax(0,1fr)] lg:grid-cols-[84px_minmax(0,1fr)] lg:gap-4">
 
-                    {/* ── Main Image ── */}
+                    {/* Thumbnails */}
+                    {galleryLength > 1 && (
+                        <div
+                            aria-label="Product image thumbnails"
+                            className="order-2 flex gap-2 overflow-x-auto pb-1 sm:order-1 sm:flex-col sm:overflow-x-visible sm:overflow-y-auto sm:pb-0"
+                        >
+                            {gallery.map((src, index) => {
+                                const active = index === selectedIndex;
+
+                                return (
+                                    <button
+                                        key={`${src}-${index}`}
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedIndex(index);
+                                            setZoomed(false);
+                                        }}
+                                        aria-label={`View product image ${index + 1}`}
+                                        aria-pressed={active}
+                                        className={cn(
+                                            "relative aspect-[4/5] w-[64px] shrink-0 overflow-hidden rounded-xl border bg-muted/30 transition-all duration-200 sm:w-full sm:rounded-2xl",
+                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                                            active
+                                                ? "border-foreground ring-2 ring-foreground/15"
+                                                : "border-border/60 hover:border-foreground/40",
+                                        )}
+                                    >
+                                        <Image
+                                            src={src}
+                                            alt={`${title}, view ${index + 1}`}
+                                            fill
+                                            sizes="(max-width: 639px) 64px, 84px"
+                                            quality={75}
+                                            loading="lazy"
+                                            placeholder="blur"
+                                            blurDataURL={BLUR_PLACEHOLDER}
+                                            className="object-cover"
+                                        />
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Main image */}
                     <div
                         ref={imageContainerRef}
-                        className="group relative order-1 overflow-hidden rounded-[28px] border border-border bg-card shadow-sm"
+                        className="group relative order-1 min-w-0 overflow-hidden rounded-[24px] border border-border/60 bg-muted/20 shadow-sm sm:order-2 sm:rounded-[28px]"
                         onMouseMove={handleMouseMove}
-                        onWheel={handleWheel}
-                        onDoubleClick={handleDoubleClick}
-                        onTouchStart={onTouchStart}
-                        onTouchEnd={onTouchEnd}
-                        onPointerDown={onPointerDown}
-                        onPointerUp={onPointerUp}
+                        onDoubleClick={toggleZoom}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                        onPointerDown={handlePointerDown}
+                        onPointerUp={handlePointerUp}
                         onPointerLeave={() => {
                             dragStartX.current = null;
                         }}
                     >
-                        <AnimatePresence mode="wait">
+                        <AnimatePresence mode="wait" initial={false}>
                             <motion.div
                                 key={currentImage}
-                                initial={{ opacity: 0, scale: 0.98 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 1.02 }}
-                                transition={imageTransition}
-                                className="relative"
+                                initial={{ opacity: 0.5 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0.5 }}
+                                transition={{ duration: 0.2 }}
+                                className="relative aspect-[4/5] w-full"
                             >
                                 <Image
                                     src={currentImage}
                                     alt={title}
-                                    width={1600}
-                                    height={2000}
-                                    priority
+                                    fill
+                                    priority={selectedIndex === 0}
+                                    loading={selectedIndex === 0 ? "eager" : "lazy"}
+                                    fetchPriority={selectedIndex === 0 ? "high" : "auto"}
+                                    sizes={imageSizes}
+                                    quality={82}
                                     placeholder="blur"
                                     blurDataURL={BLUR_PLACEHOLDER}
                                     draggable={false}
-                                    className="aspect-[6/5] w-full touch-pan-y select-none object-contain"
+                                    className="select-none object-contain"
                                     style={{
                                         transformOrigin,
                                         transform: `scale(${zoomed ? zoomScale : 1})`,
-                                        transition: "transform .28s cubic-bezier(.22,.61,.36,1)",
+                                        transition:
+                                            "transform .28s cubic-bezier(.22,.61,.36,1)",
                                     }}
                                 />
                             </motion.div>
                         </AnimatePresence>
 
-                        {/* Counter */}
-                        <div className="absolute left-5 top-5 z-20 rounded-full border border-border bg-background/80 px-3 py-1.5 text-small font-semibold text-foreground backdrop-blur-xl shadow-sm">
+                        {/* Image counter */}
+                        <div className="absolute left-3 top-3 z-10 rounded-full border border-border/50 bg-background/80 px-3 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-xl sm:left-5 sm:top-5">
                             {selectedIndex + 1} / {galleryLength}
                         </div>
 
-                        {/* Top action — fullscreen */}
-                        <div className="absolute right-5 top-5 z-20">
-                            <Button
-                                variant="glass"
-                                size="iconMd"
-                                aria-label="Open fullscreen gallery"
-                                onClick={() => setFullscreen(true)}
-                            >
-                                <Expand />
-                            </Button>
-                        </div>
+                        {/* Fullscreen */}
+                        <Button
+                            type="button"
+                            variant="glass"
+                            size="iconMd"
+                            aria-label="Open fullscreen gallery"
+                            onClick={() => setFullscreen(true)}
+                            className="absolute right-3 top-3 z-10 sm:right-5 sm:top-5"
+                        >
+                            <Expand />
+                        </Button>
 
-                        {/* Prev / Next */}
                         {galleryLength > 1 && (
                             <>
                                 <Button
+                                    type="button"
                                     variant="glass"
                                     size="iconMd"
-                                    onClick={previous}
                                     aria-label="Previous image"
-                                    className="absolute left-4 top-1/2 z-20 -translate-y-1/2"
+                                    onClick={previous}
+                                    className="absolute left-3 top-1/2 z-10 -translate-y-1/2 opacity-100 transition-opacity sm:left-4 sm:opacity-0 sm:group-hover:opacity-100"
                                 >
                                     <ChevronLeft />
                                 </Button>
+
                                 <Button
+                                    type="button"
                                     variant="glass"
                                     size="iconMd"
-                                    onClick={next}
                                     aria-label="Next image"
-                                    className="absolute right-4 top-1/2 z-20 -translate-y-1/2"
+                                    onClick={next}
+                                    className="absolute right-3 top-1/2 z-10 -translate-y-1/2 opacity-100 transition-opacity sm:right-4 sm:opacity-0 sm:group-hover:opacity-100"
                                 >
                                     <ChevronRight />
                                 </Button>
@@ -317,55 +340,48 @@ export default function ProductGallery({
                         )}
                     </div>
                 </div>
-            </div>
+            </section>
 
-            {/* ── Fullscreen ── */}
-            {/* ── Fullscreen ── */}
+            {/* Fullscreen gallery */}
             <AnimatePresence>
                 {fullscreen && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
                         className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl"
                         role="dialog"
                         aria-modal="true"
-                        aria-label="Fullscreen gallery"
+                        aria-label="Fullscreen product gallery"
+                        onWheel={handleWheel}
                     >
-                        {/* ── Close ── */}
                         <Button
                             type="button"
                             variant="glass"
                             size="iconMd"
                             rounded="full"
-                            onClick={() => {
-                                setFullscreen(false);
-                                setZoomed(false);
-                                setZoomScale(2);
-                            }}
-                            aria-label="Close fullscreen"
-                            className="absolute right-5 top-5 z-40 border-white/20 bg-black/40 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/15 hover:text-white focus-visible:ring-white/80 focus-visible:ring-offset-black"
+                            onClick={closeFullscreen}
+                            aria-label="Close fullscreen gallery"
+                            className="absolute right-4 top-4 z-50 border-white/20 bg-black/40 text-white hover:bg-white/15 hover:text-white sm:right-6 sm:top-6"
                         >
-                            <X size={22} strokeWidth={2} />
+                            <X size={22} />
                         </Button>
 
-                        {/* ── Zoom controls ── */}
-                        <div className="absolute bottom-5 right-5 z-40 flex items-center gap-2">
+                        <div className="absolute bottom-5 right-5 z-50 flex gap-2">
                             <Button
                                 type="button"
                                 variant="glass"
                                 size="iconMd"
                                 rounded="full"
+                                disabled={zoomScale >= 4 && zoomed}
+                                aria-label="Zoom in"
                                 onClick={() => {
                                     setZoomed(true);
-                                    setZoomScale((z) => Math.min(z + 0.25, 4));
+                                    setZoomScale((scale) => Math.min(scale + 0.25, 4));
                                 }}
-                                disabled={zoomed && zoomScale >= 4}
-                                aria-label="Zoom in"
-                                className="border-white/20 bg-black/40 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/15 hover:text-white focus-visible:ring-white/80 focus-visible:ring-offset-black disabled:opacity-35"
+                                className="border-white/20 bg-black/40 text-white hover:bg-white/15 hover:text-white"
                             >
-                                <ZoomIn size={20} strokeWidth={2} />
+                                <ZoomIn />
                             </Button>
 
                             <Button
@@ -373,26 +389,23 @@ export default function ProductGallery({
                                 variant="glass"
                                 size="iconMd"
                                 rounded="full"
+                                disabled={!zoomed || zoomScale <= 1}
+                                aria-label="Zoom out"
                                 onClick={() => {
-                                    setZoomScale((z) => {
-                                        const nextScale = Math.max(z - 0.25, 1);
+                                    setZoomScale((scale) => {
+                                        const nextScale = Math.max(scale - 0.25, 1);
 
-                                        if (nextScale <= 1) {
-                                            setZoomed(false);
-                                        }
+                                        if (nextScale === 1) setZoomed(false);
 
                                         return nextScale;
                                     });
                                 }}
-                                disabled={!zoomed || zoomScale <= 1}
-                                aria-label="Zoom out"
-                                className="border-white/20 bg-black/40 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/15 hover:text-white focus-visible:ring-white/80 focus-visible:ring-offset-black disabled:opacity-35"
+                                className="border-white/20 bg-black/40 text-white hover:bg-white/15 hover:text-white"
                             >
-                                <ZoomOut size={20} strokeWidth={2} />
+                                <ZoomOut />
                             </Button>
                         </div>
 
-                        {/* ── Previous / Next ── */}
                         {galleryLength > 1 && (
                             <>
                                 <Button
@@ -400,11 +413,11 @@ export default function ProductGallery({
                                     variant="glass"
                                     size="iconMd"
                                     rounded="full"
-                                    onClick={previous}
                                     aria-label="Previous image"
-                                    className="absolute left-5 top-1/2 z-40 -translate-y-1/2 border-white/20 bg-black/40 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/15 hover:text-white focus-visible:ring-white/80 focus-visible:ring-offset-black"
+                                    onClick={previous}
+                                    className="absolute left-3 top-1/2 z-50 -translate-y-1/2 border-white/20 bg-black/40 text-white hover:bg-white/15 hover:text-white sm:left-6"
                                 >
-                                    <ChevronLeft size={24} strokeWidth={2} />
+                                    <ChevronLeft />
                                 </Button>
 
                                 <Button
@@ -412,44 +425,43 @@ export default function ProductGallery({
                                     variant="glass"
                                     size="iconMd"
                                     rounded="full"
-                                    onClick={next}
                                     aria-label="Next image"
-                                    className="absolute right-5 top-1/2 z-40 -translate-y-1/2 border-white/20 bg-black/40 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/15 hover:text-white focus-visible:ring-white/80 focus-visible:ring-offset-black"
+                                    onClick={next}
+                                    className="absolute right-3 top-1/2 z-50 -translate-y-1/2 border-white/20 bg-black/40 text-white hover:bg-white/15 hover:text-white sm:right-6"
                                 >
-                                    <ChevronRight size={24} strokeWidth={2} />
+                                    <ChevronRight />
                                 </Button>
                             </>
                         )}
 
-                        {/* ── Fullscreen image area ── */}
                         <div
-                            className="relative flex h-full w-full select-none items-center justify-center p-6 sm:p-12"
-                            onWheel={handleWheel}
-                            onDoubleClick={handleDoubleClick}
-                            onTouchStart={onTouchStart}
-                            onTouchEnd={onTouchEnd}
-                            onPointerDown={onPointerDown}
-                            onPointerUp={onPointerUp}
+                            className="relative flex h-full w-full items-center justify-center overflow-hidden p-5 sm:p-12"
+                            onTouchStart={handleTouchStart}
+                            onTouchEnd={handleTouchEnd}
+                            onPointerDown={handlePointerDown}
+                            onPointerUp={handlePointerUp}
                         >
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={currentImage}
-                                    initial={{ opacity: 0, scale: 0.97 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 1.03 }}
-                                    transition={imageTransition}
-                                    className="relative flex h-full w-full items-center justify-center"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="relative h-full w-full"
                                 >
                                     <Image
                                         src={currentImage}
-                                        alt={title}
-                                        width={1800}
-                                        height={2200}
-                                        priority
+                                        alt={`${title} — fullscreen view`}
+                                        fill
+                                        sizes="100vw"
+                                        quality={85}
+                                        priority={selectedIndex === 0}
+                                        loading={selectedIndex === 0 ? "eager" : "lazy"}
                                         placeholder="blur"
                                         blurDataURL={BLUR_PLACEHOLDER}
                                         draggable={false}
-                                        className="max-h-[88vh] max-w-[92vw] rounded-2xl object-contain"
+                                        className="select-none object-contain"
                                         style={{
                                             transform: `scale(${zoomed ? zoomScale : 1})`,
                                             transition:
@@ -458,11 +470,10 @@ export default function ProductGallery({
                                     />
                                 </motion.div>
                             </AnimatePresence>
+                        </div>
 
-                            {/* ── Counter ── */}
-                            <div className="absolute bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-small font-medium text-white backdrop-blur-xl">
-                                {selectedIndex + 1} / {galleryLength}
-                            </div>
+                        <div className="absolute bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-xs font-medium text-white backdrop-blur-xl">
+                            {selectedIndex + 1} / {galleryLength}
                         </div>
                     </motion.div>
                 )}

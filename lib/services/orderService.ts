@@ -16,6 +16,19 @@ import {
   InventoryUnavailableError,
 } from "./inventory.server";
 import { revalidatePath } from "next/cache";
+import {
+  notifyOrderChanges,
+  notifyTrackingReady,
+  type OrderRef,
+} from "@/lib/notifications/orderEvents";
+
+async function safeNotify(task: () => Promise<void>) {
+  try {
+    await task();
+  } catch (error) {
+    console.error("Order notification failed:", error);
+  }
+}
 
 export class OrderInventoryConflictError extends Error {
   constructor() {
@@ -87,9 +100,21 @@ export async function updateShipment(
   shipment: UpdateShipmentData,
 ) {
   if (!isDocumentStoreConfigured) return null;
-  return documentStore.updateDocument("thriftx", "orders", documentId, {
-    ...shipment,
-  });
+  const updated = await documentStore.updateDocument(
+    "thriftx",
+    "orders",
+    documentId,
+    { ...shipment },
+  );
+  if (shipment.trackingNumber) {
+    await safeNotify(() =>
+      notifyTrackingReady(
+        updated as unknown as OrderRef,
+        String(shipment.trackingNumber),
+      ),
+    );
+  }
+  return updated;
 }
 
 export async function getOrder(documentId: string): Promise<Order> {
@@ -314,6 +339,12 @@ export async function updateOrderStatus(documentId: string, status: string) {
     status,
   });
 
+  if (existing) {
+    await safeNotify(() =>
+      notifyOrderChanges(existing as unknown as OrderRef, { status }),
+    );
+  }
+
   if (status === "Cancelled" && existing?.products) {
     try {
       const items = JSON.parse(existing.products as string);
@@ -362,6 +393,10 @@ export async function cancelUserOrder(
       cancelledAt: new Date().toISOString(),
       refundStatus: order.paymentMethod === "razorpay" ? "pending" : "none",
     },
+  );
+
+  await safeNotify(() =>
+    notifyOrderChanges(order as unknown as OrderRef, { status: "Cancelled" }),
   );
 
   // Restore inventory
@@ -420,6 +455,12 @@ export async function requestOrderReturn(
       returnRequestedAt: new Date().toISOString(),
       refundStatus: "pending",
     },
+  );
+
+  await safeNotify(() =>
+    notifyOrderChanges(order as unknown as OrderRef, {
+      returnStatus: "requested",
+    }),
   );
 
   return updatedDoc as unknown as Order;

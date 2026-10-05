@@ -2,7 +2,7 @@
 
 
 import { Button } from '@/components/ui/button'; import Link from "next/link";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -59,7 +59,7 @@ interface ProductCardListProps {
     priority?: boolean;
 }
 
-export default function ProductCardList({
+function ProductCardList({
     id,
     slug,
     brand,
@@ -223,3 +223,5 @@ export default function ProductCardList({
         </motion.div>
     );
 }
+
+export default memo(ProductCardList);

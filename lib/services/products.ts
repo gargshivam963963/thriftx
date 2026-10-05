@@ -1,3 +1,5 @@
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { productRepository } from "@/lib/repositories";
 
 export interface Product {
@@ -89,38 +91,60 @@ export async function importProducts(
 ) {
   return productRepository.importProducts(initialProducts);
 }
-export async function getProducts(
-  filters: ProductFilters = {},
-): Promise<Product[]> {
-  return productRepository.getProductsByFilters(filters);
-}
+// Product reads are cached for a short time (60s) and tagged so admin writes
+// can revalidate them immediately via `revalidateTag("products")`. Different
+// filters/ids produce distinct cache entries (args are part of the cache key).
+const PRODUCT_CACHE = { tags: ["products"], revalidate: 60 };
 
-export async function getProductById(id: string): Promise<Product | null> {
-  return productRepository.getProductById(id);
-}
+export const getProducts = unstable_cache(
+  async (filters: ProductFilters = {}): Promise<Product[]> => {
+    return productRepository.getProductsByFilters(filters);
+  },
+  ["products"],
+  PRODUCT_CACHE,
+);
 
-export async function getProductsByIds(ids: string[]): Promise<Product[]> {
-  return productRepository.getProductsByIds(ids);
-}
+export const getProductById = unstable_cache(
+  async (id: string): Promise<Product | null> => {
+    return productRepository.getProductById(id);
+  },
+  ["products"],
+  PRODUCT_CACHE,
+);
 
-export async function getProductBySlug(slug: string): Promise<Product | null> {
-  return productRepository.getProductBySlug(slug);
-}
+export const getProductsByIds = unstable_cache(
+  async (ids: string[]): Promise<Product[]> => {
+    return productRepository.getProductsByIds(ids);
+  },
+  ["products"],
+  PRODUCT_CACHE,
+);
 
-export async function getSimilarProducts(
-  product: Product,
-  limit = 6,
-): Promise<Product[]> {
-  return productRepository.getSimilarProducts(product, limit);
-}
+export const getProductBySlug = unstable_cache(
+  async (slug: string): Promise<Product | null> => {
+    return productRepository.getProductBySlug(slug);
+  },
+  ["products"],
+  PRODUCT_CACHE,
+);
 
-export async function getBrands(): Promise<string[]> {
-  return productRepository.getBrands();
-}
+export const getSimilarProducts = cache(
+  async (product: Product, limit = 6): Promise<Product[]> => {
+    return productRepository.getSimilarProducts(product, limit);
+  },
+);
 
-export async function getProductsForSitemap() {
+export const getBrands = unstable_cache(
+  async (): Promise<string[]> => {
+    return productRepository.getBrands();
+  },
+  ["brands"],
+  { revalidate: 600 },
+);
+
+export const getProductsForSitemap = cache(async () => {
   return productRepository.getProductsForSitemap();
-}
+});
 
 const ProductService = {
   getProducts,

@@ -4,7 +4,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Trash2 } from "lucide-react";
+import { ShoppingBag, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import type { CartProduct } from "@/lib/services/cartProducts";
@@ -21,6 +21,8 @@ interface CartItemProps {
 export default function CartItem({ item, onRemove }: CartItemProps) {
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [removing, setRemoving] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageFailed, setImageFailed] = useState(false);
 
     const retailPrice =
         item.retailPrice && item.retailPrice > item.price
@@ -55,13 +57,41 @@ export default function CartItem({ item, onRemove }: CartItemProps) {
             >
                 <div className="flex flex-col sm:flex-row sm:items-stretch">
                     <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-muted sm:aspect-square sm:w-32 md:w-36">
-                        <Image
-                            src={item.primaryImage}
-                            alt={item.title}
-                            fill
-                            sizes="(max-width: 640px) 100vw, 144px"
-                            className="object-cover"
-                        />
+                        {!imageLoaded && !imageFailed && (
+                            <div
+                                className="skeleton-glass absolute inset-0 z-10"
+                                aria-hidden="true"
+                            />
+                        )}
+
+                        {imageFailed ? (
+                            <div
+                                className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted text-muted-foreground"
+                                role="img"
+                                aria-label={`${item.title} image unavailable`}
+                            >
+                                <ShoppingBag
+                                    className="h-7 w-7 opacity-50"
+                                    aria-hidden="true"
+                                />
+                                <span className="text-xs">
+                                    Image unavailable
+                                </span>
+                            </div>
+                        ) : (
+                            <Image
+                                src={item.primaryImage}
+                                alt={item.title}
+                                fill
+                                sizes="(max-width: 640px) 100vw, 144px"
+                                onLoad={() => setImageLoaded(true)}
+                                onError={() => setImageFailed(true)}
+                                className={`object-cover transition-opacity duration-300 ${imageLoaded
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                    }`}
+                            />
+                        )}
                     </div>
 
                     <div className="flex min-w-0 flex-1 flex-col gap-3 p-4">
@@ -113,6 +143,7 @@ export default function CartItem({ item, onRemove }: CartItemProps) {
                                 <span className="text-body-lg font-bold text-foreground">
                                     ₹{item.price.toLocaleString("en-IN")}
                                 </span>
+
                                 <span className="text-xs text-muted-foreground">
                                     Quantity: 1
                                 </span>

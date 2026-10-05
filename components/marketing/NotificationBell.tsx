@@ -2,14 +2,25 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, Check, Megaphone } from "lucide-react";
+import {
+    Bell,
+    Check,
+    Megaphone,
+    PackageCheck,
+    RotateCcw,
+    Truck,
+    Wallet,
+    XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import type { Announcement } from "@/lib/marketing/types";
+import { useAuth } from "@/lib/AuthContext";
+import type { UserNotification } from "@/lib/notifications/types";
 import { cn } from "@/lib/utils";
 
 const READ_ANNOUNCEMENTS_KEY = "thriftx:read-announcements";
-const POLL_INTERVAL_MS = 15_000;
+const POLL_INTERVAL_MS = 60_000;
 
 function readStoredIds(): string[] {
     try {
@@ -26,6 +37,10 @@ function readStoredIds(): string[] {
 }
 
 export default function NotificationBell() {
+    const { user } = useAuth();
+    const userId = user?.id ?? null;
+    const [personal, setPersonal] = useState<UserNotification[]>([]);
+    const personalRef = useRef<UserNotification[] | null>(null);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [readIds, setReadIds] = useState<string[]>([]);
     const [open, setOpen] = useState(false);
@@ -42,6 +57,9 @@ export default function NotificationBell() {
             .map((announcement) => announcement.id),
         [announcements, readIds],
     );
+
+    const unreadPersonal = personal.filter((item) => !item.read).length;
+    const unreadTotal = unreadIds.length + unreadPersonal;
 
     const persistReadIds = useCallback((ids: string[]) => {
         setReadIds(ids);
@@ -139,6 +157,73 @@ export default function NotificationBell() {
         };
     }, [loadAnnouncements]);
 
+    const loadPersonal = useCallback(async () => {
+        if (!userId) return;
+        try {
+            const response = await fetch("/api/notifications", {
+                cache: "no-store",
+            });
+            if (!response.ok) return;
+            const data: { success?: boolean; notifications?: UserNotification[] } =
+                await response.json();
+            if (!data.success || !Array.isArray(data.notifications)) return;
+
+            const next = data.notifications;
+            const prior = personalRef.current;
+            if (prior) {
+                const known = new Set(prior.map((item) => item.id));
+                const fresh = next.filter((item) => !item.read && !known.has(item.id));
+                fresh.slice(0, 2).forEach((item) =>
+                    toast(item.title, { description: item.message, duration: 6000 }),
+                );
+            }
+            personalRef.current = next;
+            setPersonal(next);
+        } catch (personalError) {
+            console.error("Failed to load notifications:", personalError);
+        }
+    }, [userId]);
+
+    useEffect(() => {
+        personalRef.current = null;
+        setPersonal([]);
+        if (!userId) return;
+        void loadPersonal();
+        const intervalId = window.setInterval(() => {
+            if (document.visibilityState === "visible") void loadPersonal();
+        }, POLL_INTERVAL_MS);
+        const onVisible = () => {
+            if (document.visibilityState === "visible") void loadPersonal();
+        };
+        document.addEventListener("visibilitychange", onVisible);
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener("visibilitychange", onVisible);
+        };
+    }, [userId, loadPersonal]);
+
+    const markPersonalRead = useCallback(
+        async (body: { all: true } | { ids: string[] }) => {
+            setPersonal((items) =>
+                items.map((item) =>
+                    "all" in body || body.ids.includes(item.id)
+                        ? { ...item, read: true }
+                        : item,
+                ),
+            );
+            try {
+                await fetch("/api/notifications", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                });
+            } catch (markError) {
+                console.error("Could not mark notifications read:", markError);
+            }
+        },
+        [],
+    );
+
     useEffect(() => {
         const handleOutsideClick = (event: MouseEvent) => {
             if (
@@ -162,6 +247,7 @@ export default function NotificationBell() {
 
     const markAllRead = () => {
         persistReadIds(announcements.map((item) => item.id));
+        if (unreadPersonal > 0) void markPersonalRead({ all: true });
     };
 
     const markRead = (id: string) => {
@@ -174,8 +260,8 @@ export default function NotificationBell() {
             <button
                 type="button"
                 aria-label={
-                    unreadIds.length
-                        ? `Notifications, ${unreadIds.length} unread`
+                    unreadTotal
+                        ? `Notifications, ${unreadTotal} unread`
                         : "Notifications"
                 }
                 aria-expanded={open}
@@ -184,9 +270,9 @@ export default function NotificationBell() {
                 className="relative flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
                 <Bell size={20} aria-hidden="true" />
-                {unreadIds.length > 0 && (
+                {unreadTotal > 0 && (
                     <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold leading-none text-white">
-                        {unreadIds.length > 9 ? "9+" : unreadIds.length}
+                        {unreadTotal > 9 ? "9+" : unreadTotal}
                     </span>
                 )}
             </button>
@@ -204,12 +290,12 @@ export default function NotificationBell() {
                                 Updates
                             </h2>
                             <p className="mt-0.5 text-small text-muted-foreground">
-                                {unreadIds.length
-                                    ? `${unreadIds.length} unread`
+                                {unreadTotal
+                                    ? `${unreadTotal} unread`
                                     : "You’re all caught up"}
                             </p>
                         </div>
-                        {unreadIds.length > 0 && (
+                        {unreadTotal > 0 && (
                             <button
                                 type="button"
                                 onClick={markAllRead}
@@ -242,12 +328,65 @@ export default function NotificationBell() {
                                     Try again
                                 </button>
                             </div>
-                        ) : announcements.length === 0 ? (
+                        ) : announcements.length === 0 && personal.length === 0 ? (
                             <p className="p-5 text-center text-body-sm text-muted-foreground">
                                 No updates right now. Check back soon.
                             </p>
                         ) : (
                             <ul className="divide-y divide-border">
+                                {personal.map((item) => {
+                                    const body = (
+                                        <>
+                                            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                                                <PersonalIcon type={item.type} />
+                                            </span>
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block text-body-sm font-semibold text-foreground">
+                                                    {item.title}
+                                                </span>
+                                                <span className="mt-0.5 block text-small leading-relaxed text-muted-foreground">
+                                                    {item.message}
+                                                </span>
+                                                <span className="mt-1 block text-small text-muted-foreground">
+                                                    {timeAgo(item.createdAt)}
+                                                </span>
+                                            </span>
+                                            {!item.read && (
+                                                <span
+                                                    className="mt-2 h-2 w-2 shrink-0 rounded-full bg-info"
+                                                    aria-label="Unread"
+                                                />
+                                            )}
+                                        </>
+                                    );
+                                    const rowClass = cn(
+                                        "flex min-h-16 items-start gap-3 px-4 py-3",
+                                        !item.read && "bg-muted/30",
+                                    );
+                                    return (
+                                        <li key={item.id}>
+                                            {item.href ? (
+                                                <Link
+                                                    href={item.href}
+                                                    onClick={() => {
+                                                        if (!item.read) {
+                                                            void markPersonalRead({ ids: [item.id] });
+                                                        }
+                                                        setOpen(false);
+                                                    }}
+                                                    className={cn(
+                                                        rowClass,
+                                                        "transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                                                    )}
+                                                >
+                                                    {body}
+                                                </Link>
+                                            ) : (
+                                                <div className={rowClass}>{body}</div>
+                                            )}
+                                        </li>
+                                    );
+                                })}
                                 {announcements.map((item) => {
                                     const unread = !readIds.includes(item.id);
                                     return (
@@ -289,6 +428,33 @@ export default function NotificationBell() {
             )}
         </div>
     );
+}
+
+function PersonalIcon({ type }: { type: UserNotification["type"] }) {
+    const props = { size: 17, "aria-hidden": true } as const;
+    switch (type) {
+        case "order_shipped":
+        case "tracking_ready":
+            return <Truck {...props} />;
+        case "order_cancelled":
+            return <XCircle {...props} />;
+        case "return_update":
+            return <RotateCcw {...props} />;
+        case "refund_update":
+            return <Wallet {...props} />;
+        default:
+            return <PackageCheck {...props} />;
+    }
+}
+
+function timeAgo(value: string) {
+    const minutes = Math.max(0, Math.round((Date.now() - new Date(value).getTime()) / 60000));
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `${hours} hr ago`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? "Yesterday" : `${days} days ago`;
 }
 
 function NotificationItem({

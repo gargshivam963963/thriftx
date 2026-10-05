@@ -1,4 +1,3 @@
-
 "use client";
 
 import { AnimatePresence } from "framer-motion";
@@ -32,19 +31,31 @@ export default function CartItems({
                 aria-label="Loading cart items"
                 aria-live="polite"
             >
-                <span className="sr-only">Loading your cart items…</span>
+                <span className="sr-only">
+                    Loading your cart items…
+                </span>
 
                 {skeletons.map((index) => (
                     <div
                         key={index}
-                        className="flex min-h-[132px] gap-4 overflow-hidden rounded-xl border border-border bg-card p-3"
+                        className="flex min-h-[172px] gap-4 overflow-hidden rounded-xl border border-border bg-card p-3 sm:min-h-[172px]"
                     >
-                        <div className="h-28 w-28 shrink-0 animate-pulse rounded-lg bg-muted sm:h-32 sm:w-32" />
+                        <div
+                            className="h-[148px] w-32 shrink-0 animate-pulse rounded-lg bg-muted sm:h-[146px] sm:w-32 md:w-36"
+                        />
 
                         <div className="flex min-w-0 flex-1 flex-col gap-3 py-2">
-                            <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-                            <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
-                            <div className="mt-auto h-5 w-20 animate-pulse rounded bg-muted" />
+                            <div className="h-5 w-3/4 animate-pulse rounded bg-muted" />
+
+                            <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+
+                            <div className="h-7 w-20 animate-pulse rounded bg-muted" />
+
+                            <div className="mt-auto flex items-center justify-between gap-3">
+                                <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+
+                                <div className="h-9 w-32 animate-pulse rounded-lg bg-muted" />
+                            </div>
                         </div>
                     </div>
                 ))}

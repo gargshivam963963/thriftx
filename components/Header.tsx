@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -16,13 +17,19 @@ import {
   ChevronDown,
   UserCircle,
   Settings,
+  LayoutDashboard,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import GlobalSearch from "@/components/search/GlobalSearch";
+// GlobalSearch is heavy and only visible when the user opens the search, so we
+// code-split it out of the initial header bundle.
+const GlobalSearch = dynamic(
+  () => import("@/components/search/GlobalSearch"),
+  { ssr: false, loading: () => null },
+);
 import AnnouncementBar from "@/components/marketing/AnnouncementBar";
 import NotificationBell from "@/components/marketing/NotificationBell";
 import { Container } from "@/components/ui/Container";
@@ -173,6 +180,7 @@ function UserDropdown({
     $id: string;
     name?: string;
     email?: string;
+    role?: string;
   };
   logout: () => void;
 }) {
@@ -181,6 +189,9 @@ function UserDropdown({
 
   const ref =
     useRef<HTMLDivElement>(null);
+
+  const isAdmin =
+    user.role === "admin";
 
   useEffect(() => {
     function handleClickOutside(
@@ -210,6 +221,15 @@ function UserDropdown({
   }, []);
 
   const menuItems = [
+    ...(isAdmin
+      ? [
+          {
+            href: "/admin/dashboard",
+            label: "Admin Panel",
+            icon: LayoutDashboard,
+          },
+        ]
+      : []),
     {
       href: "/profile",
       label: "Profile",
@@ -416,6 +436,7 @@ function MobileMenu({
     $id: string;
     name?: string;
     email?: string;
+    role?: string;
   } | null;
   logout: () => void;
 }) {
@@ -583,6 +604,34 @@ function MobileMenu({
                 <div className="space-y-1">
                   {user ? (
                     <>
+                      {user.role === "admin" && (
+                        <Link
+                          href="/admin/dashboard"
+                          onClick={onClose}
+                          className="
+                            flex
+                            min-h-12
+                            items-center
+                            gap-4
+                            rounded-2xl
+                            px-4
+                            py-3.5
+                            text-body-sm
+                            font-semibold
+                            text-muted-foreground
+                            transition
+                            hover:bg-muted
+                            hover:text-foreground
+                            focus-visible:outline-none
+                            focus-visible:ring-2
+                            focus-visible:ring-ring
+                          "
+                        >
+                          <LayoutDashboard size={22} />
+                          Admin Panel
+                        </Link>
+                      )}
+
                       <Link
                         href="/profile"
                         onClick={onClose}
@@ -1239,10 +1288,42 @@ function HeaderContent() {
 
             <div className="ml-1 hidden items-center md:flex">
               {user ? (
-                <UserDropdown
-                  user={user}
-                  logout={logout}
-                />
+                <>
+                  {user.role === "admin" && (
+                    <Tooltip label="Admin Panel">
+                      <Link
+                        href="/admin/dashboard"
+                        aria-label="Admin Panel"
+                        className="
+                          flex
+                          h-11
+                          w-11
+                          items-center
+                          justify-center
+                          rounded-2xl
+                          text-muted-foreground
+                          transition-colors
+                          hover:bg-muted
+                          hover:text-foreground
+                          focus-visible:outline-none
+                          focus-visible:ring-2
+                          focus-visible:ring-ring
+                          dark:hover:bg-card
+                        "
+                      >
+                        <LayoutDashboard
+                          size={iconSize}
+                          strokeWidth={iconStroke}
+                        />
+                      </Link>
+                    </Tooltip>
+                  )}
+
+                  <UserDropdown
+                    user={user}
+                    logout={logout}
+                  />
+                </>
               ) : (
                 <Tooltip label="Sign in">
                   <Button

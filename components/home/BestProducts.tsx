@@ -57,7 +57,7 @@ export default function BestProducts({ products }: BestProductsProps) {
                                 image={
                                     product.primaryImage ??
                                     product.images?.[0] ??
-                                    "/placeholder.webp"
+                                    "/images/placeholder.jpg"
                                 }
                                 category={product.category}
                                 chest={product.chest}

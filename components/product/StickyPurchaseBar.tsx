@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import type { Product } from "@/lib/services/products";
 import { useCart } from "@/lib/CartContext";
 import { useAuth } from "@/lib/AuthContext";
-import { addToCart as persistAddToCart } from "@/lib/services/cart";
 import { Button } from "@/components/ui/button";
 import { useWishlistProduct } from "@/lib/WishlistContext";
 
@@ -17,75 +16,99 @@ interface StickyPurchaseBarProps {
     product: Product;
 }
 
-/**
- * StickyPurchaseBar — mobile-only fixed bottom purchase panel.
- * Shows price + Add to Cart + Buy Now. Renders nothing on desktop (lg:).
- */
-export default function StickyPurchaseBar({ product }: StickyPurchaseBarProps) {
+export default function StickyPurchaseBar({
+    product,
+}: StickyPurchaseBarProps) {
     const router = useRouter();
     const { user } = useAuth();
     const { addToCart } = useCart();
 
     const [loading, setLoading] = useState<"none" | "add" | "buy">("none");
     const [wishlistLoading, setWishlistLoading] = useState(false);
+
     const { wishlisted, toggle } = useWishlistProduct(product.id);
+
     const busyRef = useRef(false);
 
-    const soldOut = product.status === "sold" || product.isActive === false;
+    const soldOut =
+        product.status === "sold" || product.isActive === false;
 
     const ensureAuth = useCallback(() => {
         if (!user) {
             toast.error("Please sign in to continue");
-            router.push(`/login?redirect=/product/${product.slug}`);
+
+            router.push(
+                `/login?redirect=${encodeURIComponent(
+                    `/product/${product.slug}`,
+                )}`,
+            );
+
             return false;
         }
+
         return true;
     }, [user, router, product.slug]);
 
     const handleAdd = useCallback(async () => {
         if (busyRef.current || soldOut) return;
+        if (!ensureAuth()) return;
+
         busyRef.current = true;
         setLoading("add");
+
         try {
-            addToCart(product, 1);
-            if (user) {
-                await persistAddToCart(product.id, 1);
-            }
+            await addToCart(product, 1);
+
             toast.success("Added to cart");
-            setTimeout(() => router.push("/cart"), 300);
-        } catch {
-            toast.error("Unable to add to cart");
+            router.push("/cart");
+        } catch (error) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Unable to add this item to your cart",
+            );
+
             setLoading("none");
         } finally {
             busyRef.current = false;
         }
-    }, [addToCart, product, router, soldOut, user]);
+    }, [addToCart, ensureAuth, product, router, soldOut]);
 
     const handleBuy = useCallback(async () => {
         if (busyRef.current || soldOut) return;
         if (!ensureAuth()) return;
+
         busyRef.current = true;
         setLoading("buy");
+
         try {
-            addToCart(product, 1);
-            if (user) {
-                await persistAddToCart(product.id, 1);
-            }
+            await addToCart(product, 1);
+
             router.push("/checkout");
-        } catch {
-            toast.error("Unable to start checkout");
+        } catch (error) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Unable to start checkout",
+            );
+
             setLoading("none");
         } finally {
             busyRef.current = false;
         }
-    }, [addToCart, ensureAuth, product, router, soldOut, user]);
+    }, [addToCart, ensureAuth, product, router, soldOut]);
 
     const handleWishlist = useCallback(async () => {
         if (wishlistLoading) return;
+
         setWishlistLoading(true);
+
         try {
             const state = await toggle();
-            toast.success(state ? "Added to wishlist" : "Removed from wishlist");
+
+            toast.success(
+                state ? "Added to wishlist" : "Removed from wishlist",
+            );
         } catch {
             toast.error("Please sign in to wishlist");
         } finally {
@@ -98,9 +121,26 @@ export default function StickyPurchaseBar({ product }: StickyPurchaseBarProps) {
             <motion.div
                 initial={{ y: 100 }}
                 animate={{ y: 0 }}
-                className="fixed inset-x-0 bottom-[var(--mobile-nav-height)] z-[60] border-t border-border bg-card/95 p-4 backdrop-blur-xl md:bottom-0 lg:hidden"
+                className="
+                    fixed inset-x-0
+                    bottom-[var(--mobile-nav-height)]
+                    z-[60]
+                    border-t border-border/70
+                    bg-card/85
+                    p-4
+                    shadow-[0_-8px_32px_rgba(0,0,0,0.08)]
+                    backdrop-blur-2xl
+                    supports-[backdrop-filter]:bg-card/75
+                    md:bottom-0
+                    lg:hidden
+                "
             >
-                <Button variant="secondary" size="lg" fullWidth disabled>
+                <Button
+                    variant="secondary"
+                    size="lg"
+                    fullWidth
+                    disabled
+                >
                     Sold Out
                 </Button>
             </motion.div>
@@ -112,15 +152,33 @@ export default function StickyPurchaseBar({ product }: StickyPurchaseBarProps) {
             initial={{ y: 100 }}
             animate={{ y: 0 }}
             exit={{ y: 100 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed inset-x-0 bottom-[var(--mobile-nav-height)] z-[60] border-t border-border bg-card/95 px-4 py-3 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] md:bottom-0 lg:hidden"
+            transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+            }}
+            className="
+                fixed inset-x-0
+                bottom-[var(--mobile-nav-height)]
+                z-[60]
+                border-t border-border/70
+                bg-card/85
+                px-3 py-3
+                shadow-[0_-8px_32px_rgba(0,0,0,0.08)]
+                backdrop-blur-2xl
+                supports-[backdrop-filter]:bg-card/75
+                sm:px-4
+                md:bottom-0
+                lg:hidden
+            "
         >
-            <div className="mx-auto flex max-w-[1280px] items-center gap-3">
-                <div className="shrink-0">
-                    <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="mx-auto flex w-full max-w-[1280px] items-center gap-2.5 sm:gap-3">
+                <div className="min-w-0 shrink-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs">
                         Price
                     </p>
-                    <p className="text-title font-bold text-foreground">
+
+                    <p className="text-lg font-bold leading-tight tracking-tight text-foreground sm:text-xl">
                         ₹{product.price.toLocaleString("en-IN")}
                     </p>
                 </div>
@@ -130,11 +188,19 @@ export default function StickyPurchaseBar({ product }: StickyPurchaseBarProps) {
                     size="iconMd"
                     onClick={handleWishlist}
                     loading={wishlistLoading}
-                    aria-label="Toggle wishlist"
-                    className="shrink-0"
+                    aria-label={
+                        wishlisted
+                            ? "Remove from wishlist"
+                            : "Add to wishlist"
+                    }
+                    aria-pressed={wishlisted}
+                    className="h-11 w-11 shrink-0 rounded-xl"
                 >
                     <Heart
-                        className={`h-5 w-5 transition-all ${wishlisted ? "fill-red-500 text-red-500" : ""
+                        aria-hidden="true"
+                        className={`h-5 w-5 transition-colors ${wishlisted
+                            ? "fill-red-500 text-red-500"
+                            : ""
                             }`}
                     />
                 </Button>
@@ -142,10 +208,10 @@ export default function StickyPurchaseBar({ product }: StickyPurchaseBarProps) {
                 <Button
                     variant="primary"
                     size="lg"
-                    className="h-12 flex-1"
+                    className="h-11 min-w-0 flex-1 rounded-xl px-2 sm:h-12 sm:px-4"
                     loading={loading === "add"}
-                    loadingText="…"
-                    leftIcon={<ShoppingBag />}
+                    loadingText="Adding"
+                    leftIcon={<ShoppingBag className="h-4 w-4" />}
                     onClick={handleAdd}
                     disabled={loading === "buy"}
                 >
@@ -155,10 +221,10 @@ export default function StickyPurchaseBar({ product }: StickyPurchaseBarProps) {
                 <Button
                     variant="secondary"
                     size="lg"
-                    className="h-12 flex-1"
+                    className="h-11 min-w-0 flex-1 rounded-xl px-2 sm:h-12 sm:px-4"
                     loading={loading === "buy"}
-                    loadingText="…"
-                    leftIcon={<Zap />}
+                    loadingText="Opening"
+                    leftIcon={<Zap className="h-4 w-4" />}
                     onClick={handleBuy}
                     disabled={loading === "add"}
                 >

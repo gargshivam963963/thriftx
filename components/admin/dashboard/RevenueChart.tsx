@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -123,41 +122,26 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
             className="admin-card p-6"
         >
             {/* Header */}
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
                 <div>
-                    <p className="text-caption font-semibold text-muted-foreground">
+                    <p className="text-caption text-muted-foreground">
                         Revenue Overview
                     </p>
-                    <p className="mt-1 font-display text-2xl font-bold text-foreground">
+                    <p className="mt-1.5 text-price text-foreground">
                         ₹{totalRevenue.toLocaleString("en-IN")}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                        Avg. ₹{avgRevenue.toLocaleString("en-IN")}/day • {filteredData.length} days
+                    <p className="mt-1 text-body-sm text-muted-foreground">
+                        Avg. ₹{avgRevenue.toLocaleString("en-IN")}/day •{" "}
+                        {filteredData.length} days
                     </p>
                 </div>
-                <div
-                    role="tablist"
-                    aria-label="Revenue period"
-                    className="inline-flex gap-1 rounded-xl border border-border bg-muted p-1"
-                >
-                    {(["7d", "30d"] as Period[]).map((p) => (
-                        <button
-                            key={p}
-                            type="button"
-                            role="tab"
-                            aria-selected={period === p}
-                            onClick={() => setPeriod(p)}
-                            className={cn(
-                                "min-w-12 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
-                                period === p
-                                    ? "bg-foreground text-background shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground",
-                            )}
-                        >
-                            {p}
-                        </button>
-                    ))}
-                </div>
+                <SegmentedControl
+                    value={period}
+                    onChange={setPeriod}
+                    ariaLabel="Revenue period"
+                    idPrefix="dashboard-revenue-period"
+                    options={PERIOD_LABELS.map((p) => ({ value: p, label: p }))}
+                />
             </div>
 
             {/* Chart */}
@@ -211,4 +195,3 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
         </motion.div>
     );
 }
-

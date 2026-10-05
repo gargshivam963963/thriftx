@@ -603,7 +603,10 @@ html {
   font-weight: var(--weight-semibold);
 }
 
-/* Title / Subtitle */
+/* Title / Subtitle
+   NOTE: these classes intentionally do NOT set `color`. They only own the
+   size, rhythm and weight so a parent can pair them with any colour token
+   (`text-foreground`, `text-muted-foreground`, …) without a specificity war. */
 .text-title {
   font-size: clamp(1.125rem, 1.06rem + 0.3vw, 1.375rem);
   line-height: 1.35;
@@ -613,6 +616,14 @@ html {
 .text-subtitle {
   font-size: clamp(0.9375rem, 0.9rem + 0.18vw, 1.0625rem);
   line-height: 1.5;
+  letter-spacing: var(--tracking-normal);
+  font-weight: var(--weight-regular);
+}
+.text-subtitle-muted {
+  font-size: clamp(0.9375rem, 0.9rem + 0.18vw, 1.0625rem);
+  line-height: 1.5;
+  letter-spacing: var(--tracking-normal);
+  font-weight: var(--weight-regular);
   color: var(--color-text-secondary);
 }
 
@@ -825,6 +836,20 @@ label {
 }
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #52525b;
+}
+
+/* Hide a scrollbar while keeping the element scrollable.
+   Used by every horizontal chip / tab rail in the app. */
+.scrollbar-none,
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* ─── KEYFRAMES ──────────────────────────────────────────────────────────── */

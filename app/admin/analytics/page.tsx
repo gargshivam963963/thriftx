@@ -17,6 +17,8 @@ import ProductFunnel from "@/components/admin/analytics/ProductFunnel";
 import DeviceBreakdown from "@/components/admin/analytics/DeviceBreakdown";
 import TimelineChart from "@/components/admin/analytics/TimelineChart";
 import { Button } from "@/components/ui/button";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import PageHeader from "@/components/ui/PageHeader";
 import type {
     AnalyticsOverview,
     AnalyticsApiResponse,
@@ -92,51 +94,40 @@ export default function AdminAnalyticsPage() {
     return (
         <div className="space-y-6">
             {/* ── Header ─────────────────────────────────────── */}
-            <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-                <div>
-                    <div className="flex items-center gap-2">
-                        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground dark:text-white">
-                            Customer Analytics
-                        </h1>
-                        <BarChart3 size={20} className="text-violet-500" />
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Track user behavior, clicks, searches, and conversion patterns
-                    </p>
-                </div>
+            <PageHeader
+                title="Customer Analytics"
+                icon={<BarChart3 className="text-violet-500" />}
+                description="Track user behavior, clicks, searches, and conversion patterns"
+                actions={
+                    <>
+                        <SegmentedControl
+                            value={range}
+                            onChange={setRange}
+                            ariaLabel="Analytics date range"
+                            idPrefix="admin-analytics-range"
+                            options={RANGE_OPTIONS.map((opt) => ({
+                                value: opt.value,
+                                label: opt.label,
+                            }))}
+                        />
 
-                <div className="flex items-center gap-2">
-                    {/* Range Selector */}
-                    <div className="flex rounded-xl border border-border bg-card p-0.5 shadow-sm dark:border-border">
-                        {RANGE_OPTIONS.map((opt) => (
-                            <Button
-                                key={opt.value}
-                                onClick={() => setRange(opt.value)}
-                                className={`rounded-lg px-3.5 py-1.5 text-[11px] font-semibold transition ${range === opt.value
-                                    ? "bg-foreground text-white shadow-sm dark:bg-white dark:text-black"
-                                    : "text-muted-foreground hover:text-muted-foreground dark:text-muted-foreground dark:hover:text-muted-foreground"
-                                    }`}
-                            >
-                                {opt.label}
-                            </Button>
-                        ))}
-                    </div>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={loadData}
-                        disabled={loading}
-                    >
-                        <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-                        Refresh
-                    </Button>
-                </div>
-            </motion.div>
+                        <Button
+                            variant="outline"
+                            size="md"
+                            onClick={loadData}
+                            disabled={loading}
+                            leftIcon={
+                                <RefreshCw
+                                    size={15}
+                                    className={loading ? "animate-spin" : ""}
+                                />
+                            }
+                        >
+                            Refresh
+                        </Button>
+                    </>
+                }
+            />
 
             {/* ── Overview Cards ────────────────────────────── */}
             <OverviewCards data={overview} loading={loading} />
@@ -164,12 +155,12 @@ export default function AdminAnalyticsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="rounded-xl border border-border bg-card p-5 dark:border-border"
                     >
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        <h3 className="text-caption text-muted-foreground">
                             Top Pages
                         </h3>
 
                         <div className="mt-3 space-y-1">
-                            <div className="grid grid-cols-[1fr_80px_100px] gap-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            <div className="grid grid-cols-[1fr_80px_100px] gap-2 px-2 text-caption text-muted-foreground">
                                 <div>Page</div>
                                 <div className="text-right">Views</div>
                                 <div className="text-right">Unique Sessions</div>

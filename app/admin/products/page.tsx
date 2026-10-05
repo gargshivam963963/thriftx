@@ -22,6 +22,11 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { uploadImageToR2 } from "@/lib/services/r2Upload";
 import { Button } from "@/components/ui/button";
+import {
+    SegmentedControl,
+    SegmentedFilterRow,
+} from "@/components/ui/SegmentedControl";
+import PageHeader from "@/components/ui/PageHeader";
 import { showToast } from "@/components/admin/toast/Toast";
 import ToastContainer from "@/components/admin/toast/Toast";
 import ProductFormModal, { type ProductFormData } from "@/components/admin/products/ProductFormModal";
@@ -437,94 +442,68 @@ export default function AdminProductsPage() {
             <ToastContainer />
 
             {/* Header */}
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">Products</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {products.length} total &middot; {activeCount} active &middot; {draftCount}
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={loadProducts} loading={loading} leftIcon={<RefreshCw size={14} />}>
-                        Refresh
-                    </Button>
-                    <Button variant="primary" size="sm" onClick={openAddModal} leftIcon={<Plus size={15} />}>
-                        Add Product
-                    </Button>
-                </div>
-            </div>
+            <PageHeader
+                className="mb-6"
+                title="Products"
+                description={`${products.length} total · ${activeCount} active · ${draftCount} draft`}
+                actions={
+                    <>
+                        <Button variant="outline" size="md" onClick={loadProducts} loading={loading} leftIcon={<RefreshCw size={15} />}>
+                            Refresh
+                        </Button>
+                        <Button variant="primary" size="md" onClick={openAddModal} leftIcon={<Plus size={15} />}>
+                            Add Product
+                        </Button>
+                    </>
+                }
+            />
 
             {/* Search & Filters */}
-            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="relative flex-1 max-w-md">
+            <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="relative w-full lg:max-w-md">
                     <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search products..."
-                        className="h-10 w-full rounded-xl border border-border bg-white pl-9 pr-4 text-sm outline-none transition focus:border-foreground focus:ring-2 focus:ring-foreground/10 dark:border-border dark:bg-card dark:text-foreground"
+                        aria-label="Search products"
+                        className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-4 text-body-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-foreground focus:ring-2 focus:ring-ring/30 md:h-11"
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 rounded-xl border border-border bg-white p-0.5 dark:border-border dark:bg-card">
-                        <Button
-                            type="button"
-                            onClick={() => setViewMode("grid")}
-                            className={cn(
-                                "flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-all",
-                                viewMode === "grid"
-                                    ? "bg-foreground text-white shadow-sm dark:bg-muted dark:text-foreground"
-                                    : "text-muted-foreground hover:text-muted-foreground dark:text-muted-foreground"
-                            )}
-                        >
-                            <Grid3X3 size={14} />
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={() => setViewMode("list")}
-                            className={cn(
-                                "flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-all",
-                                viewMode === "list"
-                                    ? "bg-foreground text-white shadow-sm dark:bg-muted dark:text-foreground"
-                                    : "text-muted-foreground hover:text-muted-foreground dark:text-muted-foreground"
-                            )}
-                        >
-                            <List size={14} />
-                        </Button>
-                    </div>
-                </div>
+                <SegmentedControl
+                    value={viewMode}
+                    onChange={setViewMode}
+                    ariaLabel="Product layout"
+                    idPrefix="admin-products-view"
+                    options={[
+                        {
+                            value: "grid" as const,
+                            ariaLabel: "Grid view",
+                            icon: <Grid3X3 />,
+                        },
+                        {
+                            value: "list" as const,
+                            ariaLabel: "List view",
+                            icon: <List />,
+                        },
+                    ]}
+                    className="self-start lg:self-auto"
+                />
             </div>
 
             {/* Category filter chips */}
-            <div className="mb-5 flex flex-wrap items-center gap-2">
-                <Button
-                    type="button"
-                    onClick={() => setCategoryFilter("all")}
-                    className={cn(
-                        "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
-                        categoryFilter === "all"
-                            ? "bg-foreground text-white dark:bg-muted dark:text-foreground"
-                            : "bg-muted text-muted-foreground hover:bg-muted dark:bg-card dark:text-muted-foreground"
-                    )}
-                >
-                    All
-                </Button>
-                {categories.map((cat) => (
-                    <Button
-                        key={cat}
-                        type="button"
-                        onClick={() => setCategoryFilter(cat)}
-                        className={cn(
-                            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
-                            categoryFilter === cat
-                                ? "bg-foreground text-white dark:bg-muted dark:text-foreground"
-                                : "bg-muted text-muted-foreground hover:bg-muted dark:bg-card dark:text-muted-foreground"
-                        )}
-                    >
-                        {cat}
-                    </Button>
-                ))}
+            <div className="mb-6">
+                <SegmentedFilterRow
+                    value={categoryFilter}
+                    onChange={setCategoryFilter}
+                    ariaLabel="Filter products by category"
+                    idPrefix="admin-products-category"
+                    options={[
+                        { value: "all", label: "All" },
+                        ...categories.map((cat) => ({ value: cat, label: cat })),
+                    ]}
+                />
             </div>
 
             {/* Content */}

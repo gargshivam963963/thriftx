@@ -24,6 +24,8 @@ import {
     RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SegmentedFilterRow } from "@/components/ui/SegmentedControl";
+import PageHeader from "@/components/ui/PageHeader";
 import PremiumImage from "@/components/ui/PremiumImage";
 import { cn } from "@/lib/utils";
 import { shipOrder } from "@/lib/shipping/admin";
@@ -259,104 +261,70 @@ export default function AdminOrdersPage() {
     return (
         <div className="min-w-0 space-y-6">
             {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                        Orders
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {orders.length} total orders •{" "}
-                        {orders.filter((o) => o.status === "Delivered").length} delivered •{" "}
-                        ₹{orders.reduce((acc, o) => acc + (o.total || 0), 0).toLocaleString("en-IN")} total revenue
-                    </p>
-                </div>
-                <Button
-                    onClick={loadOrders}
-                    variant="outline"
-                    size="sm"
-                    className="h-10 self-start sm:self-auto"
-                    disabled={loading}
-                >
-                    <RefreshCw size={15} className={cn(loading && "animate-spin")} />
-                    <span>Refresh</span>
-                </Button>
-            </div>
+            <PageHeader
+                title="Orders"
+                description={`${orders.length} total orders • ${orders.filter((o) => o.status === "Delivered").length} delivered • ₹${orders.reduce((acc, o) => acc + (o.total || 0), 0).toLocaleString("en-IN")} total revenue`}
+                actions={
+                    <Button
+                        onClick={loadOrders}
+                        variant="outline"
+                        size="md"
+                        disabled={loading}
+                        leftIcon={<RefreshCw size={15} className={cn(loading && "animate-spin")} />}
+                    >
+                        Refresh
+                    </Button>
+                }
+            />
 
-            {/* Filter Pills & Search Bar */}
+            {/* Filter row */}
             <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between">
                 {/* Search */}
                 <div className="relative w-full lg:max-w-md">
                     <Search
-                        size={17}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        size={16}
+                        className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                     />
                     <input
                         type="text"
                         placeholder="Search by customer, phone, email, order ID..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="h-10 w-full rounded-xl border border-border bg-card pl-10 pr-9 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground"
+                        aria-label="Search orders"
+                        className="h-10 w-full rounded-xl border border-border bg-card pl-10 pr-9 text-body-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-foreground focus:ring-2 focus:ring-ring/30 md:h-11"
                     />
                     {search && (
                         <button
                             type="button"
                             onClick={() => setSearch("")}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            aria-label="Clear search"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                         >
                             <X size={15} />
                         </button>
                     )}
                 </div>
 
-                {/* Status Pills */}
-                <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1">
-                    <button
-                        type="button"
-                        onClick={() => setStatusFilter("all")}
-                        className={cn(
-                            "inline-flex h-9 items-center gap-1.5 rounded-xl px-3.5 text-xs font-semibold transition-all duration-200",
-                            statusFilter === "all"
-                                ? "bg-foreground text-background shadow-sm"
-                                : "border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
-                        )}
-                    >
-                        <span>All</span>
-                        <span className={cn(
-                            "rounded-full px-1.5 py-0.2 text-[10px]",
-                            statusFilter === "all" ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
-                        )}>
-                            {statusCounts.all || 0}
-                        </span>
-                    </button>
-
-                    {ORDER_STATUSES.map((status) => {
-                        const count = statusCounts[status] || 0;
-                        const isSelected = statusFilter === status;
-                        return (
-                            <button
-                                key={status}
-                                type="button"
-                                onClick={() => setStatusFilter(status)}
-                                className={cn(
-                                    "inline-flex h-9 items-center gap-1.5 rounded-xl px-3.5 text-xs font-semibold transition-all duration-200 whitespace-nowrap",
-                                    isSelected
-                                        ? "bg-foreground text-background shadow-sm"
-                                        : "border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
-                                )}
-                            >
-                                <span>{status}</span>
-                                {count > 0 && (
-                                    <span className={cn(
-                                        "rounded-full px-1.5 py-0.2 text-[10px]",
-                                        isSelected ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
-                                    )}>
-                                        {count}
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
+                {/* Status filter — same primitive as every other switch */}
+                <SegmentedFilterRow
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                    ariaLabel="Filter orders by status"
+                    idPrefix="admin-orders-status"
+                    options={[
+                        {
+                            value: "all",
+                            label: "All",
+                            count: statusCounts.all || 0,
+                        },
+                        ...ORDER_STATUSES.map((status) => ({
+                            value: status,
+                            label: status,
+                            count: statusCounts[status] || 0,
+                        })),
+                    ]}
+                    className="lg:max-w-xl lg:justify-end"
+                />
             </div>
 
             {/* Orders Table Card */}
@@ -365,25 +333,25 @@ export default function AdminOrdersPage() {
                     <table className="w-full text-left text-sm">
                         <thead>
                             <tr className="border-b border-border bg-muted/50">
-                                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <th className="px-4 py-3.5 text-caption text-muted-foreground">
                                     Order ID
                                 </th>
-                                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <th className="px-4 py-3.5 text-caption text-muted-foreground">
                                     Customer
                                 </th>
-                                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <th className="px-4 py-3.5 text-caption text-muted-foreground">
                                     Contact
                                 </th>
-                                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <th className="px-4 py-3.5 text-caption text-muted-foreground">
                                     Total
                                 </th>
-                                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <th className="px-4 py-3.5 text-caption text-muted-foreground">
                                     Status
                                 </th>
-                                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <th className="px-4 py-3.5 text-caption text-muted-foreground">
                                     Date
                                 </th>
-                                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <th className="px-4 py-3.5 text-right text-caption text-muted-foreground">
                                     Actions
                                 </th>
                             </tr>

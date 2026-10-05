@@ -18,6 +18,7 @@ import { toast } from "sonner";
 
 import PremiumImage from "@/components/ui/PremiumImage";
 import { Button } from "@/components/ui/button";
+import { SegmentedFilterRow } from "@/components/ui/SegmentedControl";
 import { useAuth } from "@/lib/AuthContext";
 import { getUserOrders } from "@/lib/client/orders";
 import type { Order } from "@/lib/types/order";
@@ -348,20 +349,19 @@ export default function ProfileOrdersPage() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.05 }}
-                            className="mb-5 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide"
+                            className="mb-5 -mx-1 overflow-x-auto px-1 pb-1 scrollbar-none"
                         >
-                            {STATUS_FILTERS.map((f) => (
-                                <Button
-                                    key={f.value}
-                                    type="button"
-                                    size="sm"
-                                    variant={statusFilter === f.value ? "primary" : "outline"}
-                                    onClick={() => setStatusFilter(f.value)}
-                                    className="shrink-0 rounded-full px-4 py-1.5 text-xs font-medium"
-                                >
-                                    {f.label}
-                                </Button>
-                            ))}
+                            <SegmentedFilterRow
+                                value={statusFilter}
+                                onChange={setStatusFilter}
+                                ariaLabel="Filter my orders by status"
+                                idPrefix="profile-orders-status"
+                                options={STATUS_FILTERS.map((f) => ({
+                                    value: f.value,
+                                    label: f.label,
+                                }))}
+                                className="w-max"
+                            />
                         </motion.div>
 
                         {/* Orders */}

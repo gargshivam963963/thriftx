@@ -31,7 +31,7 @@ export default function AddressEmpty({ onAdd }: AddressEmptyProps) {
                     <MapPin size={28} className="sm:h-[34px] sm:w-[34px]" />
                 </div>
 
-                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
+                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-success text-white shadow-md">
                     <Plus size={14} />
                 </span>
             </motion.div>

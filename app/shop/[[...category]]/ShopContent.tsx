@@ -12,7 +12,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
     LayoutGrid,
     List,
-    ChevronDown,
     RotateCcw,
     AlertCircle,
     Tags,
@@ -27,9 +26,9 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 import type { Product } from "@/lib/services/products";
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/constants/products";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import Pagination from "@/components/ui/Pagination";
 import FilterAccordion from "@/components/ui/FilterAccordion";
 import FilterChip from "@/components/ui/FilterChip";
 import SegmentedControl from "@/components/ui/SegmentedControl";
@@ -50,6 +49,12 @@ import { useShopFacets } from "@/hooks/useShopFacets";
 
 interface ShopContentProps {
     products: Product[];
+    /** Total products matching the current filters (server-computed). */
+    total: number;
+    /** Current 1-based page (server-computed and clamped). */
+    page: number;
+    /** Rows rendered per page. */
+    pageSize: number;
     genders: {
         id: string;
         slug: string;
@@ -74,18 +79,22 @@ interface ShopContentProps {
     initialSearch?: string | null | undefined;
 }
 
-const ITEMS_PER_PAGE = 12;
-
+/**
+ * Grid columns mirror the admin products grid so the storefront and the back
+ * office read as one system: 2-up on mobile, stepping to 4-up on desktop.
+ */
 const GRID_CLASSES =
-    "grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 sm:gap-y-9 md:grid-cols-3 md:gap-x-6 md:gap-y-10 xl:gap-x-7 xl:gap-y-11 2xl:grid-cols-4";
+    "grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 sm:gap-y-9 md:grid-cols-3 md:gap-x-6 md:gap-y-10 lg:grid-cols-4 xl:gap-x-7 xl:gap-y-11";
 
 const LIST_CLASSES =
     "flex flex-col gap-4 sm:gap-5";
 
 function ProductGridSkeleton({
     list,
+    count,
 }: {
     list: boolean;
+    count: number;
 }) {
     return (
         <div
@@ -96,7 +105,7 @@ function ProductGridSkeleton({
             }
         >
             {Array.from({
-                length: ITEMS_PER_PAGE,
+                length: count,
             }).map((_, index) => (
                 <ProductCardSkeleton
                     key={index}
@@ -237,6 +246,9 @@ function ErrorState({
 
 export default function ShopContent({
     products: initialProducts,
+    total,
+    page,
+    pageSize,
     genders,
     categories,
     gender,
@@ -256,36 +268,11 @@ export default function ShopContent({
     const [viewMode, setViewMode] =
         useState<"grid" | "list">("grid");
 
-    const [products, setProducts] =
-        useState<Product[]>(
-            initialProducts,
-        );
-
     const [loading, setLoading] =
-        useState(false);
-
-    const [loadingMore, setLoadingMore] =
-        useState(false);
-
-    const [loadMoreError, setLoadMoreError] =
         useState(false);
 
     const [initialLoadError, setInitialLoadError] =
         useState(false);
-
-    const [offset, setOffset] =
-        useState(ITEMS_PER_PAGE);
-
-    const [hasMore, setHasMore] =
-        useState(
-            initialProducts.length >=
-            ITEMS_PER_PAGE,
-        );
-
-    const [totalCount, setTotalCount] =
-        useState(
-            initialProducts.length,
-        );
 
     const [searchInput, setSearchInput] =
         useState(
@@ -294,9 +281,6 @@ export default function ShopContent({
 
     const [isSearching, setIsSearching] =
         useState(false);
-
-    const searchAbortRef =
-        useRef<AbortController | null>(null);
 
     const baseUrl = gender
         ? `/shop/${gender}${clothingCategory
@@ -374,43 +358,110 @@ export default function ShopContent({
 
     /*
      * ---------------------------------------------------------
-     * Sync server products when route changes
+     * URL helpers
      * ---------------------------------------------------------
      */
 
-    useEffect(() => {
-        setProducts(
-            initialProducts,
-        );
+    const routerPusher = useCallback(
+        (queryString: string) => {
+            const url = queryString
+                ? `${baseUrl}?${queryString}`
+                : baseUrl;
 
-        setOffset(
-            ITEMS_PER_PAGE,
-        );
+            router.push(url);
+        },
+        [baseUrl, router],
+    );
 
-        setHasMore(
-            initialProducts.length >=
-            ITEMS_PER_PAGE,
-        );
+    const removeParam = useCallback(
+        (key: string) => {
+            const params =
+                new URLSearchParams(
+                    searchParams.toString(),
+                );
 
-        setTotalCount(
-            initialProducts.length,
-        );
+            params.delete(key);
 
-        setSearchInput(
-            initialSearch ?? "",
-        );
+            // Any filter change invalidates the current page number.
+            params.delete("page");
 
-        setLoadMoreError(false);
-        setInitialLoadError(false);
-    }, [
-        initialProducts,
-        searchParams,
-        initialSearch,
-    ]);
+            routerPusher(
+                params.toString(),
+            );
+        },
+        [searchParams, routerPusher],
+    );
+
+    /**
+     * Navigates the grid.
+     *
+     * The URL is the single source of truth for "which page am I on", so the
+     * server re-runs the query and the shopper gets real pagination (and a
+     * shareable, crawlable URL) instead of an ever-growing client-side list.
+     */
+    const goToPage = useCallback(
+        (nextPage: number) => {
+            const params =
+                new URLSearchParams(
+                    searchParams.toString(),
+                );
+
+            if (nextPage <= 1) {
+                params.delete("page");
+            } else {
+                params.set(
+                    "page",
+                    String(nextPage),
+                );
+            }
+
+            routerPusher(params.toString());
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
+        },
+        [searchParams, routerPusher],
+    );
+
+    /**
+     * Changes the page size.
+     *
+     * The page resets to 1 (the old offset is meaningless under a new size)
+     * and the default size is removed from the URL to keep canonicals clean.
+     */
+    const changePageSize = useCallback(
+        (nextSize: number) => {
+            const params =
+                new URLSearchParams(
+                    searchParams.toString(),
+                );
+
+            if (nextSize === DEFAULT_PAGE_SIZE) {
+                params.delete("pageSize");
+            } else {
+                params.set(
+                    "pageSize",
+                    String(nextSize),
+                );
+            }
+
+            params.delete("page");
+
+            routerPusher(params.toString());
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
+        },
+        [searchParams, routerPusher],
+    );
 
     /*
      * ---------------------------------------------------------
-     * Search (Queries whole database across all products)
+     * Search (debounced → URL, so results stay paginated)
      * ---------------------------------------------------------
      */
 
@@ -421,6 +472,19 @@ export default function ShopContent({
             > | null
         >(null);
 
+    const committedSearch =
+        searchParams.get("search") ?? "";
+
+    useEffect(() => {
+        // Keep the input in sync when the URL changes underneath us
+        // (pagination, filter chips, back/forward).
+        setSearchInput(
+            initialSearch ?? "",
+        );
+
+        setInitialLoadError(false);
+    }, [initialSearch]);
+
     useEffect(() => {
         if (debounceRef.current) {
             clearTimeout(
@@ -428,137 +492,38 @@ export default function ShopContent({
             );
         }
 
+        const query =
+            searchInput.trim();
+
+        if (query === committedSearch) {
+            setIsSearching(false);
+            return;
+        }
+
+        setIsSearching(true);
+
         debounceRef.current =
-            setTimeout(async () => {
-                const query =
-                    searchInput.trim();
-
-                if (searchAbortRef.current) {
-                    searchAbortRef.current.abort();
-                }
-
-                if (!query) {
-                    setProducts(
-                        initialProducts,
+            setTimeout(() => {
+                const params =
+                    new URLSearchParams(
+                        searchParams.toString(),
                     );
-                    setOffset(
-                        ITEMS_PER_PAGE,
-                    );
-                    setHasMore(
-                        initialProducts.length >=
-                        ITEMS_PER_PAGE,
-                    );
-                    setTotalCount(
-                        initialProducts.length,
-                    );
-                    setIsSearching(false);
-                    return;
-                }
 
-                setIsSearching(true);
-                const controller =
-                    new AbortController();
-                searchAbortRef.current =
-                    controller;
-
-                try {
-                    const params =
-                        new URLSearchParams(
-                            searchParams.toString(),
-                        );
-
+                if (query) {
                     params.set(
                         "search",
                         query,
                     );
-                    params.set(
-                        "sort",
-                        initialSort,
-                    );
-                    params.set(
-                        "limit",
-                        String(
-                            ITEMS_PER_PAGE,
-                        ),
-                    );
-                    params.set(
-                        "offset",
-                        "0",
-                    );
-
-                    if (gender) {
-                        params.set(
-                            "gender",
-                            gender,
-                        );
-                    }
-
-                    if (
-                        clothingCategory
-                    ) {
-                        params.set(
-                            "category",
-                            clothingCategory,
-                        );
-                    }
-
-                    const response =
-                        await fetch(
-                            `/api/shop/products?${params.toString()}`,
-                            {
-                                method: "GET",
-                                signal: controller.signal,
-                                cache: "no-store",
-                            },
-                        );
-
-                    if (!response.ok) {
-                        throw new Error(
-                            "Search query failed",
-                        );
-                    }
-
-                    const data =
-                        await response.json();
-
-                    if (
-                        data.success &&
-                        Array.isArray(
-                            data.products,
-                        )
-                    ) {
-                        setProducts(
-                            data.products,
-                        );
-                        setOffset(
-                            ITEMS_PER_PAGE,
-                        );
-                        setHasMore(
-                            Boolean(
-                                data.hasMore,
-                            ),
-                        );
-                        setTotalCount(
-                            data.products
-                                .length,
-                        );
-                    }
-                } catch (error) {
-                    if (
-                        error instanceof
-                        Error &&
-                        error.name ===
-                        "AbortError"
-                    ) {
-                        return;
-                    }
-                    console.error(
-                        "Shop search error:",
-                        error,
-                    );
-                } finally {
-                    setIsSearching(false);
+                } else {
+                    params.delete("search");
                 }
+
+                // A new query invalidates the current page number.
+                params.delete("page");
+
+                routerPusher(
+                    params.toString(),
+                );
             }, 350);
 
         return () => {
@@ -570,157 +535,10 @@ export default function ShopContent({
         };
     }, [
         searchInput,
-        initialProducts,
+        committedSearch,
         searchParams,
-        initialSort,
-        gender,
-        clothingCategory,
+        routerPusher,
     ]);
-
-    /*
-     * ---------------------------------------------------------
-     * Load more
-     * ---------------------------------------------------------
-     */
-
-    const handleLoadMore =
-        useCallback(async () => {
-            if (
-                loadingMore ||
-                !hasMore
-            ) {
-                return;
-            }
-
-            setLoadingMore(true);
-            setLoadMoreError(false);
-
-            try {
-                const params =
-                    new URLSearchParams(
-                        searchParams.toString(),
-                    );
-
-                params.set(
-                    "sort",
-                    initialSort,
-                );
-
-                params.set(
-                    "limit",
-                    String(
-                        ITEMS_PER_PAGE,
-                    ),
-                );
-
-                params.set(
-                    "offset",
-                    String(offset),
-                );
-
-                const response =
-                    await fetch(
-                        `/api/shop/products?${params.toString()}`,
-                        {
-                            method: "GET",
-                            cache: "no-store",
-                        },
-                    );
-
-                if (!response.ok) {
-                    throw new Error(
-                        "Failed to load products",
-                    );
-                }
-
-                const data =
-                    await response.json();
-
-                if (!data.success) {
-                    throw new Error(
-                        data.error ??
-                        "Failed to load products",
-                    );
-                }
-
-                const incomingProducts =
-                    Array.isArray(
-                        data.products,
-                    )
-                        ? data.products
-                        : [];
-
-                setProducts(
-                    (previous) => {
-                        const existingIds =
-                            new Set(
-                                previous.map(
-                                    (
-                                        product,
-                                    ) =>
-                                        product.id,
-                                ),
-                            );
-
-                        const nextProducts =
-                            incomingProducts.filter(
-                                (
-                                    product: Product,
-                                ) =>
-                                    !existingIds.has(
-                                        product.id,
-                                    ),
-                            );
-
-                        return [
-                            ...previous,
-                            ...nextProducts,
-                        ];
-                    },
-                );
-
-                setOffset(
-                    (previous) =>
-                        previous +
-                        ITEMS_PER_PAGE,
-                );
-
-                setHasMore(
-                    Boolean(
-                        data.hasMore,
-                    ),
-                );
-
-                if (
-                    typeof data.total ===
-                    "number"
-                ) {
-                    setTotalCount(
-                        data.total,
-                    );
-                } else {
-                    setTotalCount(
-                        (previous) =>
-                            Math.max(
-                                previous,
-                                products.length +
-                                incomingProducts.length,
-                            ),
-                    );
-                }
-            } catch {
-                setLoadMoreError(true);
-            } finally {
-                setLoadingMore(false);
-            }
-        }, [
-            offset,
-            loadingMore,
-            hasMore,
-            initialSort,
-            searchParams,
-            products.length,
-        ]);
 
     /*
      * ---------------------------------------------------------
@@ -738,59 +556,17 @@ export default function ShopContent({
             }, 150);
         }, []);
 
-    /*
-     * ---------------------------------------------------------
-     * URL helpers
-     * ---------------------------------------------------------
-     */
-
-    function routerPusher(
-        queryString: string,
-    ) {
-        const url = queryString
-            ? `${baseUrl}?${queryString}`
-            : baseUrl;
-
-        router.push(url);
-    }
-
-    function removeParam(
-        key: string,
-    ) {
-        const params =
-            new URLSearchParams(
-                searchParams.toString(),
-            );
-
-        params.delete(key);
-
-        routerPusher(
-            params.toString(),
-        );
-    }
-
-    /*
-     * ---------------------------------------------------------
-     * Result state
-     * ---------------------------------------------------------
-     */
-
-    const visibleCount =
-        products.length;
-
-    const progressValue =
-        totalCount > 0
-            ? Math.min(
-                (visibleCount /
-                    totalCount) *
-                100,
-                100,
-            )
-            : 0;
-
     const isSearchActive =
         Boolean(
             searchInput.trim(),
+        );
+
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                total / pageSize,
+            ),
         );
 
     /*
@@ -816,129 +592,39 @@ export default function ShopContent({
                 "
             >
                 {/* =====================================================
-                    PAGE HEADER
+                    PAGE HEADER — visual chrome removed on purpose.
+
+                    Our goal on a collection page is to show products, not a
+                    title block. The H1 and breadcrumb stay in the DOM (hidden)
+                    so the page keeps its heading structure for SEO/screen
+                    readers — but they no longer push the grid below the fold.
+                    The result count itself lives beside the grid instead.
                 ====================================================== */}
 
-                <header
-                    className="
-                        mb-6
-                        sm:mb-8
-                        lg:mb-10
-                    "
+                <nav
+                    aria-label="Breadcrumb"
+                    className="sr-only"
                 >
-                    <nav
-                        aria-label="Breadcrumb"
-                        className="
-                            flex
-                            min-w-0
-                            flex-wrap
-                            items-center
-                            gap-x-2
-                            gap-y-1
-                            text-[11px]
-                            font-medium
-                            uppercase
-                            tracking-[0.08em]
-                            text-muted-foreground
-                            sm:text-xs
-                        "
-                    >
-                        <Link
-                            href="/"
-                            className="
-                                inline-flex
-                                min-h-8
-                                items-center
-                                transition-colors
-                                hover:text-foreground
-                                focus-visible:outline-none
-                                focus-visible:ring-2
-                                focus-visible:ring-ring
-                            "
-                        >
-                            Home
-                        </Link>
+                    <Link href="/">Home</Link>
+                    <span aria-hidden="true"> / </span>
+                    <Link href="/shop">Shop</Link>
+                    {categoryTitle !== "All Items" && (
+                        <>
+                            <span aria-hidden="true"> / </span>
+                            <span>{categoryTitle}</span>
+                        </>
+                    )}
+                </nav>
 
-                        <span
-                            aria-hidden="true"
-                            className="text-muted-foreground/50"
-                        >
-                            /
-                        </span>
-
-                        <Link
-                            href="/shop"
-                            className="
-                                inline-flex
-                                min-h-8
-                                items-center
-                                transition-colors
-                                hover:text-foreground
-                                focus-visible:outline-none
-                                focus-visible:ring-2
-                                focus-visible:ring-ring
-                            "
-                        >
-                            Shop
-                        </Link>
-
-                        {categoryTitle !==
-                            "All Items" && (
-                                <>
-                                    <span
-                                        aria-hidden="true"
-                                        className="text-muted-foreground/50"
-                                    >
-                                        /
-                                    </span>
-
-                                    <span className="inline-flex min-h-8 items-center text-foreground">
-                                        {
-                                            categoryTitle
-                                        }
-                                    </span>
-                                </>
-                            )}
-                    </nav>
-
-                    <div
-                        className="
-                            mt-3
-                            max-w-3xl
-                            sm:mt-4
-                        "
-                    >
-                        <h1
-                            className="
-                                text-[clamp(1.875rem,4vw,2.75rem)]
-                                font-semibold
-                                leading-[1.06]
-                                tracking-[-0.035em]
-                                text-foreground
-                            "
-                        >
-                            {categoryTitle}
-                        </h1>
-
-                        <p
-                            className="
-                                mt-2
-                                max-w-2xl
-                                text-[13px]
-                                leading-5
-                                text-muted-foreground
-                                sm:mt-2.5
-                                sm:text-sm
-                                sm:leading-6
-                            "
-                        >
-                            Explore our curated
-                            collection and find
-                            pieces that match
-                            your style.
-                        </p>
-                    </div>
-                </header>
+                <h1 className="sr-only">
+                    {categoryTitle !== "All Items"
+                        ? `${categoryTitle} | Shop THRIFTX`
+                        : "All Items | Shop THRIFTX"}
+                    <span className="sr-only">
+                        {" — "}
+                        {total} {total === 1 ? "piece" : "pieces"} available
+                    </span>
+                </h1>
 
                 {/* =====================================================
                     MAIN LAYOUT
@@ -1307,28 +993,13 @@ export default function ShopContent({
                                     sm:gap-3
                                 "
                             >
-                                {/* Mobile filter */}
-                                <div className="shrink-0 lg:hidden">
-                                    <FilterDrawer
-                                        genders={
-                                            genders
-                                        }
-                                        categories={
-                                            categories
-                                        }
-                                        facets={
-                                            facets
-                                        }
-                                    />
-                                </div>
-
-                                {/* Search */}
+                                {/* Search — primary action, always first */}
                                 <div
                                     className="
                                         order-3
                                         min-w-full
                                         flex-1
-                                        sm:order-none
+                                        sm:order-1
                                         sm:min-w-0
                                     "
                                 >
@@ -1344,7 +1015,33 @@ export default function ShopContent({
                                     />
                                 </div>
 
-                                {/* View toggle */}
+                                {/* Mobile filter */}
+                                <div className="order-1 shrink-0 sm:order-2 lg:hidden">
+                                    <FilterDrawer
+                                        genders={
+                                            genders
+                                        }
+                                        categories={
+                                            categories
+                                        }
+                                        facets={
+                                            facets
+                                        }
+                                    />
+                                </div>
+
+                                {/* Sort */}
+                                <div className="order-2 shrink-0 sm:order-3">
+                                    <SortDropdown
+                                        defaultValue={
+                                            initialSort
+                                        }
+                                    />
+                                </div>
+
+                                {/* Page size lives in the Pagination row below */}
+
+                                {/* View toggle — trailing, after all actions */}
                                 <SegmentedControl
                                     value={
                                         viewMode
@@ -1376,17 +1073,9 @@ export default function ShopContent({
                                             ),
                                         },
                                     ]}
-                                    className="hidden sm:inline-flex"
+                                    className="hidden sm:inline-flex order-3 sm:order-5"
                                 />
 
-                                {/* Sort */}
-                                <div className="shrink-0">
-                                    <SortDropdown
-                                        defaultValue={
-                                            initialSort
-                                        }
-                                    />
-                                </div>
                             </div>
 
                             {/* Active filters */}
@@ -1588,12 +1277,12 @@ export default function ShopContent({
                                     "
                                 >
                                     {isSearchActive
-                                        ? `${products.length} ${products.length ===
+                                        ? `${total} ${total ===
                                             1
                                             ? "result"
                                             : "results"
                                         } for "${searchInput.trim()}"`
-                                        : `${products.length} ${products.length ===
+                                        : `${total} ${total ===
                                             1
                                             ? "piece"
                                             : "pieces"
@@ -1633,6 +1322,7 @@ export default function ShopContent({
                                     viewMode ===
                                     "list"
                                 }
+                                count={pageSize}
                             />
                         ) : initialLoadError ? (
                             <ErrorState
@@ -1640,7 +1330,7 @@ export default function ShopContent({
                                     handleRetry
                                 }
                             />
-                        ) : products.length ===
+                        ) : initialProducts.length ===
                             0 ? (
                             /* =================================================
                                 EMPTY STATE
@@ -1782,7 +1472,7 @@ export default function ShopContent({
                                                 GRID_CLASSES
                                             }
                                         >
-                                            {products.map(
+                                            {initialProducts.map(
                                                 (
                                                     product,
                                                     index,
@@ -1853,7 +1543,7 @@ export default function ShopContent({
                                                 LIST_CLASSES
                                             }
                                         >
-                                            {products.map(
+                                            {initialProducts.map(
                                                 (
                                                     product,
                                                     index,
@@ -1916,192 +1606,23 @@ export default function ShopContent({
                                 </AnimatePresence>
 
                                 {/* =================================================
-                                    LOAD MORE
+                                    PAGINATION
                                 ================================================== */}
 
-                                {hasMore &&
-                                    products.length >
-                                    0 && (
-                                        <div
-                                            className="
-                                                mt-9
-                                                flex
-                                                flex-col
-                                                items-center
-                                                gap-4
-                                                sm:mt-11
-                                            "
-                                        >
-                                            <div
-                                                className="
-                                                    flex
-                                                    w-full
-                                                    max-w-sm
-                                                    items-center
-                                                    gap-3
-                                                "
-                                            >
-                                                <Progress
-                                                    value={
-                                                        progressValue
-                                                    }
-                                                    className="h-1 bg-muted"
-                                                />
+                                {initialProducts.length > 0 && (
+                                    <Pagination
+                                        page={page}
+                                        totalPages={totalPages}
+                                        totalItems={total}
+                                        pageSize={pageSize}
+                                        itemNoun="pieces"
+                                        onPageChange={goToPage}
+                                        pageSizeOptions={PAGE_SIZE_OPTIONS}
+                                        onPageSizeChange={changePageSize}
+                                        className="mt-9 sm:mt-11"
+                                    />
+                                )}
 
-                                                <span
-                                                    className="
-                                                        shrink-0
-                                                        text-[11px]
-                                                        font-medium
-                                                        leading-4
-                                                        text-muted-foreground
-                                                        sm:text-xs
-                                                    "
-                                                >
-                                                    {
-                                                        products.length
-                                                    }{" "}
-                                                    shown
-                                                </span>
-                                            </div>
-
-                                            {loadMoreError && (
-                                                <div
-                                                    className="
-                                                        flex
-                                                        flex-col
-                                                        items-center
-                                                        gap-2
-                                                        text-center
-                                                    "
-                                                >
-                                                    <p
-                                                        className="
-                                                            text-xs
-                                                            leading-5
-                                                            text-destructive
-                                                        "
-                                                    >
-                                                        Couldn&apos;t
-                                                        load
-                                                        more
-                                                        products.
-                                                    </p>
-
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={
-                                                            handleLoadMore
-                                                        }
-                                                        className="min-h-9 text-xs"
-                                                    >
-                                                        <RefreshCw className="h-3.5 w-3.5" />
-                                                        Try
-                                                        Again
-                                                    </Button>
-                                                </div>
-                                            )}
-
-                                            {!loadMoreError && (
-                                                <Button
-                                                    type="button"
-                                                    onClick={
-                                                        handleLoadMore
-                                                    }
-                                                    loading={
-                                                        loadingMore
-                                                    }
-                                                    loadingText="Loading…"
-                                                    variant="outline"
-                                                    size="lg"
-                                                    rounded="xl"
-                                                    className="
-                                                        min-h-11
-                                                        min-w-[150px]
-                                                        px-5
-                                                        text-sm
-                                                        font-medium
-                                                        shadow-none
-                                                    "
-                                                >
-                                                    <ChevronDown
-                                                        className="h-4 w-4"
-                                                        aria-hidden="true"
-                                                    />
-                                                    Load More
-                                                </Button>
-                                            )}
-                                        </div>
-                                    )}
-
-                                {/* =================================================
-                                    END OF PRODUCTS
-                                ================================================== */}
-
-                                {!hasMore &&
-                                    products.length >
-                                    0 && (
-                                        <div
-                                            className="
-                                                mt-9
-                                                flex
-                                                flex-col
-                                                items-center
-                                                gap-2
-                                                sm:mt-11
-                                            "
-                                        >
-                                            <Badge
-                                                variant="secondary"
-                                                size="md"
-                                                rounded="full"
-                                                className="
-                                                    px-3
-                                                    text-xs
-                                                    font-medium
-                                                "
-                                            >
-                                                Showing all{" "}
-                                                {
-                                                    products.length
-                                                }{" "}
-                                                {
-                                                    products.length ===
-                                                        1
-                                                        ? "piece"
-                                                        : "pieces"
-                                                }
-                                            </Badge>
-
-                                            <Button
-                                                type="button"
-                                                onClick={() =>
-                                                    window.scrollTo(
-                                                        {
-                                                            top: 0,
-                                                            behavior:
-                                                                "smooth",
-                                                        },
-                                                    )
-                                                }
-                                                variant="ghost"
-                                                size="sm"
-                                                rounded="lg"
-                                                className="
-                                                    mt-1
-                                                    min-h-9
-                                                    text-xs
-                                                    font-medium
-                                                    sm:text-sm
-                                                "
-                                            >
-                                                Back to
-                                                top ↑
-                                            </Button>
-                                        </div>
-                                    )}
                             </>
                         )}
                     </section>

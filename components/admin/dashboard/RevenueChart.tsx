@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 
 interface RevenueChartProps {
     data: { date: string; revenue: number; orders: number }[];
@@ -10,6 +11,12 @@ interface RevenueChartProps {
 }
 
 type Period = "7d" | "30d";
+
+/** Human labels for the range switcher — shared with the SegmentedControl. */
+const PERIOD_LABELS: Record<Period, string> = {
+    "7d": "7 days",
+    "30d": "30 days",
+};
 
 interface ChartPoint {
     x: number;
@@ -140,7 +147,10 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
                     onChange={setPeriod}
                     ariaLabel="Revenue period"
                     idPrefix="dashboard-revenue-period"
-                    options={PERIOD_LABELS.map((p) => ({ value: p, label: p }))}
+                    options={(Object.keys(PERIOD_LABELS) as Period[]).map((p) => ({
+                        value: p,
+                        label: PERIOD_LABELS[p],
+                    }))}
                 />
             </div>
 

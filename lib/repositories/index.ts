@@ -16,6 +16,7 @@ import * as brandRepo from "./brandRepository";
  */
 export const productRepository = {
   getProductsByFilters: productRepo.getProductsByFilters,
+  countProductsByFilters: productRepo.countProductsByFilters,
   getAllProducts: productRepo.getAllProducts,
   getProductBySlug: productRepo.getProductBySlug,
   getProductById: productRepo.getProductById,

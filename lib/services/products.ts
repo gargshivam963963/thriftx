@@ -104,6 +104,20 @@ export const getProducts = unstable_cache(
   PRODUCT_CACHE,
 );
 
+/**
+ * Total number of products matching a filter set — the `y` in "showing x of y".
+ *
+ * Cached on the same `products` tag as {@link getProducts} so an admin write
+ * revalidates the counts together with the rows they describe.
+ */
+export const countProducts = unstable_cache(
+  async (filters: ProductFilters = {}): Promise<number> => {
+    return productRepository.countProductsByFilters(filters);
+  },
+  ["products-count"],
+  PRODUCT_CACHE,
+);
+
 export const getProductById = unstable_cache(
   async (id: string): Promise<Product | null> => {
     return productRepository.getProductById(id);
@@ -148,6 +162,7 @@ export const getProductsForSitemap = cache(async () => {
 
 const ProductService = {
   getProducts,
+  countProducts,
   getProductById,
   getProductBySlug,
   getProductsForSitemap,

@@ -1,18 +1,15 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
     ChevronRight,
-    Lock,
     ShieldCheck,
     ShoppingBag,
     Tag,
 } from "lucide-react";
 
 import PremiumImage from "@/components/ui/PremiumImage";
-import { Button } from "@/components/ui/button";
 import type { CartProduct } from "@/lib/services/cartProducts";
-import type { PaymentMethod } from "@/lib/types/order";
 
 interface CheckoutOrderSummaryProps {
     items: CartProduct[];
@@ -22,10 +19,8 @@ interface CheckoutOrderSummaryProps {
     discount?: number;
     discountReason?: string;
     pricingLoading?: boolean;
-    paymentLoading: boolean;
     canPay: boolean;
-    selectedMethod: PaymentMethod | null;
-    onPay: (method: PaymentMethod) => void;
+    className?: string;
 }
 
 interface RowProps {
@@ -48,14 +43,14 @@ function formatCurrency(value: number): string {
 
 function Row({ label, value, highlight = false }: RowProps) {
     return (
-        <div className="flex items-center justify-between gap-4 text-sm">
+        <div className="flex items-center justify-between gap-4 text-body-sm">
             <span className="text-muted-foreground">{label}</span>
 
             <span
                 className={
                     highlight
-                        ? "font-semibold text-emerald-600"
-                        : "font-medium text-foreground"
+                        ? "font-semibold text-success-foreground"
+                        : "font-medium tabular-nums text-foreground"
                 }
             >
                 {value}
@@ -64,6 +59,59 @@ function Row({ label, value, highlight = false }: RowProps) {
     );
 }
 
+function ItemList({ items }: { items: CartProduct[] }) {
+    return (
+        <div
+            aria-label="Items in your order"
+            className="max-h-72 space-y-2.5 overflow-y-auto overscroll-contain px-4 py-4 sm:max-h-80 sm:px-5"
+        >
+            {items.map((item) => (
+                <motion.div
+                    key={item.cartId}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex min-w-0 items-center gap-3"
+                >
+                    <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-16">
+                        <PremiumImage
+                            src={item.primaryImage}
+                            alt={item.title}
+                            fill
+                            sizes="(max-width: 640px) 56px, 64px"
+                            className="object-cover"
+                            rounded
+                        />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                        <h3
+                            title={item.title}
+                            className="line-clamp-2 break-words text-small font-semibold leading-snug text-foreground"
+                        >
+                            {item.title}
+                        </h3>
+
+                        <p className="mt-0.5 text-small text-muted-foreground">
+                            Size {item.size} · Qty {item.quantity}
+                        </p>
+                    </div>
+
+                    <span className="shrink-0 text-small font-semibold tabular-nums text-foreground">
+                        {formatCurrency(item.price * item.quantity)}
+                    </span>
+                </motion.div>
+            ))}
+        </div>
+    );
+}
+/**
+ * CheckoutOrderSummary — order contents + price breakdown.
+ *
+ * Deliberately holds NO pay button. The single "Place order" CTA lives in the
+ * sticky mobile bar and in the desktop panel, so there is exactly one action
+ * per breakpoint instead of the previous three competing CTAs.
+ */
 export default function CheckoutOrderSummary({
     items,
     subtotal,
@@ -72,142 +120,122 @@ export default function CheckoutOrderSummary({
     discount = 0,
     discountReason = "",
     pricingLoading = false,
-    paymentLoading,
     canPay,
-    selectedMethod,
-    onPay,
+    className,
 }: CheckoutOrderSummaryProps) {
+    const reduceMotion = useReducedMotion();
+
     const isFreeShipping = shippingCost === 0;
-    const canConfirm = canPay && selectedMethod !== null;
+
+    const totalLabel =
+        pricingLoading || !canPay ? "—" : formatCurrency(total);
+
+    const priceRows = (
+        <div className="space-y-2.5">
+            <Row label="Subtotal" value={formatCurrency(subtotal)} />
+
+            <Row
+                label="Delivery"
+                value={
+                    isFreeShipping
+                        ? "FREE"
+                        : formatCurrency(shippingCost)
+                }
+                highlight={isFreeShipping}
+            />
+
+            {discount > 0 && (
+                <Row
+                    label={discountReason || "Promotion"}
+                    value={`−${formatCurrency(discount)}`}
+                    highlight
+                />
+            )}
+        </div>
+    );
 
     return (
-        <aside
-            aria-label="Order summary"
-            className="h-fit lg:sticky lg:top-24"
-        >
-            <motion.div
-                layout
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm sm:rounded-[28px]"
-            >
-                {/* Summary heading */}
-                <div className="border-b border-border p-4 sm:p-6">
-                    <div className="flex items-center justify-between gap-3">
+        <aside aria-label="Order summary" className={className}>
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm sm:rounded-3xl">
+                {/* ── Mobile: collapsible ────────────────────────── */}
+                <details className="group lg:hidden">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 p-4 [&::-webkit-details-marker]:hidden">
+                        <span
+                            aria-hidden="true"
+                            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground"
+                        >
+                            <ShoppingBag className="size-5" />
+                        </span>
+
+                        <span className="min-w-0 flex-1">
+                            <span className="block text-label font-semibold text-foreground">
+                                Order summary
+                            </span>
+
+                            <span className="mt-0.5 block truncate text-small text-muted-foreground">
+                                {items.length}{" "}
+                                {items.length === 1 ? "item" : "items"}
+                            </span>
+                        </span>
+
+                        <span className="shrink-0 text-price text-foreground">
+                            {totalLabel}
+                        </span>
+
+                        <ChevronRight
+                            aria-hidden="true"
+                            className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-90"
+                        />
+                    </summary>
+
+                    <div className="border-t border-border">
+                        <ItemList items={items} />
+
+                        <div className="border-t border-border px-4 py-4">
+                            {priceRows}
+                        </div>
+                    </div>
+                </details>
+
+                {/* ── Desktop ────────────────────────────────────── */}
+                <div className="hidden lg:block">
+                    <div className="flex items-center justify-between gap-3 border-b border-border p-5">
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                                Order Summary
+                            <p className="text-caption text-muted-foreground">
+                                Order summary
                             </p>
 
-                            <h2 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                            <h2 className="mt-1 text-h4 font-bold text-foreground">
                                 {items.length}{" "}
-                                {items.length === 1 ? "Item" : "Items"}
+                                {items.length === 1 ? "item" : "items"}
                             </h2>
                         </div>
 
-                        <div
+                        <span
                             aria-hidden="true"
-                            className="rounded-full bg-muted p-2.5 sm:p-3"
+                            className="flex size-11 items-center justify-center rounded-xl bg-muted text-muted-foreground"
                         >
-                            <ShoppingBag className="h-[18px] w-[18px] text-muted-foreground sm:h-[22px] sm:w-[22px]" />
-                        </div>
+                            <ShoppingBag className="size-5" />
+                        </span>
                     </div>
-                </div>
 
-                {/* Cart items */}
-                <div
-                    aria-label="Items in your order"
-                    className="max-h-[300px] space-y-2.5 overflow-y-auto px-4 py-4 sm:max-h-[320px] sm:space-y-3 sm:px-6"
-                >
-                    {items.map((item, index) => (
-                        <motion.div
-                            key={item.cartId}
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{
-                                delay: Math.min(index * 0.04, 0.2),
-                                duration: 0.2,
-                            }}
-                            className="flex min-w-0 items-center gap-3 rounded-xl bg-subtle p-2.5 transition-colors hover:bg-muted sm:rounded-2xl sm:p-3"
-                        >
-                            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-muted sm:h-16 sm:w-16 sm:rounded-xl">
-                                <PremiumImage
-                                    src={item.primaryImage}
-                                    alt={item.title}
-                                    fill
-                                    sizes="(max-width: 640px) 56px, 64px"
-                                    className="object-cover"
-                                    rounded
-                                />
-                            </div>
+                    <ItemList items={items} />
 
-                            <div className="flex min-w-0 flex-1 flex-col">
-                                <h3
-                                    title={item.title}
-                                    className="line-clamp-2 break-words text-xs font-semibold leading-5 text-foreground sm:text-sm"
-                                >
-                                    {item.title}
-                                </h3>
+                    <div className="space-y-4 border-t border-border p-5">
+                        {priceRows}
 
-                                <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[11px] text-muted-foreground sm:text-xs">
-                                    <span>Size {item.size}</span>
-                                    <span aria-hidden="true">•</span>
-                                    <span>Qty {item.quantity}</span>
-                                </div>
-
-                                <div className="mt-2 flex items-center justify-between gap-2">
-                                    <span className="text-[11px] text-muted-foreground sm:text-xs">
-                                        Item total
-                                    </span>
-
-                                    <span className="text-sm font-bold text-foreground sm:text-base">
-                                        {formatCurrency(
-                                            item.price * item.quantity
-                                        )}
-                                    </span>
-                                </div>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
-
-                {/* Price breakdown */}
-                <div className="border-t border-border px-4 py-4 sm:px-6 sm:py-5">
-                    <div className="space-y-3">
-                        <Row
-                            label="Subtotal"
-                            value={formatCurrency(subtotal)}
-                        />
-
-                        <Row
-                            label="Shipping"
-                            value={
-                                isFreeShipping
-                                    ? "FREE"
-                                    : formatCurrency(shippingCost)
-                            }
-                            highlight={isFreeShipping}
-                        />
-
-                        {discount > 0 ? (
-                            <Row
-                                label={discountReason || "Promotion"}
-                                value={`−${formatCurrency(discount)}`}
-                                highlight
-                            />
-                        ) : (
-                            <div className="flex items-center gap-2 rounded-xl bg-subtle px-3 py-2.5">
+                        {discount === 0 && (
+                            <div className="flex items-start gap-2 rounded-xl bg-muted/50 px-3 py-2.5">
                                 <Tag
                                     aria-hidden="true"
-                                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                                    className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
                                 />
 
-                                <span className="text-xs text-muted-foreground">
+                                <p className="text-small text-muted-foreground">
                                     {pricingLoading
-                                        ? "Confirming your server-calculated total…"
-                                        : "Have a coupon? Apply it in your cart."}
-                                </span>
+                                        ? "Confirming your total…"
+                                        : "Have a coupon? Apply it from your cart."}
+                                </p>
                             </div>
                         )}
 
@@ -217,78 +245,40 @@ export default function CheckoutOrderSummary({
                         />
 
                         <div className="flex items-end justify-between gap-3">
-                            <div>
-                                <span className="text-sm text-muted-foreground">
-                                    You Pay
-                                </span>
+                            <div className="min-w-0">
+                                <p className="text-body-sm font-semibold text-foreground">
+                                    Total payable
+                                </p>
 
-                                <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                    Inclusive of applicable taxes
+                                <p className="mt-0.5 text-small text-muted-foreground">
+                                    Inclusive of all taxes
                                 </p>
                             </div>
 
-                            <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                                {pricingLoading || !canPay
-                                    ? "—"
-                                    : formatCurrency(total)}
+                            <span className="shrink-0 text-h4 font-bold tabular-nums text-foreground">
+                                {totalLabel}
                             </span>
                         </div>
                     </div>
-
-                    {/* Desktop payment action */}
-                    <div className="hidden lg:block">
-                        <Button
-                            type="button"
-                            onClick={() => onPay(selectedMethod ?? "razorpay")}
-                            loading={paymentLoading}
-                            disabled={!canConfirm || paymentLoading}
-                            fullWidth
-                            size="lg"
-                            leftIcon={<Lock className="h-5 w-5" />}
-                            rightIcon={
-                                <ChevronRight className="h-5 w-5" />
-                            }
-                            className="mt-5 h-14 rounded-2xl text-base shadow-lg shadow-foreground/10 sm:mt-6"
-                        >
-                            {selectedMethod === "cod"
-                                ? "Place COD order"
-                                : "Pay securely"}
-                        </Button>
-
-                        {!canConfirm && (
-                            <p
-                                role="status"
-                                className="mt-3 text-center text-xs text-amber-600"
-                            >
-                                {canPay
-                                    ? "Choose a payment method to continue."
-                                    : "Complete your address and shipping selection to continue."}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Purchase protection */}
-                    <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3.5 sm:mt-5 sm:rounded-2xl sm:p-4">
-                        <div className="flex items-start gap-3">
-                            <ShieldCheck
-                                aria-hidden="true"
-                                className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600"
-                            />
-
-                            <div>
-                                <h4 className="text-sm font-semibold text-foreground">
-                                    Purchase Protection
-                                </h4>
-
-                                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                    Every order is quality checked and securely
-                                    packed before dispatch.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
-            </motion.div>
+            </div>
+
+            <motion.p
+                initial={reduceMotion ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className="mt-3 flex items-start gap-2 px-1 text-small text-muted-foreground"
+            >
+                <ShieldCheck
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0 text-success"
+                />
+
+                <span>
+                    Every order is quality checked and securely packed
+                    before dispatch.
+                </span>
+            </motion.p>
         </aside>
     );
 }

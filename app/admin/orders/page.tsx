@@ -26,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SegmentedFilterRow } from "@/components/ui/SegmentedControl";
 import PageHeader from "@/components/ui/PageHeader";
+import AdminPage from "@/components/admin/AdminPage";
 import PremiumImage from "@/components/ui/PremiumImage";
 import { cn } from "@/lib/utils";
 import { shipOrder } from "@/lib/shipping/admin";
@@ -259,7 +260,7 @@ export default function AdminOrdersPage() {
     };
 
     return (
-        <div className="min-w-0 space-y-6">
+        <AdminPage width="wide">
             {/* Header */}
             <PageHeader
                 title="Orders"
@@ -884,6 +885,6 @@ export default function AdminOrdersPage() {
                     </div>
                 )}
             </AnimatePresence>
-        </div>
+        </AdminPage>
     );
 }

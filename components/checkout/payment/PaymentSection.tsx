@@ -8,7 +8,6 @@ import {
     ChevronDown,
     ChevronRight,
     CreditCard,
-    LockKeyhole,
     Wallet,
 } from "lucide-react";
 
@@ -70,7 +69,7 @@ function PaymentOption({
                 "relative w-full min-w-0 overflow-hidden rounded-2xl border p-4 text-left transition-all duration-200 sm:rounded-3xl sm:p-5",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2",
                 selected
-                    ? "border-emerald-500 bg-emerald-50/50 shadow-sm ring-1 ring-emerald-500/20 dark:bg-emerald-950/20"
+                    ? "border-success bg-success-bg/50 shadow-sm ring-1 ring-success/25"
                     : "border-border bg-card hover:border-foreground/25 hover:bg-muted/20 hover:shadow-sm",
                 !canPay || loading
                     ? "cursor-not-allowed opacity-60"
@@ -82,7 +81,7 @@ function PaymentOption({
                     className={[
                         "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-12 sm:w-12 sm:rounded-2xl",
                         selected
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                            ? "bg-success-bg text-success-foreground"
                             : "bg-muted text-muted-foreground",
                     ].join(" ")}
                 >
@@ -101,7 +100,7 @@ function PaymentOption({
 
                         <span
                             className={[
-                                "rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
+                                "rounded-full px-2 py-0.5 text-badge font-semibold uppercase tracking-wider",
                                 isCod
                                     ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
                                     : "bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300",
@@ -111,7 +110,7 @@ function PaymentOption({
                         </span>
                     </div>
 
-                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                    <p className="mt-1.5 text-body-sm leading-relaxed text-muted-foreground">
                         {description}
                     </p>
 
@@ -119,11 +118,11 @@ function PaymentOption({
                         {features.map((feature) => (
                             <span
                                 key={feature}
-                                className="inline-flex items-center gap-1.5 text-[11px] leading-relaxed text-muted-foreground sm:text-xs"
+                                className="inline-flex items-center gap-1.5 text-small leading-relaxed text-muted-foreground"
                             >
                                 <Check
                                     size={12}
-                                    className="shrink-0 text-emerald-600 dark:text-emerald-400"
+                                    className="shrink-0 text-success"
                                     aria-hidden="true"
                                 />
                                 {feature}
@@ -136,7 +135,7 @@ function PaymentOption({
                     className={[
                         "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors",
                         selected
-                            ? "border-emerald-600 bg-emerald-600 text-white"
+                            ? "border-success bg-success text-white"
                             : "border-border bg-background",
                     ].join(" ")}
                     aria-hidden="true"
@@ -157,7 +156,7 @@ function PaymentOption({
                         opacity: 1,
                         y: 0,
                     }}
-                    className="mt-4 flex items-center gap-2 border-t border-emerald-200/70 pt-3 text-xs font-medium text-emerald-800 dark:border-emerald-900/50 dark:text-emerald-300"
+                    className="mt-4 flex items-center gap-2 border-t border-success/25 pt-3 text-small font-medium text-success-foreground"
                 >
                     <CheckCircle2
                         size={15}
@@ -238,9 +237,9 @@ export default function PaymentSection({
                 <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                     <div
                         className={[
-                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-12 sm:w-12 sm:rounded-2xl",
+                            "flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors",
                             selectedMethod
-                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                ? "bg-success-bg text-success-foreground"
                                 : open
                                     ? "bg-foreground text-background"
                                     : "bg-muted text-muted-foreground",
@@ -263,9 +262,9 @@ export default function PaymentSection({
                         <div className="flex flex-wrap items-center gap-2">
                             <span
                                 className={[
-                                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold sm:h-6 sm:w-6 sm:text-xs",
+                                    "flex size-6 shrink-0 items-center justify-center rounded-full text-badge font-semibold",
                                     selectedMethod
-                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                                        ? "bg-success-bg text-success-foreground"
                                         : "bg-muted text-muted-foreground",
                                 ].join(" ")}
                             >
@@ -276,18 +275,18 @@ export default function PaymentSection({
                                 )}
                             </span>
 
-                            <h2 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">
+                            <h2 className="text-body font-semibold tracking-tight text-foreground">
                                 Payment
                             </h2>
 
                             {selectedMethod && (
-                                <span className="hidden rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 sm:inline-flex">
+                                <span className="hidden rounded-full bg-success-bg px-2 py-0.5 text-badge font-semibold uppercase tracking-wider text-success-foreground sm:inline-flex">
                                     Selected
                                 </span>
                             )}
                         </div>
 
-                        <p className="mt-1 truncate text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                        <p className="mt-1 line-clamp-2 text-body-sm leading-relaxed text-muted-foreground">
                             {disabled
                                 ? "Select shipping first"
                                 : selectedMethod
@@ -336,7 +335,7 @@ export default function PaymentSection({
                                     Choose payment method
                                 </h3>
 
-                                <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                                <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
                                     Select how you want to complete your
                                     THRIFTX order.
                                 </p>
@@ -383,30 +382,6 @@ export default function PaymentSection({
                                 />
                             </div>
 
-                            {/* Security information */}
-                            <div className="rounded-2xl border border-border bg-muted/30 p-4">
-                                <div className="flex items-start gap-3">
-                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-background text-muted-foreground">
-                                        <LockKeyhole
-                                            size={17}
-                                            aria-hidden="true"
-                                        />
-                                    </div>
-
-                                    <div className="min-w-0">
-                                        <h4 className="text-sm font-semibold text-foreground">
-                                            Secure Checkout
-                                        </h4>
-
-                                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                                            Online payments are processed
-                                            through Razorpay. THRIFTX does
-                                            not store your card details.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
                             {!canPay && (
                                 <p
                                     role="status"
@@ -426,7 +401,7 @@ export default function PaymentSection({
                 <div className="border-t border-border px-4 py-4 sm:px-6 sm:py-5">
                     <div className="flex min-w-0 items-center justify-between gap-3">
                         <div className="flex min-w-0 items-start gap-3">
-                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success-bg text-success-foreground">
                                 <CheckCircle2
                                     size={18}
                                     aria-hidden="true"
@@ -434,7 +409,7 @@ export default function PaymentSection({
                             </div>
 
                             <div className="min-w-0">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400 sm:text-[11px]">
+                                <p className="text-badge font-semibold uppercase tracking-wider text-success-foreground sm:text-small">
                                     Payment Method
                                 </p>
 
@@ -442,7 +417,7 @@ export default function PaymentSection({
                                     {paymentLabel}
                                 </h3>
 
-                                <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                                <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
                                     {paymentDescription}
                                 </p>
                             </div>

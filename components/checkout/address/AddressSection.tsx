@@ -150,10 +150,10 @@ export default function AddressSection({
                 <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                     <div
                         className={[
-                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                            "transition-colors duration-200 sm:h-12 sm:w-12 sm:rounded-2xl",
+                            "flex size-10 shrink-0 items-center justify-center rounded-xl",
+                            "transition-colors duration-200",
                             selectedAddress
-                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                ? "bg-success-bg text-success-foreground"
                                 : open
                                     ? "bg-foreground text-background"
                                     : "bg-muted text-muted-foreground",
@@ -178,10 +178,10 @@ export default function AddressSection({
                         <div className="flex flex-wrap items-center gap-2">
                             <span
                                 className={[
-                                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-                                    "text-[10px] font-semibold sm:h-6 sm:w-6 sm:text-xs",
+                                    "flex size-6 shrink-0 items-center justify-center rounded-full",
+                                    "text-badge font-semibold",
                                     selectedAddress
-                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                                        ? "bg-success-bg text-success-foreground"
                                         : "bg-muted text-muted-foreground",
                                 ].join(" ")}
                             >
@@ -192,18 +192,18 @@ export default function AddressSection({
                                 )}
                             </span>
 
-                            <h2 className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-base">
+                            <h2 className="truncate text-body font-semibold tracking-tight text-foreground">
                                 Delivery Address
                             </h2>
 
                             {selectedAddress && (
-                                <span className="hidden rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 sm:inline-flex">
+                                <span className="hidden rounded-full bg-success-bg px-2 py-0.5 text-badge font-semibold uppercase tracking-wider text-success-foreground sm:inline-flex">
                                     Completed
                                 </span>
                             )}
                         </div>
 
-                        <p className="mt-1 max-w-[220px] truncate text-xs leading-relaxed text-muted-foreground sm:max-w-md sm:text-sm">
+                        <p className="mt-1 line-clamp-2 text-body-sm leading-relaxed text-muted-foreground">
                             {selectedAddress
                                 ? `${selectedAddress.fullName}, ${selectedAddress.city}`
                                 : "Choose where your order should arrive"}
@@ -214,12 +214,12 @@ export default function AddressSection({
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors group-hover:border-foreground/20 group-hover:text-foreground sm:h-9 sm:w-9">
                     {open ? (
                         <ChevronDown
-                            size={17}
+                            size={18}
                             aria-hidden="true"
                         />
                     ) : (
                         <ChevronRight
-                            size={17}
+                            size={18}
                             aria-hidden="true"
                         />
                     )}
@@ -344,7 +344,7 @@ export default function AddressSection({
                                                 />
                                             </Button>
 
-                                            <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
+                                            <p className="text-center text-small leading-relaxed text-muted-foreground">
                                                 You can review your delivery
                                                 method before placing your
                                                 order.
@@ -573,7 +573,7 @@ export default function AddressSection({
                                         onClick={() =>
                                             setShowPanipatModal(false)
                                         }
-                                        className="mt-6 h-11 rounded-xl bg-white px-7 text-sm font-semibold text-emerald-800 shadow-lg transition-colors hover:bg-emerald-50 sm:mt-7"
+                                        className="mt-6 min-h-11 rounded-xl bg-white px-7 text-button font-semibold text-success-foreground shadow-lg transition-colors hover:bg-success-bg sm:mt-7"
                                     >
                                         <Sparkles
                                             size={16}

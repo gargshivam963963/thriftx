@@ -115,6 +115,44 @@ export const PANIPAT_LOCAL_DELIVERY = {
 };
 
 /**
+ * Panipat marketing copy — the ONE canonical source for every line of
+ * "free delivery in Panipat" messaging across the storefront.
+ *
+ * Checkout, cart, shop, product, order-confirmation and SEO metadata all read
+ * from here so the promise can never drift between surfaces. Change it once
+ * here and the whole app updates.
+ */
+export const PANIPAT_DELIVERY_PROMO = {
+  /** City we serve free local delivery to. */
+  city: "Panipat",
+
+  /** Short badge — pills, chips, banners. */
+  badge: "FREE delivery in Panipat",
+
+  /** Primary marketing headline — banners, hero slots, empty states. */
+  headline: "Free same-day delivery across Panipat",
+
+  /** One-sentence supporting line under the headline. */
+  subheadline:
+    "Order before 2 PM and get your THRIFTX order at your door in 2-3 hours.",
+
+  /** Ordered benefit list — used in bullets under the headline. */
+  benefits: [
+    "FREE delivery — no minimum order value",
+    "Delivered at your door in 2-3 hours",
+    "Order before 2 PM for same-day dispatch",
+    "Cash on delivery and online payment both accepted",
+  ],
+
+  /** CTA label for "you qualify / order now" links. */
+  ctaLabel: "Shop Panipat delivery",
+
+  /** SEO description fragment for indexable pages. */
+  seoFragment:
+    "THRIFTX offers FREE same-day delivery across Panipat, Haryana — order before 2 PM and receive your order at your doorstep in 2-3 hours, with cash on delivery available.",
+} as const;
+
+/**
  * Shipping rate presets (used when Shiprocket API is not configured).
  * These are realistic placeholder rates for India.
  */

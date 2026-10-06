@@ -1,38 +1,45 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { ArrowUpDown, Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, ListFilter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
     controlBase,
     controlIcon,
-    controlFocusRing,
+    controlSurface,
 } from "@/components/ui/control.styles";
 
-const sortOptions = [
-    { value: "newest", label: "Newest First" },
-    { value: "popular", label: "Best Selling" },
-    { value: "price-low", label: "Price: Low to High" },
-    { value: "price-high", label: "Price: High to Low" },
-    { value: "name", label: "Alphabetical" },
-];
+interface PageSizeSelectProps {
+    /** Currently active page size. */
+    value: number;
+    /** Allowed choices — defaults to the single source of truth. */
+    options?: readonly number[];
+    onChange: (pageSize: number) => void;
+    ariaLabel?: string;
+    className?: string;
+}
 
-export default function SortDropdown({
-    defaultValue,
-}: {
-    defaultValue: string;
-}) {
-    const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
+/**
+ * PageSizeSelect — "20 / 50 / 100 per page" control.
+ *
+ * Built from the same control tokens as `SortDropdown` (identical height,
+ * radius, typography, focus ring, dropdown animation) so the shop toolbar and
+ * any admin toolbar read as one system.
+ *
+ * Lives in `components/ui` because it is rendered by the shared `Pagination`
+ * component — it is part of the paging system, not a shop-specific control.
+ */
+export default function PageSizeSelect({
+    value,
+    options,
+    onChange,
+    ariaLabel = "Items per page",
+    className,
+}: PageSizeSelectProps) {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
-
-    const currentLabel =
-        sortOptions.find((o) => o.value === defaultValue)?.label ?? "Sort";
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
@@ -44,18 +51,15 @@ export default function SortDropdown({
         return () => document.removeEventListener("mousedown", handler);
     }, []);
 
-    function handleSelect(value: string) {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("sort", value);
-        // Changing the filter or sort re-orders the result set, so the
-        // current page number is no longer meaningful — start at page 1.
-        params.delete("page");
-        router.push(`${pathname}?${params.toString()}`);
+    const choices = options ?? [20, 50, 100];
+
+    function handleSelect(next: number) {
+        if (next !== value) onChange(next);
         setOpen(false);
     }
 
     return (
-        <div ref={ref} className="relative shrink-0">
+        <div ref={ref} className={cn("relative shrink-0", className)}>
             <Button
                 type="button"
                 variant="outline"
@@ -63,20 +67,21 @@ export default function SortDropdown({
                 onClick={() => setOpen((p) => !p)}
                 aria-haspopup="listbox"
                 aria-expanded={open}
+                aria-label={ariaLabel}
                 className={cn(
                     controlBase,
-                    "border border-border bg-card",
-                    "hover:border-foreground/60",
-                    "dark:border-border dark:bg-card",
+                    controlSurface,
                     "shrink-0",
                 )}
             >
-                <ArrowUpDown
+                <ListFilter
                     size={16}
                     className={cn(controlIcon, "shrink-0 text-muted-foreground")}
                 />
-                <span className="hidden sm:inline">{currentLabel}</span>
-                <span className="sm:hidden">Sort</span>
+                <span className="tabular-nums">{value}</span>
+                <span className="hidden text-muted-foreground md:inline">
+                    / page
+                </span>
                 <ChevronDown
                     size={16}
                     className={cn(
@@ -91,30 +96,31 @@ export default function SortDropdown({
                 {open && (
                     <motion.div
                         role="listbox"
+                        aria-label={ariaLabel}
                         initial={{ opacity: 0, y: -6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
                         transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-                        className="absolute right-0 z-50 mt-2 w-56 origin-top-right overflow-hidden rounded-xl border border-border bg-card shadow-float"
+                        className="absolute right-0 bottom-full z-50 mb-2 w-44 origin-bottom-right overflow-hidden rounded-xl border border-border bg-card shadow-float"
                     >
                         <div className="p-1.5">
-                            {sortOptions.map((opt) => {
-                                const active = defaultValue === opt.value;
+                            {choices.map((opt) => {
+                                const active = value === opt;
                                 return (
                                     <Button
-                                        key={opt.value}
+                                        key={opt}
                                         variant={active ? "primary" : "ghost"}
                                         size="sm"
                                         fullWidth
                                         role="option"
                                         aria-selected={active}
-                                        onClick={() => handleSelect(opt.value)}
+                                        onClick={() => handleSelect(opt)}
                                         className={cn(
-                                            "justify-between rounded-lg px-3.5 py-2.5 text-left",
+                                            "justify-between rounded-lg px-3.5 py-2.5 text-left tabular-nums",
                                             !active && "text-foreground hover:bg-muted dark:hover:bg-card",
                                         )}
                                     >
-                                        <span className="truncate">{opt.label}</span>
+                                        <span className="truncate">{opt} / page</span>
                                         {active && (
                                             <Check size={15} strokeWidth={3} className="h-4 w-4 shrink-0" />
                                         )}

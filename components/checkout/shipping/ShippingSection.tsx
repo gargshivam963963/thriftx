@@ -8,15 +8,13 @@ import {
     ChevronDown,
     ChevronRight,
     Clock3,
-    PackageCheck,
     PackageOpen,
-    ShieldCheck,
-    Sparkles,
     Truck,
     Zap,
 } from "lucide-react";
 
 import type { ShippingMethod } from "@/lib/shipping/checkout-options";
+import { PANIPAT_DELIVERY_PROMO } from "@/lib/shipping/constants";
 
 interface ShippingSectionProps {
     open: boolean;
@@ -96,62 +94,13 @@ function EmptyShipping() {
                     No shipping options available
                 </h3>
 
-                <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                <p className="mx-auto mt-1.5 max-w-xs text-body-sm leading-relaxed text-muted-foreground">
                     We couldn&apos;t find a delivery service for this
                     pincode. Please check your address or try another
                     delivery location.
                 </p>
             </div>
         </motion.div>
-    );
-}
-
-function ShippingBenefits() {
-    const benefits = [
-        {
-            icon: ShieldCheck,
-            title: "Tracked Shipment",
-            description: "Delivery updates",
-        },
-        {
-            icon: PackageCheck,
-            title: "Secure Packing",
-            description: "Carefully packed",
-        },
-        {
-            icon: Sparkles,
-            title: "Quality Check",
-            description: "Inspected before dispatch",
-        },
-    ];
-
-    return (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
-            {benefits.map((benefit) => {
-                const Icon = benefit.icon;
-
-                return (
-                    <div
-                        key={benefit.title}
-                        className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 p-3 sm:block sm:rounded-2xl sm:p-4"
-                    >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-background text-muted-foreground sm:mb-3">
-                            <Icon size={17} aria-hidden="true" />
-                        </div>
-
-                        <div className="min-w-0">
-                            <h4 className="text-xs font-semibold text-foreground sm:text-sm">
-                                {benefit.title}
-                            </h4>
-
-                            <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
-                                {benefit.description}
-                            </p>
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
     );
 }
 
@@ -203,9 +152,9 @@ export default function ShippingSection({
                 <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                     <div
                         className={[
-                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-12 sm:w-12 sm:rounded-2xl",
+                            "flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors",
                             selectedMethod
-                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                ? "bg-success-bg text-success-foreground"
                                 : open
                                     ? "bg-foreground text-background"
                                     : "bg-muted text-muted-foreground",
@@ -230,9 +179,9 @@ export default function ShippingSection({
                         <div className="flex flex-wrap items-center gap-2">
                             <span
                                 className={[
-                                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold sm:h-6 sm:w-6 sm:text-xs",
+                                    "flex size-6 shrink-0 items-center justify-center rounded-full text-badge font-semibold",
                                     selectedMethod
-                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                                        ? "bg-success-bg text-success-foreground"
                                         : "bg-muted text-muted-foreground",
                                 ].join(" ")}
                             >
@@ -243,18 +192,18 @@ export default function ShippingSection({
                                 )}
                             </span>
 
-                            <h2 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">
+                            <h2 className="text-body font-semibold tracking-tight text-foreground">
                                 Shipping
                             </h2>
 
                             {selectedMethod && (
-                                <span className="hidden rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 sm:inline-flex">
+                                <span className="hidden rounded-full bg-success-bg px-2 py-0.5 text-badge font-semibold uppercase tracking-wider text-success-foreground sm:inline-flex">
                                     Selected
                                 </span>
                             )}
                         </div>
 
-                        <p className="mt-1 max-w-[220px] truncate text-xs leading-relaxed text-muted-foreground sm:max-w-md sm:text-sm">
+                        <p className="mt-1 line-clamp-2 text-body-sm leading-relaxed text-muted-foreground">
                             {disabled
                                 ? "Select an address first"
                                 : loading
@@ -270,7 +219,7 @@ export default function ShippingSection({
 
                 <span
                     className={[
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors sm:h-9 sm:w-9",
+                        "flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors",
                         disabled
                             ? ""
                             : "group-hover:border-foreground/20 group-hover:text-foreground",
@@ -316,24 +265,25 @@ export default function ShippingSection({
                             <div className="space-y-4 p-4 sm:space-y-5 sm:p-6">
                                 {/* Local delivery announcement */}
                                 {isLocalDelivery && (
-                                    <div className="flex items-start gap-3 rounded-xl border border-emerald-200/70 bg-emerald-50/70 p-3.5 dark:border-emerald-900/50 dark:bg-emerald-950/20 sm:rounded-2xl sm:p-4">
-                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
-                                            <Zap
-                                                size={17}
-                                                aria-hidden="true"
-                                            />
-                                        </div>
+                                    <div className="flex items-start gap-3 rounded-2xl border border-success/25 bg-success-bg/60 p-4">
+                                        <span
+                                            aria-hidden="true"
+                                            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success text-white"
+                                        >
+                                            <Zap size={18} />
+                                        </span>
 
                                         <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-300">
-                                                Panipat Local Delivery
+                                            <p className="text-badge font-bold uppercase tracking-wider text-success-foreground">
+                                                {PANIPAT_DELIVERY_PROMO.badge}
                                             </p>
 
-                                            <p className="mt-1 text-xs leading-relaxed text-emerald-800/80 dark:text-emerald-300/80">
-                                                Eligible orders receive free
-                                                same-day home delivery, with
-                                                an estimated 2–3 hour
-                                                delivery window.
+                                            <p className="mt-1 text-body-sm font-semibold text-success-foreground">
+                                                {PANIPAT_DELIVERY_PROMO.headline}
+                                            </p>
+
+                                            <p className="mt-1 text-body-sm leading-relaxed text-success-foreground/80">
+                                                {PANIPAT_DELIVERY_PROMO.subheadline}
                                             </p>
                                         </div>
                                     </div>
@@ -341,11 +291,11 @@ export default function ShippingSection({
 
                                 <div className="space-y-3">
                                     <div>
-                                        <h3 className="text-sm font-semibold text-foreground">
+                                        <h3 className="text-body font-semibold text-foreground">
                                             Select delivery method
                                         </h3>
 
-                                        <p className="mt-1 text-xs text-muted-foreground">
+                                        <p className="mt-1 text-body-sm text-muted-foreground">
                                             Choose the option that works
                                             best for you.
                                         </p>
@@ -377,7 +327,7 @@ export default function ShippingSection({
                                                     "relative w-full rounded-2xl border p-4 text-left transition-all duration-200 sm:rounded-3xl sm:p-5",
                                                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2",
                                                     selected
-                                                        ? "border-emerald-500 bg-emerald-50/50 shadow-sm ring-1 ring-emerald-500/20 dark:bg-emerald-950/20"
+                                                        ? "border-success bg-success-bg/50 shadow-sm ring-1 ring-success/25"
                                                         : "border-border bg-card hover:border-foreground/25 hover:bg-muted/20 hover:shadow-sm",
                                                 ].join(" ")}
                                             >
@@ -391,24 +341,24 @@ export default function ShippingSection({
                                                             </h4>
 
                                                             {isExpress && (
-                                                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+                                                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-badge font-semibold uppercase tracking-wider text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
                                                                     Express
                                                                 </span>
                                                             )}
 
                                                             {method.price === 0 && (
-                                                                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                                                                <span className="rounded-full bg-success-bg px-2 py-0.5 text-badge font-semibold uppercase tracking-wider text-success-foreground">
                                                                     Free
                                                                 </span>
                                                             )}
                                                         </div>
 
-                                                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                                                        <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
                                                             {method.subtitle}
                                                         </p>
 
                                                         <div className="mt-3 flex flex-wrap items-center gap-2">
-                                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-small font-medium text-muted-foreground">
                                                                 <Clock3
                                                                     size={12}
                                                                     aria-hidden="true"
@@ -430,7 +380,7 @@ export default function ShippingSection({
                                                         className={[
                                                             "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors",
                                                             selected
-                                                                ? "border-emerald-600 bg-emerald-600 text-white"
+                                                                ? "border-success bg-success text-white"
                                                                 : "border-border bg-background",
                                                         ].join(" ")}
                                                         aria-hidden="true"
@@ -447,8 +397,6 @@ export default function ShippingSection({
                                         );
                                     })}
                                 </div>
-
-                                <ShippingBenefits />
                             </div>
                         )}
                     </motion.div>
@@ -460,7 +408,7 @@ export default function ShippingSection({
                 <div className="border-t border-border px-4 py-4 sm:px-6 sm:py-5">
                     <div className="flex min-w-0 items-center justify-between gap-3">
                         <div className="flex min-w-0 items-start gap-3">
-                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success-bg text-success-foreground">
                                 <CheckCircle2
                                     size={18}
                                     aria-hidden="true"
@@ -468,7 +416,7 @@ export default function ShippingSection({
                             </div>
 
                             <div className="min-w-0">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400 sm:text-[11px]">
+                                <p className="text-badge font-semibold uppercase tracking-wider text-success-foreground sm:text-small">
                                     Shipping Method
                                 </p>
 
@@ -476,7 +424,7 @@ export default function ShippingSection({
                                     {selectedMethod.name}
                                 </h3>
 
-                                <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                                <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
                                     {selectedMethod.eta}
                                     {selectedMethod.price === 0
                                         ? " · Free"

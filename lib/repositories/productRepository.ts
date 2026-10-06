@@ -212,11 +212,13 @@ export async function getAllProducts(): Promise<Product[]> {
   return Promise.all(rows.map(mapProduct));
 }
 
-export async function getProductsByFilters(
+/**
+ * Builds the Prisma `where` clause shared by listing AND counting, so the
+ * "x of y" counts on a paginated page can never drift from the rows shown.
+ */
+function buildProductWhere(
   filters: ProductFilters = {},
-): Promise<Product[]> {
-  if (!isDatabaseConfigured) return [];
-
+): Prisma.ProductWhereInput {
   const where: Prisma.ProductWhereInput = {
     isActive: true,
     status: "active",
@@ -292,6 +294,16 @@ export async function getProductsByFilters(
     }
   }
 
+  return where;
+}
+
+export async function getProductsByFilters(
+  filters: ProductFilters = {},
+): Promise<Product[]> {
+  if (!isDatabaseConfigured) return [];
+
+  const where = buildProductWhere(filters);
+
   let orderBy: Prisma.ProductOrderByWithRelationInput = { title: "asc" };
   switch (filters.sort) {
     case "newest":
@@ -320,6 +332,33 @@ export async function getProductsByFilters(
     });
 
   return Promise.all(rows.map(mapProduct));
+}
+
+/**
+ * Counts every product matching the same filters as {@link getProductsByFilters}.
+ *
+ * Required by real pagination: without it the UI has to guess a total from the
+ * rows it happens to have loaded, which is what made the shop page report fewer
+ * pieces than the catalog actually holds.
+ */
+export async function countProductsByFilters(
+  filters: ProductFilters = {},
+): Promise<number> {
+  if (!isDatabaseConfigured) return 0;
+
+  try {
+    return await prisma!.product.count({ where: withAvailability(buildProductWhere(filters)) });
+  } catch (error) {
+    if (!isMissingReservationColumns(error)) {
+      console.error("countProductsByFilters error:", error);
+      return 0;
+    }
+
+    console.warn(
+      "Product reservation migration is not applied; using legacy product counts.",
+    );
+    return prisma!.product.count({ where: buildProductWhere(filters) });
+  }
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {

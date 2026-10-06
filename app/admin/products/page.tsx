@@ -27,6 +27,8 @@ import {
     SegmentedFilterRow,
 } from "@/components/ui/SegmentedControl";
 import PageHeader from "@/components/ui/PageHeader";
+import Pagination from "@/components/ui/Pagination";
+import AdminPage from "@/components/admin/AdminPage";
 import { showToast } from "@/components/admin/toast/Toast";
 import ToastContainer from "@/components/admin/toast/Toast";
 import ProductFormModal, { type ProductFormData } from "@/components/admin/products/ProductFormModal";
@@ -39,6 +41,35 @@ const slugify = (value: string) =>
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
+
+/** Rows per page in the admin grid / list. */
+const PRODUCTS_PER_PAGE = 12;
+
+type StatusFilter = "all" | "live" | "inactive" | "sold";
+
+/**
+ * Maps a status tab to a predicate over an admin product.
+ *
+ * `live` intentionally mirrors the storefront query
+ * (`isActive && status === "active"`), which is why the "Active" count here is
+ * lower than the raw `isActive` count — sold items are still flagged active but
+ * are not shoppable.
+ */
+function matchesStatusFilter(
+    product: AdminProduct,
+    filter: StatusFilter,
+): boolean {
+    switch (filter) {
+        case "live":
+            return product.isActive && product.status !== "sold";
+        case "inactive":
+            return !product.isActive;
+        case "sold":
+            return product.status === "sold";
+        default:
+            return true;
+    }
+}
 
 // ── Admin product API helpers (server route proxies) ──
 async function apiGetProducts(): Promise<AdminProduct[]> {
@@ -188,7 +219,9 @@ export default function AdminProductsPage() {
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("all");
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const [page, setPage] = useState(1);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
 
     // Modal state
@@ -238,6 +271,9 @@ export default function AdminProductsPage() {
 
     const filteredProducts = useMemo(() => {
         let result = products;
+        if (statusFilter !== "all") {
+            result = result.filter((p) => matchesStatusFilter(p, statusFilter));
+        }
         if (categoryFilter !== "all") {
             result = result.filter((p) => p.category === categoryFilter);
         }
@@ -251,10 +287,48 @@ export default function AdminProductsPage() {
             );
         }
         return result;
-    }, [products, search, categoryFilter]);
+    }, [products, search, categoryFilter, statusFilter]);
 
-    const activeCount = products.filter((p) => p.isActive).length;
-    const draftCount = products.filter((p) => p.status === "draft").length;
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE),
+    );
+
+    // Clamp rather than reset, so deleting the last item on a page lands the
+    // user on the new last page instead of an empty screen.
+    const currentPage = Math.min(page, totalPages);
+
+    const paginatedProducts = useMemo(
+        () =>
+            filteredProducts.slice(
+                (currentPage - 1) * PRODUCTS_PER_PAGE,
+                currentPage * PRODUCTS_PER_PAGE,
+            ),
+        [filteredProducts, currentPage],
+    );
+
+    useEffect(() => {
+        setPage(1);
+    }, [search, categoryFilter, statusFilter]);
+
+    // Status counts drive the tab badges and reconcile the admin total with the
+    // storefront: "live" is exactly what the shop is allowed to render.
+    const liveCount = products.filter((p) => matchesStatusFilter(p, "live")).length;
+    const inactiveCount = products.filter((p) => !p.isActive).length;
+    const soldCount = products.filter((p) => p.status === "sold").length;
+
+    const hasAnyFilter =
+        Boolean(search.trim()) || categoryFilter !== "all" || statusFilter !== "all";
+
+    const statusOptions = useMemo(
+        () => [
+            { value: "all" as const, label: "All", count: products.length },
+            { value: "live" as const, label: "Active", count: liveCount },
+            { value: "inactive" as const, label: "Inactive", count: inactiveCount },
+            { value: "sold" as const, label: "Sold", count: soldCount },
+        ],
+        [products.length, liveCount, inactiveCount, soldCount],
+    );
 
     // ── Handlers ──
 
@@ -438,14 +512,13 @@ export default function AdminProductsPage() {
 
     // ── Render ──
     return (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <AdminPage width="wide">
             <ToastContainer />
 
             {/* Header */}
             <PageHeader
-                className="mb-6"
                 title="Products"
-                description={`${products.length} total · ${activeCount} active · ${draftCount} draft`}
+                description={`${products.length} total · ${liveCount} live · ${soldCount} sold${inactiveCount > 0 ? ` · ${inactiveCount} inactive` : ""}`}
                 actions={
                     <>
                         <Button variant="outline" size="md" onClick={loadProducts} loading={loading} leftIcon={<RefreshCw size={15} />}>
@@ -492,11 +565,31 @@ export default function AdminProductsPage() {
                 />
             </div>
 
+            {/* Status filter — All / Active / Inactive / Sold.
+                "Live" is what the storefront shows (isActive && status !== sold),
+                so this is also how you find the gap between the admin count and
+                the shop count. */}
+            <div>
+                <SegmentedFilterRow
+                    value={statusFilter}
+                    onChange={(value) => {
+                        setStatusFilter(value);
+                        setPage(1);
+                    }}
+                    ariaLabel="Filter products by status"
+                    idPrefix="admin-products-status"
+                    options={statusOptions}
+                />
+            </div>
+
             {/* Category filter chips */}
-            <div className="mb-6">
+            <div>
                 <SegmentedFilterRow
                     value={categoryFilter}
-                    onChange={setCategoryFilter}
+                    onChange={(value) => {
+                        setCategoryFilter(value);
+                        setPage(1);
+                    }}
                     ariaLabel="Filter products by category"
                     idPrefix="admin-products-category"
                     options={[
@@ -534,14 +627,14 @@ export default function AdminProductsPage() {
                         <Package size={28} className="text-muted-foreground" />
                     </div>
                     <h3 className="text-lg font-bold text-foreground">
-                        {search || categoryFilter !== "all" ? "No products found" : "No products yet"}
+                        {hasAnyFilter ? "No products found" : "No products yet"}
                     </h3>
                     <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">
-                        {search || categoryFilter !== "all"
+                        {hasAnyFilter
                             ? "Try adjusting your search or filters."
                             : "Add your first product to start selling."}
                     </p>
-                    {!search && categoryFilter === "all" && (
+                    {!hasAnyFilter && (
                         <Button variant="primary" size="sm" className="mt-6" onClick={openAddModal} leftIcon={<Plus size={15} />}>
                             Add Product
                         </Button>
@@ -549,7 +642,7 @@ export default function AdminProductsPage() {
                 </motion.div>
             ) : viewMode === "grid" ? (
                 <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {filteredProducts.map((product) => (
+                    {paginatedProducts.map((product) => (
                         <motion.div
                             key={product.$id}
                             initial={{ opacity: 0, y: 10 }}
@@ -704,7 +797,7 @@ export default function AdminProductsPage() {
             ) : (
                 /* List View */
                 <div className="space-y-2">
-                    {filteredProducts.map((product) => (
+                    {paginatedProducts.map((product) => (
                         <motion.div
                             key={product.$id}
                             initial={{ opacity: 0 }}
@@ -856,6 +949,18 @@ export default function AdminProductsPage() {
                 </div>
             )}
 
+            {/* Pagination — same primitive as the storefront shop grid */}
+            {!loading && !error && filteredProducts.length > 0 && (
+                <Pagination
+                    page={currentPage}
+                    totalPages={totalPages}
+                    totalItems={filteredProducts.length}
+                    pageSize={PRODUCTS_PER_PAGE}
+                    itemNoun="products"
+                    onPageChange={setPage}
+                />
+            )}
+
             {/* Product Form Modal */}
             <ProductFormModal
                 open={formOpen}
@@ -991,6 +1096,6 @@ export default function AdminProductsPage() {
                     );
                 })()}
             </AnimatePresence>
-        </div>
+        </AdminPage>
     );
 }

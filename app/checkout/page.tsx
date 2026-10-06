@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    CreditCard,
     ShoppingBag,
     ArrowRight,
     LockKeyhole,
@@ -19,6 +18,8 @@ import CheckoutAccordion, {
 } from "@/components/checkout/CheckoutAccordion";
 import type { ShippingMethod } from "@/lib/shipping/checkout-options";
 import CheckoutOrderSummary from "@/components/checkout/CheckoutOrderSummary";
+import CheckoutPayBar from "@/components/checkout/CheckoutPayBar";
+import PanipatDeliveryPromo from "@/components/marketing/PanipatDeliveryPromo";
 import { Button } from "@/components/ui/button";
 
 import { useAddresses } from "@/hooks/useAddresses";
@@ -49,30 +50,45 @@ function parsePrice(value: number | string) {
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
+/**
+ * CheckoutSkeleton — mirrors the real mobile-first layout so the page does not
+ * jump when data resolves (no layout shift).
+ */
 function CheckoutSkeleton() {
     return (
-        <main className="min-h-screen bg-subtle">
-            <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-8">
-                <div className="space-y-4 sm:space-y-6">
-                    <div className="skeleton-glass h-36 rounded-2xl sm:h-44 sm:rounded-[32px]" />
-                    <div className="hidden sm:flex gap-3">
-                        {[1, 2, 3].map((i) => (
-                            <div
-                                key={i}
-                                className="skeleton-glass h-8 w-24 rounded-full"
-                            />
-                        ))}
+        <main
+            className="min-h-screen bg-background"
+            aria-busy="true"
+            aria-label="Loading checkout"
+        >
+            <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+                <div className="space-y-5 sm:space-y-6">
+                    {/* Breadcrumb + title */}
+                    <div className="space-y-3">
+                        <div className="skeleton-glass h-3 w-24 rounded-full" />
+                        <div className="skeleton-glass h-8 w-56 max-w-full rounded-lg" />
+                        <div className="skeleton-glass h-4 w-72 max-w-full rounded" />
                     </div>
-                    <div className="grid gap-5 sm:gap-6 xl:grid-cols-[1fr_380px]">
-                        <div className="space-y-4">
+
+                    {/* Panipat promo */}
+                    <div className="skeleton-glass h-24 rounded-2xl sm:rounded-3xl" />
+
+                    {/* Mobile summary */}
+                    <div className="skeleton-glass h-16 rounded-2xl lg:hidden" />
+
+                    {/* Steps + desktop summary */}
+                    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+                        <div className="space-y-3">
+                            <div className="skeleton-glass h-20 rounded-2xl sm:rounded-3xl" />
                             {[1, 2, 3].map((i) => (
                                 <div
                                     key={i}
-                                    className="skeleton-glass h-28 rounded-2xl sm:h-36 sm:rounded-3xl"
+                                    className="skeleton-glass h-16 rounded-2xl sm:rounded-3xl"
                                 />
                             ))}
                         </div>
-                        <div className="skeleton-glass hidden h-[500px] rounded-[28px] xl:block" />
+
+                        <div className="skeleton-glass hidden h-96 rounded-3xl lg:block" />
                     </div>
                 </div>
             </div>
@@ -84,57 +100,64 @@ function CheckoutSkeleton() {
 
 function EmptyCheckout() {
     return (
-        <main className="min-h-screen bg-subtle">
-            <div className="mx-auto flex min-h-[70vh] max-w-7xl flex-col items-center justify-center px-4 py-16 text-center sm:px-6 lg:px-8">
+        <main className="min-h-screen bg-background">
+            <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-4 py-16 text-center sm:px-6">
                 <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
                     transition={{
                         type: "spring",
                         stiffness: 260,
                         damping: 18,
                     }}
-                    className="rounded-full bg-muted p-5 sm:p-6"
+                    className="flex size-16 items-center justify-center rounded-full bg-muted text-muted-foreground sm:size-20"
                 >
-                    <ShoppingBag className="h-8 w-8 text-muted-foreground sm:h-10 sm:w-10" />
+                    <ShoppingBag className="size-8 sm:size-10" />
                 </motion.div>
 
                 <motion.h1
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="mt-5 text-2xl font-bold text-foreground sm:mt-6 sm:text-3xl"
+                    className="mt-6 text-h3 font-bold text-foreground"
                 >
-                    Nothing to checkout
+                    Your cart is empty
                 </motion.h1>
 
                 <motion.p
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
-                    className="mt-3 max-w-md text-sm leading-6 text-muted-foreground"
+                    className="mt-2 text-body text-muted-foreground"
                 >
-                    Your cart is empty. Add some curated thrift pieces before
-                    completing your order.
+                    Add a few curated thrift pieces to start your order.
                 </motion.p>
 
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
+                    className="mt-7 w-full sm:w-auto"
                 >
-                    <Button
-                        asChild
-                        size="lg"
-                        rounded="xl"
-                        variant="primary"
-                        className="mt-8 px-8"
-                    >
+                    <Button asChild size="lg" fullWidth>
                         <Link href="/shop">
-                            Browse Shop
-                            <ArrowRight className="ml-2 h-4 w-4" />
+                            Browse shop
+                            <ArrowRight className="size-4" />
                         </Link>
                     </Button>
+                </motion.div>
+
+                {/* Keep the delivery promise visible at the decision point. */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                    className="mt-8 w-full"
+                >
+                    <PanipatDeliveryPromo
+                        variant="compact"
+                        showCta={false}
+                    />
                 </motion.div>
             </div>
         </main>
@@ -719,35 +742,80 @@ export default function CheckoutPage() {
     }
 
     return (
-        <main className="min-h-screen bg-background pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-32 lg:pb-12">
-            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-                <header className="mb-6 border-b border-border pb-5 sm:mb-8 sm:pb-6">
-                    <div className="flex flex-wrap items-center gap-2 text-caption font-medium text-muted-foreground">
-                        <Link href="/cart" className="transition-colors hover:text-foreground">
-                            Your cart
+        <main className="min-h-screen bg-background pb-40 lg:pb-12">
+            <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+                {/* ── Page header ─────────────────────────────────── */}
+                <header className="mb-5 sm:mb-8">
+                    <nav
+                        aria-label="Breadcrumb"
+                        className="flex items-center gap-2 text-caption text-muted-foreground"
+                    >
+                        <Link
+                            href="/cart"
+                            className="rounded transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            Cart
                         </Link>
+
                         <span aria-hidden="true">/</span>
-                        <span className="text-foreground">Checkout</span>
-                    </div>
-                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <h1 className="text-heading-2 font-bold tracking-tight text-foreground">
+
+                        <span aria-current="page" className="text-foreground">
+                            Checkout
+                        </span>
+                    </nav>
+
+                    <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                            <h1 className="text-h2 font-bold tracking-tight text-foreground">
                                 Secure checkout
                             </h1>
-                            <p className="mt-1 max-w-2xl text-body-sm text-muted-foreground">
-                                Confirm your delivery details and payment. Your final total is calculated securely.
+
+                            <p className="mt-1.5 max-w-xl text-subtitle text-muted-foreground">
+                                {cartItems.length}{" "}
+                                {cartItems.length === 1
+                                    ? "item"
+                                    : "items"}
+                                {" · "}
+                                {addresses.length > 0
+                                    ? `Delivering to ${selectedAddress?.fullName ?? "your saved address"}`
+                                    : "Add a delivery address to continue"}
                             </p>
                         </div>
-                        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-caption font-medium text-muted-foreground">
-                            <LockKeyhole className="h-4 w-4 text-success" aria-hidden="true" />
-                            Secure payment
-                        </div>
+
+                        <p className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-label text-muted-foreground">
+                            <LockKeyhole
+                                className="size-3.5 text-success"
+                                aria-hidden="true"
+                            />
+                            Secure
+                        </p>
                     </div>
                 </header>
 
-                <div className="grid items-start gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-                    {/* ── Left Column – Checkout Flow ──────────────────── */}
-                    <div className="space-y-4 sm:space-y-5">
+                {/* ── Panipat marketing (first priority) ─────────── */}
+                <div className="mb-5 sm:mb-6">
+                    <PanipatDeliveryPromo
+                        variant="compact"
+                        showCta={false}
+                    />
+                </div>
+
+                {/* ── Mobile order summary (collapsible) ─────────── */}
+                <div className="mb-5 lg:hidden">
+                    <CheckoutOrderSummary
+                        items={cartItems}
+                        subtotal={serverSubtotal}
+                        shippingCost={shippingCost}
+                        total={total}
+                        discount={checkoutQuote?.discount ?? 0}
+                        discountReason={checkoutQuote?.discountReason ?? ""}
+                        pricingLoading={quoteLoading}
+                        canPay={canPay}
+                    />
+                </div>
+                {/* ── Checkout flow ─────────────────────────────── */}
+                <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+                    <div className="min-w-0 space-y-4">
                         <CheckoutAccordion
                             activeStep={activeStep}
                             onStepChange={setActiveStep}
@@ -765,17 +833,25 @@ export default function CheckoutPage() {
                             onPaymentMethodChange={setPaymentMethod}
                             subtotal={subtotal}
                         />
+
                         {quoteError && (
                             <div
                                 role="alert"
-                                className="flex flex-col gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                                className="flex flex-col gap-3 rounded-2xl border border-error/25 bg-error/5 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
                             >
-                                <p className="text-body-sm text-destructive">{quoteError}</p>
+                                <p className="text-body-sm text-error">
+                                    {quoteError}
+                                </p>
+
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => setQuoteRefresh((value) => value + 1)}
+                                    onClick={() =>
+                                        setQuoteRefresh(
+                                            (value) => value + 1,
+                                        )
+                                    }
                                     disabled={quoteLoading}
                                     className="shrink-0"
                                 >
@@ -785,114 +861,87 @@ export default function CheckoutPage() {
                         )}
                     </div>
 
-                    {/* ── Right Column – Order Summary (Desktop) ──────── */}
+                    {/* ── Desktop summary + single CTA ────────────── */}
                     <div className="hidden lg:block">
-                        <CheckoutOrderSummary
-                            items={cartItems}
-                            subtotal={checkoutQuote?.subtotal ?? 0}
-                            shippingCost={shippingCost}
-                            total={total}
-                            discount={checkoutQuote?.discount ?? 0}
-                            discountReason={checkoutQuote?.discountReason ?? ""}
-                            pricingLoading={quoteLoading}
-                            paymentLoading={paymentLoading}
-                            canPay={canPay}
-                            selectedMethod={paymentMethod}
-                            onPay={handlePay}
-                        />
+                        <div className="sticky top-24">
+                            <CheckoutOrderSummary
+                                items={cartItems}
+                                subtotal={serverSubtotal}
+                                shippingCost={shippingCost}
+                                total={total}
+                                discount={
+                                    checkoutQuote?.discount ?? 0
+                                }
+                                discountReason={
+                                    checkoutQuote?.discountReason ?? ""
+                                }
+                                pricingLoading={quoteLoading}
+                                canPay={canPay}
+                            />
+
+                            <Button
+                                type="button"
+                                onClick={() =>
+                                    handlePay(
+                                        paymentMethod ?? "razorpay",
+                                    )
+                                }
+                                disabled={!canPay || paymentLoading}
+                                loading={paymentLoading}
+                                loadingText="Placing your order…"
+                                size="lg"
+                                fullWidth
+                                leftIcon={
+                                    <LockKeyhole
+                                        className="size-5"
+                                        aria-hidden="true"
+                                    />
+                                }
+                                className="mt-4"
+                            >
+                                {paymentMethod === "cod"
+                                    ? "Place order — pay on delivery"
+                                    : quoteLoading || !checkoutQuote
+                                        ? "Confirming total…"
+                                        : `Pay ₹${total.toLocaleString("en-IN")}`}
+                            </Button>
+
+                            {!canPay && !quoteError && (
+                                <p
+                                    role="status"
+                                    className="mt-3 text-center text-small text-muted-foreground"
+                                >
+                                    {paymentMethod
+                                        ? "Confirming your total…"
+                                        : "Choose a payment method to continue."}
+                                </p>
+                            )}
+
+                            {quoteError && (
+                                <p
+                                    role="alert"
+                                    className="mt-3 text-center text-small text-error"
+                                >
+                                    {quoteError}
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
-
-                {/* ── Mobile Bottom Bar ────────────────────────────────── */}
-                <motion.div
-                    initial={{ y: 100 }}
-                    animate={{ y: 0 }}
-                    className="fixed inset-x-0 bottom-[var(--mobile-nav-height)] z-50 border-t border-border bg-card/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl md:bottom-0 lg:hidden sm:px-6 sm:py-4"
-                >
-                    <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-                        <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                                Total
-                            </p>
-                            <h3 className="text-xl font-bold text-foreground sm:text-2xl">
-                                {quoteLoading || !checkoutQuote || quoteError
-                                    ? "—"
-                                    : `₹${total.toLocaleString("en-IN")}`}
-                            </h3>
-                            {checkoutQuote && checkoutQuote.discount > 0 && (
-                                <p className="text-xs font-medium text-emerald-600">
-                                    {checkoutQuote.discountReason}: −₹
-                                    {checkoutQuote.discount.toLocaleString("en-IN")}
-                                </p>
-                            )}
-                            {checkoutQuote && shippingCost > 0 && (
-                                <p className="text-[10px] text-muted-foreground">
-                                    +₹{shippingCost.toLocaleString("en-IN")} shipping
-                                </p>
-                            )}
-                            {checkoutQuote && shippingCost === 0 && (
-                                <p className="text-[10px] text-emerald-600 font-medium">
-                                    Free Shipping
-                                </p>
-                            )}
-                            {quoteLoading && (
-                                <p className="text-[10px] text-muted-foreground">
-                                    Confirming total…
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            {/* COD button */}
-                            <Button
-                                type="button"
-                                onClick={() => handlePay("cod")}
-                                loading={paymentLoading && paymentMethod === "cod"}
-                                disabled={!canPay || paymentLoading}
-                                size="md"
-                                variant="outline"
-                                className="rounded-xl px-3 text-xs sm:px-4 sm:text-sm"
-                            >
-                                COD
-                            </Button>
-                            {/* Pay Online button */}
-                            <Button
-                                type="button"
-                                onClick={() => handlePay("razorpay")}
-                                loading={paymentLoading && paymentMethod === "razorpay"}
-                                disabled={!canPay || paymentLoading}
-                                size="lg"
-                                leftIcon={<CreditCard className="h-5 w-5" />}
-                                className="rounded-xl px-5 shadow-lg shadow-foreground/20 sm:rounded-2xl sm:px-7"
-                            >
-                                {paymentLoading
-                                    ? "Processing…"
-                                    : `Pay${checkoutQuote ? ` ₹${total.toLocaleString("en-IN")}` : ""}`}
-                            </Button>
-                        </div>
-                    </div>
-
-                    {!canPay && (
-                        <motion.p
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="mt-2 text-center text-[11px] text-amber-600"
-                        >
-                            {quoteError
-                                ? "We could not confirm your total. Retry before placing your order."
-                                : "Complete your address and delivery selection to continue."}
-                        </motion.p>
-                    )}
-                    {quoteError && (
-                        <p
-                            role="alert"
-                            className="mt-2 text-center text-xs text-destructive"
-                        >
-                            {quoteError}
-                        </p>
-                    )}
-                </motion.div>
             </div>
+
+            {/* ── Single mobile payment action ─────────────────── */}
+            <CheckoutPayBar
+                total={total}
+                discount={checkoutQuote?.discount ?? 0}
+                discountReason={checkoutQuote?.discountReason ?? ""}
+                loading={quoteLoading}
+                error={quoteError}
+                canPay={canPay}
+                paymentLoading={paymentLoading}
+                selectedMethod={paymentMethod}
+                onPay={handlePay}
+            />
         </main>
     );
 }

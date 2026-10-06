@@ -19,6 +19,7 @@ import TimelineChart from "@/components/admin/analytics/TimelineChart";
 import { Button } from "@/components/ui/button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import PageHeader from "@/components/ui/PageHeader";
+import AdminPage from "@/components/admin/AdminPage";
 import type {
     AnalyticsOverview,
     AnalyticsApiResponse,
@@ -92,7 +93,7 @@ export default function AdminAnalyticsPage() {
     }, [loadData]);
 
     return (
-        <div className="space-y-6">
+        <AdminPage width="wide">
             {/* ── Header ─────────────────────────────────────── */}
             <PageHeader
                 title="Customer Analytics"
@@ -259,6 +260,6 @@ export default function AdminAnalyticsPage() {
                     </div>
                 )
             }
-        </div>
+        </AdminPage>
     );
 }

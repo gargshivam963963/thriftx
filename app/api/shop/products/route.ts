@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProducts } from "@/lib/services/products";
+import { countProducts, getProducts } from "@/lib/services/products";
 
 export async function GET(req: NextRequest) {
   try {
@@ -41,8 +41,7 @@ export async function GET(req: NextRequest) {
       ? Math.max(0, parsedOffset)
       : 0;
 
-    // Fetch one extra row so the client can know whether another page exists.
-    const products = await getProducts({
+    const filters = {
       gender,
       category,
       brand: brand ? [brand] : undefined,
@@ -53,9 +52,25 @@ export async function GET(req: NextRequest) {
       condition: condition ? [condition] : undefined,
       search,
       sort,
-      limit: limit + 1,
-      offset,
-    });
+    };
+
+    // `measurement` is applied in JS below because the measurement columns are
+    // text, so a DB count would over-report. When it is active we fetch the
+    // whole (bounded) result set once, filter it, and derive the total from that
+    // — the same source of truth the page renders from.
+    const needsFullScan = Boolean(measurement);
+
+    const [total, products] = await Promise.all([
+      needsFullScan
+        ? Promise.resolve(0)
+        : countProducts(filters),
+      getProducts({
+        ...filters,
+        // Fetch one extra row so the client can know whether another page exists.
+        limit: needsFullScan ? MAX_LIMIT : limit + 1,
+        offset: needsFullScan ? 0 : offset,
+      }),
+    ]);
 
     let filteredProducts = products;
 
@@ -89,8 +104,17 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const hasMore = filteredProducts.length > limit;
-    const pageProducts = filteredProducts.slice(0, limit);
+    // Under a full scan the filtered set *is* the full result; otherwise the
+    // extra fetched row only signals that another page exists.
+    const effectiveTotal = needsFullScan ? filteredProducts.length : total;
+
+    const hasMore = needsFullScan
+      ? offset + limit < filteredProducts.length
+      : filteredProducts.length > limit;
+
+    const pageProducts = (
+      needsFullScan ? filteredProducts : filteredProducts.slice(0, limit)
+    ).slice(0, limit);
 
     return NextResponse.json({
       success: true,
@@ -98,6 +122,8 @@ export async function GET(req: NextRequest) {
       offset,
       limit,
       hasMore,
+      total: effectiveTotal,
+      totalPages: Math.max(1, Math.ceil(effectiveTotal / limit)),
     });
   } catch (error) {
     console.error("Error fetching shop products:", error);

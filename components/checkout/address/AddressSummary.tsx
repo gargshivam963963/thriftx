@@ -58,12 +58,12 @@ export default function AddressSummary({
         return (
             <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-                    <span className="mt-0.5 shrink-0 rounded-full bg-emerald-100 p-1.5 text-emerald-600 sm:p-2">
+                    <span className="mt-0.5 shrink-0 rounded-full bg-success-bg p-1.5 text-success-foreground sm:p-2">
                         <CheckCircle2 size={17} />
                     </span>
 
                     <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 sm:text-[11px]">
+                        <p className="text-badge font-semibold uppercase tracking-wider text-success-foreground">
                             Delivering To
                         </p>
 
@@ -73,7 +73,7 @@ export default function AddressSummary({
                             </h4>
 
                             <span
-                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${typeInfo.color}`}
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-badge font-medium ${typeInfo.color}`}
                             >
                                 <TypeIcon size={10} />
                                 {address.type}
@@ -110,12 +110,12 @@ export default function AddressSummary({
         >
             <div className="flex items-center justify-between gap-3 border-b border-border bg-gradient-to-r from-subtle/80 to-card px-4 py-4 sm:px-6 sm:py-5">
                 <div className="flex items-center gap-3">
-                    <span className="rounded-full bg-emerald-100 p-1.5 text-emerald-600 sm:p-2">
+                    <span className="rounded-full bg-success-bg p-1.5 text-success-foreground sm:p-2">
                         <CheckCircle2 size={19} />
                     </span>
 
                     <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 sm:text-[11px]">
+                        <p className="text-badge font-semibold uppercase tracking-wider text-success-foreground">
                             Delivery Address
                         </p>
                         <h3 className="mt-0.5 text-base font-semibold text-foreground sm:text-lg">
@@ -144,7 +144,7 @@ export default function AddressSummary({
                         </h4>
 
                         {address.isDefault && (
-                            <span className="mt-1.5 inline-flex rounded-full bg-foreground px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+                            <span className="mt-1.5 inline-flex rounded-full bg-foreground px-3 py-1 text-badge font-semibold uppercase tracking-wider text-white">
                                 Default
                             </span>
                         )}
@@ -166,7 +166,7 @@ export default function AddressSummary({
                         />
 
                         <div className="min-w-0">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground sm:text-[11px]">
+                            <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground sm:text-small">
                                 Delivery Address
                             </p>
 
@@ -193,7 +193,7 @@ export default function AddressSummary({
                         />
 
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground sm:text-[11px]">
+                            <p className="text-badge font-semibold uppercase tracking-wider text-muted-foreground sm:text-small">
                                 Contact
                             </p>
 

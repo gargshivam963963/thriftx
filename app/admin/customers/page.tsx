@@ -25,6 +25,7 @@ async function apiGetCustomers(): Promise<CustomerData[]> {
     return json?.customers ?? [];
 }
 import { cn } from "@/lib/utils";
+import AdminPage from "@/components/admin/AdminPage";
 
 export default function AdminCustomersPage() {
     const [customers, setCustomers] = useState<CustomerData[]>([]);
@@ -110,7 +111,7 @@ export default function AdminCustomersPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <AdminPage width="wide">
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -364,6 +365,6 @@ export default function AdminCustomersPage() {
                     </motion.div>
                 </div>
             )}
-        </div>
+        </AdminPage>
     );
 }

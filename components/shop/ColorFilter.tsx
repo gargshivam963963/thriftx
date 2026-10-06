@@ -20,6 +20,9 @@ export default function ColorFilter({ colors }: ColorFilterProps) {
         } else {
             params.set("color", color);
         }
+        // Changing the filter or sort re-orders the result set, so the
+        // current page number is no longer meaningful — start at page 1.
+        params.delete("page");
         router.push(`${pathname}?${params.toString()}`);
     }
 

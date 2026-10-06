@@ -17,6 +17,7 @@ import RevenueChart from "@/components/admin/dashboard/RevenueChart";
 import TopProducts from "@/components/admin/dashboard/TopProducts";
 import RecentOrders from "@/components/admin/dashboard/RecentOrders";
 import CategoryChart from "@/components/admin/dashboard/CategoryChart";
+import AdminPage from "@/components/admin/AdminPage";
 import OrderStatusChart from "@/components/admin/dashboard/OrderStatusChart";
 import CustomerInsights from "@/components/admin/dashboard/CustomerInsights";
 import type {
@@ -84,7 +85,7 @@ export default function AdminDashboardPage() {
     }, [loadData]);
 
     return (
-        <div className="mx-auto w-full max-w-[1600px] space-y-8">
+        <AdminPage width="wide" className="space-y-8">
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -204,6 +205,6 @@ export default function AdminDashboardPage() {
                     loading={loading}
                 />
             </div>
-        </div>
+        </AdminPage>
     );
 }

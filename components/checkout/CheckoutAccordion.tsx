@@ -10,8 +10,6 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 
 import {
-    Check,
-    CheckCircle2,
     CreditCard,
     MapPin,
     Truck,
@@ -34,6 +32,7 @@ import {
 
 import { getShippingRates } from "@/lib/shipping/api";
 
+import CheckoutProgress from "./CheckoutProgress";
 import AddressSection from "./address/AddressSection";
 import ShippingSection from "./shipping/ShippingSection";
 import PaymentSection from "./payment/PaymentSection";
@@ -171,157 +170,25 @@ export async function getShippingOptionsForCity(
 function StepIndicator({
     activeStep,
     stepStatus,
-    onStepChange,
 }: {
     activeStep: CheckoutStep;
     stepStatus: StepState;
-    onStepChange: (step: CheckoutStep) => void;
 }) {
     const activeIndex = getStepIndex(activeStep);
+
+    const statuses = STEPS.map((step) => stepStatus[step.key]);
 
     return (
         <nav
             aria-label="Checkout progress"
-            className="mb-5 rounded-2xl border border-border bg-card p-3 shadow-sm sm:mb-6 sm:rounded-3xl sm:p-5"
+            className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:rounded-3xl sm:p-5"
         >
-            <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        Checkout Progress
-                    </p>
-
-                    <p className="mt-1 text-sm font-semibold text-foreground">
-                        Step {activeIndex + 1} of {STEPS.length}
-                    </p>
-                </div>
-
-                <span className="rounded-full bg-muted px-3 py-1.5 text-[10px] font-medium text-muted-foreground sm:text-xs">
-                    {Math.round(
-                        ((activeIndex + 1) / STEPS.length) * 100,
-                    )}
-                    % complete
-                </span>
-            </div>
-
-            {/* Progress track */}
-            <div
-                className="mb-4 h-1.5 overflow-hidden rounded-full bg-muted"
-                role="progressbar"
-                aria-label="Checkout completion"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round(
-                    ((activeIndex + 1) / STEPS.length) * 100,
-                )}
-            >
-                <motion.div
-                    initial={false}
-                    animate={{
-                        width: `${((activeIndex + 1) / STEPS.length) * 100}%`,
-                    }}
-                    transition={{
-                        duration: 0.3,
-                        ease: "easeOut",
-                    }}
-                    className="h-full rounded-full bg-emerald-500"
-                />
-            </div>
-
-            {/* Responsive step controls */}
-            <div className="grid grid-cols-3 gap-1 sm:gap-3">
-                {STEPS.map((step, index) => {
-                    const status = stepStatus[step.key];
-
-                    const isActive =
-                        activeStep === step.key;
-
-                    const isComplete =
-                        status === "complete";
-
-                    const StepIcon = step.icon;
-
-                    const canNavigate =
-                        isComplete || isActive;
-
-                    return (
-                        <div
-                            key={step.key}
-                            className="relative min-w-0"
-                        >
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (canNavigate) {
-                                        onStepChange(step.key);
-                                    }
-                                }}
-                                disabled={!canNavigate}
-                                aria-current={
-                                    isActive ? "step" : undefined
-                                }
-                                className={[
-                                    "flex min-h-[76px] w-full min-w-0 flex-col items-center justify-center gap-2 rounded-xl px-1.5 py-3 text-center transition-colors sm:min-h-[88px] sm:rounded-2xl sm:px-3",
-                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-foreground",
-                                    isActive
-                                        ? "bg-muted"
-                                        : isComplete
-                                            ? "hover:bg-muted/60"
-                                            : "cursor-not-allowed opacity-45",
-                                ].join(" ")}
-                            >
-                                <motion.span
-                                    layout
-                                    className={[
-                                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors sm:h-9 sm:w-9",
-                                        isComplete
-                                            ? "bg-emerald-500 text-white"
-                                            : isActive
-                                                ? "bg-foreground text-background"
-                                                : "bg-muted text-muted-foreground",
-                                    ].join(" ")}
-                                >
-                                    {isComplete ? (
-                                        <Check
-                                            size={15}
-                                            strokeWidth={2.8}
-                                            aria-hidden="true"
-                                        />
-                                    ) : (
-                                        <StepIcon
-                                            size={15}
-                                            aria-hidden="true"
-                                        />
-                                    )}
-                                </motion.span>
-
-                                <span
-                                    className={[
-                                        "block w-full truncate text-[11px] font-semibold sm:text-sm",
-                                        isActive
-                                            ? "text-foreground"
-                                            : isComplete
-                                                ? "text-foreground"
-                                                : "text-muted-foreground",
-                                    ].join(" ")}
-                                >
-                                    {step.label}
-                                </span>
-
-                                <span className="hidden max-w-full truncate text-[10px] text-muted-foreground sm:block">
-                                    {step.description}
-                                </span>
-                            </button>
-
-                            {index < STEPS.length - 1 && (
-                                <div
-                                    aria-hidden="true"
-                                    className="pointer-events-none absolute -right-1.5 top-1/2 z-10 hidden h-px w-3 -translate-y-1/2 bg-border sm:block"
-                                />
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+            <CheckoutProgress
+                currentStep={activeIndex + 1}
+                totalSteps={STEPS.length}
+                statuses={statuses}
+                labels={STEPS.map((step) => step.label)}
+            />
         </nav>
     );
 }
@@ -583,12 +450,11 @@ export default function CheckoutAccordion({
     return (
         <div
             ref={sectionRef}
-            className="mb-6 min-w-0 scroll-mt-24 sm:mb-8"
+            className="min-w-0 scroll-mt-24"
         >
             <StepIndicator
                 activeStep={activeStep}
                 stepStatus={stepStatus}
-                onStepChange={onStepChange}
             />
 
             <motion.div

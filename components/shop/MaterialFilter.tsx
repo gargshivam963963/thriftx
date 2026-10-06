@@ -20,6 +20,9 @@ export default function MaterialFilter({ materials }: MaterialFilterProps) {
         } else {
             params.set("material", material);
         }
+        // Changing the filter or sort re-orders the result set, so the
+        // current page number is no longer meaningful — start at page 1.
+        params.delete("page");
         router.push(`${pathname}?${params.toString()}`);
     }
 

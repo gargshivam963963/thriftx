@@ -2,6 +2,11 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, MapPin, Plus } from "lucide-react";
+import {
+    lift,
+    press,
+    transitions,
+} from "@/components/animations/Motion";
 
 interface AddressEmptyProps {
     onAdd: () => void;
@@ -13,7 +18,7 @@ export default function AddressEmpty({ onAdd }: AddressEmptyProps) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.25 }}
+            transition={transitions.normal}
             className="flex flex-col items-center rounded-3xl border border-dashed border-border bg-gradient-to-b from-subtle/80 to-card px-5 py-12 text-center sm:px-8 sm:py-16"
         >
             <motion.div
@@ -48,8 +53,9 @@ export default function AddressEmpty({ onAdd }: AddressEmptyProps) {
             <motion.button
                 type="button"
                 onClick={onAdd}
-                whileHover={{ y: -3, scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={lift.card}
+                whileTap={press.tap}
+                transition={transitions.micro}
                 className="group mt-8 inline-flex min-h-12 items-center gap-3 rounded-2xl bg-foreground px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-foreground/20 transition-all duration-300 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:mt-10 sm:px-8"
             >
                 <Plus size={18} />

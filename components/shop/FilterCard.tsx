@@ -2,9 +2,13 @@
 
 
 import { Button } from '@/components/ui/button';import { useState, type ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+    accordionVariants,
+    chevronVariants,
+} from "@/components/animations/Motion";
 
 interface FilterCardProps {
     icon: ReactNode;
@@ -62,8 +66,9 @@ export default function FilterCard({
                 <span className="flex items-center gap-1.5">
                     {action}
                     <motion.span
-                        animate={{ rotate: open ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
+                        variants={chevronVariants}
+                        initial="closed"
+                        animate={open ? "open" : "closed"}
                         className="text-muted-foreground"
                     >
                         <ChevronDown size={15} />
@@ -75,10 +80,10 @@ export default function FilterCard({
                 {open && (
                     <motion.div
                         key="content"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                        variants={accordionVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
                         className="overflow-hidden"
                     >
                         <div className="border-t border-border/70 px-4 pb-4 pt-3">

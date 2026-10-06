@@ -448,7 +448,7 @@ export default function OrderTrackingPage() {
                                     <Clock size={18} />
                                 </div>
                                 <div>
-                                    <p className="text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                    <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                                         Refund Status
                                     </p>
                                     <h4 className="font-semibold text-foreground">
@@ -480,7 +480,7 @@ export default function OrderTrackingPage() {
                                     </div>
                                 </div>
                                 <div>
-                                    <p className="text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                    <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                                         Order Status
                                     </p>
                                     <h2
@@ -492,7 +492,7 @@ export default function OrderTrackingPage() {
                             </div>
 
                             <div className="rounded-xl bg-muted px-4 py-2 text-right">
-                                <p className="text-caption font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                                <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                                     Total
                                 </p>
                                 <p className="font-display text-heading-4 font-bold text-foreground">
@@ -508,7 +508,7 @@ export default function OrderTrackingPage() {
                                     {deliveryInfo.icon}
                                 </div>
                                 <div>
-                                    <p className="text-caption font-semibold uppercase tracking-[0.18em] text-warning">
+                                    <p className="text-caption font-semibold uppercase tracking-caps text-warning">
                                         Estimated Delivery
                                     </p>
                                     <h3 className="mt-0.5 font-display text-heading-4 font-bold text-warning-foreground">
@@ -524,7 +524,7 @@ export default function OrderTrackingPage() {
                         {/* Timeline */}
                         <div className="border-t border-border px-5 py-5 sm:px-6">
                             <div className="flex items-center justify-between">
-                                <p className="text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                                     Tracking Timeline
                                 </p>
                                 {order.awbNumber && (
@@ -630,7 +630,7 @@ export default function OrderTrackingPage() {
                         className="overflow-hidden rounded-2xl border border-border bg-card shadow-card"
                     >
                         <div className="border-b border-border px-5 py-4 sm:px-6">
-                            <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                            <p className="text-caption font-semibold uppercase tracking-caps-wide text-muted-foreground">
                                 Order Details
                             </p>
                         </div>
@@ -672,7 +672,7 @@ export default function OrderTrackingPage() {
                             className="overflow-hidden rounded-2xl border border-border bg-card shadow-card"
                         >
                             <div className="border-b border-border px-5 py-4 sm:px-6">
-                                <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                                <p className="text-caption font-semibold uppercase tracking-caps-wide text-muted-foreground">
                                     Items ({products.length})
                                 </p>
                             </div>
@@ -970,7 +970,7 @@ function DetailRow({
                 {icon}
             </div>
             <div className="min-w-0 flex-1">
-                <p className="text-caption font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                     {label}
                 </p>
                 <p className="mt-0.5 text-body-sm font-medium text-foreground">

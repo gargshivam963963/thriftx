@@ -3,7 +3,7 @@
 
 import { Button } from '@/components/ui/button'; import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
     Search,
     X,
@@ -25,6 +25,11 @@ import {
     type SearchResult,
 } from "@/lib/services/searchService";
 import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
+import {
+    modalBackdropVariants,
+    searchPanelVariants,
+    staggerDelay,
+} from "@/components/animations/Motion";
 
 interface GlobalSearchProps {
     open: boolean;
@@ -177,16 +182,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
 
     const trendingSearches = getTrendingSearches();
 
-    const containerVariants = {
-        hidden: { opacity: 0, y: -20, scale: 0.98 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            transition: { type: "spring" as const, damping: 30, stiffness: 300 },
-        },
-        exit: { opacity: 0, y: -20, scale: 0.98, transition: { duration: 0.15 } },
-    };
+    const containerVariants = searchPanelVariants;
 
     return (
         <AnimatePresence>
@@ -194,10 +190,10 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                 <>
                     {/* Backdrop */}
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        variants={modalBackdropVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
                         className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-md"
                         onClick={onClose}
                     />
@@ -284,7 +280,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                                 type="button"
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: index * 0.03 }}
+                                                transition={staggerDelay(index)}
                                                 onClick={() => handleResultClick(item)}
                                                 className={cn(
                                                     "group relative flex flex-col overflow-hidden rounded-2xl border text-left transition-all",
@@ -309,13 +305,13 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                                     )}
                                                     {/* Price badge */}
                                                     <div className="absolute bottom-2 left-2">
-                                                        <span className="rounded-lg bg-card/90 px-2 py-1 text-[11px] font-bold text-foreground shadow-sm backdrop-blur-sm dark:bg-card/90 dark:text-foreground">
+                                                        <span className="rounded-lg bg-card/90 px-2 py-1 text-2xs font-bold text-foreground shadow-sm backdrop-blur-sm dark:bg-card/90 dark:text-foreground">
                                                             ₹{item.price}
                                                         </span>
                                                     </div>
                                                     {item.retailPrice && item.retailPrice > item.price && (
                                                         <div className="absolute bottom-2 right-2">
-                                                            <span className="rounded-lg bg-red-500/90 px-2 py-1 text-[10px] font-bold text-white">
+                                                            <span className="rounded-lg bg-red-500/90 px-2 py-1 text-2xs font-bold text-white">
                                                                 {Math.round(
                                                                     ((item.retailPrice - item.price) / item.retailPrice) * 100,
                                                                 )}
@@ -325,13 +321,13 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                                     )}
                                                 </div>
                                                 <div className="p-2.5">
-                                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                    <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                                                         {item.brand}
                                                     </p>
                                                     <p className="mt-0.5 truncate text-sm font-bold text-foreground">
                                                         {item.title}
                                                     </p>
-                                                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                                    <div className="mt-1 flex items-center gap-1.5 text-2xs text-muted-foreground">
                                                         <span>{item.category}</span>
                                                         <span>&middot;</span>
                                                         <span>{item.size}</span>
@@ -389,7 +385,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                                         setRecentSearches([]);
                                                     }}
                                                     title="Clear recent search history"
-                                                    className="text-[10px] font-semibold text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground"
+                                                    className="text-2xs font-semibold text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground"
                                                 >
                                                     Clear
                                                 </Button>
@@ -474,7 +470,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                             )}
 
                             {/* Keyboard hints */}
-                            <div className="hidden border-t border-border px-4 py-2.5 dark:border-border sm:flex items-center gap-4 text-[10px] text-muted-foreground">
+                            <div className="hidden border-t border-border px-4 py-2.5 dark:border-border sm:flex items-center gap-4 text-2xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                     <kbd className="rounded-md border border-border bg-subtle px-1.5 py-0.5 text-badge font-bold dark:border-border dark:bg-card">
                                         ↑↓

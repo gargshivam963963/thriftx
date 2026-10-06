@@ -6,7 +6,7 @@ export default function NotFound() {
     return (
         <main className="flex min-h-screen items-center justify-center bg-background px-4 py-16">
             <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-card">
-                <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                <p className="text-caption font-semibold uppercase tracking-caps-wide text-muted-foreground">
                     404
                 </p>
                 <h1 className="mt-3 font-sans text-heading-3 font-bold text-foreground">

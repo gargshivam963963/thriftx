@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { BLUR_PLACEHOLDER } from "@/lib/imageOptimization";
 import { cn } from "@/lib/utils";
+import { transitions } from "@/components/animations/Motion";
 
 interface ProductGalleryProps {
     title: string;
@@ -270,7 +271,7 @@ export default function ProductGallery({
                                 initial={{ opacity: 0.5 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0.5 }}
-                                transition={{ duration: 0.2 }}
+                                transition={transitions.micro}
                                 className="relative aspect-[4/5] w-full"
                             >
                                 <Image
@@ -441,13 +442,13 @@ export default function ProductGallery({
                             onPointerDown={handlePointerDown}
                             onPointerUp={handlePointerUp}
                         >
-                            <AnimatePresence mode="wait">
+                            <AnimatePresence mode="wait" initial={false}>
                                 <motion.div
                                     key={currentImage}
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
+                                    transition={transitions.micro}
                                     className="relative h-full w-full"
                                 >
                                     <Image

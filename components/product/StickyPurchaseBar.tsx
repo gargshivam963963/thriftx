@@ -174,7 +174,7 @@ export default function StickyPurchaseBar({
         >
             <div className="mx-auto flex w-full max-w-[1280px] items-center gap-2.5 sm:gap-3">
                 <div className="min-w-0 shrink-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs">
+                    <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs">
                         Price
                     </p>
 

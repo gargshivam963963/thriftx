@@ -46,7 +46,7 @@ function StatsCard({
                 {icon}
             </div>
             <div>
-                <p className="text-caption font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                     {label}
                 </p>
                 <p className="font-display text-heading-4 font-bold text-foreground">
@@ -285,7 +285,7 @@ export default function ProfilePage() {
                     transition={{ delay: 0.1 }}
                     className="space-y-2"
                 >
-                    <p className="px-1 pb-1 text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    <p className="px-1 pb-1 text-caption font-semibold uppercase tracking-caps-wide text-muted-foreground">
                         Account
                     </p>
 
@@ -324,7 +324,7 @@ export default function ProfilePage() {
                     />
 
                     <div className="pt-4">
-                        <p className="px-1 pb-1 text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                        <p className="px-1 pb-1 text-caption font-semibold uppercase tracking-caps-wide text-muted-foreground">
                             Settings
                         </p>
 
@@ -354,7 +354,7 @@ export default function ProfilePage() {
                         className="mt-8"
                     >
                         <div className="mb-4 flex items-center justify-between">
-                            <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                            <p className="text-caption font-semibold uppercase tracking-caps-wide text-muted-foreground">
                                 Recent Orders
                             </p>
                             <Link

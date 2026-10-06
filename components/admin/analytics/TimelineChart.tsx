@@ -78,7 +78,7 @@ export default function TimelineChart({
                         <Button
                             key={m.key}
                             onClick={() => setSelectedMetric(m.key)}
-                            className={`rounded-md px-2.5 py-1 text-[10px] font-semibold transition ${selectedMetric === m.key
+                            className={`rounded-md px-2.5 py-1 text-2xs font-semibold transition ${selectedMetric === m.key
                                     ? "bg-white text-foreground shadow-sm dark:bg-muted dark:text-white"
                                     : "text-muted-foreground hover:text-muted-foreground dark:text-muted-foreground dark:hover:text-muted-foreground"
                                 }`}

@@ -5,6 +5,11 @@ import { MapPinPlus, Plus } from "lucide-react";
 
 import type { Address } from "@/lib/types/address";
 import AddressCard from "@/components/checkout/address/AddressCard";
+import {
+    lift,
+    press,
+    transitions,
+} from "@/components/animations/Motion";
 
 interface AddressListProps {
     addresses: Address[];
@@ -45,8 +50,9 @@ export default function AddressList({
                 <motion.button
                     type="button"
                     onClick={onAdd}
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileHover={lift.row}
+                    whileTap={press.tap}
+                    transition={transitions.micro}
                     className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-foreground px-6 py-3 text-body-sm font-medium text-background shadow-lg transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                     <Plus size={18} />
@@ -72,7 +78,8 @@ export default function AddressList({
                     type="button"
                     onClick={onAdd}
                     whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileTap={press.tap}
+                    transition={transitions.micro}
                     aria-label="Add a new address"
                     className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-border px-3 py-2 text-body-sm font-medium transition hover:border-foreground hover:bg-foreground hover:text-background sm:px-4"
                 >
@@ -90,7 +97,7 @@ export default function AddressList({
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -12, scale: 0.98 }}
-                            transition={{ duration: 0.22 }}
+                            transition={transitions.normal}
                         >
                             <AddressCard
                                 address={address}
@@ -107,8 +114,9 @@ export default function AddressList({
             <motion.button
                 type="button"
                 onClick={onAdd}
-                whileHover={{ y: -1 }}
-                whileTap={{ scale: 0.99 }}
+                whileHover={lift.row}
+                whileTap={press.tap}
+                transition={transitions.micro}
                 className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted py-3.5 text-body-sm font-medium text-muted-foreground transition hover:border-foreground hover:bg-foreground hover:text-background sm:rounded-3xl"
             >
                 <Plus size={18} />

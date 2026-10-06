@@ -148,7 +148,7 @@ export default function ProfileAddressesPage() {
 
                 <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
                     <div>
-                        <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                        <p className="text-caption font-semibold uppercase tracking-caps-wide text-muted-foreground">
                             Delivery Preferences
                         </p>
 

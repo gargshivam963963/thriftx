@@ -20,6 +20,11 @@ import {
 import { Button } from "@/components/ui/button";
 import FloatingInput from "@/components/ui/FloatingInput";
 import type { Address, CreateAddressPayload } from "@/lib/types/address";
+import {
+    lift,
+    press,
+    transitions,
+} from "@/components/animations/Motion";
 
 const phoneSchema = z
     .string()
@@ -166,7 +171,7 @@ function SectionCard({
                     {icon}
                 </div>
 
-                <h3 className="text-caption font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <h3 className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                     {label}
                 </h3>
             </div>
@@ -482,8 +487,9 @@ export default function AddressForm({
                                                 shouldValidate: true,
                                             })
                                         }
-                                        whileHover={{ y: -2, scale: 1.02 }}
-                                        whileTap={{ scale: 0.97 }}
+                                        whileHover={lift.row}
+                                        whileTap={press.tap}
+                                        transition={transitions.micro}
                                         className={`relative overflow-hidden rounded-2xl border-2 p-3 text-center transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 sm:p-4 ${isSelected
                                             ? "border-foreground bg-foreground text-background shadow-lg"
                                             : "border-border bg-card text-muted-foreground hover:border-foreground hover:shadow-md"
@@ -494,11 +500,7 @@ export default function AddressForm({
                                                 layoutId="address-type-background"
                                                 className="absolute inset-0 bg-foreground"
                                                 initial={false}
-                                                transition={{
-                                                    type: "spring",
-                                                    stiffness: 400,
-                                                    damping: 30,
-                                                }}
+                                                transition={transitions.springSnappy}
                                             />
                                         )}
 

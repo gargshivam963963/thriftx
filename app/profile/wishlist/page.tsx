@@ -139,7 +139,7 @@ function WishlistCard({
 
             {/* Details */}
             <div className="p-4 sm:p-5">
-                <p className="text-caption font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                     {item.brand || item.category}
                 </p>
 
@@ -273,7 +273,7 @@ export default function ProfileWishlistPage() {
                             <Heart size={22} />
                         </div>
                         <div>
-                            <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                            <p className="text-caption font-semibold uppercase tracking-caps-wide text-muted-foreground">
                                 Saved Items
                             </p>
                             <h1 className="font-display text-heading-2 font-bold tracking-tight text-foreground">

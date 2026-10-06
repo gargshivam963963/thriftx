@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
 import Header from "@/components/Header";
@@ -10,17 +10,19 @@ import { CartProvider } from "@/lib/CartContext";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import AnalyticsProviderWrapper from "@/components/AnalyticsProviderWrapper";
 import BottomNav from "@/components/BottomNav";
+import { MotionProvider } from "@/components/animations/Motion";
 import { Toaster } from "sonner";
 import { siteConfig } from "@/lib/seo";
 import { contactInfo } from "@/lib/contact";
 
 // ─── Design System: ONE premium font family ─────────────────────────────────
-// Plus Jakarta Sans is the single typeface for the entire THRIFTX design system.
-// It powers both display (headings) and body text via distinct weights.
-const jakarta = Plus_Jakarta_Sans({
+// Geist is the single typeface for the entire THRIFTX design system —
+// a crisp, modern variable sans built for the web. It powers both display
+// (headings) and body text via distinct weights (400–800).
+const geist = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "variable",
 });
 
 export const metadata: Metadata = {
@@ -121,7 +123,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={jakarta.variable}
+      className={geist.variable}
       suppressHydrationWarning
     >
       <head>
@@ -160,7 +162,8 @@ export default function RootLayout({
           <AuthProvider>
             <WishlistProvider>
               <CartProvider>
-                <AnalyticsProviderWrapper>
+                <MotionProvider>
+                  <AnalyticsProviderWrapper>
                   <Header />
 
                   <main className="flex flex-1 flex-col">
@@ -177,6 +180,7 @@ export default function RootLayout({
                     duration={3000}
                   />
                 </AnalyticsProviderWrapper>
+                </MotionProvider>
               </CartProvider>
             </WishlistProvider>
           </AuthProvider>

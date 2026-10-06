@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
     SlidersHorizontal,
     X,
@@ -18,6 +18,10 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import FilterAccordion from "@/components/ui/FilterAccordion";
+import {
+    modalBackdropVariants,
+    sheetVariants,
+} from "@/components/animations/Motion";
 
 import BrandFilter from "./BrandFilter";
 import SizeFilter from "./SizeFilter";
@@ -87,18 +91,19 @@ export default function FilterDrawer({
                 {open && (
                     <>
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
+                            variants={modalBackdropVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
                             className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-sm"
                             onClick={() => setOpen(false)}
                         />
 
                         <motion.div
-                            initial={{ y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
-                            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                            variants={sheetVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
                             className="fixed inset-x-0 bottom-0 z-[90] max-h-[90vh] overflow-y-auto rounded-t-2xl border-t border-border bg-background pb-8 shadow-float"
                         >
                             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 px-5 py-4 backdrop-blur-xl">

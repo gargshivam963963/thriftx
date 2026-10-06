@@ -80,7 +80,7 @@ export default function BottomNav() {
             aria-current={isActive ? "page" : undefined}
             title={item.tooltip}
             className={cn(
-              "group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold uppercase leading-normal tracking-normal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              "group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-2xs font-semibold uppercase leading-normal tracking-normal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
               isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -97,7 +97,7 @@ export default function BottomNav() {
         onClick={cycleTheme}
         aria-label={`Theme: ${themeLabel}. Click to cycle theme`}
         title={`Theme: ${themeLabel} (System / Light / Dark)`}
-        className="group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold uppercase leading-normal tracking-normal text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        className="group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-2xs font-semibold uppercase leading-normal tracking-normal text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
         <ThemeIconComponent className="h-5 w-5 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:text-foreground" strokeWidth={1.9} aria-hidden="true" />
         <span className="block max-w-full truncate">{themeLabel}</span>

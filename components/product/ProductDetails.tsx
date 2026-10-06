@@ -73,7 +73,7 @@ export default function ProductDetails({
 
     return (
         <div>
-            <h3 className="mb-4 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <h3 className="mb-4 text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                 Product Details
             </h3>
             <div className="divide-y divide-border">

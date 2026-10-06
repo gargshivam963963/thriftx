@@ -16,6 +16,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@/components/ui/button";
+import { accordionVariants } from "@/components/animations/Motion";
 import {
     FormField,
     Input,
@@ -296,22 +297,10 @@ function LoginForm() {
                         <AnimatePresence initial={false}>
                             {rootMessage && (
                                 <motion.div
-                                    initial={{
-                                        opacity: 0,
-                                        height: 0,
-                                        y: -8,
-                                    }}
-                                    animate={{
-                                        opacity: 1,
-                                        height: "auto",
-                                        y: 0,
-                                    }}
-                                    exit={{
-                                        opacity: 0,
-                                        height: 0,
-                                        y: -8,
-                                    }}
-                                    transition={{ duration: 0.2 }}
+                                    variants={accordionVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
                                     className="mb-5 overflow-hidden"
                                 >
                                     <div

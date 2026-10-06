@@ -133,7 +133,7 @@ export default function OverviewCards({
                                     {card.format(value)}
                                 </p>
                             )}
-                            <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">
+                            <p className="mt-0.5 text-2xs font-medium text-muted-foreground">
                                 {card.label}
                             </p>
                         </div>

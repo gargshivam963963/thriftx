@@ -76,7 +76,7 @@ export default function SortableImage({
                             Cover
                         </Badge>
                     ) : (
-                        <span className="text-[10px] font-medium text-muted-foreground">
+                        <span className="text-2xs font-medium text-muted-foreground">
                             #{index + 1}
                         </span>
                     )}

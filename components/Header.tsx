@@ -1094,7 +1094,7 @@ function HeaderContent() {
                   text-body
                   font-extrabold
                   leading-none
-                  tracking-[0.08em]
+                  tracking-wider
                   text-foreground
                   sm:text-title
                 "
@@ -1110,7 +1110,7 @@ function HeaderContent() {
                   font-semibold
                   uppercase
                   leading-tight
-                  tracking-[0.14em]
+                  tracking-caps
                   text-muted-foreground
                   sm:block
                 "

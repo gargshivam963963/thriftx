@@ -6,6 +6,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { Check, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { press, transitions } from "@/components/animations/Motion";
 
 import { buttonVariants } from "./button.styles";
 import type { ButtonProps } from "./button.types";
@@ -144,8 +145,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 aria-disabled={isDisabled}
                 aria-busy={loading}
                 whileHover={whileHover}
-                whileTap={whileTap ?? { scale: 0.98 }}
-                transition={transition ?? { duration: 0.16, ease: "easeOut" }}
+                whileTap={whileTap ?? press.tap}
+                transition={transition ?? transitions.micro}
                 className={variantClasses}
                 {...props}
             >

@@ -40,7 +40,7 @@ export default function ProductMeasurements({
 
     return (
         <div>
-            <h3 className="mb-4 flex items-center gap-2 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <h3 className="mb-4 flex items-center gap-2 text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                 <Ruler className="h-4 w-4" />
                 Measurements
             </h3>

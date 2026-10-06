@@ -96,7 +96,7 @@ export default function OrderSummary({
                 {/* Header */}
                 <div className="mb-5 flex items-center justify-between">
                     <div>
-                        <p className="text-caption font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                             Order summary
                         </p>
 
@@ -388,7 +388,7 @@ export default function OrderSummary({
                             aria-hidden="true"
                         />
 
-                        <span className="text-[10px] font-medium leading-tight text-muted-foreground sm:text-badge">
+                        <span className="text-2xs font-medium leading-tight text-muted-foreground sm:text-badge">
                             Authenticated
                         </span>
                     </div>
@@ -400,7 +400,7 @@ export default function OrderSummary({
                             aria-hidden="true"
                         />
 
-                        <span className="text-[10px] font-medium leading-tight text-muted-foreground sm:text-badge">
+                        <span className="text-2xs font-medium leading-tight text-muted-foreground sm:text-badge">
                             Quality checked
                         </span>
                     </div>
@@ -412,7 +412,7 @@ export default function OrderSummary({
                             aria-hidden="true"
                         />
 
-                        <span className="text-[10px] font-medium leading-tight text-muted-foreground sm:text-badge">
+                        <span className="text-2xs font-medium leading-tight text-muted-foreground sm:text-badge">
                             Fast dispatch
                         </span>
                     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
     Search,
     Package,
@@ -34,6 +34,11 @@ import ToastContainer from "@/components/admin/toast/Toast";
 import ProductFormModal, { type ProductFormData } from "@/components/admin/products/ProductFormModal";
 import ConfirmDialog from "@/components/admin/products/ConfirmDialog";
 import ProductSkeleton from "@/components/admin/products/ProductSkeleton";
+import {
+    previewBackdropVariants,
+    previewPanelVariants,
+    previewSlideVariants,
+} from "@/components/animations/Motion";
 
 const slugify = (value: string) =>
     value
@@ -674,7 +679,7 @@ export default function AdminProductsPage() {
                                 )}
                                 {/* Image count badge */}
                                 {product.images && product.images.length > 1 && (
-                                    <div className="absolute bottom-2 right-2 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                                    <div className="absolute bottom-2 right-2 rounded-md bg-black/60 px-2 py-0.5 text-2xs font-semibold text-white backdrop-blur-sm">
                                         +{product.images.length - 1}
                                     </div>
                                 )}
@@ -682,7 +687,7 @@ export default function AdminProductsPage() {
                                 <div className="absolute left-2 top-2 flex gap-1.5">
                                     <span
                                         className={cn(
-                                            "rounded-md px-2 py-0.5 text-[10px] font-bold",
+                                            "rounded-md px-2 py-0.5 text-2xs font-bold",
                                             product.isActive
                                                 ? "bg-emerald-500/90 text-white"
                                                 : "bg-foreground/75 text-background"
@@ -691,7 +696,7 @@ export default function AdminProductsPage() {
                                         {product.isActive ? "Active" : "Inactive"}
                                     </span>
                                     {product.condition && (
-                                        <span className="rounded-md bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground backdrop-blur-sm dark:bg-card/80 dark:text-muted-foreground">
+                                        <span className="rounded-md bg-white/80 px-2 py-0.5 text-2xs font-semibold text-muted-foreground backdrop-blur-sm dark:bg-card/80 dark:text-muted-foreground">
                                             {product.condition}
                                         </span>
                                     )}
@@ -833,7 +838,7 @@ export default function AdminProductsPage() {
 
                                 {/* Image count */}
                                 {product.images && product.images.length > 1 && (
-                                    <div className="absolute bottom-3 right-3 rounded-lg border border-white/20 bg-black/60 px-2 py-1 text-[10px] font-semibold text-white shadow-sm backdrop-blur-md">
+                                    <div className="absolute bottom-3 right-3 rounded-lg border border-white/20 bg-black/60 px-2 py-1 text-2xs font-semibold text-white shadow-sm backdrop-blur-md">
                                         +{product.images.length - 1}
                                     </div>
                                 )}
@@ -842,7 +847,7 @@ export default function AdminProductsPage() {
                                 <div className="absolute left-3 top-3 flex items-center gap-1.5">
                                     <span
                                         className={cn(
-                                            "rounded-lg px-2.5 py-1 text-[10px] font-bold shadow-sm backdrop-blur-md",
+                                            "rounded-lg px-2.5 py-1 text-2xs font-bold shadow-sm backdrop-blur-md",
                                             product.isActive
                                                 ? "bg-emerald-500/90 text-white"
                                                 : "bg-foreground/75 text-background"
@@ -852,7 +857,7 @@ export default function AdminProductsPage() {
                                     </span>
 
                                     {product.condition && (
-                                        <span className="rounded-lg border border-white/30 bg-background/80 px-2.5 py-1 text-[10px] font-semibold text-foreground shadow-sm backdrop-blur-md">
+                                        <span className="rounded-lg border border-white/30 bg-background/80 px-2.5 py-1 text-2xs font-semibold text-foreground shadow-sm backdrop-blur-md">
                                             {product.condition}
                                         </span>
                                     )}
@@ -896,7 +901,7 @@ export default function AdminProductsPage() {
                             <div className="hidden items-center gap-2 sm:flex">
                                 <span
                                     className={cn(
-                                        "rounded-md px-2 py-0.5 text-[10px] font-bold",
+                                        "rounded-md px-2 py-0.5 text-2xs font-bold",
                                         product.isActive
                                             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                                             : "bg-muted text-muted-foreground dark:bg-card dark:text-muted-foreground"
@@ -996,10 +1001,10 @@ export default function AdminProductsPage() {
                         <>
                             <motion.div
                                 key="preview-backdrop"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.2 }}
+                                variants={previewBackdropVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
                                 onClick={() => {
                                     setPreviewProduct(null);
                                     setPreviewIndex(0);
@@ -1008,10 +1013,10 @@ export default function AdminProductsPage() {
                             />
                             <motion.div
                                 key="preview-content"
-                                initial={{ opacity: 0, scale: 0.92 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.92 }}
-                                transition={{ duration: 0.25, ease: "easeOut" }}
+                                variants={previewPanelVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
                                 className="fixed inset-0 z-[60] flex items-center justify-center"
                             >
                                 {/* Close button */}
@@ -1061,10 +1066,10 @@ export default function AdminProductsPage() {
                                 >
                                     <motion.div
                                         key={previewIndex}
-                                        initial={{ opacity: 0, x: 40 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -40 }}
-                                        transition={{ duration: 0.2 }}
+                                        variants={previewSlideVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        exit="exit"
                                         className="relative h-full w-full max-h-[85vh] max-w-[90vw]"
                                         onClick={(e) => e.stopPropagation()}
                                     >

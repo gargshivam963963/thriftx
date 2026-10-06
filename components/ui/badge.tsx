@@ -41,10 +41,10 @@ const badgeVariants = cva(
                 ],
             },
             size: {
-                xs: "px-2 py-0.5 text-[0.625rem] tracking-wider uppercase",
-                sm: "px-2.5 py-0.5 text-[0.6875rem]",
-                md: "px-3 py-1 text-[0.75rem]",
-                lg: "px-4 py-1.5 text-[0.8125rem]",
+                xs: "px-2 py-0.5 text-2xs tracking-wider uppercase",
+                sm: "px-2.5 py-0.5 text-2xs",
+                md: "px-3 py-1 text-xs",
+                lg: "px-4 py-1.5 text-xs",
             },
             rounded: {
                 none: "rounded-none",

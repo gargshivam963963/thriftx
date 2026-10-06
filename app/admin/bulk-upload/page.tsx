@@ -7,6 +7,7 @@ import ToastContainer, { showToast } from "@/components/admin/bulk/Toast";
 import SpreadsheetEditor from "@/components/admin/bulk/SpreadsheetEditor";
 import AIProcessingOverlay from "@/components/admin/bulk/AIProcessingOverlay";
 import UploadProgress from "@/components/admin/bulk/UploadProgress";
+import AdminPage from "@/components/admin/AdminPage";
 
 import type { BulkProduct } from "@/app/lib/bulk/types";
 import { processSmartFolders } from "@/app/lib/bulk/smart-processor";
@@ -156,6 +157,33 @@ export default function BulkUploadPage() {
 
         setNextSkuNumber((current) => current + 1);
     }, [nextSkuNumber]);
+
+    /**
+     * Adds `count` blank rows in a single state update so admins can stage
+     * many products at once without clicking "Add Product" repeatedly.
+     * SKUs are allocated from the current counter, so no duplicates occur.
+     */
+    const handleAddRows = useCallback(
+        (count: number) => {
+            const amount = Math.max(1, Math.min(Math.round(count), 50));
+
+            setProducts((current) => {
+                const rows = Array.from({ length: amount }, (_, offset) =>
+                    createBlankProduct(nextSkuNumber + offset),
+                );
+
+                return validateProducts([...current, ...rows]).map(
+                    (item, index) => ({
+                        ...item,
+                        row: index + 1,
+                    }),
+                );
+            });
+
+            setNextSkuNumber((current) => current + amount);
+        },
+        [nextSkuNumber],
+    );
 
     const handleDeleteRow = useCallback((sku: string) => {
         setProducts((current) => {
@@ -922,54 +950,38 @@ export default function BulkUploadPage() {
         <div className="min-h-screen">
             <ToastContainer />
 
-            <motion.div
-                initial={{
-                    opacity: 0,
-                    y: 8,
-                }}
-                animate={{
-                    opacity: 1,
-                    y: 0,
-                }}
-                className="space-y-4"
-            >
-                <SpreadsheetEditor
-                    products={products}
-                    onUpdate={handleProductUpdate}
-                    onAddRow={handleAddRow}
-                    onDeleteRow={handleDeleteRow}
-                    onDuplicateRow={
-                        handleDuplicateRow
-                    }
-                    onImagesChange={
-                        handleImagesChange
-                    }
-                    onAiFill={handleAiFill}
-                    aiLoadingSku={
-                        aiLoadingSku
-                    }
-                    onUpload={handleUpload}
-                    uploading={uploading}
-                    bulkAiLoading={
-                        bulkAiLoading
-                    }
-                    onAiFillAll={
-                        handleBulkAiFill
-                    }
-                    onFilesSelected={
-                        handleFilesSelected
-                    }
-                    onFolderSelected={
-                        handleFolderSelected
-                    }
-                    aiProcessing={
-                        autoAiRunning
-                    }
-                    aiProcessingInfo={
-                        aiProcessingInfo
-                    }
-                />
-            </motion.div>
+            <AdminPage width="wide">
+                <motion.div
+                    initial={{
+                        opacity: 0,
+                        y: 8,
+                    }}
+                    animate={{
+                        opacity: 1,
+                        y: 0,
+                    }}
+                >
+                    <SpreadsheetEditor
+                        products={products}
+                        onUpdate={handleProductUpdate}
+                        onAddRow={handleAddRow}
+                        onAddRows={handleAddRows}
+                        onDeleteRow={handleDeleteRow}
+                        onDuplicateRow={handleDuplicateRow}
+                        onImagesChange={handleImagesChange}
+                        onAiFill={handleAiFill}
+                        aiLoadingSku={aiLoadingSku}
+                        onUpload={handleUpload}
+                        uploading={uploading}
+                        bulkAiLoading={bulkAiLoading}
+                        onAiFillAll={handleBulkAiFill}
+                        onFilesSelected={handleFilesSelected}
+                        onFolderSelected={handleFolderSelected}
+                        aiProcessing={autoAiRunning}
+                        aiProcessingInfo={aiProcessingInfo}
+                    />
+                </motion.div>
+            </AdminPage>
 
             <UploadProgress
                 progress={progress}

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from "lucide-react";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/Modal";
 
 interface ConfirmPopoverProps {
     open: boolean;
@@ -15,84 +15,58 @@ interface ConfirmPopoverProps {
     onConfirm: () => void;
 }
 
+/**
+ * ConfirmPopover — inline confirm built on the ONE `Modal` system.
+ *
+ * Props are unchanged so existing callers (cart, address book) keep working;
+ * backdrop motion, Escape handling, scroll-lock and focus management all
+ * come from `Modal` instead of a third hand-rolled AnimatePresence block.
+ */
 export default function ConfirmPopover({
     open,
     title,
     description,
-    confirmText = 'Remove',
-    cancelText = 'Cancel',
+    confirmText = "Remove",
+    cancelText = "Cancel",
     onCancel,
     onConfirm,
 }: ConfirmPopoverProps) {
     return (
-        <AnimatePresence>
-            {open && (
-                <>
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm"
+        <Modal
+            open={open}
+            onClose={onCancel}
+            title={title}
+            description={description}
+            footer={
+                <div className="grid w-full grid-cols-2 gap-3">
+                    <Button
+                        variant="outline"
+                        size="lg"
+                        fullWidth
+                        rounded="full"
                         onClick={onCancel}
-                    />
-
-                    <motion.div
-                        initial={{
-                            opacity: 0,
-                            scale: 0.96,
-                            y: 12,
-                        }}
-                        animate={{
-                            opacity: 1,
-                            scale: 1,
-                            y: 0,
-                        }}
-                        exit={{
-                            opacity: 0,
-                            scale: 0.96,
-                            y: 12,
-                        }}
-                        transition={{
-                            duration: 0.2,
-                        }}
-                        className="fixed left-1/2 top-1/2 z-[60] w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[28px] border border-border bg-card p-7 shadow-2xl"
                     >
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-error-bg">
-                            <AlertTriangle className="text-error" />
-                        </div>
+                        {cancelText}
+                    </Button>
 
-                        <h3 className="mt-5 text-2xl font-semibold">
-                            {title}
-                        </h3>
-
-                        <p className="mt-3 leading-7 text-muted-foreground">
-                            {description}
-                        </p>
-
-                        <div className="mt-8 flex gap-3">
-                            <Button
-                                variant="outline"
-                                size="lg"
-                                fullWidth
-                                rounded="full"
-                                onClick={onCancel}
-                            >
-                                {cancelText}
-                            </Button>
-
-                            <Button
-                                variant="danger"
-                                size="lg"
-                                fullWidth
-                                rounded="full"
-                                onClick={onConfirm}
-                            >
-                                {confirmText}
-                            </Button>
-                        </div>
-                    </motion.div>
-                </>
-            )}
-        </AnimatePresence>
+                    <Button
+                        variant="danger"
+                        size="lg"
+                        fullWidth
+                        rounded="full"
+                        onClick={onConfirm}
+                    >
+                        {confirmText}
+                    </Button>
+                </div>
+            }
+        >
+            <div
+                aria-hidden="true"
+                className="flex h-14 w-14 items-center justify-center rounded-full bg-error-bg"
+            >
+                <AlertTriangle className="text-error" />
+            </div>
+        </Modal>
     );
 }

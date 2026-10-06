@@ -201,7 +201,7 @@ export default function OrdersPage() {
                             <Package size={22} />
                         </div>
                         <div>
-                            <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                            <p className="text-caption font-semibold uppercase tracking-caps-wide text-muted-foreground">
                                 Your Orders
                             </p>
                             <h1 className="font-display text-heading-2 font-bold tracking-tight text-foreground">
@@ -253,7 +253,7 @@ export default function OrdersPage() {
                                                 />
                                             </div>
                                             <div>
-                                                <p className="text-caption font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                                                <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                                                     Order Placed
                                                 </p>
                                                 <p className="text-body-sm font-medium text-foreground">

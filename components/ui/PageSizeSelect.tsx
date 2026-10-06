@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Check, ChevronDown, ListFilter } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { menuVariants } from "@/components/animations/Motion";
 import {
     controlBase,
     controlIcon,
@@ -97,10 +98,10 @@ export default function PageSizeSelect({
                     <motion.div
                         role="listbox"
                         aria-label={ariaLabel}
-                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                        variants={menuVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
                         className="absolute right-0 bottom-full z-50 mb-2 w-44 origin-bottom-right overflow-hidden rounded-xl border border-border bg-card shadow-float"
                     >
                         <div className="p-1.5">

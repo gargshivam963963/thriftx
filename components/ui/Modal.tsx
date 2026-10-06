@@ -4,6 +4,11 @@ import { useEffect, useId, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
+import {
+    modalBackdropVariants,
+    modalPanelVariants,
+} from "@/components/animations/Motion";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -89,10 +94,10 @@ export function Modal({
         <AnimatePresence>
             {open && (
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    variants={modalBackdropVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
                     onClick={(event) => {
                         if (dismissible && event.target === event.currentTarget) {
                             onClose();
@@ -109,10 +114,10 @@ export function Modal({
                             description ? descriptionId : undefined
                         }
                         tabIndex={-1}
-                        initial={{ opacity: 0, scale: 0.96, y: 12 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.96, y: 12 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        variants={modalPanelVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
                         className={cn(
                             "w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-xl outline-none",
                             className,

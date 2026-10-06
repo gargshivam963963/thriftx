@@ -372,7 +372,7 @@ export default function CartPage() {
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-caption font-bold uppercase tracking-[0.25em] text-muted-foreground">
+            <p className="text-caption font-bold uppercase tracking-caps-wide text-muted-foreground">
               ThriftX
             </p>
 

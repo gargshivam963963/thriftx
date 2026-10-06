@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
     X,
     ImagePlus,
@@ -34,6 +34,11 @@ import { showToast } from "@/components/admin/toast/Toast";
 import { BLUR_PLACEHOLDER } from "@/lib/imageOptimization";
 import { cn } from "@/lib/utils";
 import SortableImage from "@/components/SortableImage";
+import {
+    previewBackdropVariants,
+    previewPanelVariants,
+    previewSlideVariants,
+} from "@/components/animations/Motion";
 
 export interface ProductFormData {
     title: string;
@@ -572,7 +577,7 @@ export default function ProductFormModal({
                                                         />
                                                     )}
                                                     {errors[field.name] && (
-                                                        <p className="text-[10px] font-medium text-red-500">{errors[field.name]}</p>
+                                                        <p className="text-2xs font-medium text-red-500">{errors[field.name]}</p>
                                                     )}
                                                 </div>
                                             ))}
@@ -618,7 +623,7 @@ export default function ProductFormModal({
                                                         />
                                                     )}
                                                     {errors[field.name] && (
-                                                        <p className="text-[10px] font-medium text-red-500">{errors[field.name]}</p>
+                                                        <p className="text-2xs font-medium text-red-500">{errors[field.name]}</p>
                                                     )}
                                                 </div>
                                             ))}
@@ -646,7 +651,7 @@ export default function ProductFormModal({
                                                             }`}
                                                     />
                                                     {errors[field.name] && (
-                                                        <p className="text-[10px] font-medium text-red-500">{errors[field.name]}</p>
+                                                        <p className="text-2xs font-medium text-red-500">{errors[field.name]}</p>
                                                     )}
                                                 </div>
                                             ))}
@@ -659,7 +664,7 @@ export default function ProductFormModal({
                                             <h3 className="mb-3 text-xs font-semibold text-muted-foreground">
                                                 Measurements
                                                 {form.category && (
-                                                    <span className="ml-2 text-[10px] font-normal text-muted-foreground">
+                                                    <span className="ml-2 text-2xs font-normal text-muted-foreground">
                                                         ({form.category === "Dresses" ? "Chest + Waist + Length" :
                                                             UPPER_CATEGORIES.includes(form.category) ? "Chest + Length" :
                                                                 LOWER_CATEGORIES.includes(form.category) ? "Waist + Length" :
@@ -670,7 +675,7 @@ export default function ProductFormModal({
                                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                                                 {measurements.map((m) => (
                                                     <div key={m.key} className="space-y-1">
-                                                        <label className="text-[10px] font-medium text-muted-foreground">
+                                                        <label className="text-2xs font-medium text-muted-foreground">
                                                             {m.label}
                                                         </label>
                                                         <input
@@ -702,7 +707,7 @@ export default function ProductFormModal({
                                                 className="w-full resize-none rounded-xl border border-border p-3.5 text-sm outline-none transition focus:border-foreground focus:ring-2 focus:ring-foreground/10 dark:border-border dark:bg-card dark:text-foreground"
                                             />
                                             <div className="flex justify-end">
-                                                <span className="text-[10px] text-muted-foreground">{form.description.length} chars</span>
+                                                <span className="text-2xs text-muted-foreground">{form.description.length} chars</span>
                                             </div>
                                         </div>
                                     </div>
@@ -724,7 +729,7 @@ export default function ProductFormModal({
                                                 </div>
                                                 {images.length > 0 && (
                                                     <div className="flex items-center gap-1.5">
-                                                        <span className="text-[10px] text-muted-foreground">
+                                                        <span className="text-2xs text-muted-foreground">
                                                             Drag to reorder
                                                         </span>
                                                         <Star size={12} className="text-amber-500" />
@@ -733,7 +738,7 @@ export default function ProductFormModal({
                                             </div>
 
                                             {errors.images && (
-                                                <p className="text-[10px] font-medium text-red-500">{errors.images}</p>
+                                                <p className="text-2xs font-medium text-red-500">{errors.images}</p>
                                             )}
 
                                             <DndContext
@@ -761,7 +766,7 @@ export default function ProductFormModal({
                                                                     <div className="rounded-lg border border-border bg-subtle p-2 space-y-1.5 dark:border-border dark:bg-card/50">
                                                                         {measurements.map((m) => (
                                                                             <div key={m.key} className="flex items-center gap-1.5">
-                                                                                <label className="text-[10px] font-semibold text-muted-foreground w-12 shrink-0">
+                                                                                <label className="text-2xs font-semibold text-muted-foreground w-12 shrink-0">
                                                                                     {m.label}
                                                                                 </label>
                                                                                 <input
@@ -769,7 +774,7 @@ export default function ProductFormModal({
                                                                                     value={form[m.key] ?? ""}
                                                                                     onChange={(e) => handleMeasurementFieldChange(m.key, e.target.value)}
                                                                                     placeholder={m.placeholder}
-                                                                                    className="h-7 w-full rounded-md border border-border bg-white px-2 text-[10px] text-center outline-none transition focus:border-foreground focus:ring-1 focus:ring-foreground/10 dark:border-border dark:bg-card dark:text-foreground"
+                                                                                    className="h-7 w-full rounded-md border border-border bg-white px-2 text-2xs text-center outline-none transition focus:border-foreground focus:ring-1 focus:ring-foreground/10 dark:border-border dark:bg-card dark:text-foreground"
                                                                                 />
                                                                             </div>
                                                                         ))}
@@ -785,7 +790,7 @@ export default function ProductFormModal({
                                                             className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border bg-subtle transition hover:border-foreground hover:bg-muted dark:border-border dark:bg-card/50 dark:hover:border-border dark:hover:bg-card"
                                                         >
                                                             <ImagePlus size={22} className="text-muted-foreground" />
-                                                            <span className="text-[10px] font-semibold text-muted-foreground">
+                                                            <span className="text-2xs font-semibold text-muted-foreground">
                                                                 {images.length === 0 ? "Add Images" : "Add More"}
                                                             </span>
                                                         </Button>
@@ -802,7 +807,7 @@ export default function ProductFormModal({
                                                 className="hidden"
                                             />
 
-                                            <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                            <p className="text-2xs text-muted-foreground leading-relaxed">
                                                 Supported formats: JPEG, PNG, WebP. First image is automatically set as the
                                                 product cover. Drag to reorder.
                                             </p>
@@ -818,7 +823,7 @@ export default function ProductFormModal({
                                                     </span>
                                                 </div>
                                                 {isGenerating && uploadProgress !== null && (
-                                                    <span className="font-mono text-[10px] font-semibold text-violet-600 dark:text-violet-400">
+                                                    <span className="font-mono text-2xs font-semibold text-violet-600 dark:text-violet-400">
                                                         {Math.round(uploadProgress)}%
                                                     </span>
                                                 )}
@@ -846,7 +851,7 @@ export default function ProductFormModal({
                                                         )}
                                                     />
                                                 </Button>
-                                                <span className="text-[11px] font-medium text-muted-foreground">
+                                                <span className="text-2xs font-medium text-muted-foreground">
                                                     Analyze all images
                                                 </span>
                                             </label>
@@ -862,7 +867,7 @@ export default function ProductFormModal({
                                                             }}
                                                         />
                                                     </div>
-                                                    <p className="text-[10px] text-muted-foreground">
+                                                    <p className="text-2xs text-muted-foreground">
                                                         {isGenerating
                                                             ? "Compressing, uploading, and analyzing images..."
                                                             : ""}
@@ -915,19 +920,19 @@ export default function ProductFormModal({
                             <>
                                 <motion.div
                                     key="preview-backdrop"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
+                                    variants={previewBackdropVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
                                     onClick={closePreview}
                                     className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm"
                                 />
                                 <motion.div
                                     key="preview-content"
-                                    initial={{ opacity: 0, scale: 0.92 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.92 }}
-                                    transition={{ duration: 0.25, ease: "easeOut" }}
+                                    variants={previewPanelVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
                                     className="fixed inset-0 z-[60] flex items-center justify-center"
                                 >
                                     <Button
@@ -953,10 +958,10 @@ export default function ProductFormModal({
                                     >
                                         <motion.div
                                             key={previewIndex}
-                                            initial={{ opacity: 0, x: 40 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -40 }}
-                                            transition={{ duration: 0.2 }}
+                                            variants={previewSlideVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                            exit="exit"
                                             className="relative h-full w-full max-h-[85vh] max-w-[90vw]"
                                             onClick={(e) => e.stopPropagation()}
                                         >

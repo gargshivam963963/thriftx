@@ -21,6 +21,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+    menuVariants,
+    modalBackdropVariants,
+    searchPanelVariants,
+    staggerDelay,
+    transitions,
+} from "@/components/animations/Motion";
 
 interface ShareButtonProps {
     title: string;
@@ -209,11 +216,7 @@ export default function ShareButton({
                         rotate: open ? 12 : 0,
                         scale: open ? 0.94 : 1,
                     }}
-                    transition={{
-                        type: "spring",
-                        stiffness: 400,
-                        damping: 22,
-                    }}
+                    transition={transitions.springSnappy}
                     className="flex items-center justify-center"
                 >
                     {open ? (
@@ -227,14 +230,10 @@ export default function ShareButton({
             <AnimatePresence>
                 {open && (
                     <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                        transition={{
-                            type: "spring",
-                            stiffness: 420,
-                            damping: 30,
-                        }}
+                        variants={menuVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
                         role="dialog"
                         aria-label="Share this THRIFTX product"
                         className="
@@ -248,7 +247,7 @@ export default function ShareButton({
             "
                     >
                         <div className="px-2 pb-3 pt-1">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            <p className="text-2xs font-semibold uppercase tracking-caps text-muted-foreground">
                                 THRIFTX
                             </p>
 

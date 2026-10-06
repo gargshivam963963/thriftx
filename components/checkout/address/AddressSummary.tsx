@@ -12,6 +12,10 @@ import {
 } from "lucide-react";
 
 import type { Address } from "@/lib/types/address";
+import {
+    press,
+    transitions,
+} from "@/components/animations/Motion";
 
 interface AddressSummaryProps {
     address: Address;
@@ -90,7 +94,8 @@ export default function AddressSummary({
                     type="button"
                     onClick={onChange}
                     whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileTap={press.tap}
+                    transition={transitions.micro}
                     className="min-h-10 shrink-0 rounded-xl border border-border px-3 py-1.5 text-xs font-medium transition hover:border-foreground hover:bg-foreground hover:text-white sm:px-4 sm:text-sm"
                 >
                     Change
@@ -105,7 +110,7 @@ export default function AddressSummary({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25 }}
+            transition={transitions.normal}
             className="overflow-hidden rounded-2xl border border-border bg-card sm:rounded-3xl"
         >
             <div className="flex items-center justify-between gap-3 border-b border-border bg-gradient-to-r from-subtle/80 to-card px-4 py-4 sm:px-6 sm:py-5">
@@ -128,7 +133,8 @@ export default function AddressSummary({
                     type="button"
                     onClick={onChange}
                     whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileTap={press.tap}
+                    transition={transitions.micro}
                     className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-border px-3 py-1.5 text-xs font-medium transition hover:border-foreground hover:bg-foreground hover:text-white sm:px-4 sm:text-sm"
                 >
                     <Pencil size={14} />

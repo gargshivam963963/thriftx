@@ -60,7 +60,7 @@ export default function SearchAnalytics({
             {/* No Results Alerts */}
             {topNoResults.length > 0 && (
                 <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-800/30 dark:bg-amber-950/20">
-                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                    <div className="flex items-center gap-1.5 text-2xs font-semibold text-amber-700 dark:text-amber-400">
                         <AlertCircle size={13} />
                         Searches with no results
                     </div>
@@ -68,7 +68,7 @@ export default function SearchAnalytics({
                         {topNoResults.map((s) => (
                             <span
                                 key={s.query}
-                                className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                                className="rounded-md bg-amber-100 px-2 py-0.5 text-2xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
                             >
                                 &ldquo;{s.query}&rdquo; ×{s.noResults}
                             </span>
@@ -84,7 +84,7 @@ export default function SearchAnalytics({
                         className="flex items-center justify-between rounded-lg px-2 py-1.5 transition hover:bg-subtle dark:hover:bg-card/50"
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground dark:bg-card dark:text-muted-foreground">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-2xs font-bold text-muted-foreground dark:bg-card dark:text-muted-foreground">
                                 {i + 1}
                             </span>
                             <span className="truncate text-sm font-medium text-foreground">
@@ -103,7 +103,7 @@ export default function SearchAnalytics({
                                 </div>
                             )}
                             <div
-                                className={`w-16 text-right text-[11px] font-medium ${item.hasResultsRate >= 80
+                                className={`w-16 text-right text-2xs font-medium ${item.hasResultsRate >= 80
                                         ? "text-emerald-600 dark:text-emerald-400"
                                         : item.hasResultsRate >= 50
                                             ? "text-amber-600 dark:text-amber-400"

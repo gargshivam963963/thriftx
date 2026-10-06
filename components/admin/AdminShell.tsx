@@ -93,7 +93,7 @@ export default function AdminShell({
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </Button>
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-black text-[10px] font-bold text-white dark:bg-white dark:text-black">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-black text-2xs font-bold text-white dark:bg-white dark:text-black">
               T
             </div>
             <span className="text-sm font-bold tracking-tight text-foreground">

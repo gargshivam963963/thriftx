@@ -305,11 +305,11 @@ export default async function ProductDetail({
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    <p className="text-xs font-semibold uppercase tracking-caps-wide text-muted-foreground">
                       {product.brand || "THRIFTX"}
                     </p>
 
-                    <h1 className="mt-2 text-[clamp(1.8rem,3vw,2.8rem)] font-semibold leading-[1.12] tracking-[-0.045em] text-foreground">
+                    <h1 className="mt-2 text-4xl font-semibold leading-tight tracking-display text-foreground">
                       {product.title}
                     </h1>
                   </div>
@@ -360,7 +360,7 @@ export default async function ProductDetail({
               {/* Price panel */}
               <div className="rounded-3xl border border-border/60 bg-card/75 p-5 shadow-sm backdrop-blur-xl sm:p-6">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-                  <p className="text-4xl font-semibold tracking-[-0.055em] text-foreground sm:text-5xl">
+                  <p className="text-5xl font-semibold tracking-display text-foreground">
                     ₹{product.price.toLocaleString("en-IN")}
                   </p>
 

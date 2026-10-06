@@ -5,6 +5,10 @@ import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+    press,
+    transitions,
+} from "@/components/animations/Motion";
 
 import {
     getWishlistedProductIds,
@@ -103,12 +107,8 @@ export default function WishlistButton({ productId }: Props) {
                 wishlisted ? "Remove from wishlist" : "Add to wishlist"
             }
             whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.92 }}
-            transition={{
-                type: "spring",
-                stiffness: 400,
-                damping: 22,
-            }}
+            whileTap={press.iconTap}
+            transition={transitions.springSnappy}
             className="
         group relative
         flex h-12 w-12 shrink-0

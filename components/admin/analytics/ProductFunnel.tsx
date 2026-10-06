@@ -52,12 +52,12 @@ export default function ProductFunnel({
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Product Conversion Funnel
             </h3>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
+            <p className="mt-0.5 text-2xs text-muted-foreground">
                 View → Cart → Purchase rates per product
             </p>
 
             <div className="mt-4 space-y-2">
-                <div className="grid grid-cols-[1fr_60px_60px_60px_60px] gap-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="grid grid-cols-[1fr_60px_60px_60px_60px] gap-2 px-2 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                     <div>Product</div>
                     <div className="text-right">Views</div>
                     <div className="text-right">Cart</div>
@@ -73,7 +73,7 @@ export default function ProductFunnel({
                         >
                             {/* Product ID (truncated) */}
                             <div className="truncate text-sm font-medium text-foreground">
-                                <span className="mr-1.5 text-[10px] text-muted-foreground">
+                                <span className="mr-1.5 text-2xs text-muted-foreground">
                                     #{i + 1}
                                 </span>
                                 {product.productId.length > 18

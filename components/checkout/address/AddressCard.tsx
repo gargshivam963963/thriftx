@@ -16,6 +16,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import ConfirmPopover from "@/components/ui/ConfirmPopover";
+import { lift } from "@/components/animations/Motion";
 import type { Address } from "@/lib/types/address";
 
 interface AddressCardProps {
@@ -74,7 +75,7 @@ export default function AddressCard({
         <>
             <motion.article
                 layout
-                whileHover={{ y: -2 }}
+                whileHover={lift.row}
                 className={`w-full overflow-hidden rounded-2xl border bg-card transition-all duration-200 sm:rounded-3xl ${selected
                     ? "border-foreground bg-muted/30 ring-1 ring-foreground/20 shadow-lg"
                     : "border-border hover:border-foreground/50 hover:shadow-md"

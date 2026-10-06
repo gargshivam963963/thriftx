@@ -285,7 +285,7 @@ export default function ProfileOrdersPage() {
                             <Package size={20} className="sm:h-[22px] sm:w-[22px]" />
                         </div>
                         <div>
-                            <p className="text-caption font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                            <p className="text-caption font-semibold uppercase tracking-caps-wide text-muted-foreground">
                                 Profile
                             </p>
                             <h1 className="font-display text-heading-3 font-bold tracking-tight text-foreground sm:text-heading-2">
@@ -319,7 +319,7 @@ export default function ProfileOrdersPage() {
                             className="mb-5 grid grid-cols-3 gap-3"
                         >
                             <div className="rounded-xl border border-border bg-card p-3 text-center shadow-card sm:p-4">
-                                <p className="text-caption font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                                <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                                     Total
                                 </p>
                                 <p className="mt-1 font-sans text-heading-4 font-bold text-foreground">
@@ -327,7 +327,7 @@ export default function ProfileOrdersPage() {
                                 </p>
                             </div>
                             <div className="rounded-xl border border-border bg-card p-3 text-center shadow-card sm:p-4">
-                                <p className="text-caption font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                                <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                                     Delivered
                                 </p>
                                 <p className="mt-1 font-sans text-heading-4 font-bold text-success">
@@ -335,7 +335,7 @@ export default function ProfileOrdersPage() {
                                 </p>
                             </div>
                             <div className="rounded-xl border border-border bg-card p-3 text-center shadow-card sm:p-4">
-                                <p className="text-caption font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                                <p className="text-caption font-semibold uppercase tracking-caps text-muted-foreground">
                                     Spent
                                 </p>
                                 <p className="mt-1 font-sans text-heading-4 font-bold text-foreground">
@@ -392,7 +392,7 @@ export default function ProfileOrdersPage() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <p className="text-badge font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                                                    <p className="text-badge font-semibold uppercase tracking-caps text-muted-foreground">
                                                         Placed on
                                                     </p>
                                                     <p className="text-small font-medium text-foreground">

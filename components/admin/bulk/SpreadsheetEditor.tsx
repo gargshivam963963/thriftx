@@ -3,6 +3,8 @@
 import {
     ChangeEvent,
     DragEvent,
+    useCallback,
+    useEffect,
     useMemo,
     useRef,
     useState,
@@ -10,7 +12,6 @@ import {
 import Image from "next/image";
 import {
     Check,
-    ChevronDown,
     Copy,
     FolderOpen,
     Image as ImageIcon,
@@ -26,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PageHeader from "@/components/ui/PageHeader";
 import {
     Table,
     TableBody,
@@ -42,6 +44,8 @@ interface Props {
         updates: Partial<BulkProduct>,
     ) => void;
     onAddRow: () => void;
+    /** Adds several blank rows at once (bulk manual entry). */
+    onAddRows?: (count: number) => void;
     onDeleteRow: (sku: string) => void;
     onDuplicateRow: (sku: string) => void;
     onImagesChange: (
@@ -138,6 +142,31 @@ function isWaistRequired(category: string): boolean {
     return LOWER_CATEGORIES.has(category);
 }
 
+/**
+ * The three steps of the bulk flow — rendered as a compact guide strip
+ * under the page header so first-time admins know exactly what to do.
+ */
+const FLOW_STEPS = [
+    {
+        number: 1,
+        title: "Add products",
+        description:
+            "Drop product folders or images, or add blank rows and fill them in by hand.",
+    },
+    {
+        number: 2,
+        title: "Let AI fill the details",
+        description:
+            "Titles, brand, material and measurements are read from the photos automatically.",
+    },
+    {
+        number: 3,
+        title: "Review & create",
+        description:
+            "Fix anything flagged in red, then create every ready product in one click.",
+    },
+] as const;
+
 function ColumnLabel({
     children,
     required = false,
@@ -159,7 +188,7 @@ function ColumnLabel({
                 </span>
             )}
             {optional && (
-                <span className="font-normal text-[10px] text-muted-foreground">
+                <span className="font-normal text-2xs text-muted-foreground">
                     optional
                 </span>
             )}
@@ -189,7 +218,7 @@ function ImageThumb({
             />
 
             {index === 0 && (
-                <span className="absolute bottom-0 left-0 right-0 bg-black/70 px-1 py-0.5 text-center text-[8px] font-medium text-white">
+                <span className="absolute bottom-0 left-0 right-0 bg-black/70 px-1 py-0.5 text-center text-2xs font-medium text-white">
                     FRONT
                 </span>
             )}
@@ -215,6 +244,7 @@ export default function SpreadsheetEditor({
     products,
     onUpdate,
     onAddRow,
+    onAddRows,
     onDeleteRow,
     onDuplicateRow,
     onImagesChange,
@@ -245,6 +275,53 @@ export default function SpreadsheetEditor({
             sku: string;
             index: number;
         } | null>(null);
+
+    /** Moves the image lightbox one image left (-1) or right (+1), wrapping. */
+    const stepPreview = useCallback(
+        (direction: 1 | -1) => {
+            setPreview((current) => {
+                if (!current) return current;
+
+                const product = products.find(
+                    (item) => item.sku === current.sku,
+                );
+
+                if (!product || !product.imageUrls.length) return null;
+
+                const count = product.imageUrls.length;
+
+                return {
+                    ...current,
+                    index:
+                        (current.index + direction + count) % count,
+                };
+            });
+        },
+        [products],
+    );
+
+    // Keyboard navigation for the image lightbox:
+    // ← / → browse images, Esc closes it.
+    useEffect(() => {
+        if (!preview) return;
+
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setPreview(null);
+            } else if (event.key === "ArrowLeft") {
+                event.preventDefault();
+                stepPreview(-1);
+            } else if (event.key === "ArrowRight") {
+                event.preventDefault();
+                stepPreview(1);
+            }
+        };
+
+        window.addEventListener("keydown", onKeyDown);
+
+        return () =>
+            window.removeEventListener("keydown", onKeyDown);
+    }, [preview, stepPreview]);
 
     const readyCount = useMemo(
         () =>
@@ -404,107 +481,129 @@ export default function SpreadsheetEditor({
     }
 
     return (
-        <div className="w-full min-w-0 max-w-full space-y-4 overflow-hidden">
-            {/* Header */}
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="w-full min-w-0 max-w-full space-y-6 overflow-hidden">
+            {/* Page header — design-system PageHeader (h1 → subtitle hierarchy) */}
+            <PageHeader
+                eyebrow="Catalog"
+                title="Bulk Upload"
+                description="Add many products at once — drop product folders, let AI fill in the details, review the sheet, then create everything in one go."
+                actions={
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline">
+                            {products.length} products
+                        </Badge>
+
+                        <Badge variant="outline">
+                            {imageCount} images
+                        </Badge>
+
+                        {readyCount > 0 && (
+                            <Badge variant="success">
+                                <Check className="h-3 w-3" />
+                                {readyCount} ready
+                            </Badge>
+                        )}
+
+                        {invalidCount > 0 && (
+                            <Badge variant="error">
+                                {invalidCount} need fixes
+                            </Badge>
+                        )}
+                    </div>
+                }
+            />
+
+            {/* How it works — three compact steps */}
+            <ol className="grid gap-3 sm:grid-cols-3">
+                {FLOW_STEPS.map((step) => (
+                    <li
+                        key={step.title}
+                        className="rounded-2xl border bg-card p-4"
+                    >
+                        <span className="text-caption text-muted-foreground">
+                            Step {step.number}
+                        </span>
+
+                        <p className="mt-1.5 text-body-sm font-semibold text-foreground">
+                            {step.title}
+                        </p>
+
+                        <p className="mt-1 text-small text-muted-foreground">
+                            {step.description}
+                        </p>
+                    </li>
+                ))}
+            </ol>
+
+            {/* Step 1 — Add products */}
+            <section
+                aria-labelledby="bulk-add-products-heading"
+                className="space-y-4"
+            >
                 <div>
-                    <h1 className="text-xl font-semibold tracking-tight">
-                        Bulk Upload
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Upload product folders, let AI
-                        identify and fill the details,
-                        review, then create all.
+                    <h2
+                        id="bulk-add-products-heading"
+                        className="text-h4 text-foreground"
+                    >
+                        Add products
+                    </h2>
+
+                    <p className="mt-1 text-body-sm text-muted-foreground">
+                        Fastest: drop one folder per product — AI sorts and
+                        labels every image for you. You can also add blank
+                        rows and type the details yourself.
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline">
-                        {products.length} products
-                    </Badge>
-
-                    <Badge variant="outline">
-                        {imageCount} images
-                    </Badge>
-
-                    {readyCount > 0 && (
-                        <Badge>
-                            <Check className="mr-1 h-3 w-3" />
-                            {readyCount} ready
-                        </Badge>
+                <div
+                    onDragOver={(event) => {
+                        event.preventDefault();
+                        setDragging(true);
+                    }}
+                    onDragEnter={(event) => {
+                        event.preventDefault();
+                        setDragging(true);
+                    }}
+                    onDragLeave={(event) => {
+                        event.preventDefault();
+                        setDragging(false);
+                    }}
+                    onDrop={handleDrop}
+                    className={cn(
+                        "relative overflow-hidden rounded-2xl border-2 border-dashed p-6 transition-all sm:p-8",
+                        dragging
+                            ? "border-primary bg-primary/5"
+                            : "border-muted-foreground/20 bg-muted/20 hover:border-muted-foreground/40",
                     )}
+                >
+                    <div className="flex flex-col items-center justify-center gap-4 text-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border">
+                            <FolderOpen className="h-5 w-5 text-muted-foreground" />
+                        </div>
 
-                    {invalidCount > 0 && (
-                        <Badge variant="error">
-                            {invalidCount} need fixes
-                        </Badge>
-                    )}
-                </div>
-            </div>
+                        <div>
+                            <p className="text-title">
+                                Drop your product folders here
+                            </p>
 
-            {/* Folder Upload Area */}
-            <div
-                onDragOver={(event) => {
-                    event.preventDefault();
-                    setDragging(true);
-                }}
-                onDragEnter={(event) => {
-                    event.preventDefault();
-                    setDragging(true);
-                }}
-                onDragLeave={(event) => {
-                    event.preventDefault();
-                    setDragging(false);
-                }}
-                onDrop={handleDrop}
-                className={cn(
-                    "relative overflow-hidden rounded-2xl border-2 border-dashed p-6 transition-all",
-                    dragging
-                        ? "border-primary bg-primary/5"
-                        : "border-muted-foreground/20 bg-muted/20 hover:border-muted-foreground/40",
-                )}
-            >
-                <div className="flex flex-col items-center justify-center gap-3 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border">
-                        <FolderOpen className="h-5 w-5 text-muted-foreground" />
-                    </div>
+                            <p className="mt-1.5 text-body-sm text-muted-foreground">
+                                One subfolder per product · 3–6 images each
+                                (Front, Back, Brand Tag, Size Tag, Fabric,
+                                Defect)
+                            </p>
+                        </div>
 
-                    <div>
-                        <p className="font-medium">
-                            Drop your product folder here
+                        <p className="max-w-full overflow-x-auto whitespace-nowrap rounded-lg border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground">
+                            Products → Nike Vintage Tee → front.jpg ·
+                            back.jpg · tag.jpg
                         </p>
 
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            One subfolder per product ·
-                            3+ images recommended
-                        </p>
-                    </div>
-
-                    <div className="flex flex-wrap justify-center gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() =>
-                                folderInputRef.current?.click()
-                            }
-                            disabled={
-                                uploading ||
-                                aiProcessing ||
-                                bulkAiLoading
-                            }
-                        >
-                            <FolderOpen className="mr-2 h-4 w-4" />
-                            Choose Folder
-                        </Button>
-
-                        {onFilesSelected && (
+                        <div className="flex flex-wrap justify-center gap-2">
                             <Button
                                 type="button"
-                                variant="ghost"
+                                variant="primary"
                                 onClick={() =>
-                                    imageInputRefs.current[
-                                        "__global__"
-                                    ]?.click()
+                                    folderInputRef.current?.click()
                                 }
                                 disabled={
                                     uploading ||
@@ -512,16 +611,45 @@ export default function SpreadsheetEditor({
                                     bulkAiLoading
                                 }
                             >
-                                <ImageIcon className="mr-2 h-4 w-4" />
-                                Add Images
+                                <FolderOpen className="h-4 w-4" />
+                                Choose Folder
                             </Button>
-                        )}
-                    </div>
 
-                    <p className="text-xs text-muted-foreground">
-                        JPG, PNG, WEBP or AVIF
-                    </p>
-                </div>
+                            {onFilesSelected && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() =>
+                                        imageInputRefs.current[
+                                            "__global__"
+                                        ]?.click()
+                                    }
+                                    disabled={
+                                        uploading ||
+                                        aiProcessing ||
+                                        bulkAiLoading
+                                    }
+                                >
+                                    <ImageIcon className="h-4 w-4" />
+                                    Add Images
+                                </Button>
+                            )}
+
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={onAddRow}
+                                disabled={uploading || aiProcessing}
+                            >
+                                <Plus className="h-4 w-4" />
+                                Add blank row
+                            </Button>
+                        </div>
+
+                        <p className="text-caption text-muted-foreground">
+                            JPG · PNG · WEBP · AVIF · HEIC
+                        </p>
+                    </div>
 
                 <input
                     ref={folderInputRef}
@@ -563,6 +691,7 @@ export default function SpreadsheetEditor({
                     }}
                 />
             </div>
+            </section>
 
             {/* AI processing banner */}
             {(aiProcessing ||
@@ -595,70 +724,129 @@ export default function SpreadsheetEditor({
                     </div>
                 )}
 
-            {/* Toolbar */}
-            <div className="flex flex-col gap-2 rounded-xl border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap gap-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={onAddRow}
-                        disabled={
-                            uploading ||
-                            aiProcessing
-                        }
-                    >
-                        <Plus className="mr-1.5 h-4 w-4" />
-                        Add Product
-                    </Button>
+            {/* Step 2 — Review & create */}
+            <section
+                aria-labelledby="bulk-review-heading"
+                className="space-y-4"
+            >
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h2
+                            id="bulk-review-heading"
+                            className="text-h4 text-foreground"
+                        >
+                            Review &amp; create
+                        </h2>
+
+                        <p className="mt-1 text-body-sm text-muted-foreground">
+                            Edit any cell inline. Rows flagged in red must be
+                            fixed before they can be created.
+                        </p>
+                    </div>
+
+                    {products.length > 0 && (
+                        <p className="text-small text-muted-foreground">
+                            <span className="font-semibold text-foreground">
+                                {readyCount}
+                            </span>{" "}
+                            of {products.length} ready to create
+                        </p>
+                    )}
+                </div>
+
+                {/* Toolbar */}
+                <div className="flex flex-col gap-3 rounded-xl border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={onAddRow}
+                            disabled={uploading || aiProcessing}
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add Product
+                        </Button>
+
+                        {onAddRows && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onAddRows(10)}
+                                disabled={uploading || aiProcessing}
+                            >
+                                <Plus className="h-4 w-4" />
+                                Add 10 Rows
+                            </Button>
+                        )}
+
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={onAiFillAll}
+                            disabled={
+                                uploading ||
+                                aiProcessing ||
+                                bulkAiLoading ||
+                                products.length === 0
+                            }
+                        >
+                            {bulkAiLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Sparkles className="h-4 w-4" />
+                            )}
+                            AI Fill All
+                        </Button>
+                    </div>
 
                     <Button
                         type="button"
-                        variant="outline"
                         size="sm"
-                        onClick={onAiFillAll}
+                        onClick={onUpload}
                         disabled={
                             uploading ||
                             aiProcessing ||
                             bulkAiLoading ||
-                            products.length === 0
+                            readyCount === 0
                         }
                     >
-                        {bulkAiLoading ? (
-                            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                        {uploading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                            <Sparkles className="mr-1.5 h-4 w-4" />
+                            <Upload className="h-4 w-4" />
                         )}
-                        AI Fill All
+                        Create All
+                        {readyCount > 0 && ` (${readyCount})`}
                     </Button>
                 </div>
 
-                <Button
-                    type="button"
-                    size="sm"
-                    onClick={onUpload}
-                    disabled={
-                        uploading ||
-                        aiProcessing ||
-                        bulkAiLoading ||
-                        readyCount === 0
-                    }
-                >
-                    {uploading ? (
-                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Upload className="mr-1.5 h-4 w-4" />
-                    )}
-                    Create All
-                </Button>
-            </div>
+                {/* Field rules — quick reference */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-xl border bg-muted/40 px-4 py-2.5 text-small text-muted-foreground">
+                    <span>
+                        <span className="font-semibold text-foreground">
+                            Required
+                        </span>{" "}
+                        fields are marked with{" "}
+                        <span className="font-bold text-red-500">*</span>
+                    </span>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11px] text-muted-foreground">
-                <span><span className="font-bold text-red-500">*</span> Required</span>
-                <span>Chest is required for upperwear categories</span>
-                <span>Waist is required for lowerwear categories</span>
-                <span>Length, retail, color are optional</span>
-            </div>
+                    <span>
+                        Chest is required for upperwear (T-Shirts, Shirts,
+                        Hoodies…)
+                    </span>
+
+                    <span>
+                        Waist is required for lowerwear (Jeans, Trousers,
+                        Shorts…)
+                    </span>
+
+                    <span>
+                        Length, retail price &amp; color are optional
+                    </span>
+                </div>
 
             {/* Desktop Grid */}
             <div className="hidden w-full min-w-0 max-w-full overflow-hidden rounded-xl border bg-background lg:block">
@@ -746,18 +934,32 @@ export default function SpreadsheetEditor({
                                     <TableRow>
                                         <TableCell
                                             colSpan={18}
-                                            className="h-48 text-center"
+                                            className="h-64"
                                         >
-                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                            <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-muted-foreground">
                                                 <FolderOpen className="h-8 w-8" />
-                                                <p className="font-medium text-foreground">
-                                                    No products yet
-                                                </p>
-                                                <p className="text-sm">
-                                                    Drop a product
-                                                    folder above
-                                                    to get started.
-                                                </p>
+
+                                                <div>
+                                                    <p className="text-body-sm font-semibold text-foreground">
+                                                        No products yet
+                                                    </p>
+
+                                                    <p className="mt-1 text-small">
+                                                        Drop a product folder
+                                                        above, or add a blank
+                                                        row to start typing.
+                                                    </p>
+                                                </div>
+
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={onAddRow}
+                                                >
+                                                    <Plus className="h-4 w-4" />
+                                                    Add Product
+                                                </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -1209,7 +1411,7 @@ export default function SpreadsheetEditor({
                                                             {product.errors
                                                                 .length >
                                                                 0 && (
-                                                                    <p className="max-w-[150px] text-[10px] leading-tight text-destructive">
+                                                                    <p className="max-w-[150px] text-2xs leading-tight text-destructive">
                                                                         {
                                                                             product
                                                                                 .errors[0]
@@ -1227,7 +1429,7 @@ export default function SpreadsheetEditor({
                                                                 )}
 
                                                             {product.aiGenerated && (
-                                                                <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                                                <span className="flex items-center gap-1 text-2xs text-muted-foreground">
                                                                     <Sparkles className="h-3 w-3" />
                                                                     AI filled
                                                                 </span>
@@ -1314,14 +1516,25 @@ export default function SpreadsheetEditor({
                     <div className="rounded-xl border p-8 text-center">
                         <FolderOpen className="mx-auto h-8 w-8 text-muted-foreground" />
 
-                        <p className="mt-3 font-medium">
+                        <p className="mt-3 text-body-sm font-semibold text-foreground">
                             No products yet
                         </p>
 
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            Upload a product folder
-                            above.
+                        <p className="mt-1 text-small text-muted-foreground">
+                            Upload a product folder above, or add a blank row
+                            to start typing.
                         </p>
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="mt-4"
+                            onClick={onAddRow}
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add Product
+                        </Button>
                     </div>
                 ) : (
                     products.map(
@@ -1901,6 +2114,7 @@ export default function SpreadsheetEditor({
                     )
                 )}
             </div>
+            </section>
 
             {/* Preview Modal */}
             {preview && (
@@ -1910,68 +2124,8 @@ export default function SpreadsheetEditor({
                     onClose={() =>
                         setPreview(null)
                     }
-                    onPrevious={() =>
-                        setPreview(
-                            (current) => {
-                                if (!current)
-                                    return current;
-
-                                const product =
-                                    products.find(
-                                        (item) =>
-                                            item.sku ===
-                                            current.sku,
-                                    );
-
-                                if (!product)
-                                    return null;
-
-                                return {
-                                    ...current,
-                                    index:
-                                        current.index >
-                                            0
-                                            ? current.index -
-                                            1
-                                            : product
-                                                .imageUrls
-                                                .length -
-                                            1,
-                                };
-                            },
-                        )
-                    }
-                    onNext={() =>
-                        setPreview(
-                            (current) => {
-                                if (!current)
-                                    return current;
-
-                                const product =
-                                    products.find(
-                                        (item) =>
-                                            item.sku ===
-                                            current.sku,
-                                    );
-
-                                if (!product)
-                                    return null;
-
-                                return {
-                                    ...current,
-                                    index:
-                                        current.index <
-                                            product
-                                                .imageUrls
-                                                .length -
-                                            1
-                                            ? current.index +
-                                            1
-                                            : 0,
-                                };
-                            },
-                        )
-                    }
+                    onPrevious={() => stepPreview(-1)}
+                    onNext={() => stepPreview(1)}
                     onRemove={() => {
                         const product =
                             products.find(
@@ -2028,6 +2182,9 @@ function ImagePreviewModal({
             onClick={onClose}
         >
             <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Product image preview"
                 className="relative flex max-h-[90vh] max-w-[90vw] flex-col items-center gap-3"
                 onClick={(event) =>
                     event.stopPropagation()
@@ -2090,6 +2247,10 @@ function ImagePreviewModal({
                         Remove
                     </Button>
                 </div>
+
+                <p className="text-small text-white/60">
+                    ← → to browse · Esc to close
+                </p>
             </div>
         </div>
     );

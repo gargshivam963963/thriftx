@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 
+import { transitions } from "@/components/animations/Motion";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
@@ -43,7 +44,7 @@ export function PageHeader({
         <motion.header
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.32, ease: [0.4, 0, 0.2, 1] }}
+            transition={transitions.pageHeader}
             className={cn(
                 "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between",
                 className,

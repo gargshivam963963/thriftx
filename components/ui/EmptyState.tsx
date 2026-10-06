@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { transitions } from "@/components/animations/Motion";
 
 interface EmptyStateProps {
     icon?: React.ReactNode;
@@ -31,7 +32,7 @@ export default function EmptyState({
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={transitions.normal}
             className={cn(
                 "flex flex-col items-center justify-center rounded-3xl border border-border bg-card px-6 py-14 text-center shadow-card",
                 className

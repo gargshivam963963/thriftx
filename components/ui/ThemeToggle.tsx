@@ -2,9 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Sun, Moon, Laptop, Check } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useTheme, type ThemePreference } from "@/lib/ThemeContext";
 import { cn } from "@/lib/utils";
+import {
+    menuVariants,
+    press,
+} from "@/components/animations/Motion";
 
 interface ThemeToggleProps {
   className?: string;
@@ -185,7 +189,7 @@ export default function ThemeToggle({
     <div ref={dropdownRef} className={cn("relative inline-block", className)}>
       <motion.button
         type="button"
-        whileTap={{ scale: 0.92 }}
+        whileTap={press.iconTap}
         onClick={() => setOpen((prev) => !prev)}
         aria-label={`Current theme: ${preference}. Click to change theme`}
         aria-haspopup="menu"
@@ -202,10 +206,10 @@ export default function ThemeToggle({
         {open && (
           <motion.div
             role="menu"
-            initial={{ opacity: 0, y: -6, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.96 }}
-            transition={{ duration: 0.15 }}
+            variants={menuVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             className="absolute right-0 top-full z-50 mt-2 w-44 origin-top-right overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-float"
           >
             <div className="px-2.5 py-1.5 text-caption text-muted-foreground">

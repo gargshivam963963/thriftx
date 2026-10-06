@@ -5,6 +5,11 @@ import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 import PremiumImage from "@/components/ui/PremiumImage";
+import {
+    lift,
+    motionTokens,
+    staggerDelay,
+} from "@/components/animations/Motion";
 
 interface CategoryCardProps {
     title: string;
@@ -35,12 +40,11 @@ export default function CategoryCard({
                 once: true,
                 amount: 0.2,
             }}
-            whileHover={{
-                y: -8,
-            }}
+            whileHover={lift.card}
             transition={{
-                duration: 0.45,
-                ease: [0.22, 1, 0.36, 1],
+                duration: motionTokens.duration.slow,
+                ease: motionTokens.ease.standard,
+                delay: 0,
             }}
             className="h-full"
         >

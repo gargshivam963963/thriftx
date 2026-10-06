@@ -208,7 +208,7 @@ function ErrorState({
                     text-lg
                     font-semibold
                     leading-6
-                    tracking-[-0.01em]
+                    tracking-tight
                     text-foreground
                 "
             >
@@ -674,7 +674,7 @@ export default function ShopContent({
                                         text-base
                                         font-semibold
                                         leading-6
-                                        tracking-[-0.01em]
+                                        tracking-tight
                                         text-foreground
                                     "
                                 >
@@ -1394,7 +1394,7 @@ export default function ShopContent({
                                         text-lg
                                         font-semibold
                                         leading-6
-                                        tracking-[-0.01em]
+                                        tracking-tight
                                         text-foreground
                                     "
                                 >

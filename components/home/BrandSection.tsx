@@ -10,8 +10,10 @@ import { Card } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
 import {
     FadeUp,
+    lift,
     StaggerContainer,
     StaggerItem,
+    transitions,
 } from "@/components/animations";
 import { cn } from "@/lib/utils";
 
@@ -25,8 +27,8 @@ const brands: Brand[] = [
     { name: "Nike", className: "font-black italic tracking-tight" },
     { name: "Adidas", className: "font-bold tracking-widest" },
     { name: "Puma", className: "font-black italic tracking-wide" },
-    { name: "Zara", className: "font-bold tracking-[0.35em]" },
-    { name: "H&M", className: "font-black tracking-[0.2em]" },
+    { name: "Zara", className: "font-bold tracking-caps-wide" },
+    { name: "H&M", className: "font-black tracking-caps-wide" },
     { name: "Levi's", className: "font-bold tracking-tight" },
     {
         name: "Tommy Hilfiger",
@@ -36,8 +38,8 @@ const brands: Brand[] = [
         name: "Ralph Lauren",
         className: "font-bold tracking-wide italic",
     },
-    { name: "Uniqlo", className: "font-black lowercase tracking-[0.15em]" },
-    { name: "Lacoste", className: "font-black tracking-[0.25em]" },
+    { name: "Uniqlo", className: "font-black lowercase tracking-caps" },
+    { name: "Lacoste", className: "font-black tracking-caps-wide" },
 ];
 
 export default function BrandSection() {
@@ -63,8 +65,8 @@ export default function BrandSection() {
                     {brands.map((brand) => (
                         <StaggerItem key={brand.name}>
                             <motion.div
-                                whileHover={{ y: -4 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                whileHover={lift.card}
+                                transition={transitions.springSnappy}
                             >
                                 <Link
                                     href={`/shop?brand=${encodeURIComponent(brand.name)}`}

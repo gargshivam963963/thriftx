@@ -99,7 +99,7 @@ export default function AIProcessingOverlay({
                                             ? `Product ${current} of ${total}`
                                             : "Analyzing images..."}
                                         {currentSku && (
-                                            <span className="ml-1 font-mono text-[10px] text-violet-200">
+                                            <span className="ml-1 font-mono text-2xs text-violet-200">
                                                 · {currentSku}
                                             </span>
                                         )}
@@ -180,7 +180,7 @@ export default function AIProcessingOverlay({
                                 </div>
 
                                 {/* Bottom note */}
-                                <div className="flex items-center gap-2 rounded-xl bg-subtle px-3 py-2.5 text-[11px] text-muted-foreground dark:bg-card/50 dark:text-muted-foreground">
+                                <div className="flex items-center gap-2 rounded-xl bg-subtle px-3 py-2.5 text-2xs text-muted-foreground dark:bg-card/50 dark:text-muted-foreground">
                                     <Sparkles size={13} className="shrink-0 text-violet-500" />
                                     You can keep editing products while AI runs.
                                 </div>

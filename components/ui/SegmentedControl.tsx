@@ -10,6 +10,10 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
+import {
+    spring,
+    transitions,
+} from "@/components/animations/Motion";
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -46,15 +50,8 @@ interface SegmentedControlProps<T extends string> {
     className?: string;
 }
 
-/* ── Motion tokens ────────────────────────────────────────────────────────────
- * Shared so every switch in the app moves identically.                          */
-
-const spring = {
-    type: "spring",
-    stiffness: 520,
-    damping: 40,
-    mass: 0.7,
-} as const;
+/* ── Motion tokens — resolved from the ONE shared system ────────────────────
+ * Every switch in the app moves identically. */
 
 /* ── Size tokens ──────────────────────────────────────────────────────────────
  * Heights follow the shared control language (32 · 36→40 · 40→44 px) and the
@@ -265,7 +262,7 @@ export function SegmentedControl<T extends string>({
                                         transition={
                                             reduceMotion
                                                 ? { duration: 0 }
-                                                : { duration: 0.18, ease: "easeOut" }
+                                                : transitions.micro
                                         }
                                         className="inline-flex"
                                     >

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { lift, staggerDelay } from "@/components/animations/Motion";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import type { Order } from "./order.types";
 
@@ -33,13 +34,8 @@ export function OrderCard({
                 opacity: 1,
                 y: 0,
             }}
-            transition={{
-                duration: 0.35,
-                delay: index * 0.08,
-            }}
-            whileHover={{
-                y: -4,
-            }}
+            transition={staggerDelay(index, 0.08)}
+            whileHover={lift.card}
             className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm transition-shadow duration-300 hover:shadow-xl"
         >
             {/* Header */}

@@ -18,6 +18,10 @@ import type { Announcement } from "@/lib/marketing/types";
 import { useAuth } from "@/lib/AuthContext";
 import type { UserNotification } from "@/lib/notifications/types";
 import { cn } from "@/lib/utils";
+import {
+    menuVariants,
+    press,
+} from "@/components/animations/Motion";
 
 const READ_ANNOUNCEMENTS_KEY = "thriftx:read-announcements";
 const POLL_INTERVAL_MS = 60_000;
@@ -271,7 +275,7 @@ export default function NotificationBell() {
             >
                 <Bell size={20} aria-hidden="true" />
                 {unreadTotal > 0 && (
-                    <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold leading-none text-white">
+                    <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-2xs font-bold leading-none text-white">
                         {unreadTotal > 9 ? "9+" : unreadTotal}
                     </span>
                 )}

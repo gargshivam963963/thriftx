@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/Modal";
 
 interface ConfirmDialogProps {
     open: boolean;
@@ -14,6 +14,13 @@ interface ConfirmDialogProps {
     loading?: boolean;
 }
 
+/**
+ * ConfirmDialog — destructive confirm built on the ONE `Modal` system.
+ *
+ * Props are unchanged so existing callers (admin products) keep working;
+ * backdrop motion, Escape handling, scroll-lock and focus management all
+ * come from `Modal` instead of a second hand-rolled AnimatePresence block.
+ */
 export default function ConfirmDialog({
     open,
     onClose,
@@ -24,58 +31,29 @@ export default function ConfirmDialog({
     loading = false,
 }: ConfirmDialogProps) {
     return (
-        <AnimatePresence>
-            {open && (
-                <>
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-                    />
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="fixed inset-x-4 bottom-auto top-1/2 z-50 mx-auto max-w-md -translate-y-1/2"
-                    >
-                        <div className="rounded-2xl border border-border bg-card p-6 shadow-xl">
-                            <div className="mb-4 flex items-start justify-between">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/30">
-                                    <AlertTriangle size={20} className="text-red-600 dark:text-red-400" />
-                                </div>
-                                <Button
-                                    onClick={onClose}
-                                    variant="ghost"
-                                    size="iconSm"
-                                    aria-label="Close dialog"
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted dark:hover:bg-card"
-                                >
-                                    <X size={16} />
-                                </Button>
-                            </div>
-                            <h3 className="text-lg font-bold text-foreground">{title}</h3>
-                            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{message}</p>
-                            <div className="mt-6 flex items-center gap-3">
-                                <Button variant="outline" onClick={onClose} fullWidth>
-                                    Cancel
-                                </Button>
-                                <Button
-                                    variant="danger"
-                                    onClick={onConfirm}
-                                    loading={loading}
-                                    fullWidth
-                                >
-                                    {confirmText}
-                                </Button>
-                            </div>
-                        </div>
-                    </motion.div>
-                </>
-            )}
-        </AnimatePresence>
+        <Modal
+            open={open}
+            onClose={onClose}
+            title={title}
+            description={message}
+            footer={
+                <div className="grid w-full grid-cols-2 gap-3">
+                    <Button variant="outline" onClick={onClose}>
+                        Cancel
+                    </Button>
+                    <Button variant="danger" onClick={onConfirm} loading={loading}>
+                        {confirmText}
+                    </Button>
+                </div>
+            }
+        >
+            <div
+                aria-hidden="true"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-error-bg"
+            >
+                <AlertTriangle size={20} className="text-error" />
+            </div>
+        </Modal>
     );
 }
 

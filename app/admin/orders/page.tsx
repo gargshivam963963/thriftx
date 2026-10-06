@@ -455,7 +455,7 @@ export default function AdminOrdersPage() {
                                                     <span className="font-bold text-sm text-foreground">
                                                         ₹{order.total?.toLocaleString("en-IN")}
                                                     </span>
-                                                    <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground uppercase">
+                                                    <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-2xs font-medium text-muted-foreground uppercase">
                                                         {order.paymentMethod === "cod" ? "COD" : "Prepaid"}
                                                     </span>
                                                 </div>
@@ -690,7 +690,7 @@ export default function AdminOrdersPage() {
                                                                     {item.title}
                                                                 </p>
                                                                 {item.size && (
-                                                                    <p className="text-[11px] text-muted-foreground">
+                                                                    <p className="text-2xs text-muted-foreground">
                                                                         Size: {item.size}
                                                                     </p>
                                                                 )}
@@ -752,7 +752,7 @@ export default function AdminOrdersPage() {
                                                 <span>Return Status: {selectedOrder.returnStatus}</span>
                                             </div>
                                             {selectedOrder.returnReason && (
-                                                <span className="text-[11px] text-muted-foreground truncate max-w-[200px]">
+                                                <span className="text-2xs text-muted-foreground truncate max-w-[200px]">
                                                     Reason: {selectedOrder.returnReason}
                                                 </span>
                                             )}

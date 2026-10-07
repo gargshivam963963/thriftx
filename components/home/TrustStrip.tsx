@@ -13,7 +13,7 @@ const features = [
 
 export default function TrustStrip() {
     return (
-        <section className="border-y border-border bg-card">
+        <section className="border-y border-white/40 bg-card/50 dark:border-white/10">
             <Container>
                 <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 py-6 sm:py-8">
                     {features.map(({ icon: Icon, label, highlight }) => (

@@ -87,7 +87,7 @@ export default function InstagramFeed({
     );
 
     return (
-        <section className="bg-card py-16 md:py-24">
+        <section className="bg-card/50 py-16 md:py-24">
             <Container>
                 <FadeUp>
                     <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">

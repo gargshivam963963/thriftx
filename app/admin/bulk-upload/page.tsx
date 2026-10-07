@@ -17,6 +17,10 @@ import { uploadProducts } from "@/app/lib/bulk/uploader";
 import { mapAIResponseToProduct } from "@/lib/ai/parser";
 import { runAiFill } from "@/lib/services/aiFill";
 import {
+    AICoverError,
+    generateCoverImage,
+} from "@/lib/services/aiCover";
+import {
     clearDraft,
     createBlankProduct,
     generateSku,
@@ -91,6 +95,14 @@ export default function BulkUploadPage() {
 
     const aiQueueRef = useRef<BulkProduct[]>([]);
     const aiRunnerRef = useRef(false);
+    const [autoCover, setAutoCover] = useState(true);
+    const [coverSkus, setCoverSkus] = useState<string[]>([]);
+    const coverQueueRef = useRef<string[]>([]);
+    const coverRunningRef = useRef(false);
+    const productsRef = useRef<BulkProduct[]>([]);
+    const autoCoverRef = useRef(true);
+    const enqueueCoverRef = useRef<(sku: string) => void>(() => {});
+    const maybeAutoCoverRef = useRef<(sku: string) => void>(() => {});
 
     useEffect(() => {
         let cancelled = false;
@@ -264,6 +276,7 @@ export default function BulkUploadPage() {
                                 imageFiles: files,
                                 imageUrls,
                                 primaryImage: imageUrls[0],
+                                aiCover: false,
                                 status:
                                     product.status === "Uploaded"
                                         ? "Ready"
@@ -273,9 +286,152 @@ export default function BulkUploadPage() {
                     ),
                 ),
             );
+            void Promise.resolve().then(() => maybeAutoCoverRef.current(sku));
         },
         [],
     );
+
+    const enqueueCover = useCallback((sku: string) => {
+        if (!coverQueueRef.current.includes(sku)) {
+            coverQueueRef.current.push(sku);
+        }
+        void runCoverQueueRef.current();
+    }, []);
+
+    const runCoverQueueRef = useRef<() => Promise<void>>(async () => {});
+
+    const runCoverQueue = useCallback(async () => {
+        if (coverRunningRef.current) return;
+        coverRunningRef.current = true;
+        try {
+            while (coverQueueRef.current.length > 0) {
+                const sku = coverQueueRef.current.shift() as string;
+                const product = productsRef.current.find(
+                    (item) => item.sku === sku
+                );
+                if (
+                    !product ||
+                    product.aiCover ||
+                    product.imageFiles.length === 0
+                ) {
+                    continue;
+                }
+                setCoverSkus((prev) =>
+                    prev.includes(sku) ? prev : [...prev, sku]
+                );
+                try {
+                    const cover = await generateCoverImage(
+                        product.imageFiles[0]
+                    );
+                    const current = productsRef.current.find(
+                        (item) => item.sku === sku
+                    );
+                    if (!current) {
+                        continue;
+                    }
+                    const nextFiles = [
+                        cover,
+                        ...current.imageFiles.filter(
+                            (file) => file.name !== cover.name
+                        ),
+                    ].slice(0, 10);
+                    const urls = nextFiles.map((file) =>
+                        URL.createObjectURL(file)
+                    );
+                    setProducts(
+                        validateProducts(
+                            productsRef.current.map((item) =>
+                                item.sku === sku
+                                    ? {
+                                          ...item,
+                                          imageFiles: nextFiles,
+                                          imageUrls: urls,
+                                          aiCover: true,
+                                      }
+                                    : item
+                            )
+                        )
+                    );
+                    showToast({
+                        type: "success",
+                        title: "AI cover ready",
+                        message: `${sku}: main cover updated. Originals kept.`,
+                        duration: 3500,
+                    });
+                } catch (error) {
+                    if (error instanceof AICoverError) {
+                        if (error.code !== "VALIDATION") {
+                            showToast({
+                                type: "info",
+                                title: "Cover skipped",
+                                message: `${sku}: ${error.message}`,
+                                duration: 4000,
+                            });
+                        }
+                    } else {
+                        showToast({
+                            type: "info",
+                            title: "Cover skipped",
+                            message: `${sku}: original photo kept.`,
+                            duration: 4000,
+                        });
+                    }
+                } finally {
+                    setCoverSkus((prev) =>
+                        prev.filter((item) => item !== sku)
+                    );
+                }
+            }
+        } finally {
+            coverRunningRef.current = false;
+        }
+    }, []);
+
+    const handleGenerateCover = useCallback(
+        (sku: string) => {
+            const product = productsRef.current.find(
+                (item) => item.sku === sku
+            );
+            if (!product || product.imageFiles.length === 0) {
+                showToast({
+                    type: "warning",
+                    title: "No photo yet",
+                    message: "Upload a product photo first.",
+                    duration: 3500,
+                });
+                return;
+            }
+            enqueueCover(sku);
+        },
+        [enqueueCover]
+    );
+
+    useEffect(() => {
+        runCoverQueueRef.current = runCoverQueue;
+        enqueueCoverRef.current = enqueueCover;
+        maybeAutoCoverRef.current = (sku: string) => {
+            if (!autoCoverRef.current) return;
+            const product = productsRef.current.find(
+                (item) => item.sku === sku
+            );
+            if (
+                !product ||
+                product.aiCover ||
+                product.imageFiles.length === 0
+            ) {
+                return;
+            }
+            enqueueCoverRef.current(sku);
+        };
+    }, [runCoverQueue, enqueueCover]);
+
+    useEffect(() => {
+        productsRef.current = products;
+    }, [products]);
+
+    useEffect(() => {
+        autoCoverRef.current = autoCover;
+    }, [autoCover]);
 
     const handleProductUpdate = useCallback(
         (sku: string, updates: Partial<BulkProduct>) => {

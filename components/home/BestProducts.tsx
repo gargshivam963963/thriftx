@@ -20,7 +20,7 @@ interface BestProductsProps {
 
 export default function BestProducts({ products }: BestProductsProps) {
     return (
-        <section className="bg-muted py-16 md:py-24">
+        <section className="bg-muted/55 py-16 md:py-24">
             <Container>
                 <FadeUp>
                     <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">

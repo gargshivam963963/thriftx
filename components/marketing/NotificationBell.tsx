@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import {
     Bell,
     Check,
@@ -18,10 +19,7 @@ import type { Announcement } from "@/lib/marketing/types";
 import { useAuth } from "@/lib/AuthContext";
 import type { UserNotification } from "@/lib/notifications/types";
 import { cn } from "@/lib/utils";
-import {
-    menuVariants,
-    press,
-} from "@/components/animations/Motion";
+import { motionTokens, press } from "@/components/animations/Motion";
 
 const READ_ANNOUNCEMENTS_KEY = "thriftx:read-announcements";
 const POLL_INTERVAL_MS = 60_000;
@@ -286,7 +284,7 @@ export default function NotificationBell() {
                     id="customer-notifications"
                     role="region"
                     aria-label="Notifications"
-                    className="absolute right-0 top-full z-[120] mt-2 flex max-h-[min(70dvh,32rem)] w-[min(22rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-float"
+                    className="glass-liquid-strong absolute right-0 top-full z-[120] mt-2 flex max-h-[min(70dvh,32rem)] w-[min(22rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl"
                 >
                     <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
                         <div>

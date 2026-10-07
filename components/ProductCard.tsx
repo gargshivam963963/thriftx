@@ -83,7 +83,8 @@ function ProductCard({
       transition={{ duration: 0.3 }}
       className="h-full"
     >
-      <Card className="group relative h-full overflow-hidden border-border/70 bg-card/80 shadow-sm">
+      <Card className="group/liquid group relative h-full overflow-hidden rounded-2xl border-white/40 bg-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1.5 hover:shadow-[0_24px_56px_rgba(0,0,0,0.14)] dark:border-white/10 dark:bg-white/[0.06] dark:hover:shadow-[0_24px_56px_rgba(0,0,0,0.5)]">
+        <span className="liquid-sheen z-30" aria-hidden />
         <Link href={`/product/${slug}`} className="flex h-full flex-col">
           {/* ── Image — Uniform Fixed Height ──────────────────────── */}
           <div className="relative h-[220px] w-full overflow-hidden bg-muted sm:h-[260px] md:h-[280px] xl:h-[320px]">
@@ -103,7 +104,7 @@ function ProductCard({
               variant="ghost"
               size="iconSm"
               rounded="full"
-              className="absolute right-2 top-2 z-20 border border-border/70 bg-background/80 backdrop-blur-md shadow-sm"
+              className="glass-liquid absolute right-2 top-2 z-20 !border-white/50 shadow-lg transition-transform duration-300 hover:scale-110 active:scale-95"
             >
               <Heart
                 size={14}

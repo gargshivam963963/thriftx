@@ -104,9 +104,9 @@ export default function FilterDrawer({
                             initial="hidden"
                             animate="visible"
                             exit="exit"
-                            className="fixed inset-x-0 bottom-0 z-[90] max-h-[90vh] overflow-y-auto rounded-t-2xl border-t border-border bg-background pb-8 shadow-float"
+                            className="fixed inset-x-0 bottom-0 z-[90] max-h-[90vh] overflow-y-auto rounded-t-3xl border-t border-white/40 bg-white/70 pb-8 shadow-float backdrop-blur-2xl backdrop-saturate-150 dark:border-white/10 dark:bg-zinc-950/75"
                         >
-                            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 px-5 py-4 backdrop-blur-xl">
+                            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/40 bg-white/60 px-5 py-4 backdrop-blur-2xl dark:border-white/10 dark:bg-zinc-950/60">
                                 <div className="flex items-center gap-3">
                                     <h2 className="text-sm font-semibold text-foreground">
                                         Filters

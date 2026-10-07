@@ -159,8 +159,6 @@ function PasswordStrengthBar({
 
 export default function Signup() {
   const router = useRouter();
-  const searchParams = new URL(typeof window !== "undefined" ? window.location.href : "").searchParams;
-  const referralCodeParam = searchParams.get("ref");
 
   const {
     user,
@@ -170,7 +168,15 @@ export default function Signup() {
 
   const [verificationNotice, setVerificationNotice] =
     useState("");
-  const [referralCode, setReferralCode] = useState<string | null>(referralCodeParam);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+
+  // Read ?ref= client-side only — `window` doesn't exist during SSR/prerender
+  // (the old `new URL("")` crashed the build once pages started rendering),
+  // and starting as null keeps server HTML and the first client render in sync.
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref) setReferralCode(ref);
+  }, []);
 
   const [googleLoading, setGoogleLoading] = useState(false);
 

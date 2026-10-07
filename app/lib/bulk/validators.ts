@@ -125,6 +125,15 @@ export function validateProduct(
 }
 
 /**
+ * Option lists exported so form controls and validation can never drift apart.
+ */
+export const GENDER_OPTIONS = VALID_GENDERS;
+export const CONDITION_OPTIONS = VALID_CONDITIONS;
+export const CATEGORY_OPTIONS = VALID_CATEGORIES;
+export const UPPER_CATEGORY_LIST = UPPER_CATEGORIES;
+export const LOWER_CATEGORY_LIST = LOWER_CATEGORIES;
+
+/**
  * Validates all products and returns them with updated errors.
  * Runs automatically — no manual Validate button needed.
  */

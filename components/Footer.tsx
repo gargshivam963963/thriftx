@@ -126,15 +126,15 @@ export default function Footer() {
   if (pathname?.startsWith("/admin")) return null;
 
   return (
-    <footer className="relative w-full overflow-hidden border-t border-border bg-card">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+    <footer className="relative w-full overflow-hidden border-t border-white/30 bg-gradient-to-b from-white/40 to-white/70 dark:border-white/10 dark:from-zinc-950/40 dark:to-zinc-950/70">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
 
       <Container className="py-12 md:py-16 lg:py-20">
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
           {trustBadges.map(({ icon: Icon, label }) => (
             <div
               key={label}
-              className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm"
+              className="glass-liquid glass-card-hover flex min-w-0 items-center gap-3 rounded-2xl p-4"
             >
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-foreground text-background dark:bg-muted dark:text-foreground">
                 <Icon className="h-5 w-5" aria-hidden="true" />

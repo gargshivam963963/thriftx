@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/Container";
 import { FadeUp, ScaleIn } from "@/components/animations";
 import { Card } from "@/components/ui/Card";
+import { Glass, LiquidOrbs } from "@/components/ui/Glass";
 
 const heroStats = [
     { value: "5000+", label: "Curated Pieces" },
@@ -25,7 +26,8 @@ const floatingFeatures = [
 
 export default function Hero() {
     return (
-        <section className="relative min-h-[90vh] overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(0,0,0,0.03),_transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.06),_transparent_60%)]">
+        <section className="relative min-h-[90vh] overflow-hidden">
+            <LiquidOrbs />
             {/* Background decorative elements */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-muted/40 to-transparent blur-3xl dark:from-muted/30" />
@@ -45,7 +47,7 @@ export default function Hero() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.5 }}
                                 >
-                                    <Badge variant="outline" size="lg" rounded="full" className="border-border bg-card/70 px-4 py-2 text-small font-semibold tracking-wide dark:border-border dark:bg-card/70">
+                                    <Badge variant="outline" size="lg" rounded="full" className="glass-liquid glass-pill px-4 py-2 text-small font-semibold tracking-wide shadow-lg">
                                         ✨ Curated Premium Thrift Fashion
                                     </Badge>
                                 </motion.div>
@@ -53,7 +55,7 @@ export default function Hero() {
                                 {/* Headline */}
                                 <h1 className="text-display-xl font-display font-bold tracking-tight text-foreground">
                                     Discover{" "}
-                                    <span className="bg-gradient-to-r from-foreground via-muted-foreground to-foreground bg-clip-text text-transparent dark:from-muted dark:via-muted-foreground dark:to-muted">
+                                    <span className="text-shimmer-liquid">
                                         Premium
                                     </span>
                                     <br />
@@ -81,7 +83,7 @@ export default function Hero() {
                                 </div>
 
                                 {/* Stats Bar */}
-                                <div className="grid grid-cols-3 divide-x divide-border overflow-hidden rounded-2xl border border-border bg-card/80 shadow-sm backdrop-blur-xl">
+                                <Glass hover className="grid grid-cols-3 divide-x divide-white/20 overflow-hidden rounded-2xl dark:divide-white/10">
                                     {heroStats.map((item) => (
                                         <div key={item.label} className="px-4 py-5 text-center sm:px-6 sm:py-6">
                                             <p className="text-heading-4 font-bold text-foreground">
@@ -92,7 +94,7 @@ export default function Hero() {
                                             </p>
                                         </div>
                                     ))}
-                                </div>
+                                </Glass>
 
                                 {/* Same-Day Delivery Banner */}
                                 <motion.div
@@ -138,8 +140,8 @@ export default function Hero() {
                             <motion.div
                                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                                transition={{ delay: 0.4, duration: 0.5 }}
-                                className="absolute -bottom-6 -left-4 hidden max-w-[240px] rounded-2xl border border-border/80 bg-card/90 p-5 shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-card/90 lg:block"
+                                transition={{ delay: 0.4, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                                className="glass-liquid glass-card-hover absolute -bottom-6 -left-4 hidden max-w-[240px] rounded-2xl p-5 lg:block"
                             >
                                 <p className="text-caption text-muted-foreground">
                                     Featured Collection
@@ -155,9 +157,9 @@ export default function Hero() {
                             {/* Floating Features - Right Side */}
                             <motion.div
                                 initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.5, duration: 0.5 }}
-                                className="absolute -right-8 top-12 hidden max-w-[220px] space-y-3 rounded-2xl border border-border/80 bg-card/90 p-5 shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-card/90 xl:block"
+                                animate={{ opacity: 1, y: [0, -10, 0], x: 0 }}
+                                transition={{ delay: 0.5, duration: 0.6, ease: [0.22, 1, 0.36, 1], y: { duration: 6, repeat: Infinity, ease: "easeInOut" } }}
+                                className="glass-liquid absolute -right-8 top-12 hidden max-w-[220px] space-y-3 rounded-2xl p-5 xl:block"
                             >
                                 <p className="text-caption text-muted-foreground">
                                     Why THRIFTX

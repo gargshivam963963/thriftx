@@ -72,7 +72,7 @@ export default function WeekendSale({
     if (!window) {
         // Reserve exact space to avoid any layout shift while mounting.
         return (
-            <section className="bg-card py-16 md:py-24" aria-hidden="true">
+            <section className="bg-card/50 py-16 md:py-24" aria-hidden="true">
                 <Container>
                     <div className="h-64 animate-pulse bg-muted" />
                 </Container>
@@ -91,7 +91,7 @@ export default function WeekendSale({
     ];
 
     return (
-        <section className="relative isolate overflow-hidden bg-card py-16 md:py-24">
+        <section className="relative isolate overflow-hidden bg-card/50 py-16 md:py-24">
             {/* Decorative gradient */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-amber-500/10 blur-3xl" />

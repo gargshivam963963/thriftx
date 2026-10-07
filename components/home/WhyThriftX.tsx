@@ -44,7 +44,7 @@ const benefits = [
 
 export default function WhyThriftX() {
     return (
-        <section className="bg-muted py-24">
+        <section className="bg-muted/55 py-24">
             <Container>
                 <div className="grid items-center gap-16 lg:grid-cols-2">
                     {/* ── Left: Content ─────────────────────────────── */}

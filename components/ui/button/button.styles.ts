@@ -127,20 +127,23 @@ export const buttonVariants = cva(
         ],
 
         /**
-         * Glass
+         * Glass — liquid frosted
          */
         glass: [
-          "border border-border/50",
+          "border border-white/50",
 
-          "bg-card/70",
+          "bg-white/60 dark:bg-white/10",
 
-          "backdrop-blur-xl",
+          "backdrop-blur-2xl backdrop-saturate-150",
 
           "text-foreground",
 
-          "hover:bg-card",
+          "shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.6)]",
 
-          "shadow-lg",
+          "hover:bg-white/80 dark:hover:bg-white/15",
+          "hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(0,0,0,0.14)]",
+
+          "active:translate-y-0 active:scale-[0.98]",
         ],
 
         /**

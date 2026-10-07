@@ -119,7 +119,7 @@ export function Modal({
                         animate="visible"
                         exit="exit"
                         className={cn(
-                            "w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-xl outline-none",
+                            "glass-liquid-strong w-full max-w-lg overflow-hidden rounded-2xl outline-none",
                             className,
                         )}
                     >

@@ -998,14 +998,16 @@ function HeaderContent() {
           z-header
           w-full
           border-b
-          border-border/80
-          bg-background/90
-          shadow-sm
+          border-white/40
+          bg-white/55
+          shadow-[0_8px_32px_rgba(0,0,0,0.06)]
           backdrop-blur-2xl
+          backdrop-saturate-150
           transition-all
-          duration-300
-          dark:border-border/50
-          dark:bg-background/90
+          duration-500
+          ease-[cubic-bezier(0.22,1,0.36,1)]
+          dark:border-white/10
+          dark:bg-zinc-950/55
         "
       >
         {/*

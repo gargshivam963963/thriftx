@@ -51,7 +51,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Primary navigation"
-      className="fixed inset-x-0 bottom-0 z-50 grid h-[var(--mobile-nav-height)] grid-cols-5 items-stretch border-t border-border bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 grid h-[var(--mobile-nav-height)] grid-cols-5 items-stretch border-t border-white/40 bg-white/60 px-1 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_32px_rgba(0,0,0,0.08)] backdrop-blur-2xl backdrop-saturate-150 dark:border-white/10 dark:bg-zinc-950/60 md:hidden"
     >
       {navItems.map((item) => {
         const isWishlist = item.href === "/profile/wishlist";

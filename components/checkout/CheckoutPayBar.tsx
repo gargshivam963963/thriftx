@@ -65,7 +65,7 @@ export function CheckoutPayBar({
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.28, ease: "easeOut" }}
             className={cn(
-                "fixed inset-x-0 z-40 border-t border-border bg-card/95 backdrop-blur-xl",
+                "fixed inset-x-0 z-40 border-t border-white/40 bg-white/60 backdrop-blur-2xl backdrop-saturate-150 dark:border-white/10 dark:bg-zinc-950/65",
                 "bottom-[var(--mobile-nav-height)] pb-[calc(0.75rem+env(safe-area-inset-bottom))]",
                 "md:bottom-0 lg:hidden",
                 className,

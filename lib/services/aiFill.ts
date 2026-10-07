@@ -42,11 +42,42 @@ const MAX_RETRIES = 2;
 /** Base delay in ms for exponential backoff. */
 const BASE_RETRY_DELAY_MS = 800;
 
-/** In-flight guard to prevent concurrent AI requests. */
-let inFlight = false;
+/** Max AI Fill requests allowed in flight at once (across all rows). */
+const MAX_CONCURRENT = 3;
 
-/** Map of SKU/product keys currently being processed (secondary guard). */
+/** Current number of in-flight AI Fill requests. */
+let activeRequests = 0;
+
+/** FIFO queue of callers waiting for a free slot. */
+const waitingRequests: (() => void)[] = [];
+
+/** Map of SKU/product keys currently being processed (dedup guard). */
 const inFlightKeys = new Set<string>();
+
+/**
+ * Take a concurrency slot, waiting if the limit is reached.
+ * Several products can be analysed in parallel — just not unbounded.
+ */
+function acquireSlot(): Promise<void> {
+  if (activeRequests < MAX_CONCURRENT) {
+    activeRequests += 1;
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve) => {
+    waitingRequests.push(() => {
+      activeRequests += 1;
+      resolve();
+    });
+  });
+}
+
+/** Release a concurrency slot and hand it to the next caller, if any. */
+function releaseSlot(): void {
+  activeRequests = Math.max(0, activeRequests - 1);
+  const next = waitingRequests.shift();
+  if (next) next();
+}
 
 /** Retryable network/timeout error codes (never validation). */
 const RETRYABLE_CODES: AIFillErrorCode[] = [
@@ -179,27 +210,25 @@ export async function runAiFill(
     imageUrls,
   } = opts;
 
-  // ── Dedup: prevent concurrent AI requests ──
-  if (key) {
-    if (inFlightKeys.has(key)) {
-      return {
-        success: false,
-        data: null,
-        code: "CONFLICT",
-        message: "AI Fill is already running for this product.",
-      };
-    }
-    inFlightKeys.add(key);
-  } else if (inFlight) {
+  // ── Dedup: never start a second run for the same product ──
+  const dedupKey =
+    key ??
+    `__anon_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+  if (inFlightKeys.has(dedupKey)) {
     return {
       success: false,
       data: null,
       code: "CONFLICT",
-      message: "AI Fill is already running. Please wait.",
+      message: "AI Fill is already running for this product.",
     };
   }
 
-  if (key) inFlight = true;
+  inFlightKeys.add(dedupKey);
+
+  // ── Bounded concurrency: several rows may analyse at once, but only a few
+  // requests are in flight at a time so the endpoint is never flooded. ──
+  await acquireSlot();
 
   const startedAt = Date.now();
   let retryCount = 0;
@@ -356,8 +385,8 @@ export async function runAiFill(
     };
   } finally {
     compressed.forEach((image) => URL.revokeObjectURL(image.url));
-    if (key) inFlightKeys.delete(key);
-    inFlight = false;
+    inFlightKeys.delete(dedupKey);
+    releaseSlot();
   }
 }
 

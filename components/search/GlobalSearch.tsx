@@ -205,7 +205,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        className="fixed inset-x-4 top-4 z-[70] mx-auto max-w-3xl overflow-hidden rounded-3xl border border-border/80 bg-card shadow-2xl shadow-black/10 dark:border-border/60 dark:bg-card"
+                        className="glass-liquid-strong fixed inset-x-4 top-4 z-[70] mx-auto max-w-3xl overflow-hidden rounded-3xl shadow-2xl shadow-black/10"
                     >
                         {/* Search Input */}
                         <form onSubmit={handleSubmit} className="relative">

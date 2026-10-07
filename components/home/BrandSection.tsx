@@ -44,7 +44,7 @@ const brands: Brand[] = [
 
 export default function BrandSection() {
     return (
-        <section className="bg-muted py-24">
+        <section className="bg-muted/55 py-24">
             <Container>
                 <FadeUp>
                     <div className="mb-14 text-center">

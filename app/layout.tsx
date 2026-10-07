@@ -10,6 +10,7 @@ import { CartProvider } from "@/lib/CartContext";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import AnalyticsProviderWrapper from "@/components/AnalyticsProviderWrapper";
 import BottomNav from "@/components/BottomNav";
+import PageTransition from "@/components/animations/PageTransition";
 import { MotionProvider } from "@/components/animations/Motion";
 import { Toaster } from "sonner";
 import { siteConfig } from "@/lib/seo";
@@ -167,7 +168,7 @@ export default function RootLayout({
                   <Header />
 
                   <main className="flex flex-1 flex-col">
-                    {children}
+                    <PageTransition>{children}</PageTransition>
                   </main>
 
                   <Footer />
@@ -178,6 +179,15 @@ export default function RootLayout({
                     richColors
                     closeButton
                     duration={3000}
+                    gap={10}
+                    visibleToasts={4}
+                    toastOptions={{
+                      className: "thriftx-toast",
+                      style: {
+                        borderRadius: "16px",
+                        backdropFilter: "blur(20px) saturate(1.4)",
+                      },
+                    }}
                   />
                 </AnalyticsProviderWrapper>
                 </MotionProvider>

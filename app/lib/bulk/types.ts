@@ -52,6 +52,12 @@ export interface BulkProduct {
   imageUrls: string[];
   primaryImage?: string;
 
+  /**
+   * True when `imageFiles[0]` is an AI-generated main cover image (identical
+   * product, clean studio backdrop) rather than an original photo.
+   */
+  aiCover?: boolean;
+
   // AI
   aiGenerated: boolean;
 

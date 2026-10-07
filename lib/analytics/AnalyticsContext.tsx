@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import type { EventType } from "./types";
 import { initTracker, getTracker } from "./tracker";
 import { shouldTrack } from "./utils";
@@ -47,13 +47,27 @@ const AnalyticsContext = createContext<AnalyticsContextType>({
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const searchParams = useSearchParams();
+    // NOTE: we deliberately avoid `useSearchParams()` here — it suspends and,
+    // because this provider wraps the whole app, it forced every static page
+    // (incl. the homepage) to bail out of SSR to client-side rendering
+    // (empty initial HTML → bad SEO + blank first paint). Search params are
+    // read client-side instead: pageview tracking only ever runs in effects.
+    const [search, setSearch] = useState("");
     const { user } = useAuth();
     const trackerRef = useRef<ReturnType<typeof getTracker> | null>(null);
     const prevPathRef = useRef<string>("");
     const [isReady, setIsReady] = useState(false);
 
     const isAdminUser = user?.role === "admin";
+
+    // App Router dispatches popstate on push/replace too, so this stays in
+    // sync with client-side ?query changes as well as back/forward.
+    useEffect(() => {
+        const sync = () => setSearch(window.location.search);
+        sync();
+        window.addEventListener("popstate", sync);
+        return () => window.removeEventListener("popstate", sync);
+    }, []);
 
     useEffect(() => {
         const tracker = initTracker({
@@ -82,12 +96,13 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        const currentPath = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "");
+        const searchQuery = search ? search.replace(/^\?/, "") : "";
+        const currentPath = pathname + (searchQuery ? `?${searchQuery}` : "");
         if (currentPath !== prevPathRef.current) {
             prevPathRef.current = currentPath;
             trackerRef.current.trackPageView();
         }
-    }, [pathname, searchParams, isAdminUser, isReady]);
+    }, [pathname, search, isAdminUser, isReady]);
 
     useEffect(() => {
         if (

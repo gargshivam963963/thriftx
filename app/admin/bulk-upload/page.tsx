@@ -49,10 +49,14 @@ const IMAGE_EXTENSIONS = new Set([
 
 function isImageFile(file: File): boolean {
     const type = file.type.toLowerCase();
-    if (IMAGE_TYPES.has(type)) return true;
+
+    if (IMAGE_TYPES.has(type)) {
+        return true;
+    }
 
     const name = file.name.toLowerCase();
     const dot = name.lastIndexOf(".");
+
     return dot >= 0 && IMAGE_EXTENSIONS.has(name.slice(dot));
 }
 
@@ -95,14 +99,15 @@ export default function BulkUploadPage() {
 
     const aiQueueRef = useRef<BulkProduct[]>([]);
     const aiRunnerRef = useRef(false);
+
     const [autoCover, setAutoCover] = useState(true);
     const [coverSkus, setCoverSkus] = useState<string[]>([]);
+
     const coverQueueRef = useRef<string[]>([]);
     const coverRunningRef = useRef(false);
+
     const productsRef = useRef<BulkProduct[]>([]);
     const autoCoverRef = useRef(true);
-    const enqueueCoverRef = useRef<(sku: string) => void>(() => {});
-    const maybeAutoCoverRef = useRef<(sku: string) => void>(() => {});
 
     useEffect(() => {
         let cancelled = false;
@@ -110,15 +115,13 @@ export default function BulkUploadPage() {
         void (async () => {
             const draft = await loadDraft();
 
-            if (cancelled) return;
+            if (cancelled) {
+                return;
+            }
 
             if (draft.products.length > 0) {
-                setProducts(
-                    validateProducts(draft.products),
-                );
-                setNextSkuNumber(
-                    draft.nextSkuNumber,
-                );
+                setProducts(validateProducts(draft.products));
+                setNextSkuNumber(draft.nextSkuNumber);
 
                 showToast({
                     type: "info",
@@ -137,16 +140,17 @@ export default function BulkUploadPage() {
     }, []);
 
     useEffect(() => {
-        if (!draftLoaded || uploading) return;
+        if (!draftLoaded || uploading) {
+            return;
+        }
 
         const timer = window.setTimeout(() => {
-            void saveDraft(
-                products,
-                nextSkuNumber,
-            );
+            void saveDraft(products, nextSkuNumber);
         }, 600);
 
-        return () => window.clearTimeout(timer);
+        return () => {
+            window.clearTimeout(timer);
+        };
     }, [
         draftLoaded,
         nextSkuNumber,
@@ -177,53 +181,75 @@ export default function BulkUploadPage() {
      */
     const handleAddRows = useCallback(
         (count: number) => {
-            const amount = Math.max(1, Math.min(Math.round(count), 50));
+            const amount = Math.max(
+                1,
+                Math.min(Math.round(count), 50),
+            );
 
             setProducts((current) => {
-                const rows = Array.from({ length: amount }, (_, offset) =>
-                    createBlankProduct(nextSkuNumber + offset),
+                const rows = Array.from(
+                    { length: amount },
+                    (_, offset) =>
+                        createBlankProduct(
+                            nextSkuNumber + offset,
+                        ),
                 );
 
-                return validateProducts([...current, ...rows]).map(
-                    (item, index) => ({
-                        ...item,
-                        row: index + 1,
-                    }),
-                );
+                return validateProducts([
+                    ...current,
+                    ...rows,
+                ]).map((item, index) => ({
+                    ...item,
+                    row: index + 1,
+                }));
             });
 
-            setNextSkuNumber((current) => current + amount);
+            setNextSkuNumber(
+                (current) => current + amount,
+            );
         },
         [nextSkuNumber],
     );
 
-    const handleDeleteRow = useCallback((sku: string) => {
-        setProducts((current) => {
-            const product = current.find((item) => item.sku === sku);
+    const handleDeleteRow = useCallback(
+        (sku: string) => {
+            setProducts((current) => {
+                const product = current.find(
+                    (item) => item.sku === sku,
+                );
 
-            if (product) {
-                revokeObjectUrls(product.imageUrls);
-            }
+                if (product) {
+                    revokeObjectUrls(product.imageUrls);
+                }
 
-            return current
-                .filter((item) => item.sku !== sku)
-                .map((item, index) => ({
-                    ...item,
-                    row: index + 1,
-                }));
-        });
-    }, []);
+                return current
+                    .filter(
+                        (item) => item.sku !== sku,
+                    )
+                    .map((item, index) => ({
+                        ...item,
+                        row: index + 1,
+                    }));
+            });
+        },
+        [],
+    );
 
     const handleDuplicateRow = useCallback(
         (sku: string) => {
             setProducts((current) => {
-                const source = current.find((item) => item.sku === sku);
-
-                if (!source) return current;
-
-                const imageUrls = source.imageFiles.map((file) =>
-                    URL.createObjectURL(file),
+                const source = current.find(
+                    (item) => item.sku === sku,
                 );
+
+                if (!source) {
+                    return current;
+                }
+
+                const imageUrls =
+                    source.imageFiles.map((file) =>
+                        URL.createObjectURL(file),
+                    );
 
                 const copy: BulkProduct = {
                     ...source,
@@ -233,7 +259,9 @@ export default function BulkUploadPage() {
                     imageFiles: [...source.imageFiles],
                     imageUrls,
                     primaryImage: imageUrls[0],
-                    title: source.title ? `${source.title} (Copy)` : "",
+                    title: source.title
+                        ? `${source.title} (Copy)`
+                        : "",
                     aiGenerated: false,
                     aiConfidence: undefined,
                     aiNeedsReview: undefined,
@@ -250,7 +278,9 @@ export default function BulkUploadPage() {
                 }));
             });
 
-            setNextSkuNumber((current) => current + 1);
+            setNextSkuNumber(
+                (current) => current + 1,
+            );
 
             showToast({
                 type: "success",
@@ -261,54 +291,36 @@ export default function BulkUploadPage() {
         [nextSkuNumber],
     );
 
-    const handleImagesChange = useCallback(
-        (sku: string, files: File[]) => {
-            const imageUrls = files.map((file) =>
-                URL.createObjectURL(file),
-            );
-
-            setProducts((current) =>
-                validateProducts(
-                    current.map((product) =>
-                        product.sku === sku
-                            ? {
-                                ...product,
-                                imageFiles: files,
-                                imageUrls,
-                                primaryImage: imageUrls[0],
-                                aiCover: false,
-                                status:
-                                    product.status === "Uploaded"
-                                        ? "Ready"
-                                        : product.status,
-                            }
-                            : product,
-                    ),
-                ),
-            );
-            void Promise.resolve().then(() => maybeAutoCoverRef.current(sku));
-        },
-        [],
-    );
-
-    const enqueueCover = useCallback((sku: string) => {
-        if (!coverQueueRef.current.includes(sku)) {
-            coverQueueRef.current.push(sku);
-        }
-        void runCoverQueueRef.current();
-    }, []);
-
-    const runCoverQueueRef = useRef<() => Promise<void>>(async () => {});
-
+    /*
+     * AI cover queue
+     *
+     * The queue runner is defined before enqueueCover so that enqueueCover
+     * can call it directly. This avoids mutating a useRef during an effect,
+     * which React's compiler rejects with:
+     *
+     * "This value cannot be modified"
+     */
     const runCoverQueue = useCallback(async () => {
-        if (coverRunningRef.current) return;
+        if (coverRunningRef.current) {
+            return;
+        }
+
         coverRunningRef.current = true;
+
         try {
             while (coverQueueRef.current.length > 0) {
-                const sku = coverQueueRef.current.shift() as string;
-                const product = productsRef.current.find(
-                    (item) => item.sku === sku
-                );
+                const sku =
+                    coverQueueRef.current.shift();
+
+                if (!sku) {
+                    continue;
+                }
+
+                const product =
+                    productsRef.current.find(
+                        (item) => item.sku === sku,
+                    );
+
                 if (
                     !product ||
                     product.aiCover ||
@@ -316,42 +328,62 @@ export default function BulkUploadPage() {
                 ) {
                     continue;
                 }
+
                 setCoverSkus((prev) =>
-                    prev.includes(sku) ? prev : [...prev, sku]
+                    prev.includes(sku)
+                        ? prev
+                        : [...prev, sku],
                 );
+
                 try {
-                    const cover = await generateCoverImage(
-                        product.imageFiles[0]
-                    );
-                    const current = productsRef.current.find(
-                        (item) => item.sku === sku
-                    );
+                    const cover =
+                        await generateCoverImage(
+                            product.imageFiles[0],
+                        );
+
+                    const current =
+                        productsRef.current.find(
+                            (item) =>
+                                item.sku === sku,
+                        );
+
                     if (!current) {
                         continue;
                     }
+
                     const nextFiles = [
                         cover,
                         ...current.imageFiles.filter(
-                            (file) => file.name !== cover.name
+                            (file) =>
+                                file.name !==
+                                cover.name,
                         ),
                     ].slice(0, 10);
-                    const urls = nextFiles.map((file) =>
-                        URL.createObjectURL(file)
-                    );
+
+                    const urls =
+                        nextFiles.map((file) =>
+                            URL.createObjectURL(file),
+                        );
+
                     setProducts(
                         validateProducts(
-                            productsRef.current.map((item) =>
-                                item.sku === sku
-                                    ? {
-                                          ...item,
-                                          imageFiles: nextFiles,
-                                          imageUrls: urls,
-                                          aiCover: true,
-                                      }
-                                    : item
-                            )
-                        )
+                            productsRef.current.map(
+                                (item) =>
+                                    item.sku === sku
+                                        ? {
+                                            ...item,
+                                            imageFiles:
+                                                nextFiles,
+                                            imageUrls:
+                                                urls,
+                                            aiCover:
+                                                true,
+                                        }
+                                        : item,
+                            ),
+                        ),
                     );
+
                     showToast({
                         type: "success",
                         title: "AI cover ready",
@@ -359,8 +391,14 @@ export default function BulkUploadPage() {
                         duration: 3500,
                     });
                 } catch (error) {
-                    if (error instanceof AICoverError) {
-                        if (error.code !== "VALIDATION") {
+                    if (
+                        error instanceof
+                        AICoverError
+                    ) {
+                        if (
+                            error.code !==
+                            "VALIDATION"
+                        ) {
                             showToast({
                                 type: "info",
                                 title: "Cover skipped",
@@ -378,7 +416,10 @@ export default function BulkUploadPage() {
                     }
                 } finally {
                     setCoverSkus((prev) =>
-                        prev.filter((item) => item !== sku)
+                        prev.filter(
+                            (item) =>
+                                item !== sku,
+                        ),
                     );
                 }
             }
@@ -387,33 +428,32 @@ export default function BulkUploadPage() {
         }
     }, []);
 
-    const handleGenerateCover = useCallback(
+    const enqueueCover = useCallback(
         (sku: string) => {
-            const product = productsRef.current.find(
-                (item) => item.sku === sku
-            );
-            if (!product || product.imageFiles.length === 0) {
-                showToast({
-                    type: "warning",
-                    title: "No photo yet",
-                    message: "Upload a product photo first.",
-                    duration: 3500,
-                });
-                return;
+            if (
+                !coverQueueRef.current.includes(
+                    sku,
+                )
+            ) {
+                coverQueueRef.current.push(sku);
             }
-            enqueueCover(sku);
+
+            void runCoverQueue();
         },
-        [enqueueCover]
+        [runCoverQueue],
     );
 
-    useEffect(() => {
-        runCoverQueueRef.current = runCoverQueue;
-        enqueueCoverRef.current = enqueueCover;
-        maybeAutoCoverRef.current = (sku: string) => {
-            if (!autoCoverRef.current) return;
-            const product = productsRef.current.find(
-                (item) => item.sku === sku
-            );
+    const maybeAutoCover = useCallback(
+        (sku: string) => {
+            if (!autoCoverRef.current) {
+                return;
+            }
+
+            const product =
+                productsRef.current.find(
+                    (item) => item.sku === sku,
+                );
+
             if (
                 !product ||
                 product.aiCover ||
@@ -421,9 +461,50 @@ export default function BulkUploadPage() {
             ) {
                 return;
             }
-            enqueueCoverRef.current(sku);
-        };
-    }, [runCoverQueue, enqueueCover]);
+
+            enqueueCover(sku);
+        },
+        [enqueueCover],
+    );
+
+    const handleImagesChange = useCallback(
+        (sku: string, files: File[]) => {
+            const imageUrls = files.map((file) =>
+                URL.createObjectURL(file),
+            );
+
+            setProducts((current) =>
+                validateProducts(
+                    current.map((product) =>
+                        product.sku === sku
+                            ? {
+                                ...product,
+                                imageFiles: files,
+                                imageUrls,
+                                primaryImage:
+                                    imageUrls[0],
+                                aiCover: false,
+                                status:
+                                    product.status ===
+                                        "Uploaded"
+                                        ? "Ready"
+                                        : product.status,
+                            }
+                            : product,
+                    ),
+                ),
+            );
+
+            /*
+             * Let the product state update commit before checking the latest
+             * product through productsRef.
+             */
+            void Promise.resolve().then(() =>
+                maybeAutoCover(sku),
+            );
+        },
+        [maybeAutoCover],
+    );
 
     useEffect(() => {
         productsRef.current = products;
@@ -434,7 +515,10 @@ export default function BulkUploadPage() {
     }, [autoCover]);
 
     const handleProductUpdate = useCallback(
-        (sku: string, updates: Partial<BulkProduct>) => {
+        (
+            sku: string,
+            updates: Partial<BulkProduct>,
+        ) => {
             setProducts((current) =>
                 validateProducts(
                     current.map((product) =>
@@ -443,7 +527,8 @@ export default function BulkUploadPage() {
                                 ...product,
                                 ...updates,
                                 status:
-                                    product.status === "Uploaded"
+                                    product.status ===
+                                        "Uploaded"
                                         ? "Ready"
                                         : product.status,
                             }
@@ -467,15 +552,24 @@ export default function BulkUploadPage() {
             setAiLoadingSku(product.sku);
 
             try {
-                const result = await runAiFill(product.imageFiles, {
-                    key: product.sku,
-                    productId: undefined,
-                    analyzeAllImages: true,
-                    onProgress: () => { },
-                });
+                const result = await runAiFill(
+                    product.imageFiles,
+                    {
+                        key: product.sku,
+                        productId: undefined,
+                        analyzeAllImages: true,
+                        onProgress: () => { },
+                    },
+                );
 
-                if (!result.success || !result.data) {
-                    if (result.code === "RATE_LIMITED") {
+                if (
+                    !result.success ||
+                    !result.data
+                ) {
+                    if (
+                        result.code ===
+                        "RATE_LIMITED"
+                    ) {
                         if (!silent) {
                             showToast({
                                 type: "warning",
@@ -505,42 +599,62 @@ export default function BulkUploadPage() {
                 const {
                     updates,
                     needsReview,
-                } = mapAIResponseToProduct(result.data);
+                } = mapAIResponseToProduct(
+                    result.data,
+                );
 
-                const aiConfidence: Record<string, number> = {};
+                const aiConfidence: Record<
+                    string,
+                    number
+                > = {};
 
                 for (const [
                     field,
                     extracted,
-                ] of Object.entries(result.data)) {
+                ] of Object.entries(
+                    result.data,
+                )) {
                     if (
                         extracted &&
-                        typeof extracted === "object" &&
-                        "confidence" in extracted
+                        typeof extracted ===
+                        "object" &&
+                        "confidence" in
+                        extracted
                     ) {
-                        const confidence = Number(
-                            (
-                                extracted as {
-                                    confidence: number;
-                                }
-                            ).confidence,
-                        );
+                        const confidence =
+                            Number(
+                                (
+                                    extracted as {
+                                        confidence: number;
+                                    }
+                                ).confidence,
+                            );
 
-                        if (Number.isFinite(confidence)) {
-                            aiConfidence[field] = confidence;
+                        if (
+                            Number.isFinite(
+                                confidence,
+                            )
+                        ) {
+                            aiConfidence[
+                                field
+                            ] = confidence;
                         }
                     }
                 }
 
-                handleProductUpdate(product.sku, {
-                    ...updates,
-                    aiGenerated: true,
-                    aiConfidence,
-                    aiNeedsReview:
-                        needsReview.length > 0
-                            ? needsReview
-                            : undefined,
-                });
+                handleProductUpdate(
+                    product.sku,
+                    {
+                        ...updates,
+                        aiGenerated: true,
+                        aiConfidence,
+                        aiNeedsReview:
+                            needsReview.length >
+                                0
+                                ? needsReview
+                                : undefined,
+                    },
+                );
 
                 if (!silent) {
                     showToast({
@@ -550,9 +664,10 @@ export default function BulkUploadPage() {
                         title: needsReview.length
                             ? "AI Fill needs review"
                             : "AI Fill complete",
-                        message: needsReview.length
-                            ? `${needsReview.length} field(s) need review.`
-                            : `${product.title || product.sku} is ready for review.`,
+                        message:
+                            needsReview.length
+                                ? `${needsReview.length} field(s) need review.`
+                                : `${product.title || product.sku} is ready for review.`,
                         duration: 5000,
                     });
                 }
@@ -581,55 +696,74 @@ export default function BulkUploadPage() {
         [handleProductUpdate],
     );
 
-    const drainAiQueue = useCallback(async () => {
-        if (aiRunnerRef.current) return;
-        if (!aiQueueRef.current.length) return;
-
-        aiRunnerRef.current = true;
-        setAutoAiRunning(true);
-
-        try {
-            let current = 0;
-
-            while (aiQueueRef.current.length > 0) {
-                const product =
-                    aiQueueRef.current.shift();
-
-                if (!product) continue;
-
-                current += 1;
-
-                setAiProcessingInfo({
-                    current,
-                    total:
-                        current +
-                        aiQueueRef.current.length,
-                    currentSku: product.sku,
-                });
-
-                await runAiFillForProduct(
-                    product,
-                    true,
-                );
-
-                if (aiQueueRef.current.length > 0) {
-                    await new Promise((resolve) =>
-                        window.setTimeout(
-                            resolve,
-                            800,
-                        ),
-                    );
-                }
+    const drainAiQueue = useCallback(
+        async () => {
+            if (aiRunnerRef.current) {
+                return;
             }
-        } finally {
-            aiQueueRef.current = [];
-            aiRunnerRef.current = false;
 
-            setAutoAiRunning(false);
-            setAiProcessingInfo(null);
-            setAiLoadingSku(null);
-        }
-    }, [runAiFillForProduct]);
+            if (!aiQueueRef.current.length) {
+                return;
+            }
+
+            aiRunnerRef.current = true;
+            setAutoAiRunning(true);
+
+            try {
+                let current = 0;
+
+                while (
+                    aiQueueRef.current.length >
+                    0
+                ) {
+                    const product =
+                        aiQueueRef.current.shift();
+
+                    if (!product) {
+                        continue;
+                    }
+
+                    current += 1;
+
+                    setAiProcessingInfo({
+                        current,
+                        total:
+                            current +
+                            aiQueueRef.current
+                                .length,
+                        currentSku:
+                            product.sku,
+                    });
+
+                    await runAiFillForProduct(
+                        product,
+                        true,
+                    );
+
+                    if (
+                        aiQueueRef.current
+                            .length > 0
+                    ) {
+                        await new Promise(
+                            (resolve) =>
+                                window.setTimeout(
+                                    resolve,
+                                    800,
+                                ),
+                        );
+                    }
+                }
+            } finally {
+                aiQueueRef.current = [];
+                aiRunnerRef.current = false;
+
+                setAutoAiRunning(false);
+                setAiProcessingInfo(null);
+                setAiLoadingSku(null);
+            }
+        },
+        [runAiFillForProduct],
+    );
 
     const enqueueAi = useCallback(
         (items: BulkProduct[]) => {
@@ -647,7 +781,9 @@ export default function BulkUploadPage() {
                     continue;
                 }
 
-                aiQueueRef.current.push(product);
+                aiQueueRef.current.push(
+                    product,
+                );
                 existing.add(product.sku);
             }
 
@@ -658,13 +794,17 @@ export default function BulkUploadPage() {
 
     const handleFilesSelected = useCallback(
         (files: File[]) => {
-            // Folder uploads must be passed intact to the folder processor.
-            // Filtering by MIME type here can silently drop files on macOS
-            // when File.type is empty/unknown (common with HEIC/HEIF and
-            // some image extensions), which can make an entire product
-            // folder disappear. The processor validates by extension.
+            /*
+             * Folder uploads must be passed intact to the folder processor.
+             * Filtering by MIME type here can silently drop files on macOS
+             * when File.type is empty/unknown (common with HEIC/HEIF and
+             * some image extensions), which can make an entire product
+             * folder disappear. The processor validates by extension.
+             */
             const selectedFiles = files;
-            const images = files.filter(isImageFile);
+            const images = files.filter(
+                isImageFile,
+            );
 
             if (!images.length) {
                 showToast({
@@ -673,22 +813,26 @@ export default function BulkUploadPage() {
                     message:
                         "Select JPG, PNG, WEBP or AVIF images.",
                 });
+
                 return;
             }
 
-            const hasFolderPath = images.some((file) =>
-                Boolean(
-                    (
-                        file as File & {
-                            webkitRelativePath?: string;
-                        }
-                    ).webkitRelativePath,
-                ),
+            const hasFolderPath = images.some(
+                (file) =>
+                    Boolean(
+                        (
+                            file as File & {
+                                webkitRelativePath?: string;
+                            }
+                        ).webkitRelativePath,
+                    ),
             );
 
             if (hasFolderPath) {
                 const result =
-                    processSmartFolders(selectedFiles);
+                    processSmartFolders(
+                        selectedFiles,
+                    );
 
                 if (!result.products.length) {
                     showToast({
@@ -726,9 +870,10 @@ export default function BulkUploadPage() {
 
                 showToast({
                     type: "success",
-                    title: `${normalized.length} product${normalized.length === 1
-                        ? ""
-                        : "s"
+                    title: `${normalized.length
+                        } product${normalized.length === 1
+                            ? ""
+                            : "s"
                         } detected`,
                     message:
                         "AI analysis started automatically.",
@@ -796,7 +941,9 @@ export default function BulkUploadPage() {
                 (item) => item.sku === sku,
             );
 
-            if (!product) return;
+            if (!product) {
+                return;
+            }
 
             if (!product.imageFiles.length) {
                 showToast({
@@ -901,7 +1048,8 @@ export default function BulkUploadPage() {
 
             showToast({
                 type:
-                    success === targets.length
+                    success ===
+                        targets.length
                         ? "success"
                         : "info",
                 title:
@@ -918,7 +1066,9 @@ export default function BulkUploadPage() {
 
     const handleUpload =
         useCallback(async () => {
-            if (uploading) return;
+            if (uploading) {
+                return;
+            }
 
             const validated =
                 validateProducts(
@@ -1047,9 +1197,10 @@ export default function BulkUploadPage() {
                         type: "success",
                         title:
                             "Create complete",
-                        message: `${summary.success} product${summary.success === 1
-                            ? ""
-                            : "s"
+                        message: `${summary.success
+                            } product${summary.success === 1
+                                ? ""
+                                : "s"
                             } created successfully.`,
                         duration: 5000,
                     });
@@ -1058,17 +1209,13 @@ export default function BulkUploadPage() {
                         () => {
                             clearDraft();
 
-                            setProducts(
-                                [],
-                            );
+                            setProducts([]);
 
                             setNextSkuNumber(
                                 1,
                             );
 
-                            setProgress(
-                                null,
-                            );
+                            setProgress(null);
 
                             setUploadResult(
                                 null,
@@ -1123,18 +1270,36 @@ export default function BulkUploadPage() {
                         onAddRow={handleAddRow}
                         onAddRows={handleAddRows}
                         onDeleteRow={handleDeleteRow}
-                        onDuplicateRow={handleDuplicateRow}
-                        onImagesChange={handleImagesChange}
+                        onDuplicateRow={
+                            handleDuplicateRow
+                        }
+                        onImagesChange={
+                            handleImagesChange
+                        }
                         onAiFill={handleAiFill}
-                        aiLoadingSku={aiLoadingSku}
+                        aiLoadingSku={
+                            aiLoadingSku
+                        }
                         onUpload={handleUpload}
                         uploading={uploading}
-                        bulkAiLoading={bulkAiLoading}
-                        onAiFillAll={handleBulkAiFill}
-                        onFilesSelected={handleFilesSelected}
-                        onFolderSelected={handleFolderSelected}
-                        aiProcessing={autoAiRunning}
-                        aiProcessingInfo={aiProcessingInfo}
+                        bulkAiLoading={
+                            bulkAiLoading
+                        }
+                        onAiFillAll={
+                            handleBulkAiFill
+                        }
+                        onFilesSelected={
+                            handleFilesSelected
+                        }
+                        onFolderSelected={
+                            handleFolderSelected
+                        }
+                        aiProcessing={
+                            autoAiRunning
+                        }
+                        aiProcessingInfo={
+                            aiProcessingInfo
+                        }
                     />
                 </motion.div>
             </AdminPage>

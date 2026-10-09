@@ -258,21 +258,41 @@ export async function POST(request: NextRequest) {
     let eligibleReferralCode: string | undefined;
 
     if (checkout.paymentMethod === "razorpay") {
-      const payment = await verifyCapturedRazorpayPayment({
-        userId: user.id,
-        orderId: checkout.orderId,
-        paymentId: checkout.paymentId,
-        signature: checkout.signature,
-      });
-
-      if (!payment) {
+      let payment: { amount: number; notes: Record<string, string> };
+      try {
+        const verified = await verifyCapturedRazorpayPayment({
+          userId: user.id,
+          orderId: checkout.orderId,
+          paymentId: checkout.paymentId,
+          signature: checkout.signature,
+        });
+        if (!verified) {
+          return NextResponse.json(
+            {
+              success: false,
+              message: "Payment could not be verified.",
+            },
+            {
+              status: 400,
+            },
+          );
+        }
+        payment = verified;
+      } catch {
+        // Razorpay API / network failure AFTER the shopper paid: the payment
+        // may be captured but unreachable right now. Return a retryable 502
+        // (the client retries 5xx) instead of a terminal 4xx that tells the
+        // shopper to give up / contact support. Idempotency guard above makes
+        // the retry safe. Never log order/payment ids or signatures.
+        console.error("[orders] Razorpay verification API call failed");
         return NextResponse.json(
           {
             success: false,
-            message: "Payment could not be verified.",
+            message:
+              "Payment verification is temporarily unavailable. Please retry — do not pay again.",
           },
           {
-            status: 400,
+            status: 502,
           },
         );
       }
@@ -280,11 +300,21 @@ export async function POST(request: NextRequest) {
       const intent = await getCheckoutPaymentIntent(checkout.orderId);
 
       if (!intent || intent.userId !== user.id) {
+        // The Razorpay signature, amount, and capture state are VALID here —
+        // only our local checkout snapshot is missing (e.g. intent write
+        // failed, DB lag, or wrong order id). Tell the shopper the truth:
+        // money may have moved, so do NOT retry payment blindly.
+        console.error(
+          "[orders] verified Razorpay payment has no matching checkout intent:",
+          {
+            userMismatch: !intent ? "missing-intent" : "wrong-user",
+          },
+        );
         return NextResponse.json(
           {
             success: false,
             message:
-              "We could not confirm your payment details. Please contact support before retrying.",
+              "Your payment was verified but we could not find its checkout details. Do not pay again — please contact support with your payment reference.",
           },
           {
             status: 409,

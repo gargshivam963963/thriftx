@@ -124,10 +124,22 @@ export async function saveCheckoutPaymentIntent(
     couponCode: intent.couponCode,
     referralCode: intent.referralCode,
   } satisfies Prisma.InputJsonValue;
-  await prisma.storedDocument.create({
-    data: {
+  // Idempotent write: a retried create-order for the same Razorpay order id
+  // must not throw a duplicate-key error (which today surfaces as a generic
+  // 500 and strands a paid-for reservation). Upsert keeps the latest intent.
+  await prisma.storedDocument.upsert({
+    where: {
+      collectionKey_id: {
+        collectionKey: COLLECTION,
+        id: paymentOrderId,
+      },
+    },
+    create: {
       collectionKey: COLLECTION,
       id: paymentOrderId,
+      data,
+    },
+    update: {
       data,
     },
   });

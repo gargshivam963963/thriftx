@@ -629,6 +629,41 @@ export default function CheckoutPage() {
                         setPaymentLoading(false);
                     },
                 },
+                // Fires when Razorpay itself reports the payment as failed
+                // (e.g. BAD_REQUEST_ERROR / payment_risk_check_failed website
+                // mismatch, card declined, UPI timeout). Without this, a
+                // blocked payment leaves inventory reserved and the shopper
+                // staring at a closed modal with no message.
+                payment_failed: (
+                    failureResponse: Record<string, unknown>,
+                ) => {
+                    const nested = failureResponse.error as
+                        | Record<string, unknown>
+                        | undefined;
+                    const code =
+                        typeof nested?.code === "string"
+                            ? nested.code
+                            : "unknown";
+                    setPaymentLoading(false);
+                    // Secret-free diagnostic: Razorpay error code only.
+                    console.error("[checkout] Razorpay payment failed:", {
+                        code,
+                    });
+                    toast.error(
+                        code === "BAD_REQUEST_ERROR"
+                            ? "This payment was blocked. Please try another method or contact support."
+                            : "Your payment failed. No money was deducted — please try again.",
+                    );
+                    if (reservationId && !paymentConfirmed) {
+                        void releaseCheckoutReservation(
+                            razorpayOrderId,
+                            reservationId,
+                        ).catch(() => {
+                            // Inventory auto-expires server-side; a
+                            // failed release here is non-fatal.
+                        });
+                    }
+                },
             };
 
             const razorpay = new window.Razorpay(options);

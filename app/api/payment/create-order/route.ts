@@ -137,21 +137,36 @@ export async function POST(request: Request) {
           addressId: quote.addressId,
         },
       });
-      await saveCheckoutPaymentIntent(order.id, {
-        userId: user.id,
-        reservationId,
-        quote,
-        couponCode:
-          quote.appliedPromotion === "coupon" &&
-          typeof couponCode === "string"
-            ? couponCode.trim().toUpperCase()
-            : "",
-        referralCode:
-          quote.appliedPromotion === "referral" &&
-          typeof referralCode === "string"
-            ? referralCode.trim()
-            : "",
-      });
+      try {
+        await saveCheckoutPaymentIntent(order.id, {
+          userId: user.id,
+          reservationId,
+          quote,
+          couponCode:
+            quote.appliedPromotion === "coupon" &&
+            typeof couponCode === "string"
+              ? couponCode.trim().toUpperCase()
+              : "",
+          referralCode:
+            quote.appliedPromotion === "referral" &&
+            typeof referralCode === "string"
+              ? referralCode.trim()
+              : "",
+        });
+      } catch (intentError) {
+        // The Razorpay order EXISTS but our local snapshot failed. Releasing
+        // the inventory while logging the Razorpay order id prefix lets
+        // support reconcile without double-charging. Never log secrets.
+        console.error(
+          "[payment/create-order] saved Razorpay order but failed to persist checkout intent:",
+          intentError,
+        );
+        await releaseCheckoutInventory(user.id, reservationId);
+        return NextResponse.json(
+          { error: "Unable to initiate payment. Please try again." },
+          { status: 500 },
+        );
+      }
     } catch (error) {
       await releaseCheckoutInventory(user.id, reservationId);
       throw error;
@@ -197,6 +212,27 @@ export async function POST(request: Request) {
       );
     }
     console.error("Razorpay order creation failed:", error);
+
+    // Distinguish credential/auth failures from transient Razorpay issues so
+    // the shopper gets an honest message and logs stay secret-free.
+    // NOTE: BAD_REQUEST_ERROR is NOT mapped here on purpose — it is also
+    // returned for account-level blocks (e.g. payment_risk_check_failed /
+    // website mismatch) AND for malformed requests. Treating all of them as
+    // "temporarily unavailable" would mislead. Only 401 (wrong key/secret
+    // pair) maps to the unavailable message; everything else stays a 500.
+    const statusCode =
+      typeof error === "object" && error !== null && "statusCode" in error
+        ? Number((error as { statusCode?: unknown }).statusCode)
+        : NaN;
+    if (statusCode === 401) {
+      console.error(
+        "[payment/create-order] Razorpay rejected the request credentials (401). Verify the key id and secret belong to the same mode (live/live) and the secret is the current one.",
+      );
+      return NextResponse.json(
+        { error: "Online payment is temporarily unavailable." },
+        { status: 503 },
+      );
+    }
 
     return NextResponse.json(
       { error: "Unable to create Razorpay order." },

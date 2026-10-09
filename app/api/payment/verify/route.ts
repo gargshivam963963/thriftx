@@ -129,14 +129,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.error("Razorpay payment verification failed:", error);
+    // Razorpay API / network failure AFTER the shopper may have paid: the
+    // payment could be captured but unreachable. Return a retryable 502 —
+    // never a terminal 400 — so the caller retries instead of abandoning a
+    // paid payment. No IDs, secrets, or signatures are logged.
+    console.error("Razorpay payment verification failed:", {
+      code:
+        typeof error === "object" && error !== null && "statusCode" in error
+          ? String((error as { statusCode?: unknown }).statusCode)
+          : "unknown",
+      message: error instanceof Error ? error.message : "unknown error",
+    });
 
     return jsonResponse(
       {
         success: false,
-        message: "Verification failed.",
+        message:
+          "Verification is temporarily unavailable. Please retry — do not pay again.",
       },
-      500,
+      502,
     );
   }
 }

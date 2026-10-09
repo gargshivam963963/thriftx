@@ -18,11 +18,27 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isNonNegativeSafeInteger(value: unknown): value is number {
+/**
+ * Accept non-negative INR amounts with at most two decimal places.
+ *
+ * Examples:
+ *   69       -> valid
+ *   69.72    -> valid
+ *   0        -> valid
+ *   -1       -> invalid
+ *   69.721   -> invalid
+ *   Infinity -> invalid
+ */
+function isNonNegativeMoneyAmount(value: unknown): value is number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    return false;
+  }
+
+  const paise = value * 100;
+
   return (
-    typeof value === "number" &&
-    Number.isSafeInteger(value) &&
-    value >= 0
+    Number.isSafeInteger(Math.round(paise)) &&
+    Math.abs(paise - Math.round(paise)) < 1e-6
   );
 }
 
@@ -39,10 +55,11 @@ function isPromotion(
 
 function parsePaymentIntent(value: unknown): CheckoutPaymentIntent | null {
   if (!isRecord(value)) return null;
-  const data = value;
+  const data = value as Record<string, unknown>;
   if (!isRecord(data.quote)) return null;
-  const quote = data.quote;
+  const quote = data.quote as Record<string, unknown>;
   const promotion = quote.appliedPromotion;
+
   if (
     typeof data.userId !== "string" ||
     typeof data.reservationId !== "string" ||
@@ -57,13 +74,15 @@ function parsePaymentIntent(value: unknown): CheckoutPaymentIntent | null {
     typeof quote.postalCode !== "string" ||
     typeof quote.country !== "string" ||
     typeof quote.deliveryMethod !== "string" ||
+    typeof quote.deliveryMethodId !== "string" ||
+    typeof quote.shippingProvider !== "string" ||
     typeof quote.products !== "string" ||
     typeof quote.discountReason !== "string" ||
     !isPromotion(promotion) ||
-    !isNonNegativeSafeInteger(quote.subtotal) ||
-    !isNonNegativeSafeInteger(quote.shipping) ||
-    !isNonNegativeSafeInteger(quote.discount) ||
-    !isNonNegativeSafeInteger(quote.total)
+    !isNonNegativeMoneyAmount(quote.subtotal) ||
+    !isNonNegativeMoneyAmount(quote.shipping) ||
+    !isNonNegativeMoneyAmount(quote.discount) ||
+    !isNonNegativeMoneyAmount(quote.total)
   ) {
     return null;
   }
@@ -83,6 +102,8 @@ function parsePaymentIntent(value: unknown): CheckoutPaymentIntent | null {
       postalCode: quote.postalCode,
       country: quote.country,
       deliveryMethod: quote.deliveryMethod,
+      deliveryMethodId: quote.deliveryMethodId,
+      shippingProvider: quote.shippingProvider,
       products: quote.products,
       subtotal: quote.subtotal,
       shipping: quote.shipping,
@@ -98,7 +119,9 @@ export async function saveCheckoutPaymentIntent(
   paymentOrderId: string,
   intent: CheckoutPaymentIntent,
 ): Promise<void> {
-  if (!prisma) throw new Error("Database is not configured");
+  if (!prisma) {
+    throw new Error("Database is not configured");
+  }
 
   const data = {
     userId: intent.userId,
@@ -113,6 +136,8 @@ export async function saveCheckoutPaymentIntent(
       postalCode: intent.quote.postalCode,
       country: intent.quote.country,
       deliveryMethod: intent.quote.deliveryMethod,
+      deliveryMethodId: intent.quote.deliveryMethodId,
+      shippingProvider: intent.quote.shippingProvider,
       subtotal: intent.quote.subtotal,
       products: intent.quote.products,
       shipping: intent.quote.shipping,
@@ -124,9 +149,9 @@ export async function saveCheckoutPaymentIntent(
     couponCode: intent.couponCode,
     referralCode: intent.referralCode,
   } satisfies Prisma.InputJsonValue;
-  // Idempotent write: a retried create-order for the same Razorpay order id
-  // must not throw a duplicate-key error (which today surfaces as a generic
-  // 500 and strands a paid-for reservation). Upsert keeps the latest intent.
+
+  // Repeated requests for the same Razorpay order ID update the
+  // existing intent rather than creating a duplicate database record.
   await prisma.storedDocument.upsert({
     where: {
       collectionKey_id: {
@@ -148,7 +173,9 @@ export async function saveCheckoutPaymentIntent(
 export async function getCheckoutPaymentIntent(
   paymentOrderId: string,
 ): Promise<CheckoutPaymentIntent | null> {
-  if (!prisma) throw new Error("Database is not configured");
+  if (!prisma) {
+    throw new Error("Database is not configured");
+  }
 
   const document = await prisma.storedDocument.findUnique({
     where: {
@@ -157,9 +184,14 @@ export async function getCheckoutPaymentIntent(
         id: paymentOrderId,
       },
     },
-    select: { data: true },
+    select: {
+      data: true,
+    },
   });
 
-  if (!document) return null;
+  if (!document) {
+    return null;
+  }
+
   return parsePaymentIntent(document.data);
 }

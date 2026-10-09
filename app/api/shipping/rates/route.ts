@@ -48,7 +48,20 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const rates = await shipmentService.getShippingRates(pincode, weight);
+    const rawCod = searchParams.get("cod") ?? "0";
+
+    if (rawCod !== "0" && rawCod !== "1") {
+      return jsonResponse(
+        {
+          success: false,
+          message: "Invalid payment mode.",
+        },
+        400,
+      );
+    }
+
+    const cod = rawCod === "1";
+    const rates = await shipmentService.getShippingRates(pincode, weight, cod);
 
     return jsonResponse({
       success: true,

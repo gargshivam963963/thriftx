@@ -9,7 +9,12 @@ import {
 } from "@/lib/document-store";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
-import type { Order } from "@/lib/types/order";
+import type {
+  Order,
+  PaymentMethod,
+  ShipmentStatus,
+  PickupStatus,
+} from "@/lib/types/order";
 import {
   claimCheckoutInventory,
   restoreOrderInventory,
@@ -21,6 +26,10 @@ import {
   notifyTrackingReady,
   type OrderRef,
 } from "@/lib/notifications/orderEvents";
+import {
+  SHIPPING_PROVIDERS,
+  SHIPPING_METHOD_IDS,
+} from "@/lib/shipping/checkout-options";
 
 async function safeNotify(task: () => Promise<void>) {
   try {
@@ -119,13 +128,14 @@ export async function updateShipment(
 
 export async function getOrder(documentId: string): Promise<Order> {
   const doc = await documentStore.getDocument("thriftx", "orders", documentId);
-  return doc as unknown as Order;
+  if (!doc) throw new Error("Document not found");
+  return toOrder(doc);
 }
 
 export async function createOrder(
   data: OrderData,
   user: { id: string; email: string },
-) {
+): Promise<Order | null> {
   if (!isDocumentStoreConfigured || !prisma) return null;
 
   if (data.paymentId) {
@@ -170,46 +180,48 @@ export async function createOrder(
   }
 
   const payload = {
-      userId: user.id,
-      email: user.email,
-      subtotal: data.subtotal,
-      shipping: data.shipping,
-      discount: data.discount ?? 0,
-      couponCode: data.couponCode ?? "",
-      creditUsed: data.creditUsed ?? 0,
-      total: data.total,
-      paymentMethod: data.paymentMethod,
-      paymentId: data.paymentId ?? "",
-      orderId:
-        data.orderId ??
-        `THRIFTX-${documentId.slice(-12).toUpperCase()}`,
-      signature: data.signature ?? "",
-      status: data.paymentMethod === "cod" ? "Pending (COD)" : "Pending",
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone,
-      address: data.address,
-      city: data.city,
-      postalCode: data.postalCode,
-      country: data.country,
-      deliveryMethod: data.deliveryMethod,
-      products: data.products,
-      shippingProvider: data.shippingProvider ?? "shiprocket",
-      shipmentStatus: data.shipmentStatus ?? "pending",
-      pickupStatus: data.pickupStatus ?? "pending",
-      shipmentId: data.shipmentId ?? "",
-      trackingNumber: data.trackingNumber ?? "",
-      awbNumber: data.awbNumber ?? "",
-      courier: data.courier ?? "",
-      courierId: data.courierId ?? "",
-      estimatedDelivery: data.estimatedDelivery ?? "",
-      labelUrl: data.labelUrl ?? "",
-      invoiceUrl: data.invoiceUrl ?? "",
-      trackingUrl: data.trackingUrl ?? "",
-      pickupId: data.pickupId ?? "",
-      shippedAt: data.shippedAt ?? "",
-      deliveredAt: data.deliveredAt ?? "",
-    } satisfies Record<string, Prisma.InputJsonValue>;
+    userId: user.id,
+    email: user.email,
+    subtotal: data.subtotal,
+    shipping: data.shipping,
+    discount: data.discount ?? 0,
+    couponCode: data.couponCode ?? "",
+    creditUsed: data.creditUsed ?? 0,
+    total: data.total,
+    paymentMethod: data.paymentMethod as PaymentMethod,
+    paymentId: data.paymentId ?? "",
+    orderId: data.orderId ?? `THRIFTX-${documentId.slice(-12).toUpperCase()}`,
+    signature: data.signature ?? "",
+    status: data.paymentMethod === "cod" ? "Pending (COD)" : "Pending",
+    firstName: data.firstName,
+    lastName: data.lastName,
+    phone: data.phone,
+    address: data.address,
+    city: data.city,
+    postalCode: data.postalCode,
+    country: data.country,
+    deliveryMethod: data.deliveryMethod,
+    products: data.products,
+    shippingProvider: data.shippingProvider ?? SHIPPING_PROVIDERS.LOCAL,
+    shipmentStatus: isShipmentStatus(data.shipmentStatus)
+      ? data.shipmentStatus
+      : "pending",
+    pickupStatus: isPickupStatus(data.pickupStatus)
+      ? data.pickupStatus
+      : "pending",
+    shipmentId: data.shipmentId ?? "",
+    trackingNumber: data.trackingNumber ?? "",
+    awbNumber: data.awbNumber ?? "",
+    courier: data.courier ?? "",
+    courierId: data.courierId ?? "",
+    estimatedDelivery: data.estimatedDelivery ?? "",
+    labelUrl: data.labelUrl ?? "",
+    invoiceUrl: data.invoiceUrl ?? "",
+    trackingUrl: data.trackingUrl ?? "",
+    pickupId: data.pickupId ?? "",
+    shippedAt: data.shippedAt ?? "",
+    deliveredAt: data.deliveredAt ?? "",
+  } satisfies Record<string, Prisma.InputJsonValue>;
 
   try {
     return await prisma.$transaction(async (transaction) => {
@@ -226,12 +238,27 @@ export async function createOrder(
         if (existingData.userId !== user.id) {
           throw new Error("Order idempotency key belongs to another user");
         }
+
+        const shipmentStatus = isShipmentStatus(existingData.shipmentStatus)
+          ? existingData.shipmentStatus
+          : undefined;
+
+        const pickupStatus = isPickupStatus(existingData.pickupStatus)
+          ? existingData.pickupStatus
+          : undefined;
+        const {
+          shipmentStatus: _shipment,
+          pickupStatus: _pickup,
+          ...rest
+        } = existingData;
         return {
-          ...existingData,
+          ...rest,
+          shipmentStatus: shipmentStatus as ShipmentStatus | undefined,
+          pickupStatus: pickupStatus as PickupStatus | undefined,
           $id: existing.id,
           $createdAt: existing.createdAt.toISOString(),
           $updatedAt: existing.updatedAt.toISOString(),
-        };
+        } as unknown as Order;
       }
 
       if (data.paymentMethod === "razorpay" && !data.reservationId) {
@@ -258,20 +285,76 @@ export async function createOrder(
           data: payload,
         },
       });
-      return {
+      return toOrder({
         ...payload,
         $id: created.id,
         $createdAt: created.createdAt.toISOString(),
         $updatedAt: created.updatedAt.toISOString(),
-      };
+      });
     });
   } catch (error) {
     const existing = await documentStore
       .getDocument("thriftx", "orders", documentId)
       .catch(() => null);
-    if (existing && existing.userId === user.id) return existing;
+
+    if (existing && existing.userId === user.id) {
+      return toOrder(existing);
+    }
+
     throw error;
   }
+}
+
+const SHIPMENT_STATUSES: readonly ShipmentStatus[] = [
+  "pending",
+  "confirmed",
+  "packed",
+  "shipment_created",
+  "pickup_scheduled",
+  "picked_up",
+  "in_transit",
+  "out_for_delivery",
+  "delivered",
+  "cancelled",
+  "returned",
+  "rto",
+];
+
+const PICKUP_STATUSES: readonly PickupStatus[] = [
+  "pending",
+  "scheduled",
+  "picked_up",
+  "failed",
+];
+
+function isShipmentStatus(value: unknown): value is ShipmentStatus {
+  return typeof value === "string" &&
+    SHIPMENT_STATUSES.includes(value as ShipmentStatus);
+}
+
+function isPickupStatus(value: unknown): value is PickupStatus {
+  return typeof value === "string" &&
+    PICKUP_STATUSES.includes(value as PickupStatus);
+}
+
+function toOrder(doc: unknown): Order {
+  if (typeof doc !== "object" || doc === null || Array.isArray(doc)) {
+    throw new Error("Invalid order document");
+  }
+
+  const record = doc as Record<string, unknown>;
+  const shipmentStatus = isShipmentStatus(record.shipmentStatus)
+    ? record.shipmentStatus
+    : undefined;
+  const pickupStatus = isPickupStatus(record.pickupStatus)
+    ? record.pickupStatus
+    : undefined;
+
+  return {
+    ...record,
+    ...(shipmentStatus ? { shipmentStatus } : { shipmentStatus: undefined }),
+    ...(pickupStatus ? { pickupStatus } : { pickupStatus: undefined }),
+  } as unknown as Order;
 }
 
 export async function getUserOrders(userId: string): Promise<Order[]> {
@@ -280,21 +363,26 @@ export async function getUserOrders(userId: string): Promise<Order[]> {
     DocumentQuery.orderDesc("$createdAt"),
   ]);
 
-  return response.documents as unknown as Order[];
+  return response.documents.map((doc) => toOrder(doc));
 }
 
-export async function getOrderByPaymentId(userId: string, paymentId: string) {
+export async function getOrderByPaymentId(
+  userId: string,
+  paymentId: string,
+): Promise<Order | null> {
   const response = await documentStore.listDocuments("thriftx", "orders", [
     DocumentQuery.equal("userId", userId),
     DocumentQuery.equal("paymentId", paymentId),
     DocumentQuery.limit(1),
   ]);
-
-  return response.documents[0] ?? null;
+  const doc = response.documents[0];
+  return doc ? toOrder(doc) : null;
 }
 
-export async function getOrderById(documentId: string) {
-  return documentStore.getDocument("thriftx", "orders", documentId);
+export async function getOrderById(documentId: string): Promise<Order | null> {
+  const doc = await documentStore.getDocument("thriftx", "orders", documentId);
+  if (!doc) return null;
+  return toOrder(doc);
 }
 
 export async function getUserOrder(
@@ -325,19 +413,24 @@ export async function getUserOrder(
   const payload = document.data as Record<string, unknown>;
   if (payload.userId !== userId) return null;
 
-  return {
+  return toOrder({
     ...payload,
     $id: document.id,
     $createdAt: document.createdAt.toISOString(),
     $updatedAt: document.updatedAt.toISOString(),
-  } as unknown as Order;
+  });
 }
 
 export async function updateOrderStatus(documentId: string, status: string) {
   const existing = await getOrderById(documentId);
-  const updated = await documentStore.updateDocument("thriftx", "orders", documentId, {
-    status,
-  });
+  const updated = await documentStore.updateDocument(
+    "thriftx",
+    "orders",
+    documentId,
+    {
+      status,
+    },
+  );
 
   if (existing) {
     await safeNotify(() =>
@@ -413,7 +506,10 @@ export async function cancelUserOrder(
       }
     }
   } catch (e) {
-    console.error("Failed to restore inventory during customer cancellation:", e);
+    console.error(
+      "Failed to restore inventory during customer cancellation:",
+      e,
+    );
   }
 
   return updatedDoc as unknown as Order;
@@ -434,15 +530,20 @@ export async function requestOrderReturn(
   }
 
   if (order.returnStatus && order.returnStatus !== "none") {
-    throw new Error(`A return has already been ${order.returnStatus} for this order.`);
+    throw new Error(
+      `A return has already been ${order.returnStatus} for this order.`,
+    );
   }
 
   // 7-day return policy check
   const orderDate = new Date(order.deliveredAt || order.$createdAt);
   const now = new Date();
-  const daysDiff = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24);
+  const daysDiff =
+    (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24);
   if (daysDiff > 7) {
-    throw new Error("Return window has closed. Returns must be requested within 7 days of delivery.");
+    throw new Error(
+      "Return window has closed. Returns must be requested within 7 days of delivery.",
+    );
   }
 
   const updatedDoc = await documentStore.updateDocument(

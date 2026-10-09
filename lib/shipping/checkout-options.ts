@@ -41,7 +41,6 @@ export type ShippingProviderId =
   | typeof SHIPPING_PROVIDERS.LOCAL
   | typeof SHIPPING_PROVIDERS.COURIER;
 
-
 export function isLocalDelivery(city?: string, pincode?: string): boolean {
   return Boolean(
     city && pincode && detectDeliveryZone(city, pincode) === "local",
@@ -55,13 +54,14 @@ export function getCheckoutShippingOptions(
   rates: ShippingRate[],
 ): ShippingMethod[] {
   if (isLocalDelivery(city, pincode)) {
+    const local = PANIPAT_LOCAL_DELIVERY;
     return [
       {
         id: SHIPPING_METHOD_IDS.LOCAL,
-        name: "Panipat Local Delivery",
-        subtitle: PANIPAT_LOCAL_DELIVERY.subtitle,
-        price: PANIPAT_LOCAL_DELIVERY.price,
-        eta: PANIPAT_LOCAL_DELIVERY.etaLabel,
+        name: local.enabled ? "Panipat Local Delivery" : "Local Delivery",
+        subtitle: local.subtitle,
+        price: local.price,
+        eta: local.enabled ? local.etaLabel : "2–3 Hours",
       },
     ];
   }
@@ -97,22 +97,7 @@ export function getCheckoutShippingOptions(
     return methods;
   }
 
-  return [
-    {
-      id: SHIPPING_METHOD_IDS.COURIER_STANDARD,
-      name: "Standard Delivery",
-      subtitle: freeShipping ? "FREE on this order" : "Best Value",
-      price: freeShipping ? 0 : 49,
-      eta: "4–6 Days",
-    },
-    {
-      id: SHIPPING_METHOD_IDS.COURIER_EXPRESS,
-      name: "Express Delivery",
-      subtitle: "Faster Shipping",
-      price: 99,
-      eta: "2–3 Days",
-    },
-  ];
+  return [];
 }
 
 /**

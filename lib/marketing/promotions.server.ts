@@ -122,9 +122,14 @@ async function isFirstOrder(userId: string): Promise<boolean> {
     DocumentQuery.equal("userId", userId),
   ]);
 
-  return !result.documents.some(
-    (doc) => String(doc.status ?? "").toLowerCase() !== "cancelled",
-  );
+  // A customer is first-time only if they have no non-cancelled orders.
+  // Ignore documents without a status field (defensive against data drift).
+  const nonCancelledOrders = result.documents.filter((doc) => {
+    if (!doc || typeof doc.status !== "string") return false;
+    return doc.status.trim().toLowerCase() !== "cancelled";
+  });
+
+  return nonCancelledOrders.length === 0;
 }
 
 /**

@@ -51,9 +51,9 @@ export const SHIPPING_ESTIMATES = {
 export const SHIPPING_DEFAULTS = {
   currency: "INR",
 
-  freeShippingAmount: 1199,
+  freeShippingAmount: 999,
 
-  defaultWeight: 0.5, // kg
+  defaultWeight: 0.4, // kg
 
   defaultLength: 30, // cm
 
@@ -112,16 +112,26 @@ export const PICKUP_ADDRESS = {
 
 /**
  * Panipat same-day delivery configuration.
- * Used to power the free + 2–3 hour local delivery experience.
+ * All values are configurable via environment variables so the business
+ * rules can be updated per deployment without a code change. Defaults
+ * apply to a brand-new install only — Panipat-specific pins/fees must be
+ * supplied via env before going live.
  */
 export const PANIPAT_LOCAL_DELIVERY = {
-  enabled: true,
-  free: true,
-  price: 0,
-  etaLabel: "2–3 Hours",
-  etaLong: "Same-day delivery in 2–3 hours",
-  subtitle: "FREE delivery in Panipat",
-  window: "Order before 2 PM for same-day dispatch",
+  enabled:
+    process.env.PANIPAT_LOCAL_DELIVERY_ENABLED !== "false" &&
+    process.env.PANIPAT_LOCAL_CITIES_ENABLED !== "false",
+  free: process.env.PANIPAT_LOCAL_DELIVERY_FREE === "true",
+  price: Number(process.env.PANIPAT_LOCAL_DELIVERY_PRICE ?? "0"),
+  etaLabel: process.env.PANIPAT_LOCAL_DELIVERY_ETA_LABEL ?? "2–3 Hours",
+  etaLong:
+    process.env.PANIPAT_LOCAL_DELIVERY_ETA_LONG ??
+    "Same-day delivery in 2–3 hours",
+  subtitle:
+    process.env.PANIPAT_LOCAL_DELIVERY_SUBTITLE ?? "Panipat Local Delivery",
+  window:
+    process.env.PANIPAT_LOCAL_DELIVERY_WINDOW ??
+    "Order before 2 PM for same-day dispatch",
 };
 
 /**

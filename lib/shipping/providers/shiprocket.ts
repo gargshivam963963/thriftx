@@ -166,7 +166,10 @@ export class ShiprocketProvider implements ShippingProvider {
 
             billing_customer_name: payload.customerName,
 
-            billing_last_name: payload.customerName.trim().split(/\s+/).slice(1).join(" ") || payload.customerName.trim().split(/\s+/)[0] || "Customer",
+            billing_last_name:
+              payload.customerName.trim().split(/\s+/).slice(1).join(" ") ||
+              payload.customerName.trim().split(/\s+/)[0] ||
+              "Customer",
 
             billing_address: payload.address,
 
@@ -486,35 +489,45 @@ export class ShiprocketProvider implements ShippingProvider {
   async getShippingRates(
     pincode: string,
     weight: number,
+    cod = false,
   ): Promise<ShippingRate[]> {
+    if (!/^\d{6}$/.test(pincode)) {
+      throw new Error("A valid 6-digit delivery PIN is required.");
+    }
+
+    if (!Number.isFinite(weight) || weight <= 0) {
+      throw new Error("A valid shipment weight is required.");
+    }
+
+    // Do not catch the provider error here and silently return
+    // preset prices. The caller must know when live rates failed.
     const couriers = await getAvailableCouriers(
       PICKUP_ADDRESS.pincode,
       pincode,
-      true,
+      cod,
       weight,
     );
 
-    if (!couriers.length) {
+    if (couriers.length === 0) {
       throw new Error(
-        "No Shiprocket courier is available for this destination.",
+        "No Shiprocket courier is available for this destination and payment mode.",
       );
     }
 
-    return couriers.map((courier) => ({
-      courierId: String(courier.courierCompanyId),
-
-      courierName: courier.courierName,
-
-      method: courier.freightCharge > 70 ? "express" : "standard",
-
-      amount: courier.freightCharge,
-
-      estimatedDays: Number.parseInt(courier.estimatedDays, 10) || 5,
-
-      codAvailable: true,
-
-      trackingAvailable: true,
-    }));
+    return couriers
+      .filter(
+        (courier) =>
+          Number.isFinite(courier.freightCharge) && courier.freightCharge >= 0,
+      )
+      .map((courier) => ({
+        courierId: String(courier.courierCompanyId),
+        courierName: courier.courierName,
+        method: "standard" as const,
+        amount: courier.freightCharge,
+        estimatedDays: Number.parseInt(courier.estimatedDays, 10) || 5,
+        codAvailable: true,
+        trackingAvailable: true,
+      }));
   }
 }
 

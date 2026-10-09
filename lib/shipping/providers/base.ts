@@ -132,5 +132,9 @@ export interface ShippingProvider {
   /**
    * Fetch shipping rates
    */
-  getShippingRates(pincode: string, weight: number): Promise<ShippingRate[]>;
+  getShippingRates(
+    pincode: string,
+    weight: number,
+    cod?: boolean,
+  ): Promise<ShippingRate[]>;
 }

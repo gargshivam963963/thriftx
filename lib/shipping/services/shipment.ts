@@ -53,8 +53,9 @@ class ShipmentService {
   async getShippingRates(
     pincode: string,
     weight: number,
+    cod = false,
   ): Promise<ShippingRate[]> {
-    return this.provider.getShippingRates(pincode, weight);
+    return this.provider.getShippingRates(pincode, weight, cod);
   }
 }
 

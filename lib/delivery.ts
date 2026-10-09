@@ -5,6 +5,9 @@
  * Outside Panipat  → 3-5 Business Days Courier (Shiprocket)
  */
 
+import { PANIPAT_LOCAL_DELIVERY } from "./shipping/constants";
+
+
 const LOCAL_CITIES = new Set([
   "panipat",
   "panipat city",
@@ -90,12 +93,12 @@ export function getDeliveryInfo(city: string, pincode?: string): DeliveryInfo {
     return {
       zone: "local",
       label: "Same-Day Delivery",
-      eta: "2–3 Hours",
+      eta: PANIPAT_LOCAL_DELIVERY.etaLabel,
       icon: "⚡",
       description:
-        "FREE same-day delivery in Panipat within 2–3 hours. Order before 2 PM for same-day dispatch.",
-      price: 0,
-      free: true,
+        `${PANIPAT_LOCAL_DELIVERY.free ? "Free" : "₹" + PANIPAT_LOCAL_DELIVERY.price} same-day delivery in Panipat within 2–3 hours. Order before 2 PM for same-day dispatch.`,
+      price: PANIPAT_LOCAL_DELIVERY.price,
+      free: PANIPAT_LOCAL_DELIVERY.free,
     };
   }
 

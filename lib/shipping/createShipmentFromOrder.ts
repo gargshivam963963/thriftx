@@ -15,6 +15,8 @@ import {
 
 import { PICKUP_ADDRESS, SHIPPING_DEFAULTS } from "./constants";
 
+import { SHIPPING_PROVIDERS } from "@/lib/shipping/checkout-options";
+
 interface OrderItem {
   id?: string;
   title?: string;
@@ -52,6 +54,18 @@ export async function createShipmentFromOrder(orderId: string) {
     return {
       success: false,
       message: "Order not found.",
+    };
+  }
+
+  /*
+   * Local (THRIFTX-managed) delivery is fulfilled by the merchant, not
+   * by an external courier. Skip every shipment step for local orders so
+   * no Shiprocket request is ever made for a Panipat customer.
+   */
+  if (order.shippingProvider === SHIPPING_PROVIDERS.LOCAL) {
+    return {
+      success: true,
+      message: "Local delivery — no external shipment required.",
     };
   }
 

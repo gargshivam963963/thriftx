@@ -10,15 +10,16 @@ import { SHIPPING_DEFAULTS } from "./constants";
 // stale-quote bug fixed in this release lives client-side (checkout page
 // reused the previous address's quote); see app/checkout/page.tsx.
 const loadShippingRates = unstable_cache(
-  (pincode: string, weight: number) =>
-    shipmentService.getShippingRates(pincode, weight),
-  ["shipping-rates-v1"],
+  (pincode: string, weight: number, cod: boolean) =>
+    shipmentService.getShippingRates(pincode, weight, cod),
+  ["shipping-rates-v2"],
   { revalidate: 60, tags: ["shipping-rates"] },
 );
 
 export function getCachedShippingRates(
   pincode: string,
   weight = SHIPPING_DEFAULTS.defaultWeight,
+  cod = false,
 ) {
-  return loadShippingRates(pincode, weight);
+  return loadShippingRates(pincode, weight, cod);
 }

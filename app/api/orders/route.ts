@@ -28,6 +28,8 @@ import { getCheckoutPaymentIntent } from "@/lib/services/paymentIntent.server";
 
 import { createShipmentFromOrder } from "@/lib/shipping/createShipmentFromOrder";
 
+import { SHIPPING_PROVIDERS } from "@/lib/shipping/checkout-options";
+
 const MAX_BODY_LENGTH = 16_384;
 
 type CheckoutRequest =
@@ -445,9 +447,23 @@ export async function POST(request: NextRequest) {
      * Shipping failure must NOT turn a successful customer order
      * into a failed order. The admin can retry shipment creation
      * from the order management screen.
+     *
+     * Local (THRIFTX-managed) delivery is handled by the merchant in
+     * person — never through an external courier.
      */
     if ("$id" in order && typeof order.$id === "string") {
       try {
+        // Local orders are fulfilled by the merchant, not by Shiprocket.
+        if (order.shippingProvider === SHIPPING_PROVIDERS.LOCAL) {
+          return NextResponse.json(
+            {
+              success: true,
+              order,
+            },
+            { status: 201 },
+          );
+        }
+
         const shipment = await createShipmentFromOrder(order.$id);
 
         if (!shipment.success) {

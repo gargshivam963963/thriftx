@@ -33,10 +33,12 @@ const LOOKBOOK_COUNT = 6;
 /** Which genders the homepage promotes, in display order. */
 const FEATURED_GENDERS = ["men", "women", "kids", "unisex"] as const;
 
-/** Static art per gender; only used when a gender has no product imagery yet. */
+/** Static fashion covers per gender — real thrift/streetwear photography. */
 const GENDER_IMAGES: Record<string, string> = {
   men: "/images/categories/men.jpg",
   women: "/images/categories/women.jpg",
+  kids: "/images/categories/kids.jpg",
+  unisex: "/images/categories/unisex.jpg",
 };
 
 export default async function HomePage() {

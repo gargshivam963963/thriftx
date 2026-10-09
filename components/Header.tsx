@@ -842,58 +842,6 @@ function MobileMenu({
   );
 }
 
-function HeaderSkeleton() {
-  return (
-    <header
-      className="
-        sticky
-        top-0
-        z-header
-        w-full
-        border-b
-        border-border
-        bg-background/90
-        backdrop-blur-xl
-      "
-    >
-      <Container
-        className="
-          flex
-          h-header
-          items-center
-          justify-between
-          gap-4
-          !px-4
-          sm:!px-6
-          lg:!px-8
-          xl:!px-10
-        "
-      >
-        <div className="h-11 w-11 animate-pulse rounded-xl bg-muted lg:hidden" />
-
-        <div className="h-10 w-32 animate-pulse rounded-lg bg-muted sm:w-40" />
-
-        <div className="hidden items-center gap-2 lg:flex">
-          {[1, 2, 3, 4, 5].map((item) => (
-            <div
-              key={item}
-              className="h-10 w-16 animate-pulse rounded-xl bg-muted"
-            />
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="hidden h-11 w-11 animate-pulse rounded-xl bg-muted md:block" />
-          <div className="h-11 w-11 animate-pulse rounded-xl bg-muted" />
-          <div className="h-11 w-11 animate-pulse rounded-xl bg-muted" />
-          <div className="h-11 w-11 animate-pulse rounded-xl bg-muted" />
-          <div className="hidden h-10 w-10 animate-pulse rounded-full bg-muted md:block" />
-        </div>
-      </Container>
-    </header>
-  );
-}
-
 function IconButton({
   onClick,
   label,
@@ -933,24 +881,129 @@ function IconButton({
 }
 
 export default function Header() {
+  // NOTE: no outer Suspense here on purpose. HeaderContent never calls
+  // useSearchParams() directly, so the static shell (logo / nav / actions)
+  // paints instantly. Only the tiny active-nav highlight (which needs the
+  // query string) suspends, isolated in <DesktopNav /> below.
+  return <HeaderContent />;
+}
+
+function DesktopNavFallback() {
   return (
-    <Suspense fallback={<HeaderSkeleton />}>
-      <HeaderContent />
-    </Suspense>
+    <nav
+      aria-label="Main navigation"
+      className="
+              hidden
+              items-center
+              gap-0.5
+              lg:flex
+            "
+    >
+      {navCategories.map((cat) => (
+        <span
+          key={cat.href}
+          className="
+                        relative
+                        inline-flex
+                        min-h-10
+                        items-center
+                        whitespace-nowrap
+                        rounded-xl
+                        px-3.5
+                        py-2
+                        text-label
+                        font-semibold
+                        text-muted-foreground
+                      "
+        >
+          {cat.label}
+        </span>
+      ))}
+    </nav>
+  );
+}
+
+function DesktopNav({ pathname }: { pathname: string | null }) {
+  const searchParams = useSearchParams();
+  return (
+    <nav
+      aria-label="Main navigation"
+      className="
+              hidden
+              items-center
+              gap-0.5
+              lg:flex
+            "
+    >
+      {navCategories.map((cat) => {
+        const basePath = cat.href.split("?")[0];
+        const query = cat.href.split("?")[1];
+        const active = query
+          ? pathname === basePath &&
+            Array.from(new URLSearchParams(query).entries()).every(
+              ([key, value]) => searchParams.get(key) === value,
+            )
+          : (pathname === basePath && !searchParams.has("sort")) ||
+            (pathname?.startsWith(`${basePath}/`) ?? false);
+        return (
+          <Link
+            key={cat.href}
+            href={cat.href}
+            className={cn(
+              `
+                        relative
+                        inline-flex
+                        min-h-10
+                        items-center
+                        whitespace-nowrap
+                        rounded-xl
+                        px-3.5
+                        py-2
+                        text-label
+                        font-semibold
+                        transition-colors
+                        focus-visible:outline-none
+                        focus-visible:ring-2
+                        focus-visible:ring-ring
+                      `,
+              active
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+              cat.highlight &&
+                "text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300",
+            )}
+          >
+            {cat.label}
+            {active && (
+              <motion.div
+                layoutId="navIndicator"
+                className="
+                          absolute
+                          inset-0
+                          -z-10
+                          rounded-xl
+                          bg-muted
+                          dark:bg-card
+                        "
+                transition={{
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 30,
+                }}
+              />
+            )}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
 function HeaderContent() {
   const router = useRouter();
-  const pathname =
-    usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
-  const {
-    user,
-    logout,
-    loading,
-  } = useAuth();
+  const { user, logout, loading } = useAuth();
 
   const {
     totalItems,
@@ -978,9 +1031,9 @@ function HeaderContent() {
     return null;
   }
 
-  if (loading) {
-    return <HeaderSkeleton />;
-  }
+  // Auth is the ONLY async bit — it resolves in its own tiny slot instead of
+  // swapping the whole header for a skeleton. Static shell (logo/nav/icons)
+  // is already painted by the time this flips from placeholder → avatar.
 
   const iconSize = 20;
   const iconStroke = 2;
@@ -1120,91 +1173,11 @@ function HeaderContent() {
             </div>
           </Link>
 
-          {/* DESKTOP NAV */}
-          <nav
-            aria-label="Main navigation"
-            className="
-              hidden
-              items-center
-              gap-0.5
-              lg:flex
-            "
-          >
-            {navCategories.map(
-              (cat) => {
-                const basePath =
-                  cat.href.split(
-                    "?",
-                  )[0];
-                const query =
-                  cat.href.split("?")[1];
-
-                const active = query
-                  ? pathname === basePath &&
-                  Array.from(
-                    new URLSearchParams(query).entries(),
-                  ).every(([key, value]) => searchParams.get(key) === value)
-                  : (pathname === basePath &&
-                    !searchParams.has("sort")) ||
-                  pathname.startsWith(`${basePath}/`);
-
-                return (
-                  <Link
-                    key={
-                      cat.href
-                    }
-                    href={
-                      cat.href
-                    }
-                    className={cn(
-                      `
-                        relative
-                        inline-flex
-                        min-h-10
-                        items-center
-                        whitespace-nowrap
-                        rounded-xl
-                        px-3.5
-                        py-2
-                        text-label
-                        font-semibold
-                        transition-colors
-                        focus-visible:outline-none
-                        focus-visible:ring-2
-                        focus-visible:ring-ring
-                      `,
-                      active
-                        ? "text-foreground"
-                        : "text-muted-foreground hover:text-foreground",
-                      cat.highlight &&
-                      "text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300",
-                    )}
-                  >
-                    {cat.label}
-
-                    {active && (
-                      <motion.div
-                        layoutId="navIndicator"
-                        className="
-                          absolute
-                          inset-0
-                          -z-10
-                          rounded-xl
-                          bg-muted
-                          dark:bg-card
-                        "
-                        transition={{
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 30,
-                        }}
-                      />
-                    )}
-                  </Link>
-                );
-              },
-            )}
-          </nav>
+          {/* DESKTOP NAV — active highlight needs ?sort=, so it lives in its
+              own Suspense island. Logo + links paint instantly. */}
+          <Suspense fallback={<DesktopNavFallback />}>
+            <DesktopNav pathname={pathname} />
+          </Suspense>
 
           {/* RIGHT ACTIONS */}
           <div
@@ -1287,7 +1260,19 @@ function HeaderContent() {
             </Tooltip>
 
             <div className="ml-1 hidden items-center md:flex">
-              {user ? (
+              {loading ? (
+                <Tooltip label="Sign in">
+                  <Button
+                    onClick={() => router.push("/login")}
+                    variant="primary"
+                    size="md"
+                    className="min-h-11 rounded-xl px-4"
+                  >
+                    <User size={iconSize} strokeWidth={iconStroke} />
+                    Sign In
+                  </Button>
+                </Tooltip>
+              ) : user ? (
                 <>
                   {user.role === "admin" && (
                     <Tooltip label="Admin Panel">

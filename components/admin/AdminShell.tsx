@@ -88,7 +88,7 @@ export default function AdminShell({
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card px-4 lg:hidden">
           <Button
             onClick={() => setSidebarOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-border text-foreground hover:bg-muted"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-border text-foreground bg-card hover:bg-muted"
           >
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </Button>

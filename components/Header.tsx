@@ -223,12 +223,12 @@ function UserDropdown({
   const menuItems = [
     ...(isAdmin
       ? [
-          {
-            href: "/admin/dashboard",
-            label: "Admin Panel",
-            icon: LayoutDashboard,
-          },
-        ]
+        {
+          href: "/admin/dashboard",
+          label: "Admin Panel",
+          icon: LayoutDashboard,
+        },
+      ]
       : []),
     {
       href: "/profile",
@@ -919,10 +919,9 @@ function IconButton({
         items-center
         justify-center
         rounded-2xl
-        text-muted-foreground
+        text-foreground
         transition-colors
         hover:bg-muted
-        hover:text-foreground
         focus-visible:outline-none
         focus-visible:ring-2
         focus-visible:ring-ring
@@ -1143,12 +1142,12 @@ function HeaderContent() {
 
                 const active = query
                   ? pathname === basePath &&
-                    Array.from(
-                      new URLSearchParams(query).entries(),
-                    ).every(([key, value]) => searchParams.get(key) === value)
+                  Array.from(
+                    new URLSearchParams(query).entries(),
+                  ).every(([key, value]) => searchParams.get(key) === value)
                   : (pathname === basePath &&
-                      !searchParams.has("sort")) ||
-                    pathname.startsWith(`${basePath}/`);
+                    !searchParams.has("sort")) ||
+                  pathname.startsWith(`${basePath}/`);
 
                 return (
                   <Link

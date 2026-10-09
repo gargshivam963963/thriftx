@@ -181,7 +181,7 @@ function StepIndicator({
     return (
         <nav
             aria-label="Checkout progress"
-            className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:rounded-3xl sm:p-5"
+            className="glass-liquid rounded-2xl p-4 sm:rounded-3xl sm:p-5"
         >
             <CheckoutProgress
                 currentStep={activeIndex + 1}
@@ -416,14 +416,63 @@ export default function CheckoutAccordion({
             addressId?: string,
         ) => {
             await onAddressSave(data, addressId);
-
-            onStepChange("shipping");
+            // Smart defaults (effects below) move the customer forward —
+            // no forced step click required.
         },
-        [
-            onAddressSave,
-            onStepChange,
-        ],
+        [onAddressSave],
     );
+
+    // Smart defaults: address + delivery auto-resolve. An existing address
+    // stays selected, delivery derives from the address zone, and the
+    // customer lands on payment. "Change" buttons remain for multi-address
+    // cases, but no step is ever a forced click.
+    useEffect(() => {
+        if (addressesLoading || addresses.length === 0) return;
+        if (!selectedAddress) {
+            const fallback =
+                addresses.find((a) => a.isDefault) ?? addresses[0];
+            if (fallback) onAddressSelect(fallback.$id);
+        }
+    }, [addressesLoading, addresses, selectedAddress, onAddressSelect]);
+
+    useEffect(() => {
+        if (shippingLoading || shippingMethod) return;
+        if (shippingOptions.length > 0 && selectedAddress) {
+            onShippingSelect(shippingOptions[0]);
+        }
+    }, [
+        shippingLoading,
+        shippingMethod,
+        shippingOptions,
+        selectedAddress,
+        onShippingSelect,
+    ]);
+
+    // Auto-advance to payment ONLY the first time an address + shipping combo
+    // resolves — never when the customer deliberately returns to the address
+    // step to change it. The previous version bounced "Change" straight back
+    // to payment, which made editing the delivery address impossible.
+    const autoAdvancedKeyRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (!selectedAddress || !shippingMethod) return;
+
+        const key = `${selectedAddress.$id}:${shippingMethod.name}`;
+
+        // Remember the combo we've already advanced past so returning to the
+        // address step later does not re-trigger the jump.
+        if (activeStep === "payment") {
+            autoAdvancedKeyRef.current = key;
+            return;
+        }
+
+        // Already auto-advanced for this exact combo → respect the customer's
+        // current position (they are editing the address on purpose).
+        if (autoAdvancedKeyRef.current === key) return;
+
+        autoAdvancedKeyRef.current = key;
+        onStepChange("payment");
+    }, [selectedAddress, shippingMethod, activeStep, onStepChange]);
 
     const handleAddressSelect = useCallback(
         (address: Address) => {
@@ -450,7 +499,7 @@ export default function CheckoutAccordion({
     return (
         <div
             ref={sectionRef}
-            className="min-w-0 scroll-mt-24"
+            className="min-w-0 scroll-mt-24 space-y-4 sm:space-y-5"
         >
             <StepIndicator
                 activeStep={activeStep}
@@ -459,7 +508,7 @@ export default function CheckoutAccordion({
 
             <motion.div
                 layout
-                className="space-y-3 sm:space-y-4"
+                className="space-y-4 sm:space-y-5"
             >
                 <AddressSection
                     open={activeStep === "address"}
@@ -472,10 +521,15 @@ export default function CheckoutAccordion({
                         onStepChange("address")
                     }
                     onContinue={() =>
-                        onStepChange("shipping")
+                        onStepChange(localDelivery ? "payment" : "shipping")
                     }
                 />
 
+                {/* Shipping step is only a real choice for non-local zones
+                    with 2+ courier options. Panipat self-delivery and single
+                    courier options auto-resolve — shown as a compact
+                    confirmation line instead of a forced click-step. */}
+                {(!localDelivery && shippingOptions.length > 1) ? (
                 <ShippingSection
                     open={activeStep === "shipping"}
                     methods={shippingOptions}
@@ -488,6 +542,29 @@ export default function CheckoutAccordion({
                     loading={shippingLoading}
                     isLocalDelivery={localDelivery}
                 />
+                ) : (
+                selectedAddress && shippingMethod && (
+                <div className="rounded-2xl border border-border bg-card px-4 py-3.5 sm:rounded-3xl sm:px-6 sm:py-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-success-bg text-success-foreground">
+                            <Truck className="size-4" aria-hidden="true" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-small font-semibold text-foreground">
+                                {shippingMethod.name}
+                            </p>
+                            <p className="mt-0.5 truncate text-small text-muted-foreground">
+                                {shippingMethod.eta}
+                                {shippingMethod.price === 0
+                                    ? " · Free"
+                                    : ` · ₹${shippingMethod.price.toLocaleString("en-IN")}`}
+                                {localDelivery ? " · Delivered by THRIFTX" : ""}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                )
+                )}
 
                 <PaymentSection
                     open={activeStep === "payment"}

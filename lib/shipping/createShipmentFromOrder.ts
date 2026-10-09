@@ -1,10 +1,19 @@
-import { getOrder, updateShipment } from "@/lib/services/orderService";
+import {
+  getOrder,
+  updateOrderStatus,
+  updateShipment,
+} from "@/lib/services/orderService";
+
 import { shipmentService } from "./services/shipment";
 import { getBestCourier } from "./services/courier";
 import { generateAwb } from "./services/awb";
-import { requestPickup } from "./services/pickupScheduler";
+
+import {
+  acquireShipmentCreationLock,
+  releaseShipmentCreationLock,
+} from "./shipmentCreationLock";
+
 import { PICKUP_ADDRESS, SHIPPING_DEFAULTS } from "./constants";
-import type { Order } from "@/lib/types/order";
 
 interface OrderItem {
   id?: string;
@@ -13,110 +22,481 @@ interface OrderItem {
   quantity?: number;
 }
 
-/**
- * Parse the order's stored product JSON into a typed array.
- */
 function parseOrderItems(raw: string): OrderItem[] {
   try {
     const parsed = JSON.parse(raw || "[]");
-    return Array.isArray(parsed) ? parsed : [];
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed;
   } catch {
     return [];
   }
 }
 
-/**
- * Create a Shiprocket shipment from a stored order.
- * Uses the configured pickup address + shipping defaults so nothing is hardcoded.
- * Returns the full result (shipment, courier, AWB, pickup) or an error result.
- */
 export async function createShipmentFromOrder(orderId: string) {
-  const order = await getOrder(orderId);
+  let order;
 
-  const items = parseOrderItems(order.products);
-  const weight = SHIPPING_DEFAULTS.defaultWeight;
-  const length = SHIPPING_DEFAULTS.defaultLength;
-  const width = SHIPPING_DEFAULTS.defaultWidth;
-  const height = SHIPPING_DEFAULTS.defaultHeight;
+  try {
+    order = await getOrder(orderId);
+  } catch {
+    return {
+      success: false,
+      message: "Order not found.",
+    };
+  }
 
-  const result = await shipmentService.createShipment({
-    orderId: order.orderId,
-    customerName: `${order.firstName} ${order.lastName}`.trim(),
-    email: order.email ?? "",
-    phone: order.phone,
-    address: order.address,
-    city: order.city,
-    state: order.state || "Haryana",
-    country: order.country || "India",
-    pincode: order.postalCode,
-    amount: order.total,
-    cod: order.paymentMethod === "cod",
-    weight,
-    length,
-    width,
-    height,
-    items,
-  });
+  if (!order) {
+    return {
+      success: false,
+      message: "Order not found.",
+    };
+  }
 
-  if (!result.success || !result.shipment) {
-    return result;
+  /*
+   * Database-backed lock.
+   *
+   * This prevents two simultaneous admin requests from
+   * creating two real Shiprocket shipments.
+   */
+  const lockToken = await acquireShipmentCreationLock(orderId);
+
+  if (!lockToken) {
+    return {
+      success: false,
+      code: "SHIPMENT_CREATION_IN_PROGRESS",
+      message:
+        "Shipment creation is already in progress for this order. Please try again shortly.",
+    };
   }
 
   try {
-    const bestCourier = await getBestCourier(
-      PICKUP_ADDRESS.pincode,
-      order.postalCode,
-      order.paymentMethod === "cod",
-      weight,
-    );
+    /*
+     * Always reload after obtaining the lock.
+     */
+    try {
+      order = await getOrder(orderId);
+    } catch {
+      return {
+        success: false,
+        message: "Order not found.",
+      };
+    }
 
-    const awb = await generateAwb(
-      result.shipment.shipmentId ?? "",
-      bestCourier.courierCompanyId,
-    );
+    if (!order) {
+      return {
+        success: false,
+        message: "Order not found.",
+      };
+    }
 
-    const pickup = await requestPickup(result.shipment.shipmentId ?? "");
+    /*
+     * If the complete shipping workflow already exists,
+     * return it instead of creating anything again.
+     */
+    if (
+      order.shipmentId &&
+      order.awbNumber &&
+      order.pickupStatus === "scheduled"
+    ) {
+      return {
+        success: true,
+        shipmentId: order.shipmentId,
+        trackingNumber: order.trackingNumber || order.awbNumber,
+        trackingUrl: order.trackingUrl || "",
+        labelUrl: order.labelUrl || "",
+        estimatedDelivery: order.estimatedDelivery || "",
+        message: "Shipment already exists and pickup is scheduled.",
+      };
+    }
 
-    await updateShipment(order.$id, {
-      shippingProvider: "shiprocket",
+    const items = parseOrderItems(order.products);
 
-      shipmentStatus: "recommended_to_ship",
+    const weight = SHIPPING_DEFAULTS.defaultWeight;
+    const length = SHIPPING_DEFAULTS.defaultLength;
+    const width = SHIPPING_DEFAULTS.defaultWidth;
+    const height = SHIPPING_DEFAULTS.defaultHeight;
 
-      pickupStatus: pickup?.pickup_status === 1 ? "scheduled" : "pending",
+    const cod = order.paymentMethod === "cod";
 
-      shipmentId: result.shipment.shipmentId,
+    /*
+     * ---------------------------------------------------------
+     * STEP 1 — CREATE SHIPROCKET SHIPMENT
+     * ---------------------------------------------------------
+     *
+     * If shipmentId already exists, this is a retry/resume.
+     * Do NOT create another Shiprocket order.
+     */
 
-      courier: bestCourier.courierName,
+    let shipmentId = order.shipmentId || "";
 
-      courierId: String(bestCourier.courierCompanyId),
+    let createdShipment: Awaited<
+      ReturnType<typeof shipmentService.createShipment>
+    > | null = null;
 
-      awbNumber: awb?.awb_code,
+    if (!shipmentId) {
+      createdShipment = await shipmentService.createShipment({
+        orderId: order.orderId,
 
-      trackingNumber: awb?.awb_code,
+        customerName: `${order.firstName} ${order.lastName}`.trim(),
 
-      trackingUrl: result.trackingUrl,
+        email: order.email ?? "",
 
-      labelUrl: result.labelUrl,
+        phone: order.phone,
 
-      invoiceUrl: result.invoiceUrl,
+        address: order.address,
 
-      estimatedDelivery: result.estimatedDelivery,
-    });
+        city: order.city,
+
+        state: order.state || "Haryana",
+
+        country: order.country || "India",
+
+        pincode: order.postalCode,
+
+        amount: Number(order.total),
+
+        cod,
+
+        weight,
+
+        length,
+
+        width,
+
+        height,
+
+        items,
+      });
+
+      if (!createdShipment.success) {
+        return {
+          success: false,
+          message:
+            createdShipment.message || "Shiprocket shipment creation failed.",
+          details: (createdShipment as { details?: unknown }).details,
+        };
+      }
+
+      shipmentId = createdShipment.shipmentId || "";
+
+      if (!shipmentId) {
+        const providerShipment = (createdShipment as { shipment?: unknown }).shipment;
+        return {
+          success: false,
+          message:
+            createdShipment.message ||
+            "Shiprocket accepted the request but did not return a shipment ID.",
+          details: providerShipment,
+        };
+      }
+
+      await updateShipment(order.$id, {
+        shippingProvider: "shiprocket",
+
+        shipmentStatus: "shipment_created",
+
+        pickupStatus: "pending",
+
+        shipmentId,
+
+        trackingNumber: createdShipment.trackingNumber || "",
+
+        trackingUrl: createdShipment.trackingUrl || "",
+
+        labelUrl: createdShipment.labelUrl || "",
+
+        invoiceUrl: createdShipment.invoiceUrl || "",
+
+        estimatedDelivery: createdShipment.estimatedDelivery || "",
+      });
+
+      /*
+       * Shipment exists in Shiprocket, but pickup has not
+       * happened yet. THRIFTX must therefore remain Processing.
+       */
+      if (order.status !== "Processing") {
+        await updateOrderStatus(order.$id, "Processing");
+      }
+    }
+
+    /*
+     * Reload persisted state.
+     */
+    order = await getOrder(orderId);
+
+    /*
+     * ---------------------------------------------------------
+     * STEP 2 — COURIER
+     * ---------------------------------------------------------
+     *
+     * Reuse an already assigned courier when available.
+     * Otherwise select one from live Shiprocket serviceability.
+     */
+
+    let courierCompanyId = order.courierId ? Number(order.courierId) : 0;
+
+    let courierName = order.courier || "";
+
+    let courier: Awaited<ReturnType<typeof getBestCourier>> | null = null;
+
+    if (!courierCompanyId) {
+      try {
+        courier = await getBestCourier(
+          PICKUP_ADDRESS.pincode,
+          order.postalCode,
+          cod,
+          weight,
+        );
+      } catch (error) {
+        return {
+          success: false,
+          shipmentId,
+          message:
+            error instanceof Error
+              ? `Shipment created, but courier selection failed: ${error.message}`
+              : "Shipment created, but courier selection failed.",
+        };
+      }
+
+      courierCompanyId = courier.courierCompanyId;
+      courierName = courier.courierName;
+    }
+
+    /*
+     * ---------------------------------------------------------
+     * STEP 3 — AWB
+     * ---------------------------------------------------------
+     *
+     * Never request another AWB if one is already stored.
+     */
+
+    let awbCode = order.awbNumber || "";
+
+    if (!awbCode) {
+      let awb;
+
+      try {
+        awb = await generateAwb(shipmentId, courierCompanyId);
+      } catch (error) {
+        await updateShipment(order.$id, {
+          shippingProvider: "shiprocket",
+          shipmentStatus: "shipment_created",
+          pickupStatus: "pending",
+          shipmentId,
+          courier: courierName,
+          courierId: String(courierCompanyId),
+        });
+
+        return {
+          success: false,
+          shipmentId,
+          courier,
+          message:
+            error instanceof Error
+              ? `Shipment exists and courier was selected, but AWB assignment failed: ${error.message}`
+              : "Shipment exists and courier was selected, but AWB assignment failed.",
+        };
+      }
+
+      awbCode = awb?.awb_code || "";
+
+      if (!awbCode) {
+        await updateShipment(order.$id, {
+          shippingProvider: "shiprocket",
+          shipmentStatus: "shipment_created",
+          pickupStatus: "pending",
+          shipmentId,
+          courier: courierName,
+          courierId: String(courierCompanyId),
+        });
+
+        return {
+          success: false,
+          shipmentId,
+          courier,
+          message: "Shiprocket did not return an AWB after courier assignment.",
+        };
+      }
+
+      await updateShipment(order.$id, {
+        shippingProvider: "shiprocket",
+
+        shipmentStatus: "shipment_created",
+
+        pickupStatus: "pending",
+
+        shipmentId,
+
+        courier: courierName,
+
+        courierId: String(courierCompanyId),
+
+        awbNumber: awbCode,
+
+        trackingNumber: awbCode,
+
+        trackingUrl:
+          order.trackingUrl || `https://shiprocket.co/tracking/${awbCode}`,
+      });
+    } else {
+      /*
+       * Make sure courier information is persisted even
+       * when this is a retry of an existing AWB.
+       */
+      await updateShipment(order.$id, {
+        shippingProvider: "shiprocket",
+
+        shipmentStatus: order.shipmentStatus || "shipment_created",
+
+        pickupStatus: order.pickupStatus || "pending",
+
+        shipmentId,
+
+        courier: courierName,
+
+        courierId: String(courierCompanyId),
+
+        awbNumber: awbCode,
+
+        trackingNumber: order.trackingNumber || awbCode,
+
+        trackingUrl:
+          order.trackingUrl || `https://shiprocket.co/tracking/${awbCode}`,
+      });
+    }
+
+    /*
+     * ---------------------------------------------------------
+     * STEP 4 — REAL PICKUP REQUEST
+     * ---------------------------------------------------------
+     *
+     * Only request pickup when it isn't already scheduled.
+     */
+
+    order = await getOrder(orderId);
+
+    if (order.pickupStatus !== "scheduled") {
+      const pickupResult = await shipmentService.schedulePickup(shipmentId);
+
+      if (
+        !pickupResult.success ||
+        pickupResult.pickup?.status !== "scheduled"
+      ) {
+        await updateShipment(order.$id, {
+          shippingProvider: "shiprocket",
+
+          shipmentStatus: "shipment_created",
+
+          pickupStatus: "failed",
+
+          shipmentId,
+
+          courier: courierName,
+
+          courierId: String(courierCompanyId),
+
+          awbNumber: awbCode,
+
+          trackingNumber: order.trackingNumber || awbCode,
+
+          trackingUrl:
+            order.trackingUrl || `https://shiprocket.co/tracking/${awbCode}`,
+        });
+
+        return {
+          success: false,
+
+          shipmentId,
+
+          trackingNumber: awbCode,
+
+          courier,
+
+          pickup: pickupResult.pickup,
+
+          message:
+            pickupResult.message ||
+            "AWB is assigned, but Shiprocket did not confirm pickup scheduling.",
+        };
+      }
+
+      await updateShipment(order.$id, {
+        shippingProvider: "shiprocket",
+
+        shipmentStatus: "pickup_scheduled",
+
+        pickupStatus: "scheduled",
+
+        shipmentId,
+
+        courier: courierName,
+
+        courierId: String(courierCompanyId),
+
+        awbNumber: awbCode,
+
+        trackingNumber: awbCode,
+
+        trackingUrl:
+          order.trackingUrl || `https://shiprocket.co/tracking/${awbCode}`,
+
+        pickupId: pickupResult.pickup?.pickupId,
+
+        shippedAt: pickupResult.pickup?.scheduledAt || new Date().toISOString(),
+      });
+
+      /*
+       * IMPORTANT:
+       * Only after Shiprocket confirms pickup scheduling
+       * does THRIFTX become Shipped.
+       */
+      await updateOrderStatus(order.$id, "Shipped");
+
+      return {
+        success: true,
+
+        shipmentId,
+
+        trackingNumber: awbCode,
+
+        trackingUrl:
+          order.trackingUrl || `https://shiprocket.co/tracking/${awbCode}`,
+
+        courier,
+
+        awb: {
+          awb_code: awbCode,
+        },
+
+        pickup: pickupResult.pickup,
+
+        message: "Shipment created, AWB assigned and pickup scheduled.",
+      };
+    }
+
+    /*
+     * Pickup was already scheduled before this request.
+     */
+    if (order.status !== "Shipped") {
+      await updateOrderStatus(order.$id, "Shipped");
+    }
 
     return {
-      ...result,
-      courier: bestCourier,
-      awb,
-      pickup,
+      success: true,
+
+      shipmentId,
+
+      trackingNumber: awbCode,
+
+      trackingUrl:
+        order.trackingUrl || `https://shiprocket.co/tracking/${awbCode}`,
+
+      message: "Shipment already exists and pickup is scheduled.",
     };
-  } catch (error) {
-    // Shipment created but AWB/pickup failed — still return the shipment result
-    return {
-      ...result,
-      message:
-        error instanceof Error
-          ? `Shipment created, but AWB/pickup failed: ${error.message}`
-          : "Shipment created, but AWB/pickup failed.",
-    };
+  } finally {
+    await releaseShipmentCreationLock(orderId, lockToken);
   }
 }

@@ -49,6 +49,10 @@ export interface ShipmentResult {
 
   message?: string;
 
+  code?: string;
+
+  details?: unknown;
+
   shipment?: Shipment;
 
   shipmentId?: string;
@@ -78,6 +82,10 @@ export interface PickupResult {
   pickup?: PickupDetails;
 
   message?: string;
+
+  code?: string;
+
+  details?: unknown;
 }
 
 export interface TrackingResult {

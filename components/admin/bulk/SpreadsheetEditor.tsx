@@ -526,16 +526,7 @@ export default function SpreadsheetEditor({
                             <p className="text-title">
                                 Drop your product folders here
                             </p>
-
-                            <p className="mt-1.5 text-body-sm text-muted-foreground">
-                                One subfolder per product · 3–6 images each
-                            </p>
                         </div>
-
-                        <p className="max-w-full overflow-x-auto whitespace-nowrap rounded-lg border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground">
-                            Products → Nike Vintage Tee → front.jpg ·
-                            back.jpg
-                        </p>
 
                         <div className="flex flex-wrap justify-center gap-2">
                             <Button

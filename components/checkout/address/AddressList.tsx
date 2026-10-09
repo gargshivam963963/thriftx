@@ -81,7 +81,7 @@ export default function AddressList({
                     whileTap={press.tap}
                     transition={transitions.micro}
                     aria-label="Add a new address"
-                    className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-border px-3 py-2 text-body-sm font-medium transition hover:border-foreground hover:bg-foreground hover:text-background sm:px-4"
+                    className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-body-sm font-medium text-foreground transition hover:border-foreground/40 hover:bg-muted hover:text-foreground sm:px-4"
                 >
                     <Plus size={16} />
                     <span className="hidden sm:inline">Add New</span>
@@ -117,7 +117,7 @@ export default function AddressList({
                 whileHover={lift.row}
                 whileTap={press.tap}
                 transition={transitions.micro}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted py-3.5 text-body-sm font-medium text-muted-foreground transition hover:border-foreground hover:bg-foreground hover:text-background sm:rounded-3xl"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-background py-3.5 text-body-sm font-medium text-foreground transition hover:border-foreground/40 hover:bg-muted hover:text-foreground sm:rounded-3xl"
             >
                 <Plus size={18} />
                 Add Another Address

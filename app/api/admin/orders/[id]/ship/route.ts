@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-
 import { createShipmentFromOrder } from "@/lib/shipping/createShipmentFromOrder";
 import { adminAuthErrorResponse } from "@/lib/auth-guard";
 
@@ -17,7 +16,11 @@ function errorResponse(message: string, status: number) {
 
 export async function POST(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>;
+  },
 ) {
   const authError = await adminAuthErrorResponse();
 
@@ -39,24 +42,24 @@ export async function POST(
     const result = await createShipmentFromOrder(id.trim());
 
     if (!result.success) {
-      return errorResponse(
-        "Shipment could not be created. Check the order and shipping configuration.",
-        400,
+      const status =
+        result.code === "SHIPMENT_CREATION_IN_PROGRESS" ? 409 : 400;
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            result.message ||
+            "Shipment could not be created. Check the order and shipping configuration.",
+          code: (result as { code?: string }).code,
+          details: (result as { details?: unknown }).details,
+        },
+        { status },
       );
     }
 
     return NextResponse.json({
+      ...result,
       success: true,
-      shipment: result.shipment,
-      shipmentId: result.shipmentId,
-      orderId: result.orderId,
-      trackingNumber: result.trackingNumber,
-      trackingUrl: result.trackingUrl,
-      estimatedDelivery: result.estimatedDelivery,
-      courier: "courier" in result ? result.courier : undefined,
-      awb: "awb" in result ? result.awb : undefined,
-      pickup: "pickup" in result ? result.pickup : undefined,
-      message: result.message,
     });
   } catch (error) {
     console.error("[admin/orders/:id/ship] Shipment request failed:", error);

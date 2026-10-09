@@ -1,12 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-
 import {
   getAllOrders,
   updateOrderStatus,
   adminUpdateOrder,
   deleteOrder,
 } from "@/lib/services/adminService";
-
+import { getOrder } from "@/lib/services/orderService";
+import { NextRequest, NextResponse } from "next/server";
 import { adminAuthErrorResponse } from "@/lib/auth-guard";
 
 const MAX_BODY_BYTES = 4_096;
@@ -103,11 +102,58 @@ export async function PATCH(request: NextRequest) {
     if (typeof status !== "string" || !ALLOWED_ORDER_STATUSES.has(status)) {
       return jsonError("Invalid order status.", 400);
     }
+
+    /*
+     * "Shipped" must only be reached through
+     * the real Shiprocket shipment workflow.
+     */
+    if (status === "Shipped") {
+      try {
+        const order = await getOrder(id.trim());
+
+        if (
+          !order ||
+          !order.shipmentId ||
+          !order.awbNumber ||
+          order.pickupStatus !== "scheduled"
+        ) {
+          return jsonError(
+            "This order cannot be marked Shipped until Shiprocket confirms the shipment and pickup.",
+            409,
+          );
+        }
+      } catch {
+        return jsonError("Order could not be verified.", 404);
+      }
+    }
+
+    /*
+     * Delivered must come from the actual shipment
+     * lifecycle, not a visual admin-only change.
+     */
+    if (status === "Delivered") {
+      try {
+        const order = await getOrder(id.trim());
+
+        if (!order || order.shipmentStatus !== "delivered") {
+          return jsonError(
+            "This order cannot be marked Delivered until the shipment is actually delivered.",
+            409,
+          );
+        }
+      } catch {
+        return jsonError("Order could not be verified.", 404);
+      }
+    }
+
     updates.status = status;
   }
 
   if (returnStatus !== undefined) {
-    if (typeof returnStatus !== "string" || !ALLOWED_RETURN_STATUSES.has(returnStatus)) {
+    if (
+      typeof returnStatus !== "string" ||
+      !ALLOWED_RETURN_STATUSES.has(returnStatus)
+    ) {
       return jsonError("Invalid return status.", 400);
     }
     updates.returnStatus = returnStatus;
@@ -118,7 +164,10 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (refundStatus !== undefined) {
-    if (typeof refundStatus !== "string" || !ALLOWED_REFUND_STATUSES.has(refundStatus)) {
+    if (
+      typeof refundStatus !== "string" ||
+      !ALLOWED_REFUND_STATUSES.has(refundStatus)
+    ) {
       return jsonError("Invalid refund status.", 400);
     }
     updates.refundStatus = refundStatus;

@@ -91,6 +91,16 @@ export const SHIPPING_FEATURES = {
  */
 export const PICKUP_ADDRESS = {
   name: process.env.SHIPROCKET_PICKUP_NAME || "ThriftX Warehouse",
+  /**
+   * Shiprocket "pickup_location" nickname registered in the Shiprocket
+   * dashboard (Settings → Pickup & RTO addresses). This MUST exactly match
+   * the nickname in Shiprocket, otherwise order creation is rejected.
+   * Falls back to the warehouse name for backwards compatibility.
+   */
+  pickupLocation:
+    process.env.SHIPROCKET_PICKUP_LOCATION ||
+    process.env.SHIPROCKET_PICKUP_NAME ||
+    "ThriftX Warehouse",
   address: process.env.SHIPROCKET_PICKUP_ADDRESS || "35B, Aggarsain Colony",
   city: process.env.SHIPROCKET_PICKUP_CITY || "Panipat",
   state: process.env.SHIPROCKET_PICKUP_STATE || "Haryana",

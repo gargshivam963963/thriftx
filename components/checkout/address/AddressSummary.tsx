@@ -26,15 +26,15 @@ interface AddressSummaryProps {
 const typeConfig = {
     Home: {
         icon: Home,
-        color: "bg-amber-100 text-amber-700 border-amber-200",
+        color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/25",
     },
     Work: {
         icon: BriefcaseBusiness,
-        color: "bg-blue-100 text-blue-700 border-blue-200",
+        color: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/25",
     },
     Other: {
         icon: Building2,
-        color: "bg-purple-100 text-purple-700 border-purple-200",
+        color: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/25",
     },
 } as const;
 
@@ -96,7 +96,7 @@ export default function AddressSummary({
                     whileHover={{ scale: 1.03 }}
                     whileTap={press.tap}
                     transition={transitions.micro}
-                    className="min-h-10 shrink-0 rounded-xl border border-border px-3 py-1.5 text-xs font-medium transition hover:border-foreground hover:bg-foreground hover:text-white sm:px-4 sm:text-sm"
+                    className="min-h-10 shrink-0 rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:border-foreground/40 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-95 sm:px-4 sm:text-sm"
                 >
                     Change
                 </motion.button>
@@ -135,7 +135,7 @@ export default function AddressSummary({
                     whileHover={{ scale: 1.03 }}
                     whileTap={press.tap}
                     transition={transitions.micro}
-                    className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-border px-3 py-1.5 text-xs font-medium transition hover:border-foreground hover:bg-foreground hover:text-white sm:px-4 sm:text-sm"
+                    className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:border-foreground/40 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-95 sm:px-4 sm:text-sm"
                 >
                     <Pencil size={14} />
                     Change
@@ -150,7 +150,7 @@ export default function AddressSummary({
                         </h4>
 
                         {address.isDefault && (
-                            <span className="mt-1.5 inline-flex rounded-full bg-foreground px-3 py-1 text-badge font-semibold uppercase tracking-wider text-white">
+                            <span className="mt-1.5 inline-flex rounded-full bg-foreground px-3 py-1 text-badge font-semibold uppercase tracking-wider text-background dark:bg-white dark:text-zinc-950">
                                 Default
                             </span>
                         )}

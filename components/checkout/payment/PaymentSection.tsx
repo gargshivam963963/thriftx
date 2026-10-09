@@ -69,7 +69,7 @@ function PaymentOption({
                 "relative w-full min-w-0 overflow-hidden rounded-2xl border p-4 text-left transition-all duration-200 sm:rounded-3xl sm:p-5",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2",
                 selected
-                    ? "border-success bg-success-bg/50 shadow-sm ring-1 ring-success/25"
+                    ? "border-success bg-success-bg shadow-sm ring-1 ring-success/30"
                     : "border-border bg-card hover:border-foreground/25 hover:bg-muted/20 hover:shadow-sm",
                 !canPay || loading
                     ? "cursor-not-allowed opacity-60"
@@ -110,7 +110,14 @@ function PaymentOption({
                         </span>
                     </div>
 
-                    <p className="mt-1.5 text-body-sm leading-relaxed text-muted-foreground">
+                    <p
+                        className={[
+                            "mt-1.5 text-body-sm leading-relaxed",
+                            selected
+                                ? "text-foreground"
+                                : "text-muted-foreground",
+                        ].join(" ")}
+                    >
                         {description}
                     </p>
 
@@ -118,7 +125,12 @@ function PaymentOption({
                         {features.map((feature) => (
                             <span
                                 key={feature}
-                                className="inline-flex items-center gap-1.5 text-small leading-relaxed text-muted-foreground"
+                                className={[
+                                    "inline-flex items-center gap-1.5 text-small leading-relaxed",
+                                    selected
+                                        ? "text-foreground/85"
+                                        : "text-muted-foreground",
+                                ].join(" ")}
                             >
                                 <Check
                                     size={12}

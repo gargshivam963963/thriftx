@@ -124,14 +124,23 @@ export default function AddressSection({
         setViewOverride("form");
     };
 
+    // "Change" from the collapsed summary jumps straight to the address
+    // picker (not another summary) so the customer can swap address in one
+    // tap — matches Zara/Nike-style single-action editing.
+    const handleChangeAddress = () => {
+        onOpen();
+        setViewOverride(addresses.length > 0 ? "list" : "empty");
+    };
+
     return (
+        <>
         <motion.section
             layout
             transition={{
                 duration: 0.28,
                 ease: "easeOut",
             }}
-            className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow duration-200 hover:shadow-md sm:rounded-3xl"
+            className="glass-liquid min-w-0 overflow-hidden rounded-2xl transition-shadow duration-200 sm:rounded-3xl"
         >
             {/* Section header */}
             <button
@@ -141,8 +150,8 @@ export default function AddressSection({
                 aria-controls="checkout-address-content"
                 className={[
                     "group flex w-full min-w-0 items-center justify-between gap-3",
-                    "bg-card px-4 py-4 text-left transition-colors",
-                    "hover:bg-muted/30 focus-visible:outline-none",
+                    "bg-transparent px-4 py-4 text-left transition-colors",
+                    "hover:bg-foreground/[0.04] focus-visible:outline-none",
                     "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-foreground",
                     "sm:px-6 sm:py-5",
                 ].join(" ")}
@@ -389,11 +398,11 @@ export default function AddressSection({
 
             {/* Collapsed selected address */}
             {!open && selectedAddress && (
-                <div className="border-t border-border px-4 py-4 sm:px-6 sm:py-5">
+                <div className="border-t border-border bg-subtle/40 px-4 py-4 sm:px-6 sm:py-5">
                     <AddressSummary
                         compact
                         address={selectedAddress}
-                        onChange={onOpen}
+                        onChange={handleChangeAddress}
                     />
                 </div>
             )}
@@ -416,9 +425,13 @@ export default function AddressSection({
                         </button>
                     </div>
                 )}
+        </motion.section>
 
-            {/* Panipat local delivery promotion */}
-            <AnimatePresence>
+        {/* Panipat local delivery promotion — rendered OUTSIDE the glass
+            section on purpose: `backdrop-filter` on the section creates a
+            containing block, which would trap this `fixed` overlay and clip
+            it inside the card instead of covering the viewport. */}
+        <AnimatePresence>
                 {showPanipatModal && (
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -588,6 +601,6 @@ export default function AddressSection({
                     </motion.div>
                 )}
             </AnimatePresence>
-        </motion.section>
+        </>
     );
 }

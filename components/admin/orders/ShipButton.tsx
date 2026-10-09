@@ -1,7 +1,7 @@
 "use client";
 
-
-import { Button } from '@/components/ui/button';import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { shipOrder } from "@/lib/shipping/admin";
 
 interface Props {
@@ -11,19 +11,31 @@ interface Props {
 export default function ShipButton({
     orderId,
 }: Props) {
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] =
+        useState(false);
 
     async function handleShip() {
         try {
             setLoading(true);
 
-            await shipOrder(orderId);
+            const result =
+                await shipOrder(orderId);
 
-            alert("Shipment created successfully.");
+            alert(
+                result?.message ||
+                "Shipment created successfully.",
+            );
         } catch (error) {
-            console.error(error);
+            console.error(
+                "[ShipButton] Shipment failed:",
+                error,
+            );
 
-            alert("Shipment failed.");
+            alert(
+                error instanceof Error
+                    ? error.message
+                    : "Shipment failed.",
+            );
         } finally {
             setLoading(false);
         }
@@ -34,7 +46,9 @@ export default function ShipButton({
             disabled={loading}
             onClick={handleShip}
         >
-            {loading ? "Creating..." : "Create Shipment"}
+            {loading
+                ? "Creating..."
+                : "Create Shipment"}
         </Button>
     );
 }

@@ -365,7 +365,7 @@ export default async function ProductDetail({
                   </p>
 
                   {discount && product.retailPrice && (
-                    <span className="rounded-full bg-success-bg px-2.5 py-1 text-xs font-semibold text-success-foreground">
+                    <span className="rounded-full bg-success px-2.5 py-1 text-xs font-bold text-white dark:bg-success dark:text-zinc-950">
                       {discount}% OFF
                     </span>
                   )}

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/SegmentedControl";
 import PageHeader from "@/components/ui/PageHeader";
 import Pagination from "@/components/ui/Pagination";
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/constants/products";
 import AdminPage from "@/components/admin/AdminPage";
 import { showToast } from "@/components/admin/toast/Toast";
 import ToastContainer from "@/components/admin/toast/Toast";
@@ -46,9 +47,6 @@ const slugify = (value: string) =>
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
-
-/** Rows per page in the admin grid / list. */
-const PRODUCTS_PER_PAGE = 12;
 
 type StatusFilter = "all" | "live" | "inactive" | "sold";
 
@@ -227,6 +225,8 @@ export default function AdminProductsPage() {
     const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [page, setPage] = useState(1);
+    /** Rows per page — the same 20 / 50 / 100 choices as the shop grid. */
+    const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
 
     // Modal state
@@ -296,7 +296,7 @@ export default function AdminProductsPage() {
 
     const totalPages = Math.max(
         1,
-        Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE),
+        Math.ceil(filteredProducts.length / pageSize),
     );
 
     // Clamp rather than reset, so deleting the last item on a page lands the
@@ -306,15 +306,25 @@ export default function AdminProductsPage() {
     const paginatedProducts = useMemo(
         () =>
             filteredProducts.slice(
-                (currentPage - 1) * PRODUCTS_PER_PAGE,
-                currentPage * PRODUCTS_PER_PAGE,
+                (currentPage - 1) * pageSize,
+                currentPage * pageSize,
             ),
-        [filteredProducts, currentPage],
+        [filteredProducts, currentPage, pageSize],
     );
 
     useEffect(() => {
         setPage(1);
     }, [search, categoryFilter, statusFilter]);
+
+    /**
+     * Page size is part of paging: a new size invalidates the old offsets, so
+     * always jump back to page 1 (mirrors the shop grid's `changePageSize`).
+     */
+    const handlePageSizeChange = useCallback((nextSize: number) => {
+        setPageSize(nextSize);
+        setPage(1);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, []);
 
     // Status counts drive the tab badges and reconcile the admin total with the
     // storefront: "live" is exactly what the shop is allowed to render.
@@ -960,9 +970,11 @@ export default function AdminProductsPage() {
                     page={currentPage}
                     totalPages={totalPages}
                     totalItems={filteredProducts.length}
-                    pageSize={PRODUCTS_PER_PAGE}
+                    pageSize={pageSize}
                     itemNoun="products"
                     onPageChange={setPage}
+                    pageSizeOptions={PAGE_SIZE_OPTIONS}
+                    onPageSizeChange={handlePageSizeChange}
                 />
             )}
 

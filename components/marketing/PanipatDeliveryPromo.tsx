@@ -43,14 +43,14 @@ export function PanipatDeliveryPromo({
             transition={{ duration: 0.3, ease: "easeOut" }}
             aria-label={`${PANIPAT_DELIVERY_PROMO.badge} — 2–3 hour delivery`}
             className={cn(
-                "relative overflow-hidden rounded-2xl border border-success/25 bg-success-bg/60 sm:rounded-3xl",
+                "relative overflow-hidden rounded-2xl border border-success/35 bg-success-bg shadow-sm sm:rounded-3xl",
                 className,
             )}
         >
             {/* Soft ambient wash — decorative only. */}
             <span
                 aria-hidden="true"
-                className="pointer-events-none absolute -right-10 -top-14 size-32 rounded-full bg-success/10 blur-3xl"
+                className="pointer-events-none absolute -right-10 -top-14 size-32 rounded-full bg-success/15 blur-3xl"
             />
 <div className="relative flex items-start gap-3 p-4 sm:gap-4 sm:p-5">
                 <span
@@ -61,18 +61,18 @@ export function PanipatDeliveryPromo({
                 </span>
 
                 <div className="min-w-0 flex-1">
-                    <p className="text-badge font-bold uppercase tracking-wider text-success-foreground">
+                    <p className="text-badge font-bold uppercase tracking-wider text-success">
                         {PANIPAT_DELIVERY_PROMO.badge}
                     </p>
 
-                    <p className="mt-1 text-body-sm font-semibold text-success-foreground">
+                    <p className="mt-1 text-body-sm font-semibold text-foreground">
                         {variant === "full"
                             ? PANIPAT_DELIVERY_PROMO.headline
                             : PANIPAT_DELIVERY_PROMO.subheadline}
                     </p>
 
                     {variant === "compact" ? (
-                        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-success-foreground/80">
+                        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-muted-foreground">
                             <span className="inline-flex items-center gap-1.5">
                                 <Clock
                                     className="size-3.5 shrink-0"
@@ -90,7 +90,7 @@ export function PanipatDeliveryPromo({
                         </p>
                     ) : (
                         <>
-                            <p className="mt-1.5 text-small text-success-foreground/80">
+                            <p className="mt-1.5 text-small text-muted-foreground">
                                 {PANIPAT_DELIVERY_PROMO.subheadline}
                             </p>
                             <ul className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -98,7 +98,7 @@ export function PanipatDeliveryPromo({
                                     (benefit) => (
                                         <li
                                             key={benefit}
-                                            className="flex items-start gap-2 text-small text-success-foreground"
+                                            className="flex items-start gap-2 text-small text-foreground"
                                         >
                                             <Truck
                                                 className="mt-0.5 size-3.5 shrink-0"

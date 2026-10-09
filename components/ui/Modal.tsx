@@ -119,12 +119,16 @@ export function Modal({
                         animate="visible"
                         exit="exit"
                         className={cn(
-                            "glass-liquid-strong w-full max-w-lg overflow-hidden rounded-2xl outline-none",
+                            // `max-h` + internal body scrolling guarantees the
+                            // panel never exceeds the viewport (the backdrop
+                            // padding is p-4 = 2rem total), no matter how much
+                            // content the dialog holds.
+                            "glass-liquid-strong flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden rounded-2xl outline-none",
                             className,
                         )}
                     >
                         {/* Header */}
-                        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+                        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-5 py-4">
                             <div className="min-w-0">
                                 <h2
                                     id={titleId}
@@ -156,12 +160,12 @@ export function Modal({
                             </Button>
                         </div>
 
-                        {/* Body */}
-                        <div className="px-5 py-5">{children}</div>
+                        {/* Body — scrolls internally when the panel hits max height */}
+                        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
 
                         {/* Footer */}
                         {footer && (
-                            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border bg-muted/40 px-5 py-3.5">
+                            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-border bg-muted/40 px-5 py-3.5">
                                 {footer}
                             </div>
                         )}

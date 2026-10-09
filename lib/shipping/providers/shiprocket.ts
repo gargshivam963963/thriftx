@@ -1,6 +1,5 @@
 import type { ShippingRate, ShipmentStatus } from "../types";
-import { PICKUP_ADDRESS, FALLBACK_SHIPPING_RATES } from "../constants";
-import { detectDeliveryZone } from "@/lib/delivery";
+import { PICKUP_ADDRESS } from "../constants";
 
 import type {
   CreateShipmentPayload,
@@ -9,27 +8,38 @@ import type {
   ShippingProvider,
   TrackingResult,
 } from "./base";
+
 import { shiprocketFetch } from "./client";
 import { getAvailableCouriers } from "./couriers";
-
-/**
- * Map Shiprocket shipment status strings to our internal ShipmentStatus.
- */
 
 interface ShiprocketShipmentResponse {
   shipment_id?: string | number;
   order_id?: string | number;
   awb_code?: string;
+  awb?: string;
   courier_name?: string;
   courier_company_id?: string | number;
   tracking_url?: string;
   label_url?: string;
   invoice_url?: string;
   estimated_delivery_date?: string;
+  status?: string;
+  status_code?: string | number;
+  message?: string;
+  error?: string;
+  errors?: unknown;
+  payload?: ShiprocketShipmentResponse;
+  data?: ShiprocketShipmentResponse;
 }
 
 interface ShiprocketPickupResponse {
   pickup_id?: string | number;
+  pickup_status?: number | string;
+  response?: {
+    pickup_scheduled_date?: string;
+    pickup_token_number?: string;
+    message?: string;
+  };
 }
 
 interface ShiprocketTrackingEventResponse {
@@ -50,19 +60,44 @@ interface ShiprocketLabelResponse {
 function mapShiprocketStatus(status: string): ShipmentStatus {
   const normalized = (status || "").toLowerCase();
 
-  if (normalized.includes("delivered")) return "delivered";
-  if (normalized.includes("cancelled") || normalized.includes("cancel"))
+  if (normalized.includes("delivered")) {
+    return "delivered";
+  }
+
+  if (normalized.includes("cancelled") || normalized.includes("cancel")) {
     return "cancelled";
-  if (normalized.includes("rto") || normalized.includes("return")) return "rto";
-  if (normalized.includes("out for delivery")) return "out_for_delivery";
-  if (normalized.includes("picked up") || normalized.includes("pickup"))
+  }
+
+  if (normalized.includes("rto") || normalized.includes("return")) {
+    return "rto";
+  }
+
+  if (normalized.includes("out for delivery")) {
+    return "out_for_delivery";
+  }
+
+  if (normalized.includes("picked up") || normalized.includes("pickup")) {
     return "picked_up";
-  if (normalized.includes("in transit") || normalized.includes("transit"))
+  }
+
+  if (normalized.includes("in transit") || normalized.includes("transit")) {
     return "in_transit";
-  if (normalized.includes("shipment created") || normalized.includes("created"))
+  }
+
+  if (
+    normalized.includes("shipment created") ||
+    normalized.includes("created")
+  ) {
     return "shipment_created";
-  if (normalized.includes("confirmed")) return "confirmed";
-  if (normalized.includes("packed")) return "packed";
+  }
+
+  if (normalized.includes("confirmed")) {
+    return "confirmed";
+  }
+
+  if (normalized.includes("packed")) {
+    return "packed";
+  }
 
   return "in_transit";
 }
@@ -78,17 +113,25 @@ export class ShiprocketProvider implements ShippingProvider {
         payload.items && payload.items.length > 0
           ? payload.items.map((item, index) => ({
               name: item.title || `THRIFTX Item ${index + 1}`,
+
               sku: String(item.id || `${payload.orderId}-${index + 1}`),
+
               units: Number(item.quantity) || 1,
+
               selling_price: Number(item.price) || payload.amount,
+
               discount: 0,
             }))
           : [
               {
                 name: "THRIFTX Order",
+
                 sku: payload.orderId,
+
                 units: 1,
+
                 selling_price: payload.amount,
+
                 discount: 0,
               },
             ];
@@ -97,27 +140,42 @@ export class ShiprocketProvider implements ShippingProvider {
         "/orders/create/adhoc",
         {
           method: "POST",
+
           body: JSON.stringify({
             order_id: payload.orderId,
+
             order_date: new Date().toISOString().slice(0, 10),
 
-            pickup_location: PICKUP_ADDRESS.name,
+            pickup_location: PICKUP_ADDRESS.pickupLocation,
+
             pickup_customer_name: "ThriftX",
+
             pickup_address: PICKUP_ADDRESS.address,
+
             pickup_city: PICKUP_ADDRESS.city,
+
             pickup_state: PICKUP_ADDRESS.state,
+
             pickup_country: PICKUP_ADDRESS.country,
+
             pickup_pincode: PICKUP_ADDRESS.pincode,
+
             pickup_email: PICKUP_ADDRESS.email,
+
             pickup_phone: PICKUP_ADDRESS.phone,
 
             billing_customer_name: payload.customerName,
-            billing_last_name: "",
+
+            billing_last_name: payload.customerName.trim().split(/\s+/).slice(1).join(" ") || payload.customerName.trim().split(/\s+/)[0] || "Customer",
 
             billing_address: payload.address,
+
             billing_city: payload.city,
+
             billing_pincode: payload.pincode,
+
             billing_state: payload.state,
+
             billing_country: payload.country,
 
             billing_email: payload.email ?? "",
@@ -133,7 +191,9 @@ export class ShiprocketProvider implements ShippingProvider {
             sub_total: payload.amount,
 
             length: payload.length,
+
             breadth: payload.width,
+
             height: payload.height,
 
             weight: payload.weight,
@@ -141,40 +201,82 @@ export class ShiprocketProvider implements ShippingProvider {
         },
       );
 
+      const raw = response as ShiprocketShipmentResponse;
+      const src =
+        raw?.payload?.shipment_id != null
+          ? (raw.payload as ShiprocketShipmentResponse)
+          : raw?.data?.shipment_id != null
+            ? (raw.data as ShiprocketShipmentResponse)
+            : raw;
+
+      const shipmentId = String(src.shipment_id ?? "");
+
+      if (!shipmentId) {
+        const msg =
+          (typeof src.message === "string" && src.message.trim()) ||
+          (typeof src.error === "string" && src.error.trim()) ||
+          (typeof src.errors === "string" && src.errors.trim()) ||
+          (src.errors && typeof src.errors === "object"
+            ? JSON.stringify(src.errors).slice(0, 500)
+            : "") ||
+          "Shiprocket did not return a shipment ID.";
+        // Append the exact nickname we sent so the admin can compare it
+        // with Shiprocket dashboard → Settings → Pickup & RTO addresses.
+        // This mismatch is the #1 cause of adhoc order rejection.
+        const hinted =
+          /pickup location/i.test(msg) || /pickup_location/i.test(msg)
+            ? `${msg} (sent pickup_location="${PICKUP_ADDRESS.pickupLocation}" — must exactly match the nickname in your Shiprocket dashboard; check /api/shipping/diagnose for the valid list)`
+            : msg;
+        console.error(
+          "[Shiprocket] Order creation returned no shipment_id:",
+          JSON.stringify(response).slice(0, 2000),
+        );
+        return {
+          success: false,
+          message: hinted,
+        };
+      }
+
+      const awbCode = src.awb_code ?? src.awb ?? "";
+
       return {
         success: true,
 
-        shipmentId: String(response.shipment_id ?? ""),
+        shipmentId,
 
-        orderId: String(response.order_id ?? ""),
+        orderId: String(src.order_id ?? ""),
 
-        awbCode: response.awb_code ?? "",
+        awbCode,
 
-        courierName: response.courier_name ?? "",
+        courierName: src.courier_name ?? "",
 
-        courierCompanyId: response.courier_company_id
-          ? Number(response.courier_company_id)
+        courierCompanyId: src.courier_company_id
+          ? Number(src.courier_company_id)
           : undefined,
 
-        trackingNumber: response.awb_code ?? String(response.shipment_id ?? ""),
+        /*
+         * AWB is the tracking number.
+         * Never use shipment_id as an AWB.
+         */
+        trackingNumber: awbCode,
 
-        trackingUrl: response.tracking_url ?? "",
+        trackingUrl: src.tracking_url ?? "",
 
-        labelUrl: response.label_url ?? "",
+        labelUrl: src.label_url ?? "",
 
-        invoiceUrl: response.invoice_url ?? "",
+        invoiceUrl: src.invoice_url ?? "",
 
-        estimatedDelivery: response.estimated_delivery_date ?? "",
+        estimatedDelivery: src.estimated_delivery_date ?? "",
 
         shipment: {
-          shipmentId: String(response.shipment_id ?? ""),
+          shipmentId,
 
           provider: "shiprocket",
 
           courier: {
-            id: String(response.courier_company_id ?? ""),
+            id: String(src.courier_company_id ?? ""),
 
-            name: response.courier_name ?? "",
+            name: src.courier_name ?? "",
 
             provider: "shiprocket",
           },
@@ -197,6 +299,8 @@ export class ShiprocketProvider implements ShippingProvider {
         },
       };
     } catch (error) {
+      console.error("[Shiprocket] Shipment creation failed:", error);
+
       return {
         success: false,
 
@@ -208,41 +312,94 @@ export class ShiprocketProvider implements ShippingProvider {
 
   async cancelShipment(shipmentId: string): Promise<boolean> {
     try {
-      await shiprocketFetch(`/orders/cancel`, {
+      const id = Number(shipmentId);
+
+      if (!Number.isInteger(id) || id <= 0) {
+        return false;
+      }
+
+      await shiprocketFetch("/orders/cancel", {
         method: "POST",
-        body: JSON.stringify({ ids: [parseInt(shipmentId, 10)] }),
+
+        body: JSON.stringify({
+          ids: [id],
+        }),
       });
+
       return true;
     } catch (error) {
       console.error("[Shiprocket] Cancel failed:", error);
+
       return false;
     }
   }
 
   async schedulePickup(shipmentId: string): Promise<PickupResult> {
     try {
+      const id = Number(shipmentId);
+
+      if (!Number.isInteger(id) || id <= 0) {
+        return {
+          success: false,
+          message: "Invalid Shiprocket shipment ID.",
+        };
+      }
+
       const response = await shiprocketFetch<ShiprocketPickupResponse>(
-        `/courier/generate/pickup`,
+        "/courier/generate/pickup",
         {
           method: "POST",
+
           body: JSON.stringify({
-            shipment_id: [parseInt(shipmentId, 10)],
+            shipment_id: [id],
           }),
         },
       );
 
+      const pickupConfirmed = Number(response.pickup_status) === 1;
+
+      const scheduledAt = response.response?.pickup_scheduled_date;
+
+      const pickupId =
+        response.pickup_id !== undefined && response.pickup_id !== null
+          ? String(response.pickup_id)
+          : undefined;
+
+      if (!pickupConfirmed) {
+        return {
+          success: false,
+
+          pickup: {
+            pickupId,
+
+            scheduledAt,
+
+            status: "pending",
+          },
+
+          message:
+            response.response?.message ||
+            "Shiprocket did not confirm pickup scheduling.",
+        };
+      }
+
       return {
         success: true,
+
         pickup: {
-          pickupId: String(response.pickup_id ?? ""),
-          scheduledAt: new Date().toISOString(),
+          pickupId,
+
+          scheduledAt: scheduledAt || new Date().toISOString(),
+
           status: "scheduled",
         },
       };
     } catch (error) {
       console.error("[Shiprocket] Pickup scheduling failed:", error);
+
       return {
         success: false,
+
         message:
           error instanceof Error ? error.message : "Pickup scheduling failed.",
       };
@@ -251,34 +408,48 @@ export class ShiprocketProvider implements ShippingProvider {
 
   async getTracking(trackingNumber: string): Promise<TrackingResult> {
     try {
+      const awb = trackingNumber.trim();
+
+      if (!awb) {
+        return {
+          success: false,
+          message: "AWB is required for tracking.",
+        };
+      }
+
       const response = await shiprocketFetch<ShiprocketTrackingResponse>(
-        `/tracking?shipment_id=${trackingNumber}`,
+        `/courier/track/awb/${encodeURIComponent(awb)}`,
       );
 
-      const trackingData = response?.tracking_data ?? response;
+      const trackingData = response?.tracking_data ?? [];
 
       const events = Array.isArray(trackingData)
         ? trackingData.map((event) => ({
-            status:
-              mapShiprocketStatus(event.current_status ?? "") ?? "in_transit",
-            description: event.activity ?? "In transit",
+            status: mapShiprocketStatus(event.current_status ?? ""),
+
+            description: event.activity ?? "Shipment update",
+
             location: event.location ?? "",
+
             timestamp: event.date ?? new Date().toISOString(),
           }))
         : [];
 
-      // Determine current status from the latest event if present.
-      const latestStatus = events[0]?.status ?? "in_transit";
+      const latestStatus = events[0]?.status ?? "shipment_created";
 
       return {
         success: true,
+
         status: latestStatus,
+
         tracking: events,
       };
     } catch (error) {
       console.error("[Shiprocket] Tracking failed:", error);
+
       return {
         success: false,
+
         message:
           error instanceof Error ? error.message : "Tracking fetch failed.",
       };
@@ -287,12 +458,19 @@ export class ShiprocketProvider implements ShippingProvider {
 
   async generateLabel(shipmentId: string): Promise<string | null> {
     try {
+      const id = Number(shipmentId);
+
+      if (!Number.isInteger(id) || id <= 0) {
+        return null;
+      }
+
       const response = await shiprocketFetch<ShiprocketLabelResponse>(
-        `/courier/generate/label`,
+        "/courier/generate/label",
         {
           method: "POST",
+
           body: JSON.stringify({
-            shipment_id: [parseInt(shipmentId, 10)],
+            shipment_id: [id],
           }),
         },
       );
@@ -300,6 +478,7 @@ export class ShiprocketProvider implements ShippingProvider {
       return response.label_url ?? null;
     } catch (error) {
       console.error("[Shiprocket] Label generation failed:", error);
+
       return null;
     }
   }
@@ -308,55 +487,33 @@ export class ShiprocketProvider implements ShippingProvider {
     pincode: string,
     weight: number,
   ): Promise<ShippingRate[]> {
-    try {
-      // Try Shiprocket API first
-      const couriers = await getAvailableCouriers(
-        PICKUP_ADDRESS.pincode,
-        pincode,
-        true, // COD
-        weight,
-      );
+    const couriers = await getAvailableCouriers(
+      PICKUP_ADDRESS.pincode,
+      pincode,
+      true,
+      weight,
+    );
 
-      if (couriers.length > 0) {
-        return couriers.map((c) => ({
-          courierId: String(c.courierCompanyId),
-          courierName: c.courierName,
-          method: c.freightCharge > 70 ? "express" : "standard",
-          amount: c.freightCharge,
-          estimatedDays: parseInt(c.estimatedDays, 10) || 5,
-          codAvailable: true,
-          trackingAvailable: true,
-        }));
-      }
-
-      // Fallback to preset rates if API returns nothing
-      return this.getFallbackRates(pincode);
-    } catch {
-      // If Shiprocket is not configured, return fallback rates
-      console.warn(
-        "[Shiprocket] API call failed, using fallback rates. Set SHIPROCKET_EMAIL & SHIPROCKET_PASSWORD env vars to enable live rates.",
+    if (!couriers.length) {
+      throw new Error(
+        "No Shiprocket courier is available for this destination.",
       );
-      return this.getFallbackRates(pincode);
     }
-  }
 
-  /**
-   * Return preset rates when Shiprocket is not configured.
-   * This makes the shipping integration work without credentials.
-   */
-  private getFallbackRates(pincode: string): ShippingRate[] {
-    const zone = detectDeliveryZone("", pincode);
-    const rates =
-      FALLBACK_SHIPPING_RATES[zone === "local" ? "local" : "courier"];
+    return couriers.map((courier) => ({
+      courierId: String(courier.courierCompanyId),
 
-    return Object.entries(rates).map(([method, config]) => ({
-      courierId: `fallback_${method}`,
-      courierName: config.name,
-      method: method as "standard" | "express",
-      amount: config.price,
-      estimatedDays: method === "express" ? 3 : 6,
+      courierName: courier.courierName,
+
+      method: courier.freightCharge > 70 ? "express" : "standard",
+
+      amount: courier.freightCharge,
+
+      estimatedDays: Number.parseInt(courier.estimatedDays, 10) || 5,
+
       codAvailable: true,
-      trackingAvailable: method !== "local",
+
+      trackingAvailable: true,
     }));
   }
 }

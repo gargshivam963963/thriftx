@@ -23,6 +23,7 @@ import PanipatDeliveryPromo from "@/components/marketing/PanipatDeliveryPromo";
 import { Button } from "@/components/ui/button";
 
 import { useAddresses } from "@/hooks/useAddresses";
+import { detectDeliveryZone } from "@/lib/delivery";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
 import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
@@ -396,7 +397,15 @@ export default function CheckoutPage() {
         !quoteError,
     );
 
-    // Shipping options are now fetched and auto-selected inside CheckoutAccordion
+    // Whether the selected address qualifies for THRIFTX self-delivery.
+    // The Panipat promo banner only renders for local addresses —
+    // non-Panipat customers go straight to courier, no banner noise.
+    const isLocalAddress =
+        selectedAddress != null &&
+        detectDeliveryZone(
+            selectedAddress.city,
+            selectedAddress.pincode,
+        ) === "local";
     // to avoid duplicating async calls and fixing Promise-based logic
 
     const handleAddressSave = async (
@@ -549,26 +558,26 @@ export default function CheckoutPage() {
                 handler: async (paymentResponse: Record<string, string>) => {
                     paymentConfirmed = true;
                     try {
-                            const order = await createOrder({
-                                paymentMethod: "razorpay",
-                                paymentId: paymentResponse.razorpay_payment_id,
-                                orderId: paymentResponse.razorpay_order_id,
-                                signature: paymentResponse.razorpay_signature,
-                            });
+                        const order = await createOrder({
+                            paymentMethod: "razorpay",
+                            paymentId: paymentResponse.razorpay_payment_id,
+                            orderId: paymentResponse.razorpay_order_id,
+                            signature: paymentResponse.razorpay_signature,
+                        });
 
-                            try {
-                                await clearCart();
-                            } catch (error) {
-                                console.error(
-                                    "Order created, but cart cleanup failed:",
-                                    error,
-                                );
-                                toast.error(
-                                    "Your order is confirmed, but your cart could not be cleared.",
-                                );
-                            }
-                            window.sessionStorage.removeItem("thriftx:checkout-coupon");
-                            window.localStorage.removeItem("thriftx:referral-code");
+                        try {
+                            await clearCart();
+                        } catch (error) {
+                            console.error(
+                                "Order created, but cart cleanup failed:",
+                                error,
+                            );
+                            toast.error(
+                                "Your order is confirmed, but your cart could not be cleared.",
+                            );
+                        }
+                        window.sessionStorage.removeItem("thriftx:checkout-coupon");
+                        window.localStorage.removeItem("thriftx:referral-code");
                         toast.success("Order placed successfully!");
 
                         // Track purchase & checkout events for analytics
@@ -604,7 +613,7 @@ export default function CheckoutPage() {
                 theme: { color: "#000000" },
                 modal: {
                     ondismiss: () => {
-                    if (reservationId && !paymentConfirmed) {
+                        if (reservationId && !paymentConfirmed) {
                             void releaseCheckoutReservation(
                                 razorpayOrderId,
                                 reservationId,
@@ -692,7 +701,7 @@ export default function CheckoutPage() {
         if (quoteLoading || !checkoutQuote || quoteError) {
             toast.error(
                 quoteError ||
-                    "Please wait while we confirm your order total.",
+                "Please wait while we confirm your order total.",
             );
             return;
         }
@@ -792,13 +801,15 @@ export default function CheckoutPage() {
                     </div>
                 </header>
 
-                {/* ── Panipat marketing (first priority) ─────────── */}
-                <div className="mb-5 sm:mb-6">
-                    <PanipatDeliveryPromo
-                        variant="compact"
-                        showCta={false}
-                    />
-                </div>
+                {/* ── Panipat marketing (locals only) ─────────── */}
+                {isLocalAddress && (
+                    <div className="mb-5 sm:mb-6">
+                        <PanipatDeliveryPromo
+                            variant="compact"
+                            showCta={false}
+                        />
+                    </div>
+                )}
 
                 {/* ── Mobile order summary (collapsible) ─────────── */}
                 <div className="mb-5 lg:hidden">

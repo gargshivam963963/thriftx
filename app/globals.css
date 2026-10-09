@@ -203,8 +203,12 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
 
-  --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
+  /* NOTE: success tokens are intentionally NOT declared here. Declaring them
+     in `@theme inline` bakes the light-mode literals into every utility
+     (`background: #d1fae5` instead of `var(--color-success-bg)`), which
+     silently defeats the `.dark` overrides below and breaks dark mode.
+     They are defined once in the plain `@theme` block above + `:root`/`.dark`
+     so utilities resolve through the variable and follow the theme toggle. */
 
   /* ─────────────────────────────────────────────
      FORM / FOCUS

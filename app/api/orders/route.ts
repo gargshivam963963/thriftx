@@ -1,21 +1,32 @@
 import { notifyOrderPlaced } from "@/lib/notifications/orderEvents";
+
 import { NextRequest, NextResponse } from "next/server";
+
 import { revalidatePath } from "next/cache";
+
 import { AuthGuardError, requireUser } from "@/lib/auth-guard";
+
 import {
   createOrder,
   getOrderByPaymentId,
   getUserOrders,
   OrderInventoryConflictError,
 } from "@/lib/services/orderService";
+
 import type { OrderData } from "@/lib/services/orderService";
+
 import { verifyCapturedRazorpayPayment } from "@/lib/razorpay";
+
 import {
   CheckoutPricingError,
   getCheckoutPricing,
 } from "@/lib/services/checkoutPricing.server";
+
 import { recordOrderForReferral } from "@/lib/marketing/promotions.server";
+
 import { getCheckoutPaymentIntent } from "@/lib/services/paymentIntent.server";
+
+import { createShipmentFromOrder } from "@/lib/shipping/createShipmentFromOrder";
 
 const MAX_BODY_LENGTH = 16_384;
 
@@ -58,15 +69,21 @@ function parseCheckoutRequest(value: unknown): CheckoutRequest | null {
 
   if (paymentMethod === "cod") {
     const { addressId, deliveryMethod } = value;
+
     const optionalString = (key: string, maxLength: number) => {
       const optional = value[key];
+
       if (optional === undefined || optional === null || optional === "") {
         return undefined;
       }
+
       return isNonEmptyString(optional, maxLength) ? optional.trim() : null;
     };
+
     const couponCode = optionalString("couponCode", 64);
+
     const referralCode = optionalString("referralCode", 64);
+
     const idempotencyKey = optionalString("idempotencyKey", 128);
 
     if (
@@ -81,10 +98,15 @@ function parseCheckoutRequest(value: unknown): CheckoutRequest | null {
 
     return {
       paymentMethod,
+
       addressId: addressId.trim(),
+
       deliveryMethod: deliveryMethod.trim(),
+
       ...(couponCode ? { couponCode } : {}),
+
       ...(referralCode ? { referralCode } : {}),
+
       idempotencyKey,
     };
   }
@@ -102,8 +124,11 @@ function parseCheckoutRequest(value: unknown): CheckoutRequest | null {
 
   return {
     paymentMethod,
+
     orderId: orderId.trim(),
+
     paymentId: paymentId.trim(),
+
     signature,
   };
 }
@@ -111,6 +136,7 @@ function parseCheckoutRequest(value: unknown): CheckoutRequest | null {
 export async function GET() {
   try {
     const user = await requireUser();
+
     const orders = await getUserOrders(user.id);
 
     return NextResponse.json({
@@ -124,7 +150,9 @@ export async function GET() {
           success: false,
           message: "Authentication required.",
         },
-        { status: error.status },
+        {
+          status: error.status,
+        },
       );
     }
 
@@ -135,7 +163,9 @@ export async function GET() {
         success: false,
         message: "Unable to load orders.",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }
@@ -148,23 +178,30 @@ export async function POST(request: NextRequest) {
 
     if (
       contentLength !== null &&
-      (!/^\d+$/.test(contentLength) ||
-        Number(contentLength) > MAX_BODY_LENGTH)
+      (!/^\d+$/.test(contentLength) || Number(contentLength) > MAX_BODY_LENGTH)
     ) {
       return NextResponse.json(
         {
           success: false,
           message: "Request is too large.",
         },
-        { status: 413 },
+        {
+          status: 413,
+        },
       );
     }
 
     const rawBody = await request.text();
+
     if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_LENGTH) {
       return NextResponse.json(
-        { success: false, message: "Request is too large." },
-        { status: 413 },
+        {
+          success: false,
+          message: "Request is too large.",
+        },
+        {
+          status: 413,
+        },
       );
     }
 
@@ -178,7 +215,9 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Invalid order details.",
         },
-        { status: 400 },
+        {
+          status: 400,
+        },
       );
     }
 
@@ -190,7 +229,9 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Invalid checkout details.",
         },
-        { status: 400 },
+        {
+          status: 400,
+        },
       );
     }
 
@@ -199,10 +240,16 @@ export async function POST(request: NextRequest) {
         user.id,
         checkout.paymentId,
       );
+
       if (existingOrder) {
         return NextResponse.json(
-          { success: true, order: existingOrder },
-          { status: 200 },
+          {
+            success: true,
+            order: existingOrder,
+          },
+          {
+            status: 200,
+          },
         );
       }
     }
@@ -224,11 +271,14 @@ export async function POST(request: NextRequest) {
             success: false,
             message: "Payment could not be verified.",
           },
-          { status: 400 },
+          {
+            status: 400,
+          },
         );
       }
 
       const intent = await getCheckoutPaymentIntent(checkout.orderId);
+
       if (!intent || intent.userId !== user.id) {
         return NextResponse.json(
           {
@@ -236,14 +286,20 @@ export async function POST(request: NextRequest) {
             message:
               "We could not confirm your payment details. Please contact support before retrying.",
           },
-          { status: 409 },
+          {
+            status: 409,
+          },
         );
       }
 
       const { quote } = intent;
+
       const paidSubtotal = Number(payment.notes.subtotal);
+
       const paidShipping = Number(payment.notes.shipping);
+
       const paidDiscount = Number(payment.notes.discount || "0");
+
       const paidTotal = Number(payment.notes.total);
 
       const paymentMatchesIntent =
@@ -271,20 +327,30 @@ export async function POST(request: NextRequest) {
             message:
               "We could not match this payment to its checkout details. Please contact support.",
           },
-          { status: 409 },
+          {
+            status: 409,
+          },
         );
       }
 
       orderData = {
         ...quote,
+
         paymentMethod: "razorpay",
+
         paymentId: checkout.paymentId,
+
         orderId: checkout.orderId,
+
         signature: checkout.signature,
+
         couponCode: intent.couponCode,
+
         creditUsed: 0,
+
         reservationId: intent.reservationId,
       };
+
       if (quote.appliedPromotion === "referral") {
         eligibleReferralCode = intent.referralCode;
       }
@@ -298,18 +364,28 @@ export async function POST(request: NextRequest) {
         checkout.couponCode,
         checkout.referralCode,
       );
+
       orderData = {
         ...quote,
+
         paymentMethod: "cod",
+
         paymentId: undefined,
+
         orderId: undefined,
+
         signature: undefined,
-        // Discount is already in quote (calculated server-side)
+
         couponCode:
-          quote.appliedPromotion === "coupon" ? checkout.couponCode ?? "" : "",
+          quote.appliedPromotion === "coupon"
+            ? (checkout.couponCode ?? "")
+            : "",
+
         creditUsed: 0,
+
         idempotencyKey: checkout.idempotencyKey,
       };
+
       if (quote.appliedPromotion === "referral") {
         eligibleReferralCode = checkout.referralCode;
       }
@@ -326,8 +402,33 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Order service is temporarily unavailable.",
         },
-        { status: 503 },
+        {
+          status: 503,
+        },
       );
+    }
+
+    /*
+     * Create the live Shiprocket shipment after the THRIFTX order
+     * has been successfully created.
+     *
+     * Shipping failure must NOT turn a successful customer order
+     * into a failed order. The admin can retry shipment creation
+     * from the order management screen.
+     */
+    if ("$id" in order && typeof order.$id === "string") {
+      try {
+        const shipment = await createShipmentFromOrder(order.$id);
+
+        if (!shipment.success) {
+          console.error(
+            "[THRIFTX] Shiprocket shipment creation failed:",
+            shipment.message,
+          );
+        }
+      } catch (shippingError) {
+        console.error("[THRIFTX] Shiprocket integration error:", shippingError);
+      }
     }
 
     revalidatePath("/product/[slug]", "page");
@@ -336,7 +437,9 @@ export async function POST(request: NextRequest) {
       try {
         await notifyOrderPlaced({
           $id: order.$id,
+
           userId: user.id,
+
           orderId:
             "orderId" in order && typeof order.orderId === "string"
               ? order.orderId
@@ -350,6 +453,7 @@ export async function POST(request: NextRequest) {
     if (eligibleReferralCode) {
       const orderDocumentId =
         "$id" in order && typeof order.$id === "string" ? order.$id : "";
+
       if (
         !orderDocumentId ||
         !(await recordOrderForReferral(
@@ -369,7 +473,9 @@ export async function POST(request: NextRequest) {
         success: true,
         order,
       },
-      { status: 201 },
+      {
+        status: 201,
+      },
     );
   } catch (error) {
     if (error instanceof AuthGuardError) {
@@ -378,7 +484,9 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Authentication required.",
         },
-        { status: error.status },
+        {
+          status: error.status,
+        },
       );
     }
 
@@ -388,16 +496,22 @@ export async function POST(request: NextRequest) {
           success: false,
           message: error.message,
         },
-        { status: error.status },
+        {
+          status: error.status,
+        },
       );
     }
+
     if (error instanceof OrderInventoryConflictError) {
       return NextResponse.json(
         {
           success: false,
-          message: "An item in your cart has just been sold. Please refresh your cart.",
+          message:
+            "An item in your cart has just been sold. Please refresh your cart.",
         },
-        { status: 409 },
+        {
+          status: 409,
+        },
       );
     }
 
@@ -408,7 +522,9 @@ export async function POST(request: NextRequest) {
         success: false,
         message: "Unable to create order.",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }

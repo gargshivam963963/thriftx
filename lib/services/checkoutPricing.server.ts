@@ -6,6 +6,9 @@ import { getCachedShippingRates } from "@/lib/shipping/cachedRates";
 import {
   getCheckoutShippingOptions,
   isLocalDelivery,
+  resolveCheckoutShippingOption,
+  SHIPPING_METHOD_IDS,
+  SHIPPING_PROVIDERS,
 } from "@/lib/shipping/checkout-options";
 import { SHIPPING_DEFAULTS } from "@/lib/shipping/constants";
 import type { ShippingRate } from "@/lib/shipping/types";
@@ -34,6 +37,8 @@ export interface CheckoutPricing {
   postalCode: string;
   country: string;
   deliveryMethod: string;
+  deliveryMethodId: string;
+  shippingProvider: string;
   subtotal: number;
   products: string;
   shipping: number;
@@ -110,14 +115,18 @@ export async function getCheckoutPricing(
     }
   }
 
-  const shippingMethod = getCheckoutShippingOptions(
+  const shippingMethod = resolveCheckoutShippingOption(
     city,
     pincode,
     subtotal,
     rates,
-  ).find((option) => option.name === deliveryMethod);
+    deliveryMethod,
+  );
 
   if (!shippingMethod) {
+    // Fail closed: a method valid for the PREVIOUS address (e.g. Panipat
+    // local) must never be honoured for the new one (e.g. Jaipur), and
+    // vice versa. The shopper must pick from the live options.
     throw new CheckoutPricingError(
       "The selected shipping method is no longer available.",
       409,
@@ -125,6 +134,13 @@ export async function getCheckoutPricing(
   }
 
   const shipping = shippingMethod.price;
+  // Persist the stable id + provider alongside the display name so order
+  // creation can gate Shiprocket without string-matching labels.
+  const deliveryMethodId = shippingMethod.id;
+  const shippingProvider =
+    shippingMethod.id === SHIPPING_METHOD_IDS.LOCAL
+      ? SHIPPING_PROVIDERS.LOCAL
+      : SHIPPING_PROVIDERS.COURIER;
   const nameParts = address.fullName.trim().split(/\s+/);
 
   // SECURITY: Calculate promotion server-side only
@@ -150,6 +166,8 @@ export async function getCheckoutPricing(
     postalCode: pincode,
     country: "India",
     deliveryMethod: shippingMethod.name,
+    deliveryMethodId,
+    shippingProvider,
     subtotal,
     products,
     shipping,

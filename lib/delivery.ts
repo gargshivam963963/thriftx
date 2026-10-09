@@ -15,7 +15,32 @@ const LOCAL_CITIES = new Set([
   "aggarsain colony panipat",
 ]);
 
-const LOCAL_PINCODES = new Set(["132103", "132104"]);
+/**
+ * Panipat local-delivery PIN codes.
+ *
+ * Single canonical source for the local boundary — lib/delivery.ts and
+ * lib/shipping/checkout-options.ts both resolve through here, so the
+ * storefront, checkout quote, and order creation can never disagree.
+ *
+ * Override with env PANIPAT_LOCAL_PINCODES="132103,132104,..." (comma
+ * separated). Extra env-only pins are UNIONED with the built-in list, so a
+ * missing env can never accidentally shrink coverage. Report the effective
+ * list in the final summary — do not silently guess new areas.
+ */
+const BUILT_IN_LOCAL_PINCODES = ["132103", "132101", "132102", "132104"];
+
+function readExtraLocalPincodes(): string[] {
+  const raw = process.env.PANIPAT_LOCAL_PINCODES ?? "";
+  return raw
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => /^\d{6}$/.test(part));
+}
+
+export const LOCAL_PINCODES: ReadonlySet<string> = new Set([
+  ...BUILT_IN_LOCAL_PINCODES,
+  ...readExtraLocalPincodes(),
+]);
 
 export type DeliveryZone = "local" | "courier";
 
@@ -34,11 +59,24 @@ export function detectDeliveryZone(
   pincode?: string,
 ): DeliveryZone {
   const normalizedCity = city.trim().toLowerCase();
-  const cityMatches = LOCAL_CITIES.has(normalizedCity);
-  if (!pincode) return cityMatches ? "local" : "courier";
-  return cityMatches && LOCAL_PINCODES.has(pincode.trim())
-    ? "local"
-    : "courier";
+  const normalizedPincode = (pincode ?? "").trim();
+  // Explicit PIN match always wins — covers "Panipat / 132103" plus any
+  // address whose city string is a locality ("Shiv Nagar, Panipat").
+  if (normalizedPincode && LOCAL_PINCODES.has(normalizedPincode)) {
+    return "local";
+  }
+  // Fall back to the city allow-list when no pincode is known yet
+  // (address form before PIN entry, marketing surfaces).
+  if (
+    !normalizedPincode &&
+    (LOCAL_CITIES.has(normalizedCity) || normalizedCity.includes("panipat"))
+  ) {
+    return "local";
+  }
+  // PIN present but not local, or a non-Panipat city: courier.
+  // This keeps Jaipur/302039 on Shiprocket even if a stale local method
+  // is still selected client-side (server then rejects it — see quote).
+  return "courier";
 }
 
 export function isLocalDelivery(city: string, pincode?: string): boolean {

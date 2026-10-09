@@ -10,6 +10,38 @@ export interface ShippingMethod {
   eta: string;
 }
 
+/**
+ * Stable shipping-method identifiers.
+ *
+ * History: local and courier options previously shared the ids
+ * "standard"/"express", so switching Panipat <-> Jaipur kept a stale
+ * selection that passed id checks. These ids are now globally unique and
+ * the backend validates by id (with legacy name fallback).
+ */
+export const SHIPPING_METHOD_IDS = {
+  LOCAL: "local",
+  COURIER_STANDARD: "courier-standard",
+  COURIER_EXPRESS: "courier-express",
+  // Legacy ids sent by older clients / persisted quotes.
+  LEGACY_STANDARD: "standard",
+  LEGACY_EXPRESS: "express",
+} as const;
+
+export type ShippingMethodId =
+  | typeof SHIPPING_METHOD_IDS.LOCAL
+  | typeof SHIPPING_METHOD_IDS.COURIER_STANDARD
+  | typeof SHIPPING_METHOD_IDS.COURIER_EXPRESS;
+
+export const SHIPPING_PROVIDERS = {
+  LOCAL: "thriftx-local",
+  COURIER: "shiprocket",
+} as const;
+
+export type ShippingProviderId =
+  | typeof SHIPPING_PROVIDERS.LOCAL
+  | typeof SHIPPING_PROVIDERS.COURIER;
+
+
 export function isLocalDelivery(city?: string, pincode?: string): boolean {
   return Boolean(
     city && pincode && detectDeliveryZone(city, pincode) === "local",
@@ -25,8 +57,8 @@ export function getCheckoutShippingOptions(
   if (isLocalDelivery(city, pincode)) {
     return [
       {
-        id: "standard",
-        name: "Panipat Same-Day Delivery",
+        id: SHIPPING_METHOD_IDS.LOCAL,
+        name: "Panipat Local Delivery",
         subtitle: PANIPAT_LOCAL_DELIVERY.subtitle,
         price: PANIPAT_LOCAL_DELIVERY.price,
         eta: PANIPAT_LOCAL_DELIVERY.etaLabel,
@@ -41,7 +73,7 @@ export function getCheckoutShippingOptions(
     const cheapest = sorted[0];
     const methods: ShippingMethod[] = [
       {
-        id: "standard",
+        id: SHIPPING_METHOD_IDS.COURIER_STANDARD,
         name: `${cheapest.courierName} — Standard`,
         subtitle: freeShipping
           ? "FREE on this order"
@@ -54,7 +86,7 @@ export function getCheckoutShippingOptions(
     if (sorted.length > 1) {
       const faster = sorted[1];
       methods.push({
-        id: "express",
+        id: SHIPPING_METHOD_IDS.COURIER_EXPRESS,
         name: `${faster.courierName} — Express`,
         subtitle: `Faster — ₹${faster.amount}`,
         price: faster.amount,
@@ -67,18 +99,61 @@ export function getCheckoutShippingOptions(
 
   return [
     {
-      id: "standard",
+      id: SHIPPING_METHOD_IDS.COURIER_STANDARD,
       name: "Standard Delivery",
       subtitle: freeShipping ? "FREE on this order" : "Best Value",
       price: freeShipping ? 0 : 49,
       eta: "4–6 Days",
     },
     {
-      id: "express",
+      id: SHIPPING_METHOD_IDS.COURIER_EXPRESS,
       name: "Express Delivery",
       subtitle: "Faster Shipping",
       price: 99,
       eta: "2–3 Days",
     },
   ];
+}
+
+/**
+ * Resolve a client-supplied delivery-method value to a live option.
+ *
+ * Clients send the option NAME today (and older builds sent the legacy
+ * "standard"/"express" ids). Matching is:
+ *  1. exact id match (preferred — stable across address changes),
+ *  2. exact name match (current clients),
+ *  3. legacy id + zone fallback ("standard" -> local for Panipat,
+ *     courier-standard otherwise) so old persisted quotes fail closed
+ *     instead of charging the wrong fee.
+ *
+ * Returns undefined when the value is not valid for this address.
+ */
+export function resolveCheckoutShippingOption(
+  city: string | undefined,
+  pincode: string | undefined,
+  orderSubtotal: number,
+  rates: ShippingRate[],
+  deliveryMethod: string,
+): ShippingMethod | undefined {
+  const options = getCheckoutShippingOptions(
+    city,
+    pincode,
+    orderSubtotal,
+    rates,
+  );
+  const wanted = deliveryMethod.trim();
+  const exact = options.find(
+    (option) => option.id === wanted || option.name === wanted,
+  );
+  if (exact) return exact;
+  if (
+    wanted === SHIPPING_METHOD_IDS.LEGACY_STANDARD ||
+    wanted === SHIPPING_METHOD_IDS.LEGACY_EXPRESS
+  ) {
+    // Legacy clients: only accept the id when that zone has exactly one
+    // option (Panipat local). Otherwise the method is ambiguous (which
+    // courier?) and the shopper must reselect.
+    if (options.length === 1) return options[0];
+  }
+  return undefined;
 }

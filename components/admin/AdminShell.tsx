@@ -32,16 +32,23 @@ export default function AdminShell({
     setMounted(true);
   }, []);
 
-  // Defense in depth: if the session is lost while inside the admin panel.
+  /*
+   * Defense in depth: if the session is lost while inside the admin panel.
+   *
+   * These effects intentionally DO NOT gate the render. `app/admin/layout.tsx`
+   * has already verified the session on the server before this component is
+   * sent to the browser, so blocking on `useAuth().loading` here replaced the
+   * whole panel with a full-screen "Loading admin..." spinner on EVERY admin
+   * navigation — which is most of why the panel felt like it was doing a hard
+   * page reload. The redirect still runs; it just doesn't blank the UI first.
+   */
   useEffect(() => {
-    if (mounted && !loading && !user) {
+    if (!mounted || loading) return;
+    if (!user) {
       router.replace("/login?redirect=/admin/dashboard");
+      return;
     }
-  }, [mounted, loading, user, router]);
-
-  // Defense in depth: if the current user is not an admin, send them away.
-  useEffect(() => {
-    if (mounted && !loading && user && user.role !== "admin") {
+    if (user.role !== "admin") {
       router.replace("/");
     }
   }, [mounted, loading, user, router]);
@@ -50,19 +57,6 @@ export default function AdminShell({
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
-
-  if (!mounted || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
-          <p className="text-sm text-muted-foreground">Loading admin...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || user.role !== "admin") return null;
 
   return (
     <div className="flex min-h-screen bg-background">

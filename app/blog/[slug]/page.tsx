@@ -114,7 +114,7 @@ export default async function BlogArticlePage({
                         className="inline-flex min-h-11 items-center gap-2 text-body-sm font-semibold text-foreground"
                     >
                         <ArrowLeft size={16} aria-hidden="true" />
-                        Back to the journal
+                        Back to the blog
                     </Link>
                     <Link
                         href="/shop"

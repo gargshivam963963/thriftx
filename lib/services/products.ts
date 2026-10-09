@@ -77,7 +77,19 @@ export interface ProductFilters {
   color?: string;
   material?: string;
   search?: string;
-  sort?: "newest" | "price-low" | "price-high" | "name" | "popular";
+  /**
+   * `popular` is intentionally the same ordering as `newest` (see the
+   * repository switch) — the catalogue has no sales-volume signal to rank by,
+   * so recency is the honest proxy. `sale` is a real filter: only pieces that
+   * carry a retail (MRP) price above our selling price.
+   */
+  sort?:
+    | "newest"
+    | "popular"
+    | "sale"
+    | "price-low"
+    | "price-high"
+    | "name";
   limit?: number;
   offset?: number;
 }

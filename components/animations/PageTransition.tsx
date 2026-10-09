@@ -21,6 +21,18 @@ import { usePathname } from "next/navigation";
  * `transitionEnd` restores `filter: none` the moment the animation finishes,
  * and the completion handler strips any leftover inline styles as a safety
  * net so the wrapper always returns to a paint-neutral element.
+ *
+ * ── Why this is skipped for /admin ───────────────────────────────────────────
+ * This wrapper is keyed on `pathname`, which means React DESTROYS and rebuilds
+ * its entire subtree on every navigation. That is the point for marketing
+ * pages, but it defeats the whole reason for using a framework layout inside
+ * the admin panel: `app/admin/layout.tsx` renders a static sidebar, and a
+ * `key` here threw that sidebar away and recreated it on every click, so
+ * navigating between admin pages looked like a hard page reload.
+ *
+ * Rendering the children bare for /admin lets Next.js preserve the admin
+ * layout (and the sidebar's DOM/state) across navigations — only the page
+ * chunk swaps, which is what an app shell is supposed to do.
  */
 export default function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -33,6 +45,12 @@ export default function PageTransition({ children }: { children: React.ReactNode
     el.style.removeProperty("transform");
     el.style.removeProperty("will-change");
   };
+
+  // Admin is an application shell, not a marketing page: no enter animation,
+  // no remount, sidebar preserved across navigations.
+  if (pathname?.startsWith("/admin")) {
+    return <div className="flex flex-1 flex-col">{children}</div>;
+  }
 
   return (
     <motion.div

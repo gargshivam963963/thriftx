@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Clapperboard, Instagram, Play } from "lucide-react";
@@ -18,9 +18,19 @@ import { cn } from "@/lib/utils";
 import { contactInfo } from "@/lib/contact";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Instagram Community Section
-// Reusable and integration-ready: swap the STATIC_POSTS source with a live
-// Instagram API/Graph responder by implementing `fetchInstagramContent()`.
+// Instagram / Lookbook Section
+//
+// Integration-ready: pass `items` from a server component. To go live with the
+// Instagram Graph API, build the array there (map media URLs → `src`, set
+// `type: "reel"` for VIDEO/MEDIA_TYPE_REEL, point `href` at the permalink) —
+// nothing in this component needs to change.
+//
+// Two rules keep this section honest:
+//   1. Tabs are derived from the data actually present. A "Reels" tab that
+//      renders an empty grid is worse than no tab at all, so it is only shown
+//      when at least one reel exists.
+//   2. `filtered` compares against the active tab instead of short-circuiting
+//      on it, so Posts really does show only posts.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface InstagramMediaItem {
@@ -35,31 +45,19 @@ export interface InstagramMediaItem {
 
 interface InstagramFeedProps {
     handle?: string;
-    /** Optional injected data (e.g. from a server component). */
+    /** Media to render. Empty array → the section renders its empty state. */
     items?: InstagramMediaItem[];
     /** Follow/profile URL. */
     profileUrl?: string;
+    /**
+     * Real follower count, formatted by the caller (e.g. "12K").
+     * Omitted rather than invented — a made-up number here is a trust problem.
+     */
     followerCount?: string;
 }
 
 const INSTAGRAM_HANDLE = "ThriftX";
 const INSTAGRAM_PROFILE_URL = contactInfo.instagramUrl;
-
-// Static fallback content — replace with live API data when available.
-const STATIC_POSTS: InstagramMediaItem[] = [
-    "/images/instagram/1.jpg",
-    "/images/instagram/2.jpg",
-    "/images/instagram/3.jpg",
-    "/images/instagram/4.jpg",
-    "/images/instagram/5.jpg",
-    "/images/instagram/6.jpg",
-].map((src, i) => ({
-    id: `post-${i}`,
-    type: "post" as const,
-    src,
-    alt: `THRIFTX Instagram post ${i + 1}`,
-    href: INSTAGRAM_PROFILE_URL,
-}));
 
 const tabConfig = [
     { key: "post", label: "Posts", icon: Instagram },
@@ -70,21 +68,30 @@ type TabKey = (typeof tabConfig)[number]["key"];
 
 export default function InstagramFeed({
     handle = INSTAGRAM_HANDLE,
-    items = STATIC_POSTS,
+    items = [],
     profileUrl = INSTAGRAM_PROFILE_URL,
-    followerCount = "12K+",
+    followerCount,
 }: InstagramFeedProps) {
-    const [activeTab, setActiveTab] = useState<TabKey>("post");
-    const [media, setMedia] = useState<InstagramMediaItem[]>(items);
+    const media = items;
 
-    // Keep in sync if parent injects new data.
-    useEffect(() => {
-        setMedia(items);
-    }, [items]);
-
-    const filtered = media.filter(
-        (item) => activeTab === "post" || item.type === "reel",
+    const availableTabs = tabConfig.filter(({ key }) =>
+        media.some((item) => item.type === key),
     );
+
+    // With a single media type the tab bar is pure decoration, so skip it.
+    const showTabs = availableTabs.length > 1;
+
+    const [activeTab, setActiveTab] = useState<TabKey>(
+        availableTabs[0]?.key ?? "post",
+    );
+
+    // If injected data changes (or arrives without the active type), fall back
+    // to a tab that actually has content instead of showing an empty grid.
+    const effectiveTab = availableTabs.some((t) => t.key === activeTab)
+        ? activeTab
+        : (availableTabs[0]?.key ?? "post");
+
+    const filtered = media.filter((item) => item.type === effectiveTab);
 
     return (
         <section className="bg-card/50 py-16 md:py-24">
@@ -93,20 +100,22 @@ export default function InstagramFeed({
                     <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
                         <div className="max-w-xl space-y-4">
                             <Badge variant="secondary" size="md" rounded="full">
-                                <Instagram size={14} /> Instagram Community
+                                <Instagram size={14} /> The Lookbook
                             </Badge>
                             <h2 className="text-h2 font-bold text-foreground">
-                                Join our journey on Instagram
+                                Styled straight from our racks
                             </h2>
                             <p className="max-w-xl text-body text-muted-foreground">
-                                Watch styling videos, new arrivals, thrift finds, behind-the-scenes
-                                content and exclusive drops. Follow <span className="font-semibold text-foreground">@{handle}</span> and
-                                never miss a moment.
+                                Real pieces from our latest drops, photographed in-house.
+                                Tap any shot to open the item — every one is single-stock,
+                                so it goes to whoever checks out first.
                             </p>
-                            <p className="inline-flex items-center gap-2 text-body font-semibold text-foreground">
-                                <Instagram size={18} className="text-muted-foreground" />
-                                {followerCount} followers
-                            </p>
+                            {followerCount && (
+                                <p className="inline-flex items-center gap-2 text-body font-semibold text-foreground">
+                                    <Instagram size={18} className="text-muted-foreground" />
+                                    {followerCount} followers
+                                </p>
+                            )}
                         </div>
 
                         <Link href={profileUrl} target="_blank" rel="noopener noreferrer">
@@ -118,26 +127,27 @@ export default function InstagramFeed({
                 </FadeUp>
 
                 {/* ── Tabs ─────────────────────────────────────────── */}
+                {showTabs && (
                 <div
                     role="tablist"
                     aria-label="Instagram content"
                     className="mb-8 inline-flex items-center gap-1 rounded-full border border-border bg-muted p-1"
                 >
-                    {tabConfig.map(({ key, label, icon: Icon }) => (
+                    {availableTabs.map(({ key, label, icon: Icon }) => (
                         <Button
                             key={key}
                             role="tab"
-                            aria-selected={activeTab === key}
+                            aria-selected={effectiveTab === key}
                             aria-label={`Show ${label}`}
                             onClick={() => setActiveTab(key)}
                             className={cn(
                                 "relative inline-flex items-center gap-2 rounded-full px-5 py-2 text-button transition-colors",
-                                activeTab === key
+                                effectiveTab === key
                                     ? "text-background"
                                     : "text-muted-foreground hover:text-foreground",
                             )}
                         >
-                            {activeTab === key && (
+                            {effectiveTab === key && (
                                 <motion.span
                                     layoutId="igTab"
                                     className="absolute inset-0 rounded-full bg-foreground"
@@ -149,15 +159,34 @@ export default function InstagramFeed({
                         </Button>
                     ))}
                 </div>
+                )}
 
                 {/* ── Media grid ───────────────────────────────────── */}
+                {filtered.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-border px-6 py-12 text-center text-body text-muted-foreground">
+                        No posts to show yet — follow{" "}
+                        <a
+                            href={profileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-foreground underline underline-offset-4"
+                        >
+                            @{handle}
+                        </a>{" "}
+                        for the latest drops.
+                    </p>
+                ) : (
                 <StaggerContainer className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5">
-                    {filtered.map((mediaItem) => (
+                    {filtered.map((mediaItem) => {
+                        // Instagram permalinks are external; our own product
+                        // pages are internal and must navigate in-place.
+                        const isInternal = mediaItem.href.startsWith("/");
+                        return (
                         <StaggerItem key={mediaItem.id}>
                             <Link
                                 href={mediaItem.href}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                target={isInternal ? undefined : "_blank"}
+                                rel={isInternal ? undefined : "noopener noreferrer"}
                                 className="group block"
                                 aria-label={mediaItem.alt}
                             >
@@ -187,8 +216,10 @@ export default function InstagramFeed({
                                 </div>
                             </Link>
                         </StaggerItem>
-                    ))}
+                        );
+                    })}
                 </StaggerContainer>
+                )}
             </Container>
         </section>
     );

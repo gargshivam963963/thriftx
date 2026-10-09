@@ -2,15 +2,12 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import StorefrontChrome from "@/components/layout/StorefrontChrome";
 import { AuthProvider } from "@/lib/AuthContext";
 import { WishlistProvider } from "@/lib/WishlistContext";
 import { CartProvider } from "@/lib/CartContext";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import AnalyticsProviderWrapper from "@/components/AnalyticsProviderWrapper";
-import BottomNav from "@/components/BottomNav";
-import PageTransition from "@/components/animations/PageTransition";
 import { MotionProvider } from "@/components/animations/Motion";
 import { Toaster } from "sonner";
 import { siteConfig } from "@/lib/seo";
@@ -165,31 +162,24 @@ export default function RootLayout({
               <CartProvider>
                 <MotionProvider>
                   <AnalyticsProviderWrapper>
-                  <Header />
+                    <StorefrontChrome>{children}</StorefrontChrome>
 
-                  <main className="flex flex-1 flex-col">
-                    <PageTransition>{children}</PageTransition>
-                  </main>
-
-                  <Footer />
-                  <BottomNav />
-
-                  <Toaster
-                    position="top-right"
-                    richColors
-                    closeButton
-                    duration={3000}
-                    gap={10}
-                    visibleToasts={4}
-                    toastOptions={{
-                      className: "thriftx-toast",
-                      style: {
-                        borderRadius: "16px",
-                        backdropFilter: "blur(20px) saturate(1.4)",
-                      },
-                    }}
-                  />
-                </AnalyticsProviderWrapper>
+                    <Toaster
+                      position="top-right"
+                      richColors
+                      closeButton
+                      duration={3000}
+                      gap={10}
+                      visibleToasts={4}
+                      toastOptions={{
+                        className: "thriftx-toast",
+                        style: {
+                          borderRadius: "16px",
+                          backdropFilter: "blur(20px) saturate(1.4)",
+                        },
+                      }}
+                    />
+                  </AnalyticsProviderWrapper>
                 </MotionProvider>
               </CartProvider>
             </WishlistProvider>

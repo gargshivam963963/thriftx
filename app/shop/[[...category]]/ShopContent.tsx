@@ -551,10 +551,17 @@ export default function ShopContent({
             setInitialLoadError(false);
             setLoading(true);
 
-            window.setTimeout(() => {
-                window.location.reload();
-            }, 150);
-        }, []);
+            /*
+             * Re-run the RSC fetch for this route instead of reloading the
+             * document. `window.location.reload()` here was a genuine hard
+             * navigation: it threw away every client provider (cart, wishlist,
+             * auth, theme), reset scroll, re-downloaded all chunks, and flashed
+             * the storefront header/footer back in. `router.refresh()` re-runs
+             * the server component for the current route — the same fresh data,
+             * without destroying the app shell.
+             */
+            router.refresh();
+        }, [router]);
 
     const isSearchActive =
         Boolean(
@@ -576,7 +583,16 @@ export default function ShopContent({
      */
 
     return (
-        <main className="min-w-0 w-full overflow-x-hidden bg-background text-foreground">
+        /*
+         * ⚠️ Do NOT use `overflow-x-hidden` here. `hidden` turns this <main> into
+         * a scroll container, and `position: sticky` only works against the
+         * nearest scrolling ancestor — so the desktop filter sidebar would
+         * "stick" to a scrollport as tall as the page and never actually pin.
+         * `overflow-x-clip` gives us the same horizontal bleed protection
+         * without creating a scroll container, so the sidebar stays pinned
+         * under the sticky header while the product grid scrolls.
+         */
+        <main className="min-w-0 w-full overflow-x-clip bg-background text-foreground">
             <div
                 className="
                     mx-auto
@@ -652,10 +668,15 @@ export default function ShopContent({
                             w-[232px]
                             shrink-0
                             lg:sticky
-                            lg:top-24
+                            lg:top-20
                             lg:flex
+                            lg:max-h-[calc(100vh-6rem)]
                             lg:flex-col
                             lg:gap-4
+                            lg:overflow-y-auto
+                            lg:overscroll-contain
+                            lg:pb-2
+                            lg:[scrollbar-width:thin]
                             xl:w-[248px]
                         "
                         aria-label="Product filters"

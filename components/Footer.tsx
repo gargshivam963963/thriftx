@@ -29,15 +29,19 @@ const companyLinks = [
   { label: "About Us", href: "/about" },
   { label: "Contact", href: "/contact" },
   { label: "FAQs", href: "/faqs" },
-  { label: "Journal", href: "/blog" },
+  { label: "Blog", href: "/blog" },
   { label: "Careers", href: "/careers" },
 ];
 
+// Footer has room for the full set, so this is where the sort views live.
+// NOTE: no "Best Sellers" entry — `sort=popular` is an alias of `sort=newest`
+// (see productRepository), so it would just be a third link to the same list
+// the "New Arrivals" entry already points at.
 const shopLinks = [
   { label: "Men", href: "/shop/men" },
   { label: "Women", href: "/shop/women" },
   { label: "New Arrivals", href: "/shop?sort=newest" },
-  { label: "Best Sellers", href: "/shop?sort=popular" },
+  { label: "Sale", href: "/shop?sort=sale" },
   { label: "All Products", href: "/shop" },
 ];
 
@@ -117,6 +121,54 @@ function FooterNav({
         ))}
       </ul>
     </nav>
+  );
+}
+
+/**
+ * A contact row (icon + text) whose icon is optically centred on the *first
+ * line* of text.
+ *
+ * The previous markup used `items-start` with `mt-0.5` on the raw 16px icon,
+ * which never lined up: `text-body` has a line-height of 1.6, so a nudge of
+ * 2px left the icon visibly high against the text on every row. Wrapping the
+ * icon in a box exactly one line tall (`h-[1.6em]`) and centring inside it
+ * gives pixel-correct alignment whether the row wraps (the email) or not.
+ */
+function ContactRow({
+  icon: Icon,
+  children,
+  ...rest
+}: {
+  icon: typeof Mail;
+  children: ReactNode;
+} & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+  return (
+    <a
+      {...rest}
+      className="group flex items-start gap-2.5 text-body text-muted-foreground transition-colors hover:text-foreground"
+    >
+      <span className="mt-0 flex h-[1.6em] w-4 shrink-0 items-center justify-center">
+        <Icon className="h-4 w-4" aria-hidden="true" />
+      </span>
+      <span className="min-w-0">{children}</span>
+    </a>
+  );
+}
+
+function ContactText({
+  icon: Icon,
+  children,
+}: {
+  icon: typeof Mail;
+  children: ReactNode;
+}) {
+  return (
+    <p className="flex items-start gap-2.5 text-body text-muted-foreground">
+      <span className="mt-0 flex h-[1.6em] w-4 shrink-0 items-center justify-center">
+        <Icon className="h-4 w-4" aria-hidden="true" />
+      </span>
+      <span className="min-w-0">{children}</span>
+    </p>
   );
 }
 
@@ -219,45 +271,24 @@ export default function Footer() {
                 Customer Support
               </FooterHeading>
               <div className="mt-5 space-y-3">
-                <a
-                  href={`mailto:${contactInfo.email}`}
-                  className="flex items-start gap-2.5 text-body text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <ContactRow href={`mailto:${contactInfo.email}`} icon={Mail}>
                   <span className="break-all">{contactInfo.email}</span>
-                </a>
-                <a
-                  href={contactInfo.phoneHref}
-                  className="flex items-start gap-2.5 text-body text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <Phone
-                    className="mt-0.5 h-4 w-4 shrink-0"
-                    aria-hidden="true"
-                  />
+                </ContactRow>
+                <ContactRow href={contactInfo.phoneHref} icon={Phone}>
                   {contactInfo.phone}
-                </a>
-                <a
+                </ContactRow>
+                <ContactRow
                   href={contactInfo.whatsappUrl}
+                  icon={MessageCircle}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-start gap-2.5 text-body text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  <MessageCircle
-                    className="mt-0.5 h-4 w-4 shrink-0"
-                    aria-hidden="true"
-                  />
                   WhatsApp Support
-                </a>
-                <p className="flex items-start gap-2.5 text-body text-muted-foreground">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                  Panipat, Haryana, India
-                </p>
-                <p className="flex items-start gap-2.5 text-body text-muted-foreground">
-                  <Clock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                  <span>
-                    Mon&ndash;Sat, 10 AM &ndash; 7 PM IST
-                  </span>
-                </p>
+                </ContactRow>
+                <ContactText icon={MapPin}>Panipat, Haryana, India</ContactText>
+                <ContactText icon={Clock}>
+                  Mon&ndash;Sat, 10 AM &ndash; 7 PM IST
+                </ContactText>
               </div>
 
               <div className="mt-8">

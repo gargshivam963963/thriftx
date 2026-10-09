@@ -43,21 +43,20 @@ interface NavCategory {
   highlight?: boolean;
 }
 
+// Primary navigation is intentionally short: only real destinations a shopper
+// looks for. Everything else lives inside /shop as a filter/sort, not as its own
+// top-level link.
+//
+// NOTE: there is deliberately no "New Arrivals" item — `/shop` already sorts by
+// `createdAt desc`, so `/shop` and `/shop?sort=newest` are the *same page*.
+// Shipping both made the nav look padded and gave shoppers two doors into one
+// room. If you want "New In" as a word, change the label below instead of
+// adding a second link.
 const navCategories: NavCategory[] = [
   {
     label: "Shop",
     href: "/shop",
     icon: "✳️",
-  },
-  {
-    label: "New Arrivals",
-    href: "/shop?sort=newest",
-    icon: "🔥",
-  },
-  {
-    label: "Best Sellers",
-    href: "/shop?sort=popular",
-    icon: "⭐",
   },
   {
     label: "Sale",
@@ -66,7 +65,7 @@ const navCategories: NavCategory[] = [
     highlight: true,
   },
   {
-    label: "Journal",
+    label: "Blog",
     href: "/blog",
     icon: "✎",
   },
@@ -563,7 +562,7 @@ function MobileMenu({
 
             <nav className="px-3 py-6 sm:px-4">
               <p className="px-3 pb-3 text-caption text-muted-foreground">
-                Shop
+                Browse
               </p>
 
               <div className="space-y-1">

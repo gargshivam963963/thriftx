@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, ShieldCheck, Sparkles, Truck, Zap } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,12 +16,6 @@ const heroStats = [
     { value: "5000+", label: "Curated Pieces" },
     { value: "150+", label: "Premium Brands" },
     { value: "100%", label: "Quality Checked" },
-];
-
-const floatingFeatures = [
-    { icon: ShieldCheck, title: "Quality Checked", subtitle: "Every item inspected" },
-    { icon: Truck, title: "Fast Shipping", subtitle: "Quick & secure delivery" },
-    { icon: Sparkles, title: "Unique Pieces", subtitle: "Only one available" },
 ];
 
 export default function Hero() {
@@ -69,13 +63,18 @@ export default function Hero() {
                                 </p>
 
                                 {/* CTA Buttons */}
+                                {/* These MUST be path segments (`/shop/men`), not
+                                    `?gender=men`: the shop route reads gender from
+                                    the catch-all path, so a query-string gender is
+                                    silently ignored and the link lands on ALL
+                                    products. */}
                                 <div className="flex flex-wrap items-center gap-4">
-                                    <Link href="/shop?gender=men">
+                                    <Link href="/shop/men">
                                         <Button size="lg" rightIcon={<ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />}>
                                             Shop Men
                                         </Button>
                                     </Link>
-                                    <Link href="/shop?gender=women">
+                                    <Link href="/shop/women">
                                         <Button variant="outline" size="lg">
                                             Shop Women
                                         </Button>
@@ -141,7 +140,7 @@ export default function Hero() {
                                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 transition={{ delay: 0.4, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                                className="glass-liquid glass-card-hover absolute -bottom-6 -left-4 hidden max-w-[240px] rounded-2xl p-5 lg:block"
+                                className="glass-liquid glass-card-hover absolute -bottom-6 left-0 hidden max-w-[240px] rounded-2xl p-5 lg:block"
                             >
                                 <p className="text-caption text-muted-foreground">
                                     Featured Collection
@@ -152,38 +151,6 @@ export default function Hero() {
                                 <p className="mt-2 text-small leading-relaxed text-muted-foreground">
                                     Every product individually photographed and inspected before reaching your wardrobe.
                                 </p>
-                            </motion.div>
-
-                            {/* Floating Features - Right Side */}
-                            <motion.div
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, y: [0, -10, 0], x: 0 }}
-                                transition={{ delay: 0.5, duration: 0.6, ease: [0.22, 1, 0.36, 1], y: { duration: 6, repeat: Infinity, ease: "easeInOut" } }}
-                                className="glass-liquid absolute -right-8 top-12 hidden max-w-[220px] space-y-3 rounded-2xl p-5 xl:block"
-                            >
-                                <p className="text-caption text-muted-foreground">
-                                    Why THRIFTX
-                                </p>
-                                <div className="space-y-3">
-                                    {floatingFeatures.map(({ icon: Icon, title, subtitle }) => (
-                                        <div
-                                            key={title}
-                                            className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted/60"
-                                        >
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
-                                                <Icon size={16} />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-body font-semibold text-foreground">
-                                                    {title}
-                                                </p>
-                                                <p className="text-small text-muted-foreground">
-                                                    {subtitle}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
                             </motion.div>
                         </div>
                     </ScaleIn>

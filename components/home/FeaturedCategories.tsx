@@ -8,39 +8,37 @@ import { Container } from "@/components/ui/Container";
 import PremiumImage from "@/components/ui/PremiumImage";
 import { FadeUp, StaggerContainer, StaggerItem } from "@/components/animations";
 import { Card } from "@/components/ui/Card";
+import { cn } from "@/lib/utils";
 
-const categories = [
-    {
-        title: "Men",
-        image: "/images/categories/men.jpg",
-        href: "/shop/men",
-        productCount: 326,
-        badge: "Trending",
-    },
-    {
-        title: "Women",
-        image: "/images/categories/women.jpg",
-        href: "/shop/women",
-        productCount: 294,
-        badge: "New",
-    },
-    {
-        title: "Vintage",
-        image: "/images/categories/vintage.jpg",
-        href: "/shop?sort=newest",
-        productCount: 186,
-        badge: "Editor's Pick",
-    },
-    {
-        title: "Luxury",
-        image: "/images/categories/luxury.jpg",
-        href: "/shop?sort=price-high",
-        productCount: 148,
-        badge: "Premium",
-    },
-];
+/**
+ * A gender collection tile.
+ *
+ * Deliberately a *prop*, not a hardcoded list: the previous version invented
+ * "Vintage" and "Luxury" collections and pointed them at `?sort=newest` /
+ * `?sort=price-high` — two sort orders of the same all-products page, dressed up
+ * as categories. It also printed fabricated counts ("326 Products"). Every tile
+ * here now maps 1:1 to a real `/shop/<gender>` route, and `count` is the live
+ * catalogue figure passed down by the page (0 → the count line is omitted
+ * rather than guessed).
+ */
+export interface FeaturedCategory {
+    title: string;
+    image: string;
+    href: string;
+    /** Live number of available pieces; omitted/0 hides the count line. */
+    count?: number;
+    badge?: string;
+}
 
-export default function FeaturedCategories() {
+interface FeaturedCategoriesProps {
+    categories: FeaturedCategory[];
+}
+
+export default function FeaturedCategories({
+    categories,
+}: FeaturedCategoriesProps) {
+    if (categories.length === 0) return null;
+
     return (
         <section className="py-16 md:py-24">
             <Container>
@@ -50,16 +48,27 @@ export default function FeaturedCategories() {
                             Curated Collections
                         </Badge>
                         <h2 className="text-h2 font-bold text-foreground">
-                            Shop by Category
+                            Shop by Collection
                         </h2>
                         <p className="mt-4 text-body text-muted-foreground">
-                            Every collection is carefully curated with premium branded pieces,
-                            individually quality checked before reaching your wardrobe.
+                            Every piece is a genuine branded item, individually
+                            inspected and photographed before it reaches your wardrobe.
                         </p>
                     </div>
                 </FadeUp>
 
-                <StaggerContainer className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                {/* Column count follows the tile count so a 2-collection catalogue
+                    doesn't leave two empty grid cells behind. */}
+                <StaggerContainer
+                    className={cn(
+                        "grid grid-cols-1 gap-6 sm:grid-cols-2",
+                        categories.length >= 4
+                            ? "xl:grid-cols-4"
+                            : categories.length === 3
+                                ? "xl:grid-cols-3"
+                                : "xl:grid-cols-2 xl:max-w-3xl",
+                    )}
+                >
                     {categories.map((category) => (
                         <StaggerItem key={category.title}>
                             <Link href={category.href} className="group block h-full">
@@ -89,9 +98,11 @@ export default function FeaturedCategories() {
                                         )}
 
                                         <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                                            <p className="text-caption font-semibold uppercase tracking-widest text-white/70">
-                                                {category.productCount}+ Products
-                                            </p>
+                                            {!!category.count && category.count > 0 && (
+                                                <p className="text-caption font-semibold uppercase tracking-widest text-white/70">
+                                                    {category.count} {category.count === 1 ? "Piece" : "Pieces"}
+                                                </p>
+                                            )}
                                             <h3 className="mt-1.5 text-heading-4 font-bold tracking-tight">
                                                 {category.title}
                                             </h3>

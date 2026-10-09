@@ -277,6 +277,25 @@ function buildProductWhere(
     }
   }
 
+  // `sort=sale` is a *filter*, not an ordering: only pieces whose retail (MRP)
+  // price is above our selling price. Prisma compares the two columns in SQL via
+  // a field reference, so the count and the rows always agree. Products with no
+  // MRP recorded are excluded — we never invent a fake "original price".
+  // These go into `AND` rather than directly on `where.price`, so a shopper
+  // combining "Sale" with a price-range facet keeps both constraints instead of
+  // the last one silently winning.
+  if (filters.sort === "sale" && prisma) {
+    const saleConditions: Prisma.ProductWhereInput[] = [
+      { retailPrice: { not: null } },
+      { price: { lt: prisma.product.fields.retailPrice } },
+    ];
+    where.AND = Array.isArray(where.AND)
+      ? [...where.AND, ...saleConditions]
+      : where.AND
+        ? [where.AND, ...saleConditions]
+        : saleConditions;
+  }
+
   if (filters.price) {
     switch (filters.price) {
       case "0-499":
@@ -304,17 +323,27 @@ export async function getProductsByFilters(
 
   const where = buildProductWhere(filters);
 
-  let orderBy: Prisma.ProductOrderByWithRelationInput = { title: "asc" };
+  let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: "desc" };
   switch (filters.sort) {
-    case "newest":
-    case "popular":
-      orderBy = { createdAt: "desc" };
-      break;
     case "price-low":
       orderBy = { price: "asc" };
       break;
     case "price-high":
       orderBy = { price: "desc" };
+      break;
+    case "sale":
+      // Biggest markdown first — the only ordering that gives "Sale" a reason
+      // to exist as its own destination.
+      orderBy = { retailPrice: "desc" };
+      break;
+    case "name":
+      orderBy = { title: "asc" };
+      break;
+    default:
+      // "newest" and "popular" collapse to recency on purpose: the catalogue
+      // has no sales-volume signal, so inventing a popularity rank would be
+      // fake data. Recency is the honest proxy.
+      orderBy = { createdAt: "desc" };
       break;
   }
 

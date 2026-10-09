@@ -13,9 +13,18 @@ import {
     controlFocusRing,
 } from "@/components/ui/control.styles";
 
+/**
+ * Sort + filter options.
+ *
+ * There is deliberately no "Best Selling" option: the catalogue has no
+ * sales-volume signal, so that option could only ever be a fake rank of
+ * `createdAt` — the same list the shopper already sees under "Newest First".
+ * "Biggest Discount" is a real query (`sort=sale` → only pieces priced below
+ * their recorded MRP, ordered by markdown size).
+ */
 const sortOptions = [
     { value: "newest", label: "Newest First" },
-    { value: "popular", label: "Best Selling" },
+    { value: "sale", label: "Biggest Discount" },
     { value: "price-low", label: "Price: Low to High" },
     { value: "price-high", label: "Price: High to Low" },
     { value: "name", label: "Alphabetical" },

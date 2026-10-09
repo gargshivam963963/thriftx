@@ -6,16 +6,16 @@ import { ContentPage } from "@/components/content/ContentPage";
 import { blogPosts } from "@/lib/content/blog";
 
 export const metadata: Metadata = {
-    title: "The THRIFTX Journal",
+    title: "The THRIFTX Blog",
     description:
-        "Practical guides to finding, fitting, and caring for pre-loved clothing from the THRIFTX Journal.",
+        "Practical guides to finding, fitting, and caring for pre-loved clothing from the THRIFTX Blog.",
     alternates: { canonical: "/blog" },
 };
 
 export default function BlogPage() {
     return (
         <ContentPage
-            eyebrow="The THRIFTX journal"
+            eyebrow="The THRIFTX blog"
             title="A little more style, a little less guesswork."
             description="Useful notes on thrift shopping, fit, and caring for the pieces you choose."
         >
@@ -64,7 +64,7 @@ export default function BlogPage() {
                 ))}
             </div>
             <p className="rounded-xl bg-muted/50 p-4 text-body-sm text-muted-foreground">
-                We’ll add new journal entries as we publish them. For questions
+                We’ll add new blog posts as we publish them. For questions
                 about a specific item, <Link href="/contact" className="font-semibold text-foreground underline underline-offset-4">contact our team</Link>.
             </p>
         </ContentPage>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { countProducts, getProducts, getBrands } from "@/lib/services/products";
+import type { ProductFilters } from "@/lib/services/products";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/constants/products";
 import { getCategories, getGenders } from "@/lib/categories";
 import { siteConfig } from "@/lib/seo";
@@ -111,7 +112,10 @@ export default async function Shop({ params, searchParams }: PageProps) {
     material,
     condition: condition ? [condition] : undefined,
     search,
-    sort: sort as "newest" | "price-low" | "price-high" | "name",
+    // `sale` and `popular` are accepted here so the header's Sale link and any
+    // shared/bookmarked `?sort=` URL resolve to a real ordering instead of
+    // silently falling back to alphabetical.
+    sort: sort as ProductFilters["sort"],
   };
 
   // Server-driven pagination. The page is clamped rather than 404'd so an

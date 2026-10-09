@@ -12,6 +12,10 @@ import {
 interface ToolbarSearchProps {
     value: string;
     onChange: (value: string) => void;
+    /** Called when the shopper commits the query (Enter). Lets the parent
+     * push the `?search=` URL immediately instead of waiting for debounce,
+     * so the committed URL can't lag behind what's typed. */
+    onSubmit?: () => void;
     placeholder?: string;
     ariaLabel?: string;
     className?: string;
@@ -26,6 +30,7 @@ interface ToolbarSearchProps {
 export function ToolbarSearch({
     value,
     onChange,
+    onSubmit,
     placeholder = "Search products, brands…",
     ariaLabel = "Search products",
     className,
@@ -40,6 +45,16 @@ export function ToolbarSearch({
                 type="text"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
+                onKeyDown={(e) => {
+                    // Enter commits immediately (parent pushes `?search=` now).
+                    // Without this, Enter fires while the 350ms debounce is
+                    // still pending, the URL keeps the PREVIOUS value, and the
+                    // sync-back overwrites what was just typed.
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        onSubmit?.();
+                    }
+                }}
                 placeholder={placeholder}
                 aria-label={ariaLabel}
                 className={cn(

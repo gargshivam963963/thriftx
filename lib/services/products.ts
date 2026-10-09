@@ -78,6 +78,13 @@ export interface ProductFilters {
   material?: string;
   search?: string;
   /**
+   * Raw `?measurement=` value from the shop URL (e.g. `chest-38`,
+   * `waist-32`, `length-30`, `chest-44-plus`). Parsed server-side into a
+   * tolerant range filter on the string measurement columns so the count
+   * and the rows can never disagree.
+   */
+  measurement?: string;
+  /**
    * `popular` is intentionally the same ordering as `newest` (see the
    * repository switch) — the catalogue has no sales-volume signal to rank by,
    * so recency is the honest proxy. `sale` is a real filter: only pieces that
@@ -106,13 +113,17 @@ export async function importProducts(
 // Product reads are cached for a short time (60s) and tagged so admin writes
 // can revalidate them immediately via `revalidateTag("products")`. Different
 // filters/ids produce distinct cache entries (args are part of the cache key).
+// NOTE: every unstable_cache entry needs a UNIQUE static key — reusing the
+// same key across entries makes Next treat them as ONE cache slot, so a count
+// read could serve rows from a products read (or vice versa) and the grid
+// would show a stale total with an empty/mismatched list.
 const PRODUCT_CACHE = { tags: ["products"], revalidate: 60 };
 
 export const getProducts = unstable_cache(
   async (filters: ProductFilters = {}): Promise<Product[]> => {
     return productRepository.getProductsByFilters(filters);
   },
-  ["products"],
+  ["products-by-filters"],
   PRODUCT_CACHE,
 );
 
@@ -134,7 +145,7 @@ export const getProductById = unstable_cache(
   async (id: string): Promise<Product | null> => {
     return productRepository.getProductById(id);
   },
-  ["products"],
+  ["product-by-id"],
   PRODUCT_CACHE,
 );
 
@@ -142,7 +153,7 @@ export const getProductsByIds = unstable_cache(
   async (ids: string[]): Promise<Product[]> => {
     return productRepository.getProductsByIds(ids);
   },
-  ["products"],
+  ["products-by-ids"],
   PRODUCT_CACHE,
 );
 
@@ -150,7 +161,7 @@ export const getProductBySlug = unstable_cache(
   async (slug: string): Promise<Product | null> => {
     return productRepository.getProductBySlug(slug);
   },
-  ["products"],
+  ["product-by-slug"],
   PRODUCT_CACHE,
 );
 

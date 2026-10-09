@@ -173,6 +173,8 @@ async function getRows() {
 }
 
 async function mapProduct(row: ProductRow): Promise<Product> {
+  // Per-image fallback: one bad key must not kill the row (and, via the
+  // callers' all-settled mapping below, must not blank the whole grid).
   const images = await Promise.all(
     row.images.map((image) => createProductImageUrl(image.url)),
   );
@@ -206,16 +208,74 @@ async function mapProduct(row: ProductRow): Promise<Product> {
   };
 }
 
+/**
+ * Maps rows to products without letting ONE bad row blank the whole grid.
+ *
+ * `Promise.all(rows.map(mapProduct))` rejects everything when a single row
+ * throws (bad image key, corrupt field). The count query has no such mapping
+ * step, so it still returns e.g. 36 — producing the exact live symptom:
+ * "36 pieces" header + "No items found" grid. All-settled keeps the good rows.
+ */
+async function mapProductsSafe(rows: ProductRow[]): Promise<Product[]> {
+  const settled = await Promise.allSettled(rows.map((row) => mapProduct(row)));
+  const products: Product[] = [];
+  for (const entry of settled) {
+    if (entry.status === "fulfilled") {
+      products.push(entry.value);
+    } else {
+      console.error("mapProduct failed for a row, skipping it:", entry.reason);
+    }
+  }
+  return products;
+}
+
 export async function getAllProducts(): Promise<Product[]> {
   const rows = await getRows();
   if (!rows) return [];
-  return Promise.all(rows.map(mapProduct));
+  return mapProductsSafe(rows);
 }
 
 /**
  * Builds the Prisma `where` clause shared by listing AND counting, so the
  * "x of y" counts on a paginated page can never drift from the rows shown.
  */
+function parseMeasurementFilter(
+  raw: string | undefined,
+): Prisma.ProductWhereInput | null {
+  if (!raw) return null;
+  // Accepted shapes: `chest-38`, `waist-32`, `length-30`, `chest-44-plus`.
+  // Stored columns are free-form strings, so be tolerant: match the exact
+  // number and (for `-plus`) anything at/above it instead of rejecting rows
+  // over formatting differences.
+  const match = raw
+    .trim()
+    .toLowerCase()
+    .match(/^(chest|waist|length|inseam)-(\d+)(?:-plus)?$/);
+  if (!match) return null;
+  const [, dimension, num] = match;
+  const n = Number.parseInt(num, 10);
+  if (!Number.isFinite(n)) return null;
+  const field = dimension as "chest" | "waist" | "length" | "inseam";
+  const isPlus = raw.toLowerCase().endsWith("-plus");
+  if (isPlus) {
+    return {
+      OR: [
+        { [field]: { contains: String(n), mode: "insensitive" } },
+        { [field]: { contains: `${n}+`, mode: "insensitive" } },
+      ],
+    } as Prisma.ProductWhereInput;
+  }
+  // Bucket semantics from the UI (e.g. `chest-36` means 36–38″): accept the
+  // anchor size and the next even size so boundary items aren't dropped.
+  return {
+    OR: [
+      { [field]: { contains: String(n), mode: "insensitive" } },
+      { [field]: { contains: String(n + 1), mode: "insensitive" } },
+      { [field]: { contains: String(n + 2), mode: "insensitive" } },
+    ],
+  } as Prisma.ProductWhereInput;
+}
+
 function buildProductWhere(
   filters: ProductFilters = {},
 ): Prisma.ProductWhereInput {
@@ -313,6 +373,20 @@ function buildProductWhere(
     }
   }
 
+  // The `?measurement=` facet MUST filter server-side too. Previously it only
+  // rendered a chip client-side while count+rows ignored it — so a shared /
+  // bookmarked measurement URL could show a stale total with wrong rows.
+  // Both queries share this builder, so they stay in agreement by construction.
+  const measurementWhere = parseMeasurementFilter(filters.measurement);
+  if (measurementWhere) {
+    const existingAnd = where.AND
+      ? Array.isArray(where.AND)
+        ? where.AND
+        : [where.AND]
+      : [];
+    where.AND = [...existingAnd, measurementWhere];
+  }
+
   return where;
 }
 
@@ -360,7 +434,7 @@ export async function getProductsByFilters(
       return [];
     });
 
-  return Promise.all(rows.map(mapProduct));
+  return mapProductsSafe(rows);
 }
 
 /**
@@ -399,7 +473,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       status: "active",
     });
     if (!row) return null;
-    return mapProduct(row);
+    const mapped = await mapProductsSafe([row]);
+    return mapped[0] ?? null;
   } catch (error) {
     console.error("getProductBySlug error:", error);
     return null;
@@ -415,7 +490,8 @@ export async function getProductById(id: string): Promise<Product | null> {
       status: "active",
     });
     if (!row) return null;
-    return mapProduct(row);
+    const mapped = await mapProductsSafe([row]);
+    return mapped[0] ?? null;
   } catch (error) {
     console.error("getProductById error:", error);
     return null;
@@ -429,7 +505,7 @@ export async function getProductsByIds(ids: string[]): Promise<Product[]> {
       isActive: true,
       status: "active",
   });
-  return Promise.all(rows.map(mapProduct));
+  return mapProductsSafe(rows);
 }
 
 export async function getSimilarProducts(
@@ -451,7 +527,7 @@ export async function getSimilarProducts(
       return [];
     });
 
-  const mappedCandidates = await Promise.all(candidates.map(mapProduct));
+  const mappedCandidates = await mapProductsSafe(candidates);
   const scored = mappedCandidates.map((mapped) => {
     const sharedCategory = mapped.category === product.category ? 4 : 0;
     const sharedBrand = mapped.brand === product.brand ? 4 : 0;
@@ -791,5 +867,5 @@ export async function searchProducts(
     return [];
   });
 
-  return Promise.all(rows.map(mapProduct));
+  return mapProductsSafe(rows);
 }

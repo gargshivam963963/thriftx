@@ -49,7 +49,15 @@ export async function createProductImageUrl(value: string): Promise<string> {
   }
 
   if (value.startsWith("products/")) {
-    return createDownloadUrl(value);
+    // A single bad image (missing R2 env, expired creds, network blip)
+    // must NEVER blank the whole grid — fall back to the raw key so the
+    // card still renders instead of `Promise.all` rejecting everything.
+    try {
+      return await createDownloadUrl(value);
+    } catch (error) {
+      console.error("[r2] failed to sign product image, using raw key:", error);
+      return value;
+    }
   }
 
   return value;

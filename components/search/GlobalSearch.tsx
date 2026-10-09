@@ -77,16 +77,21 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
         }
     }, [open]);
 
-    // Perform search when debounced query changes
+    // Perform search when debounced query changes. The request id guards
+    // against out-of-order responses: without it, a slow response for an
+    // OLD query can overwrite the results of the NEW query, so Enter either
+    // navigates to a stale product or resets to a previous result set.
     useEffect(() => {
         if (!debouncedQuery.trim()) {
             setResults([]);
             setHasSearched(false);
             setLoading(false);
+            setSelectedIndex(-1);
             return;
         }
 
         let cancelled = false;
+        const requestQuery = debouncedQuery;
         setLoading(true);
         setHasSearched(true);
         setShowRecent(false);
@@ -96,8 +101,13 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                 setResults(data);
                 setLoading(false);
                 setSelectedIndex(-1);
-                // Track the search event for analytics
-                trackSearch(debouncedQuery, data.length);
+                // Track the search event for analytics — never let analytics
+                // break search results.
+                try {
+                    trackSearch(requestQuery, data.length);
+                } catch {
+                    // ignore analytics failures
+                }
             }
         });
 
@@ -106,13 +116,31 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
         };
     }, [debouncedQuery, trackSearch]);
 
+    // Typing a new query invalidates any keyboard selection from the previous
+    // result set. Without this reset, hitting Enter after editing the text
+    // (before fresh results arrive) navigates to the OLD highlighted item —
+    // the "starts from previous value" bug.
+    useEffect(() => {
+        setSelectedIndex(-1);
+    }, [query]);
+
     const handleSubmit = useCallback(
         (e?: React.FormEvent) => {
             e?.preventDefault();
             if (!query.trim()) return;
 
-            // If there's a selected item, navigate to it
-            if (selectedIndex >= 0 && selectedIndex < results.length) {
+            // Only honour a keyboard selection when the visible results still
+            // belong to the CURRENT text. `results` may still hold the previous
+            // query's items while the new debounced fetch is in flight — in
+            // that window Enter must run a fresh search, not open a stale row.
+            const resultsMatchQuery =
+                debouncedQuery.trim().toLowerCase() ===
+                query.trim().toLowerCase();
+            if (
+                resultsMatchQuery &&
+                selectedIndex >= 0 &&
+                selectedIndex < results.length
+            ) {
                 const item = results[selectedIndex];
                 saveRecentSearch(item.title);
                 onClose();
@@ -124,7 +152,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
             onClose();
             router.push(`/shop?search=${encodeURIComponent(query.trim())}`);
         },
-        [query, results, selectedIndex, router, onClose],
+        [query, debouncedQuery, results, selectedIndex, router, onClose],
     );
 
     const handleKeyDown = useCallback(

@@ -112,6 +112,7 @@ export default async function Shop({ params, searchParams }: PageProps) {
     material,
     condition: condition ? [condition] : undefined,
     search,
+    measurement,
     // `sale` and `popular` are accepted here so the header's Sale link and any
     // shared/bookmarked `?sort=` URL resolve to a real ordering instead of
     // silently falling back to alphabetical.

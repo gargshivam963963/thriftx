@@ -475,12 +475,39 @@ export default function ShopContent({
     const committedSearch =
         searchParams.get("search") ?? "";
 
+    // Tracks whether the input currently has focus. While focused, the
+    // shopper is mid-typing: the sync-back below must NOT overwrite the
+    // input, otherwise typing + hitting Enter (before the debounced URL
+    // push lands) snaps the field back to the previous committed value.
+    const searchFocusedRef = useRef(false);
+
+    // Commits the current input to the URL immediately (Enter key). Shared
+    // with the 350ms debounce so both paths push the exact same params.
+    const commitSearchToUrl = useCallback(
+        (query: string) => {
+            const params = new URLSearchParams(searchParams.toString());
+
+            if (query) {
+                params.set("search", query);
+            } else {
+                params.delete("search");
+            }
+
+            // A new query invalidates the current page number.
+            params.delete("page");
+
+            routerPusher(params.toString());
+        },
+        [searchParams, routerPusher],
+    );
+
     useEffect(() => {
         // Keep the input in sync when the URL changes underneath us
-        // (pagination, filter chips, back/forward).
-        setSearchInput(
-            initialSearch ?? "",
-        );
+        // (pagination, filter chips, back/forward) — but never while the
+        // shopper is actively typing, or their keystrokes get clobbered by
+        // the lagging prop and "start from previous value".
+        if (searchFocusedRef.current) return;
+        setSearchInput(initialSearch ?? "");
 
         setInitialLoadError(false);
     }, [initialSearch]);
@@ -504,26 +531,7 @@ export default function ShopContent({
 
         debounceRef.current =
             setTimeout(() => {
-                const params =
-                    new URLSearchParams(
-                        searchParams.toString(),
-                    );
-
-                if (query) {
-                    params.set(
-                        "search",
-                        query,
-                    );
-                } else {
-                    params.delete("search");
-                }
-
-                // A new query invalidates the current page number.
-                params.delete("page");
-
-                routerPusher(
-                    params.toString(),
-                );
+                commitSearchToUrl(query);
             }, 350);
 
         return () => {
@@ -536,8 +544,7 @@ export default function ShopContent({
     }, [
         searchInput,
         committedSearch,
-        searchParams,
-        routerPusher,
+        commitSearchToUrl,
     ]);
 
     /*
@@ -1023,6 +1030,21 @@ export default function ShopContent({
                                         sm:order-1
                                         sm:min-w-0
                                     "
+                                    // Focus capture: while the shopper is typing,
+                                    // the URL→input sync stays paused so fresh
+                                    // keystrokes are never snapped back to the
+                                    // previous committed value.
+                                    onFocusCapture={() => {
+                                        searchFocusedRef.current = true;
+                                    }}
+                                    onBlurCapture={() => {
+                                        searchFocusedRef.current = false;
+                                        // Re-sync on blur so chip/back-nav
+                                        // changes still reflect afterwards.
+                                        setSearchInput(
+                                            initialSearch ?? "",
+                                        );
+                                    }}
                                 >
                                     <ToolbarSearch
                                         value={
@@ -1031,6 +1053,28 @@ export default function ShopContent({
                                         onChange={
                                             setSearchInput
                                         }
+                                        onSubmit={() => {
+                                            // Enter commits NOW: cancel the
+                                            // pending debounce and push the
+                                            // exact current text so the URL
+                                            // can't lag one keystroke behind.
+                                            if (
+                                                debounceRef.current
+                                            ) {
+                                                clearTimeout(
+                                                    debounceRef.current,
+                                                );
+                                                debounceRef.current =
+                                                    null;
+                                            }
+                                            setIsSearching(
+                                                searchInput.trim() !==
+                                                    committedSearch,
+                                            );
+                                            commitSearchToUrl(
+                                                searchInput.trim(),
+                                            );
+                                        }}
                                         placeholder="Search products, brands…"
                                         ariaLabel="Search products"
                                     />

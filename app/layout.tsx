@@ -73,6 +73,22 @@ export const metadata: Metadata = {
     title: siteConfig.title,
     description: siteConfig.description,
   },
+
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+  },
+
+  icons: {
+    icon: [{ url: "/icon.jpg", sizes: "any" }],
+    shortcut: "/icon.jpg",
+    apple: "/icon.jpg",
+  },
+
+  appleWebApp: {
+    title: siteConfig.name,
+    statusBarStyle: "black-translucent",
+  },
 };
 
 const organizationJsonLd = {

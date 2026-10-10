@@ -30,6 +30,12 @@ import RecentlyViewedSection from "@/components/product/RecentlyViewedSection";
 import SimilarProductsSection from "@/components/product/SimilarProductsSection";
 import CompleteTheLookSection from "@/components/product/CompleteTheLookSection";
 import { siteConfig } from "@/lib/seo";
+import {
+  canonicalUrl,
+  buildCategoryBreadcrumbs,
+  serializeProductJsonLd,
+  serializeBreadcrumbJsonLd,
+} from "@/lib/seo/metadata";
 import { getDeliveryInfo } from "@/lib/delivery";
 
 export const revalidate = 3600;
@@ -48,17 +54,25 @@ export async function generateMetadata({
     product.description ||
     `${product.title} from ${product.brand || "THRIFTX"} — Premium curated thrift wear.`;
 
-  const url = `${siteConfig.url}/product/${slug}`;
+  const url = canonicalUrl(`/product/${slug}`);
+  const lastModified = product.$updatedAt ?? new Date().toISOString();
+
+  // Only live, purchasable listings belong in the index. Sold, draft, or
+  // deactivated pieces are truthful about their state in search (noindex) so we
+  // never advertise something a shopper cannot actually buy.
+  const indexable = product.isActive && product.status === "active";
 
   return {
     title: product.title,
     description,
+    authors: [{ name: siteConfig.name }],
     openGraph: {
       title: `${product.title} | THRIFTX`,
       description,
       images: [{ url: product.primaryImage, width: 1200, height: 1500 }],
       url,
       siteName: siteConfig.name,
+      locale: siteConfig.locale,
     },
     twitter: {
       card: "summary_large_image",
@@ -67,7 +81,9 @@ export async function generateMetadata({
       images: [product.primaryImage],
     },
     alternates: { canonical: url },
-    robots: { index: true, follow: true },
+    robots: indexable
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
   };
 }
 
@@ -144,27 +160,28 @@ export default async function ProductDetail({
   const savings = retail ? retail - product.price : null;
   const delivery = getDeliveryInfo("", undefined);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.title,
-    description: descriptionText,
-    image: product.primaryImage,
-    brand: {
-      "@type": "Brand",
-      name: product.brand || "THRIFTX",
-    },
-    offers: {
-      "@type": "Offer",
+  const canonicalProductUrl = canonicalUrl(`/product/${product.slug}`);
+  const productJsonLd = serializeProductJsonLd(
+    {
+      title: product.title,
+      description: descriptionText,
+      primaryImage: product.primaryImage,
       price: product.price,
-      priceCurrency: "INR",
-      availability: "https://schema.org/InStock",
-      url: `${siteConfig.url}/product/${product.slug}`,
+      condition: product.condition,
+      status: product.status,
+      isActive: product.isActive,
+      slug: product.slug,
     },
-    category: product.category,
-    material: product.material,
-    color: product.color,
-  };
+    canonicalProductUrl,
+  );
+  const breadcrumbJsonLd = serializeBreadcrumbJsonLd(
+    buildCategoryBreadcrumbs(
+      product.gender,
+      product.category && product.categorySlug
+        ? { name: product.category, slug: product.categorySlug }
+        : undefined,
+    ),
+  );
 
   return (
     <>
@@ -173,9 +190,12 @@ export default async function ProductDetail({
 
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd),
-        }}
+        dangerouslySetInnerHTML={{ __html: productJsonLd }}
+      />
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }}
       />
 
       <Section className="pb-24 pt-5 sm:pt-7 lg:pb-16">

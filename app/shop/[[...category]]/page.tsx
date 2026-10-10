@@ -4,6 +4,7 @@ import type { ProductFilters } from "@/lib/services/products";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/constants/products";
 import { getCategories, getGenders } from "@/lib/categories";
 import { siteConfig } from "@/lib/seo";
+import { escapeJsonLd } from "@/lib/seo/metadata";
 import ShopContent from "./ShopContent";
 
 type PageProps = {
@@ -139,8 +140,52 @@ export default async function Shop({ params, searchParams }: PageProps) {
   const categories = await getCategories();
   const brands = await getBrands();
 
+  // Build a truthful BreadcrumbList from the real catalog labels so the JSON-LD
+  // matches the on-page navigation (Home > Shop > Gender > Category). Only
+  // real, resolved category names are included — never a guessed slug.
+  const breadcrumbItems: { name: string; url: string }[] = [
+    { name: "Home", url: siteConfig.url },
+    { name: "Shop", url: `${siteConfig.url}/shop` },
+  ];
+  if (gender) {
+    const genderLabel =
+      genders.find((g) => g.slug === gender)?.name ??
+      gender.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    breadcrumbItems.push({
+      name: genderLabel,
+      url: `${siteConfig.url}/shop/${gender}`,
+    });
+  }
+  if (clothingCategory) {
+    const catLabel =
+      categories.find((c) => c.slug === clothingCategory)?.name ??
+      clothingCategory.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    breadcrumbItems.push({
+      name: catLabel,
+      url: `${siteConfig.url}/shop/${gender}/${clothingCategory}`,
+    });
+  }
+  const breadcrumbJsonLd = escapeJsonLd(
+    JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "https://schema.org/BreadcrumbList",
+      "@version": 1,
+      itemListElement: breadcrumbItems.map((item, index) => ({
+        "@type": "https://schema.org/ListItem",
+        position: index + 1,
+        name: item.name,
+        item: item.url,
+      })),
+    }),
+  );
+
   return (
-    <ShopContent
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }}
+      />
+      <ShopContent
       products={products}
       total={total}
       page={currentPage}
@@ -158,6 +203,7 @@ export default async function Shop({ params, searchParams }: PageProps) {
       initialPrice={price}
       initialMeasurement={measurement}
       initialSearch={search}
-    />
+      />
+    </>
   );
 }

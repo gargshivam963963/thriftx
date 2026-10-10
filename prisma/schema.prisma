@@ -98,6 +98,8 @@ model User {
   verifications Verification[]
   addresses     Address[]
   orders        Order[]
+  conversations Conversation[]
+
 }
 
 model Session {
@@ -267,3 +269,88 @@ model StoredDocument {
   @@id([collectionKey, id])
   @@index([collectionKey, createdAt])
 }
+
+model NewsletterSubscription {
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  status               String    @default("subscribed")
+  consentVersion       String    @default("1.0")
+  consentTimestamp     DateTime?
+  source               String?
+  landingPage          String?
+  utmSource            String?
+  utmMedium            String?
+  utmCampaign          String?
+  utmContent           String?
+  ip                   String?
+  userAgent            String?
+  subscriptionId       String?   @unique
+  unsubscribedAt       DateTime?
+  unsubscribedReason   String?
+  createdCity          String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+model AnalyticsEvent {
+  id           String   @id @default(cuid())
+  eventType    String
+  eventName    String
+  orderId      String?   // idempotent key for purchase events
+  properties   Json?
+  page         String
+  sessionId    String?
+  referrer     String?
+  userId       String?
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([eventType, createdAt])
+  @@index([orderId])
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
+}
+
+model Conversation {
+  id            String    @id @default(cuid())
+  guestToken    String?   @unique
+  userId        String?
+  orderRef      String?
+  productSlug   String?
+  status        String    @default("open")
+  source        String?   @default("website")
+  ip            String?
+  userAgent     String?
+  answeredAt    DateTime?
+  resolvedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  messages      Message[]
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([guestToken])
+  @@index([status, createdAt])
+}
+
+model Message {
+  id           String   @id @default(cuid())
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  senderType   String   // customer | admin
+  name         String?
+  body         String
+  status       String   @default("sent")
+  readAt       DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([conversationId, senderType])
+}
+

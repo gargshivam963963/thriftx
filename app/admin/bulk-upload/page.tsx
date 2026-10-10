@@ -4,8 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 import ToastContainer, { showToast } from "@/components/admin/bulk/Toast";
-import SpreadsheetEditor from "@/components/admin/bulk/SpreadsheetEditor";
-import AIProcessingOverlay from "@/components/admin/bulk/AIProcessingOverlay";
+import CompactWorkspace from "@/components/admin/bulk/CompactWorkspace";
 import UploadProgress from "@/components/admin/bulk/UploadProgress";
 import AdminPage from "@/components/admin/AdminPage";
 
@@ -13,7 +12,14 @@ import type { BulkProduct } from "@/app/lib/bulk/types";
 import { processSmartFolders } from "@/app/lib/bulk/smart-processor";
 import { sortByFilename } from "@/app/lib/bulk/image-sorter";
 import { validateProducts } from "@/app/lib/bulk/validators";
-import { uploadProducts } from "@/app/lib/bulk/uploader";
+import { uploadProducts, uploadSingleProduct } from "@/app/lib/bulk/uploader";
+import {
+    reorderImages,
+    moveImage,
+    setPrimaryImage,
+    removeImage,
+    addImagesToProduct,
+} from "@/app/lib/bulk/imageGrouping";
 import { mapAIResponseToProduct } from "@/lib/ai/parser";
 import { runAiFill } from "@/lib/services/aiFill";
 import {
@@ -87,6 +93,10 @@ export default function BulkUploadPage() {
     const [aiLoadingSku, setAiLoadingSku] = useState<string | null>(null);
     const [bulkAiLoading, setBulkAiLoading] = useState(false);
     const [autoAiRunning, setAutoAiRunning] = useState(false);
+    /** SKUs waiting in the background AI queue (drives Processing badges). */
+    const [aiQueueSkus, setAiQueueSkus] = useState<string[]>([]);
+    /** SKU currently being saved/published individually. */
+    const [savingSku, setSavingSku] = useState<string | null>(null);
 
     const [aiProcessingInfo, setAiProcessingInfo] = useState<{
         current: number;
@@ -540,6 +550,191 @@ export default function BulkUploadPage() {
         [],
     );
 
+    /* ── Image grouping: reorder / move / primary / remove / append ── */
+
+    const handleReorderImage = useCallback(
+        (sku: string, fromIndex: number, toIndex: number) => {
+            setProducts((current) =>
+                validateProducts(
+                    reorderImages(current, sku, fromIndex, toIndex).products,
+                ),
+            );
+        },
+        [],
+    );
+
+    const handleMoveImage = useCallback(
+        (
+            fromSku: string,
+            imageIndex: number,
+            toSku: string,
+            toIndex?: number,
+        ) => {
+            setProducts((current) =>
+                validateProducts(
+                    moveImage(current, fromSku, imageIndex, toSku, toIndex)
+                        .products,
+                ),
+            );
+        },
+        [],
+    );
+
+    const handleSetPrimaryImage = useCallback(
+        (sku: string, imageIndex: number) => {
+            setProducts((current) =>
+                validateProducts(
+                    setPrimaryImage(current, sku, imageIndex).products,
+                ),
+            );
+        },
+        [],
+    );
+
+    const handleRemoveImage = useCallback(
+        (sku: string, imageIndex: number) => {
+            setProducts((current) => {
+                const result = removeImage(current, sku, imageIndex);
+                revokeObjectUrls(result.revokedUrls);
+                return validateProducts(result.products);
+            });
+        },
+        [],
+    );
+
+    const handleAppendImages = useCallback(
+        (sku: string, files: File[]) => {
+            if (files.length === 0) {
+                return;
+            }
+
+            const urls = files.map((file) => URL.createObjectURL(file));
+
+            setProducts((current) =>
+                validateProducts(
+                    addImagesToProduct(current, sku, files, urls).products,
+                ),
+            );
+
+            void Promise.resolve().then(() => maybeAutoCover(sku));
+        },
+        [maybeAutoCover],
+    );
+
+    /**
+     * Saves or publishes ONE product without touching the rest of the batch.
+     * `publish: false` creates/updates a draft; `publish: true` activates it.
+     */
+    const handleSaveSingle = useCallback(
+        async (sku: string, publish: boolean) => {
+            if (savingSku) {
+                return;
+            }
+
+            const product = productsRef.current.find(
+                (item) => item.sku === sku,
+            );
+
+            if (!product) {
+                return;
+            }
+
+            if (product.status === "Uploaded") {
+                showToast({
+                    type: "info",
+                    title: "Already published",
+                    message: `${product.title || sku} is already live.`,
+                    duration: 3000,
+                });
+                return;
+            }
+
+            const [validated] = validateProducts([product]);
+
+            if (publish) {
+                if (
+                    validated.status !== "Ready" ||
+                    validated.errors.length > 0
+                ) {
+                    setProducts((current) => validateProducts(current));
+                    showToast({
+                        type: "warning",
+                        title: "Not ready to publish",
+                        message:
+                            validated.errors[0] ??
+                            "Fix the validation issues first.",
+                        duration: 5000,
+                    });
+                    return;
+                }
+            } else {
+                // Drafts only need the fields the API itself requires.
+                const missing: string[] = [];
+                if (!validated.title.trim()) missing.push("title");
+                if (!validated.category.trim()) missing.push("category");
+                if (!validated.price || validated.price <= 0)
+                    missing.push("price");
+                if (validated.imageFiles.length === 0) missing.push("images");
+
+                if (missing.length > 0) {
+                    showToast({
+                        type: "warning",
+                        title: "Cannot save draft yet",
+                        message: `Missing: ${missing.join(", ")}.`,
+                        duration: 5000,
+                    });
+                    return;
+                }
+            }
+
+            setSavingSku(sku);
+
+            try {
+                const outcome = await uploadSingleProduct(validated, {
+                    publish,
+                });
+
+                setProducts((current) =>
+                    current.map((item) =>
+                        item.sku === sku ? outcome : item,
+                    ),
+                );
+
+                // uploadSingleProduct appends a new error on every failure,
+                // so a growing error list is the failure signal.
+                const failed = outcome.errors.length > validated.errors.length;
+
+                if (failed) {
+                    showToast({
+                        type: "error",
+                        title: publish ? "Publish failed" : "Draft save failed",
+                        message:
+                            outcome.errors[outcome.errors.length - 1] ??
+                            "Upload failed.",
+                        duration: 6000,
+                    });
+                } else if (publish) {
+                    showToast({
+                        type: "success",
+                        title: "Product published",
+                        message: `${outcome.title || sku} is now live.`,
+                        duration: 4000,
+                    });
+                } else {
+                    showToast({
+                        type: "success",
+                        title: "Draft saved",
+                        message: `${outcome.title || sku} saved as draft. Publish when the row is ready.`,
+                        duration: 4000,
+                    });
+                }
+            } finally {
+                setSavingSku(null);
+            }
+        },
+        [savingSku],
+    );
+
     const runAiFillForProduct = useCallback(
         async (
             product: BulkProduct,
@@ -599,6 +794,7 @@ export default function BulkUploadPage() {
                 const {
                     updates,
                     needsReview,
+                    suggestedPrice,
                 } = mapAIResponseToProduct(
                     result.data,
                 );
@@ -646,6 +842,14 @@ export default function BulkUploadPage() {
                     product.sku,
                     {
                         ...updates,
+                        // Rule-based, editable price suggestion from the
+                        // approved thrift-price set. Only applied when the
+                        // owner has not already set a price, so AI never
+                        // overwrites a human decision.
+                        price:
+                            product.price && product.price > 0
+                                ? product.price
+                                : suggestedPrice,
                         aiGenerated: true,
                         aiConfidence,
                         aiNeedsReview:
@@ -734,6 +938,11 @@ export default function BulkUploadPage() {
                         currentSku:
                             product.sku,
                     });
+                    setAiQueueSkus(
+                        aiQueueRef.current.map(
+                            (item) => item.sku,
+                        ),
+                    );
 
                     await runAiFillForProduct(
                         product,
@@ -760,6 +969,7 @@ export default function BulkUploadPage() {
                 setAutoAiRunning(false);
                 setAiProcessingInfo(null);
                 setAiLoadingSku(null);
+                setAiQueueSkus([]);
             }
         },
         [runAiFillForProduct],
@@ -786,6 +996,12 @@ export default function BulkUploadPage() {
                 );
                 existing.add(product.sku);
             }
+
+            setAiQueueSkus(
+                aiQueueRef.current.map(
+                    (item) => item.sku,
+                ),
+            );
 
             void drainAiQueue();
         },
@@ -1264,42 +1480,31 @@ export default function BulkUploadPage() {
                         y: 0,
                     }}
                 >
-                    <SpreadsheetEditor
+                    <CompactWorkspace
                         products={products}
-                        onUpdate={handleProductUpdate}
+                        aiLoadingSku={aiLoadingSku}
+                        aiPendingSkus={aiQueueSkus}
+                        aiRunning={autoAiRunning || bulkAiLoading}
+                        aiProcessingInfo={aiProcessingInfo}
+                        savingSku={savingSku}
+                        uploading={uploading}
                         onAddRow={handleAddRow}
                         onAddRows={handleAddRows}
-                        onDeleteRow={handleDeleteRow}
-                        onDuplicateRow={
-                            handleDuplicateRow
-                        }
-                        onImagesChange={
-                            handleImagesChange
-                        }
+                        onFilesSelected={handleFilesSelected}
+                        onFolderSelected={handleFolderSelected}
+                        onUpdate={handleProductUpdate}
+                        onImagesChange={handleImagesChange}
+                        onDelete={handleDeleteRow}
+                        onDuplicate={handleDuplicateRow}
                         onAiFill={handleAiFill}
-                        aiLoadingSku={
-                            aiLoadingSku
-                        }
-                        onUpload={handleUpload}
-                        uploading={uploading}
-                        bulkAiLoading={
-                            bulkAiLoading
-                        }
-                        onAiFillAll={
-                            handleBulkAiFill
-                        }
-                        onFilesSelected={
-                            handleFilesSelected
-                        }
-                        onFolderSelected={
-                            handleFolderSelected
-                        }
-                        aiProcessing={
-                            autoAiRunning
-                        }
-                        aiProcessingInfo={
-                            aiProcessingInfo
-                        }
+                        onAiFillAll={handleBulkAiFill}
+                        onSaveSingle={handleSaveSingle}
+                        onPublishAll={handleUpload}
+                        onReorderImage={handleReorderImage}
+                        onMoveImage={handleMoveImage}
+                        onSetPrimary={handleSetPrimaryImage}
+                        onRemoveImage={handleRemoveImage}
+                        onAppendImages={handleAppendImages}
                     />
                 </motion.div>
             </AdminPage>
@@ -1307,25 +1512,6 @@ export default function BulkUploadPage() {
             <UploadProgress
                 progress={progress}
                 uploadResult={uploadResult}
-            />
-
-            <AIProcessingOverlay
-                open={
-                    autoAiRunning ||
-                    bulkAiLoading
-                }
-                current={
-                    aiProcessingInfo?.current ??
-                    0
-                }
-                total={
-                    aiProcessingInfo?.total ??
-                    0
-                }
-                currentSku={
-                    aiProcessingInfo?.currentSku ??
-                    ""
-                }
             />
         </div>
     );

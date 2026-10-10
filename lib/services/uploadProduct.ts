@@ -8,6 +8,11 @@ export interface UploadProductInput {
   images: File[];
   primaryIndex: number;
   productId?: string;
+  /**
+   * When false, the product is created and its images uploaded but left as a
+   * draft (not activated). Defaults to true to preserve existing behaviour.
+   */
+  publish?: boolean;
 }
 
 export class ProductUploadError extends Error {
@@ -32,6 +37,7 @@ export async function uploadProduct({
   images,
   primaryIndex,
   productId: existingProductId,
+  publish = true,
 }: UploadProductInput) {
   // Required fields
   if (!form.title || !form.category || !form.gender || !form.price) {
@@ -94,7 +100,12 @@ export async function uploadProduct({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id: resolvedProductId,
-        data: { ...payload, images: keys, status: "active", isActive: true },
+        data: {
+          ...payload,
+          images: keys,
+          status: publish ? "active" : "draft",
+          isActive: publish,
+        },
       }),
     });
     const result = await response.json().catch(() => null);

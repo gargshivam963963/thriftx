@@ -69,6 +69,11 @@ export interface BulkProduct {
 
   // Upload
   productId?: string;
+  /**
+   * True when a draft of this product already exists in the admin (created
+   * via "Save draft"). The row stays `Ready` so it can still be published.
+   */
+  draftSaved?: boolean;
   status: "Ready" | "Missing Images" | "Invalid" | "Uploading" | "Uploaded";
 
   errors: string[];

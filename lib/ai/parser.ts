@@ -5,6 +5,8 @@
  * { "value": string | null, "confidence": number, "needsReview": boolean }
  */
 
+import { suggestThriftPrice } from "@/app/lib/bulk/pricing";
+
 export interface AIExtractedField {
   value: string | null;
   confidence: number;
@@ -126,11 +128,14 @@ export function parseAIResponse(text: string): AIProductResponse {
 
 /**
  * Maps AI extraction results to BulkProduct partial updates.
- * Only includes fields with high-confidence values.
+ * Only includes fields with high-confidence values. A thrift price is suggested
+ * centrally via the shared pricing module (never invented by the AI prompt).
  */
 export function mapAIResponseToProduct(aiResponse: AIProductResponse): {
   updates: Record<string, string | null>;
   needsReview: string[];
+  /** Centralized thrift price suggestion (editable; never auto-finalized). */
+  suggestedPrice?: number;
 } {
   const updates: Record<string, string | null> = {};
   const needsReview: string[] = [];
@@ -169,5 +174,14 @@ export function mapAIResponseToProduct(aiResponse: AIProductResponse): {
     }
   }
 
-  return { updates, needsReview };
+  // Centralized, rule-based price suggestion based on the mapped category and
+  // condition. The AI never picks a price itself — this keeps the approved
+  // thrift-price set as the single source of truth. It is returned as an
+  // editable suggestion only.
+  const suggestedPrice = suggestThriftPrice({
+    category: typeof updates.category === "string" ? updates.category : "",
+    condition: typeof updates.condition === "string" ? updates.condition : "",
+  });
+
+  return { updates, needsReview, suggestedPrice };
 }

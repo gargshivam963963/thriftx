@@ -63,7 +63,8 @@ function slugify(value: string): string {
  * Create a single product.
  *
  * Returns the product with its outcome applied:
- *  - `status: "Uploaded"` on success (with `productId` set)
+ *  - publish: `status: "Uploaded"` on success (with `productId` set)
+ *  - draft: `status` unchanged + `draftSaved: true` (with `productId` set)
  *  - `status: "Invalid"` + an appended error on failure
  *
  * Preview object URLs are intentionally kept alive so the admin can still see
@@ -71,11 +72,36 @@ function slugify(value: string): string {
  */
 export async function uploadSingleProduct(
   product: BulkProduct,
+  options: { publish?: boolean } = {},
 ): Promise<BulkProduct> {
+  const publish = options.publish ?? true;
+
   if (product.status === "Uploaded") return product;
 
-  if (product.status !== "Ready") {
-    return { ...product, status: "Invalid" };
+  if (publish) {
+    // Publishing requires full validation to pass.
+    if (product.status !== "Ready") {
+      return { ...product, status: "Invalid" };
+    }
+  } else {
+    // A draft only needs the fields the API itself requires; measurement and
+    // condition issues can be fixed later, before publishing.
+    const missingDraftFields: string[] = [];
+    if (!product.title.trim()) missingDraftFields.push("title");
+    if (!product.category.trim()) missingDraftFields.push("category");
+    if (!product.price || product.price <= 0) missingDraftFields.push("price");
+    if (product.imageFiles.length === 0) missingDraftFields.push("images");
+
+    if (missingDraftFields.length > 0) {
+      return {
+        ...product,
+        status: "Invalid",
+        errors: [
+          ...product.errors,
+          `Draft needs: ${missingDraftFields.join(", ")}.`,
+        ],
+      };
+    }
   }
 
   try {
@@ -112,13 +138,17 @@ export async function uploadSingleProduct(
       images: product.imageFiles,
       primaryIndex: 0,
       productId: product.productId,
+      publish: options.publish ?? true,
     });
 
     return {
       ...product,
       productId: result.productId,
-      status: "Uploaded",
-      errors: [],
+      status: publish ? "Uploaded" : product.status,
+      draftSaved: publish ? false : true,
+      // A draft save keeps any outstanding validation issues visible so the
+      // admin can finish the row before publishing.
+      errors: publish ? [] : product.errors,
     };
   } catch (error) {
     return {

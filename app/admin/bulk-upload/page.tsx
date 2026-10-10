@@ -21,6 +21,7 @@ import {
     addImagesToProduct,
 } from "@/app/lib/bulk/imageGrouping";
 import { mapAIResponseToProduct } from "@/lib/ai/parser";
+import { compressImage } from "@/lib/services/imageCompression";
 import { runAiFill } from "@/lib/services/aiFill";
 import {
     AICoverError,
@@ -72,6 +73,52 @@ function revokeObjectUrls(urls: string[]): void {
             URL.revokeObjectURL(url);
         }
     }
+}
+
+/**
+ * Compresses heavy photos before they enter the workspace.
+ *
+ * Every image is rendered as a thumbnail, decoded in the editor, written to
+ * the IndexedDB draft and (later) re-compressed for upload — so shrinking it
+ * once here pays off across the whole page. Only JPEG/WebP files above
+ * `MIN_COMPRESS_BYTES` are touched; PNGs (transparency) and anything the
+ * browser cannot decode (e.g. HEIC in Chrome) fall through untouched.
+ */
+const MIN_COMPRESS_BYTES = 256 * 1024;
+
+async function compressWorkspaceImage(file: File): Promise<File> {
+    if (
+        file.size <= MIN_COMPRESS_BYTES ||
+        (file.type !== "image/jpeg" && file.type !== "image/webp")
+    ) {
+        return file;
+    }
+
+    try {
+        const result = await compressImage(file, {
+            maxWidth: 1600,
+            quality: 0.85,
+            // Keep the input format so `file.type` stays stable for
+            // validation and draft storage.
+            preferWebp: file.type === "image/webp",
+        });
+
+        if (result.sizeBytes >= file.size) {
+            return file;
+        }
+
+        return new File([result.file], file.name, {
+            type: result.mimeType,
+            lastModified: file.lastModified,
+        });
+    } catch {
+        // Undecodable or canvas failure — keep the original.
+        return file;
+    }
+}
+
+async function compressWorkspaceImages(files: File[]): Promise<File[]> {
+    return Promise.all(files.map(compressWorkspaceImage));
 }
 
 export default function BulkUploadPage() {
@@ -479,39 +526,46 @@ export default function BulkUploadPage() {
 
     const handleImagesChange = useCallback(
         (sku: string, files: File[]) => {
-            const imageUrls = files.map((file) =>
-                URL.createObjectURL(file),
-            );
+            void (async () => {
+                const compressed = await compressWorkspaceImages(files);
+                const imageUrls = compressed.map((file) =>
+                    URL.createObjectURL(file),
+                );
 
-            setProducts((current) =>
-                validateProducts(
-                    current.map((product) =>
-                        product.sku === sku
-                            ? {
+                setProducts((current) =>
+                    validateProducts(
+                        current.map((product) => {
+                            if (product.sku !== sku) {
+                                return product;
+                            }
+
+                            // Replaced images: free the previous previews.
+                            revokeObjectUrls(product.imageUrls);
+
+                            return {
                                 ...product,
-                                imageFiles: files,
+                                imageFiles: compressed,
                                 imageUrls,
-                                primaryImage:
-                                    imageUrls[0],
+                                primaryImage: imageUrls[0],
                                 aiCover: false,
                                 status:
                                     product.status ===
                                         "Uploaded"
                                         ? "Ready"
                                         : product.status,
-                            }
-                            : product,
+                            };
+                        }),
                     ),
-                ),
-            );
+                );
 
-            /*
-             * Let the product state update commit before checking the latest
-             * product through productsRef.
-             */
-            void Promise.resolve().then(() =>
-                maybeAutoCover(sku),
-            );
+                /*
+                 * Let the product state update commit before checking the latest
+                 * product through productsRef.
+                 */
+                void Promise.resolve().then(() =>
+                    maybeAutoCover(sku),
+                );
+            })();
         },
         [maybeAutoCover],
     );
@@ -608,15 +662,18 @@ export default function BulkUploadPage() {
                 return;
             }
 
-            const urls = files.map((file) => URL.createObjectURL(file));
+            void (async () => {
+                const compressed = await compressWorkspaceImages(files);
+                const urls = compressed.map((file) => URL.createObjectURL(file));
 
-            setProducts((current) =>
-                validateProducts(
-                    addImagesToProduct(current, sku, files, urls).products,
-                ),
-            );
+                setProducts((current) =>
+                    validateProducts(
+                        addImagesToProduct(current, sku, compressed, urls).products,
+                    ),
+                );
 
-            void Promise.resolve().then(() => maybeAutoCover(sku));
+                void Promise.resolve().then(() => maybeAutoCover(sku));
+            })();
         },
         [maybeAutoCover],
     );
@@ -694,17 +751,17 @@ export default function BulkUploadPage() {
                     publish,
                 });
 
-                setProducts((current) =>
-                    current.map((item) =>
-                        item.sku === sku ? outcome : item,
-                    ),
-                );
-
                 // uploadSingleProduct appends a new error on every failure,
                 // so a growing error list is the failure signal.
                 const failed = outcome.errors.length > validated.errors.length;
 
                 if (failed) {
+                    setProducts((current) =>
+                        current.map((item) =>
+                            item.sku === sku ? outcome : item,
+                        ),
+                    );
+
                     showToast({
                         type: "error",
                         title: publish ? "Publish failed" : "Draft save failed",
@@ -714,6 +771,23 @@ export default function BulkUploadPage() {
                         duration: 6000,
                     });
                 } else if (publish) {
+                    /*
+                     * Published products leave the workspace immediately so
+                     * the grid only ever shows unpublished work. The editor
+                     * closes itself because `editingProduct` is derived from
+                     * this list.
+                     */
+                    setProducts((current) =>
+                        current
+                            .filter((item) => item.sku !== sku)
+                            .map((item, index) => ({
+                                ...item,
+                                row: index + 1,
+                            })),
+                    );
+
+                    revokeObjectUrls(outcome.imageUrls);
+
                     showToast({
                         type: "success",
                         title: "Product published",
@@ -721,6 +795,12 @@ export default function BulkUploadPage() {
                         duration: 4000,
                     });
                 } else {
+                    setProducts((current) =>
+                        current.map((item) =>
+                            item.sku === sku ? outcome : item,
+                        ),
+                    );
+
                     showToast({
                         type: "success",
                         title: "Draft saved",
@@ -1009,7 +1089,7 @@ export default function BulkUploadPage() {
     );
 
     const handleFilesSelected = useCallback(
-        (files: File[]) => {
+        async (files: File[]) => {
             /*
              * Folder uploads must be passed intact to the folder processor.
              * Filtering by MIME type here can silently drop files on macOS
@@ -1062,13 +1142,52 @@ export default function BulkUploadPage() {
                     return;
                 }
 
-                const normalized =
+                const normalized = await Promise.all(
                     result.products.map(
-                        (product) => ({
-                            ...product,
-                            row: 0,
-                        }),
-                    );
+                        async (product) => {
+                            const imageFiles =
+                                await compressWorkspaceImages(
+                                    product.imageFiles,
+                                );
+
+                            if (
+                                imageFiles.every(
+                                    (file, index) =>
+                                        file ===
+                                        product
+                                            .imageFiles[
+                                            index
+                                        ],
+                                )
+                            ) {
+                                return {
+                                    ...product,
+                                    row: 0,
+                                };
+                            }
+
+                            revokeObjectUrls(
+                                product.imageUrls,
+                            );
+
+                            const imageUrls =
+                                imageFiles.map((file) =>
+                                    URL.createObjectURL(
+                                        file,
+                                    ),
+                                );
+
+                            return {
+                                ...product,
+                                row: 0,
+                                imageFiles,
+                                imageUrls,
+                                primaryImage:
+                                    imageUrls[0],
+                            };
+                        },
+                    ),
+                );
 
                 setProducts((current) =>
                     validateProducts([
@@ -1102,7 +1221,9 @@ export default function BulkUploadPage() {
             const sorted =
                 sortByFilename(images);
 
-            const imageUrls = sorted.map(
+            const imageFiles = await compressWorkspaceImages(sorted);
+
+            const imageUrls = imageFiles.map(
                 (file) =>
                     URL.createObjectURL(file),
             );
@@ -1111,7 +1232,7 @@ export default function BulkUploadPage() {
                 ...createBlankProduct(
                     nextSkuNumber,
                 ),
-                imageFiles: sorted,
+                imageFiles,
                 imageUrls,
                 primaryImage: imageUrls[0],
             };
@@ -1139,7 +1260,7 @@ export default function BulkUploadPage() {
 
     const handleFolderSelected = useCallback(
         (files: File[]) => {
-            handleFilesSelected(files);
+            void handleFilesSelected(files);
         },
         [handleFilesSelected],
     );
@@ -1390,12 +1511,28 @@ export default function BulkUploadPage() {
                         ),
                     );
 
+                /*
+                 * Published rows leave the workspace right away; only failed
+                 * (or untouched draft) rows remain for the admin to retry.
+                 */
                 setProducts((current) =>
-                    current.map(
-                        (product) =>
-                            resultsBySku.get(
-                                product.sku,
-                            ) ?? product,
+                    current
+                        .map(
+                            (product) =>
+                                resultsBySku.get(product.sku) ?? product,
+                        )
+                        .filter(
+                            (product) => product.status !== "Uploaded",
+                        )
+                        .map((product, index) => ({
+                            ...product,
+                            row: index + 1,
+                        })),
+                );
+
+                revokeObjectUrls(
+                    result.success.flatMap(
+                        (product) => product.imageUrls,
                     ),
                 );
 

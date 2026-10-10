@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import {
     DndContext,
+    DragOverlay,
     PointerSensor,
     KeyboardSensor,
     closestCenter,
@@ -12,10 +14,12 @@ import {
     useDroppable,
     type CollisionDetection,
     type DragEndEvent,
+    type DragStartEvent,
 } from "@dnd-kit/core";
 import {
     SortableContext,
     horizontalListSortingStrategy,
+    rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
     FolderOpen,
@@ -27,6 +31,13 @@ import {
     PackageOpen,
     Wand2,
     AlertTriangle,
+    Star,
+    Trash2,
+    X,
+    ChevronLeft,
+    ChevronRight,
+    ArrowLeft,
+    ArrowRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -132,6 +143,7 @@ interface ProductSlotProps {
     onSetPrimary: (index: number) => void;
     onRemove: (index: number) => void;
     onAppendFiles: (files: File[]) => void;
+    onPreview: (index: number) => void;
 }
 
 /**
@@ -155,6 +167,7 @@ function ProductSlot({
     onSetPrimary,
     onRemove,
     onAppendFiles,
+    onPreview,
 }: ProductSlotProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: `product::${product.sku}`,
@@ -205,9 +218,12 @@ function ProductSlot({
             {imageIds.length > 0 && (
                 <SortableContext
                     items={imageIds}
-                    strategy={horizontalListSortingStrategy}
+                    strategy={rectSortingStrategy}
                 >
-                    <div className="flex gap-1.5 overflow-x-auto rounded-xl border bg-card p-1.5">
+                    <div
+                        title="Drag photos to reorder · Click a photo to enlarge"
+                        className="grid grid-cols-3 gap-2.5 rounded-xl border bg-card p-2"
+                    >
                         {product.imageUrls.map((src, index) => (
                             <SortableBulkImage
                                 key={imageIds[index]}
@@ -221,16 +237,211 @@ function ProductSlot({
                                         : index === 0
                                 }
                                 total={product.imageUrls.length}
+                                size="lg"
                                 onSetPrimary={() => onSetPrimary(index)}
                                 onRemove={() => onRemove(index)}
                                 onMoveLeft={() => onReorder(index, index - 1)}
                                 onMoveRight={() => onReorder(index, index + 1)}
+                                onPreview={() => onPreview(index)}
                             />
                         ))}
                     </div>
                 </SortableContext>
             )}
         </div>
+    );
+}
+
+interface ImagePreviewModalProps {
+    sku: string;
+    title: string;
+    images: string[];
+    index: number;
+    isPrimary: (imageIndex: number) => boolean;
+    onNavigate: (nextIndex: number) => void;
+    onReorder: (fromIndex: number, toIndex: number) => void;
+    onSetPrimary: (imageIndex: number) => void;
+    onRemove: (imageIndex: number) => void;
+    onClose: () => void;
+}
+
+/**
+ * Full-size preview: arrows + keyboard cycle photos, footer acts in place.
+ */
+function ImagePreviewModal({
+    sku,
+    title,
+    images,
+    index,
+    isPrimary,
+    onNavigate,
+    onReorder,
+    onSetPrimary,
+    onRemove,
+    onClose,
+}: ImagePreviewModalProps) {
+    const total = images.length;
+    const src = images[index] ?? "";
+    const primary = isPrimary(index);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "ArrowLeft" && index > 0) {
+                event.preventDefault();
+                onNavigate(index - 1);
+            } else if (event.key === "ArrowRight" && index < total - 1) {
+                event.preventDefault();
+                onNavigate(index + 1);
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [index, total, onNavigate]);
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title={title.trim() || `Product ${sku}`}
+            description={`SKU ${sku} · Photo ${total === 0 ? 0 : index + 1} of ${total}`}
+            className="max-w-4xl"
+            footer={
+                <div className="flex w-full flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onNavigate(index - 1)}
+                            disabled={index <= 0}
+                        >
+                            <ChevronLeft size={14} className="mr-1" />
+                            Prev
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onNavigate(index + 1)}
+                            disabled={index >= total - 1}
+                        >
+                            Next
+                            <ChevronRight size={14} className="ml-1" />
+                        </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => onSetPrimary(index)}
+                            disabled={primary || !src}
+                        >
+                            <Star size={14} className="mr-1.5" />
+                            {primary ? "Cover photo" : "Make cover"}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="danger"
+                            size="sm"
+                            onClick={() => onRemove(index)}
+                            disabled={!src || total <= 1}
+                        >
+                            <Trash2 size={14} className="mr-1.5" />
+                            Delete
+                        </Button>
+                    </div>
+                </div>
+            }
+        >
+            <div className="relative flex min-h-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
+                {src ? (
+                    <div className="relative max-h-[68dvh] w-full">
+                        <Image
+                            src={src}
+                            alt={`${title.trim() || sku} photo ${index + 1}`}
+                            width={1200}
+                            height={900}
+                            unoptimized
+                            className="mx-auto h-auto max-h-[68dvh] w-auto max-w-full rounded-xl object-contain"
+                        />
+                        {total > 1 && (
+                            <>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="iconSm"
+                                    onClick={() => onNavigate(index - 1)}
+                                    disabled={index <= 0}
+                                    aria-label="Previous photo"
+                                    className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full shadow"
+                                >
+                                    <ChevronLeft size={16} />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="iconSm"
+                                    onClick={() => onNavigate(index + 1)}
+                                    disabled={index >= total - 1}
+                                    aria-label="Next photo"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full shadow"
+                                >
+                                    <ChevronRight size={16} />
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                ) : (
+                    <p className="py-16 text-sm text-muted-foreground">
+                        No photo to preview.
+                    </p>
+                )}
+                {total > 1 && (
+                    <div className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
+                        {images.map((_, dotIndex) => (
+                            <span
+                                key={dotIndex}
+                                className={
+                                    dotIndex === index
+                                        ? "h-1.5 w-4 rounded-full bg-white"
+                                        : "h-1.5 w-1.5 rounded-full bg-white/50"
+                                }
+                            />
+                        ))}
+                    </div>
+                )}
+                {/* In-place reorder: move this photo earlier / later in its product */}
+                <div className="absolute right-2 top-2 flex gap-1">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="iconSm"
+                        onClick={() => onReorder(index, index - 1)}
+                        disabled={index <= 0}
+                        title="Move photo earlier"
+                        aria-label="Move photo earlier"
+                        className="rounded-full shadow"
+                    >
+                        <ArrowLeft size={14} />
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="iconSm"
+                        onClick={() => onReorder(index, index + 1)}
+                        disabled={index >= total - 1}
+                        title="Move photo later"
+                        aria-label="Move photo later"
+                        className="rounded-full shadow"
+                    >
+                        <ArrowRight size={14} />
+                    </Button>
+                </div>
+            </div>
+        </Modal>
     );
 }
 
@@ -250,6 +461,7 @@ interface CompactEditorProps {
     onAppendFiles: (files: File[]) => void;
     /** Replaces all images of the product (optional). */
     onImagesChange?: (files: File[]) => void;
+    onPreview: (index: number) => void;
     otherProducts: { sku: string; label: string }[];
 }
 
@@ -272,6 +484,7 @@ function CompactEditor({
     onRemove,
     onAppendFiles,
     onImagesChange,
+    onPreview,
     otherProducts,
 }: CompactEditorProps) {
     const appendInputRef = useRef<HTMLInputElement>(null);
@@ -433,7 +646,7 @@ function CompactEditor({
                         items={tileIds}
                         strategy={horizontalListSortingStrategy}
                     >
-                        <div className="flex flex-wrap gap-2">
+                        <div className="grid grid-cols-4 gap-2">
                             {product.imageUrls.map((src, index) => (
                                 <SortableBulkImage
                                     key={tileIds[index]}
@@ -447,11 +660,12 @@ function CompactEditor({
                                             : index === 0
                                     }
                                     total={product.imageUrls.length}
-                                    size="md"
+                                    size="sm"
                                     onSetPrimary={() => onSetPrimary(index)}
                                     onRemove={() => onRemove(index)}
                                     onMoveLeft={() => onReorder(index, index - 1)}
                                     onMoveRight={() => onReorder(index, index + 1)}
+                                    onPreview={() => onPreview(index)}
                                 />
                             ))}
                             {product.imageUrls.length === 0 && (
@@ -749,6 +963,9 @@ export default function CompactWorkspace({
     const folderInputRef = useRef<HTMLInputElement>(null);
     const imagesInputRef = useRef<HTMLInputElement>(null);
     const [editingSku, setEditingSku] = useState<string | null>(null);
+    const [preview, setPreview] = useState<{ sku: string; index: number } | null>(
+        null,
+    );
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -759,6 +976,11 @@ export default function CompactWorkspace({
 
     const editingProduct =
         products.find((product) => product.sku === editingSku) ?? null;
+
+    const previewProduct = useMemo(
+        () => products.find((p) => p.sku === preview?.sku) ?? null,
+        [products, preview],
+    );
 
     const stats = useMemo(() => {
         let ready = 0;
@@ -1108,6 +1330,12 @@ export default function CompactWorkspace({
                                 onAppendFiles={(files) =>
                                     onAppendImages(product.sku, files)
                                 }
+                                onPreview={(index) =>
+                                    setPreview({
+                                        sku: product.sku,
+                                        index,
+                                    })
+                                }
                             />
                         ))}
                     </div>
@@ -1155,7 +1383,61 @@ export default function CompactWorkspace({
                             onImagesChange={(files) =>
                                 onImagesChange?.(editingProduct.sku, files)
                             }
+                            onPreview={(index) =>
+                                setPreview({
+                                    sku: editingProduct.sku,
+                                    index,
+                                })
+                            }
                             otherProducts={otherProducts}
+                        />
+                    )}
+
+                    {previewProduct && preview && (
+                        <ImagePreviewModal
+                            sku={previewProduct.sku}
+                            title={previewProduct.title}
+                            images={previewProduct.imageUrls}
+                            index={Math.min(
+                                preview.index,
+                                Math.max(previewProduct.imageUrls.length - 1, 0),
+                            )}
+                            isPrimary={(imageIndex) =>
+                                previewProduct.primaryImage
+                                    ? previewProduct.imageUrls[imageIndex] ===
+                                      previewProduct.primaryImage
+                                    : imageIndex === 0
+                            }
+                            onNavigate={(nextIndex) =>
+                                setPreview({ sku: previewProduct.sku, index: nextIndex })
+                            }
+                            onReorder={(fromIndex, toIndex) => {
+                                onReorderImage(
+                                    previewProduct.sku,
+                                    fromIndex,
+                                    toIndex,
+                                );
+                                setPreview({
+                                    sku: previewProduct.sku,
+                                    index: toIndex,
+                                });
+                            }}
+                            onSetPrimary={(imageIndex) =>
+                                onSetPrimary(previewProduct.sku, imageIndex)
+                            }
+                            onRemove={(imageIndex) => {
+                                onRemoveImage(previewProduct.sku, imageIndex);
+                                const remaining = previewProduct.imageUrls.length - 1;
+                                if (remaining <= 0) {
+                                    setPreview(null);
+                                } else {
+                                    setPreview({
+                                        sku: previewProduct.sku,
+                                        index: Math.min(imageIndex, remaining - 1),
+                                    });
+                                }
+                            }}
+                            onClose={() => setPreview(null)}
                         />
                     )}
                 </DndContext>

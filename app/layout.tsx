@@ -181,7 +181,7 @@ export default function RootLayout({
                     <StorefrontChrome>{children}</StorefrontChrome>
 
                     <Toaster
-                      position="top-right"
+                      position="bottom-center"
                       richColors
                       closeButton
                       duration={3000}

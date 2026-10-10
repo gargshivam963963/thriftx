@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Hashed/static imagery in /public rarely changes — cache aggressively.
+        source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, stale-while-revalidate=86400",
+          },
+        ],
+      },
+      {
         source: "/:path*",
         headers: [
           {
@@ -53,7 +63,8 @@ const nextConfig: NextConfig = {
   },
 
   images: {
-    minimumCacheTTL: 60,
+    // Keep optimized derivatives around for a day so repeat views hit cache.
+    minimumCacheTTL: 86400,
     // Serve the smallest modern format the browser supports (AVIF > WebP).
     formats: ["image/avif", "image/webp"],
     // Only generate the quality levels actually used across the app.

@@ -26,12 +26,15 @@ export default function UploadProgress({
     if (!progress && !uploadResult) return null;
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-        >
-            <Card className="shadow-sm">
-                <CardContent className="p-4">
+        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+            <motion.div
+                initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ type: "spring", damping: 24, stiffness: 260 }}
+                className="pointer-events-auto w-full max-w-md"
+            >
+                <Card className="shadow-lg">
+                    <CardContent className="p-4">
                     {progress && !uploadResult ? (
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
@@ -69,7 +72,8 @@ export default function UploadProgress({
                         </div>
                     ) : null}
                 </CardContent>
-            </Card>
-        </motion.div>
+                </Card>
+            </motion.div>
+        </div>
     );
 }

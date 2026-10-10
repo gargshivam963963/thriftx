@@ -116,13 +116,15 @@ export default function ProductCard({
       )}
       data-testid="bulk-product-card"
     >
-      <div className="relative aspect-square w-full overflow-hidden bg-muted">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
         {cover ? (
           <Image
             src={cover}
             alt={product.title?.trim() || `Product ${product.sku}`}
             fill
             unoptimized
+            loading="lazy"
+            decoding="async"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
             className="object-cover transition duration-300 group-hover:scale-[1.03]"
           />
@@ -306,10 +308,11 @@ export default function ProductCard({
               type="button"
               size="sm"
               variant="ghost"
-              onClick={onEdit}
-              className="flex-1 text-muted-foreground"
+              onClick={onDelete}
+              className="flex-1 text-red-600 hover:text-red-700 dark:text-red-400"
             >
-              Review
+              <Trash2 size={13} className="mr-1.5" />
+              Delete
             </Button>
           )}
         </div>

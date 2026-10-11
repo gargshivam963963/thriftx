@@ -646,7 +646,7 @@ function CompactEditor({
                         items={tileIds}
                         strategy={horizontalListSortingStrategy}
                     >
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 lg:grid-cols-5">
                             {product.imageUrls.map((src, index) => (
                                 <SortableBulkImage
                                     key={tileIds[index]}
@@ -660,7 +660,7 @@ function CompactEditor({
                                             : index === 0
                                     }
                                     total={product.imageUrls.length}
-                                    size="sm"
+                                    size="cell"
                                     onSetPrimary={() => onSetPrimary(index)}
                                     onRemove={() => onRemove(index)}
                                     onMoveLeft={() => onReorder(index, index - 1)}

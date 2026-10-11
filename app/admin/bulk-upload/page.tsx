@@ -21,7 +21,7 @@ import {
     addImagesToProduct,
 } from "@/app/lib/bulk/imageGrouping";
 import { mapAIResponseToProduct } from "@/lib/ai/parser";
-import { compressImage } from "@/lib/services/imageCompression";
+import { compressHeavyImage } from "@/lib/services/imageCompression";
 import { runAiFill } from "@/lib/services/aiFill";
 import {
     AICoverError,
@@ -80,45 +80,12 @@ function revokeObjectUrls(urls: string[]): void {
  *
  * Every image is rendered as a thumbnail, decoded in the editor, written to
  * the IndexedDB draft and (later) re-compressed for upload — so shrinking it
- * once here pays off across the whole page. Only JPEG/WebP files above
- * `MIN_COMPRESS_BYTES` are touched; PNGs (transparency) and anything the
- * browser cannot decode (e.g. HEIC in Chrome) fall through untouched.
+ * once here pays off across the whole page. Delegates to the shared
+ * `compressHeavyImage` helper (JPEG/WebP > 256KB → max 1600px, q0.85; PNGs
+ * and HEIC pass through untouched).
  */
-const MIN_COMPRESS_BYTES = 256 * 1024;
-
-async function compressWorkspaceImage(file: File): Promise<File> {
-    if (
-        file.size <= MIN_COMPRESS_BYTES ||
-        (file.type !== "image/jpeg" && file.type !== "image/webp")
-    ) {
-        return file;
-    }
-
-    try {
-        const result = await compressImage(file, {
-            maxWidth: 1600,
-            quality: 0.85,
-            // Keep the input format so `file.type` stays stable for
-            // validation and draft storage.
-            preferWebp: file.type === "image/webp",
-        });
-
-        if (result.sizeBytes >= file.size) {
-            return file;
-        }
-
-        return new File([result.file], file.name, {
-            type: result.mimeType,
-            lastModified: file.lastModified,
-        });
-    } catch {
-        // Undecodable or canvas failure — keep the original.
-        return file;
-    }
-}
-
 async function compressWorkspaceImages(files: File[]): Promise<File[]> {
-    return Promise.all(files.map(compressWorkspaceImage));
+    return Promise.all(files.map((file) => compressHeavyImage(file)));
 }
 
 export default function BulkUploadPage() {

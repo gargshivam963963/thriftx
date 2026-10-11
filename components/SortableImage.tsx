@@ -58,6 +58,8 @@ export default function SortableImage({
                     alt={`Image ${index + 1}`}
                     fill
                     unoptimized
+                    loading="lazy"
+                    decoding="async"
                     className="object-cover transition duration-200 group-hover:scale-105"
                     sizes="(max-width: 768px) 50vw, 20vw"
                 />

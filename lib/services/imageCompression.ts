@@ -175,3 +175,52 @@ export async function compressImages(
 }
 
 export { ACCEPTED_TYPES, MAX_SOURCE_BYTES };
+
+/** JPEG/WebP files above this size are re-encoded before entering a UI. */
+export const HEAVY_IMAGE_BYTES = 256 * 1024;
+
+/**
+ * Compress a heavy JPEG/WebP before it enters a UI (thumbnails, previews,
+ * IndexedDB drafts) so the page never decodes multi-megabyte originals.
+ *
+ * Small files, PNGs (transparency) and formats the browser cannot decode
+ * (e.g. HEIC in Chrome) pass through untouched. The original file name and
+ * MIME type are preserved so downstream validation keeps working.
+ */
+export async function compressHeavyImage(
+  file: File,
+  options: Partial<CompressionOptions> = {},
+): Promise<File> {
+  if (
+    file.size <= HEAVY_IMAGE_BYTES ||
+    (file.type !== "image/jpeg" && file.type !== "image/webp")
+  ) {
+    return file;
+  }
+
+  try {
+    const result = await compressImage(file, {
+      maxWidth: 1600,
+      quality: 0.85,
+      // Keep the input format so `file.type` stays stable for validation.
+      preferWebp: file.type === "image/webp",
+      ...options,
+    });
+
+    if (result.sizeBytes >= file.size) {
+      URL.revokeObjectURL(result.url);
+      return file;
+    }
+
+    // The caller only needs the File — drop the helper's object URL now.
+    URL.revokeObjectURL(result.url);
+
+    return new File([result.file], file.name, {
+      type: result.mimeType,
+      lastModified: file.lastModified,
+    });
+  } catch {
+    // Undecodable or canvas failure — keep the original.
+    return file;
+  }
+}

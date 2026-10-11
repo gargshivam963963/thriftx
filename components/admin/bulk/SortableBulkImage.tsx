@@ -20,9 +20,10 @@ interface SortableBulkImageProps {
   total: number;
   /**
    * `sm` = tiny tile, `md` = editor organizer tile,
+   * `cell` = square tile that fills its grid cell (editor modal),
    * `lg` = big 3-per-row preview tile on the product card.
    */
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "cell" | "lg";
   onSetPrimary: () => void;
   onRemove: () => void;
   onMoveLeft: () => void;
@@ -64,7 +65,12 @@ export default function SortableBulkImage({
 
   const downAt = useRef<{ x: number; y: number } | null>(null);
 
-  const box = size === "lg" ? "w-full" : size === "md" ? "w-11" : "w-9";
+  const box =
+    size === "lg" || size === "cell"
+      ? "w-full"
+      : size === "md"
+        ? "w-11"
+        : "w-9";
 
   return (
     <div
@@ -97,7 +103,13 @@ export default function SortableBulkImage({
         }}
         className={cn(
           "relative block w-full cursor-zoom-in overflow-hidden bg-muted",
-          size === "lg" ? "h-36" : size === "md" ? "h-8" : "h-[22px]",
+          size === "lg"
+            ? "h-36"
+            : size === "cell"
+              ? "aspect-square"
+              : size === "md"
+                ? "h-8"
+                : "h-[22px]",
         )}
         title={
           onPreview
@@ -114,7 +126,15 @@ export default function SortableBulkImage({
           loading="lazy"
           decoding="async"
           draggable={false}
-          sizes={size === "lg" ? "360px" : size === "md" ? "48px" : "40px"}
+          sizes={
+            size === "lg"
+              ? "360px"
+              : size === "cell"
+                ? "(max-width: 640px) 45vw, (max-width: 768px) 30vw, 180px"
+                : size === "md"
+                  ? "48px"
+                  : "40px"
+          }
           className="pointer-events-none object-cover"
         />
         {onPreview && (

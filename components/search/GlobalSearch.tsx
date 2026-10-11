@@ -323,6 +323,9 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                                                             src={item.primaryImage}
                                                             alt={item.title}
                                                             fill
+                                                            loading="lazy"
+                                                            decoding="async"
+                                                            sizes="(max-width: 640px) 45vw, 140px"
                                                             className="object-cover transition duration-300 group-hover:scale-105"
                                                             unoptimized
                                                         />

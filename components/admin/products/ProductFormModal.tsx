@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PRODUCT_FIELDS } from "@/lib/productFields";
 import { deleteImageFromStorage } from "@/lib/services/storage";
+import { compressHeavyImage } from "@/lib/services/imageCompression";
 import { runAiFill } from "@/lib/services/aiFill";
 import { showToast } from "@/components/admin/toast/Toast";
 import { BLUR_PLACEHOLDER } from "@/lib/imageOptimization";
@@ -240,11 +241,17 @@ export default function ProductFormModal({
 
     // ── Image Management ──
 
-    function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
 
-        const newItems: ImageItem[] = files.map((f) => ({
+        // Shrink heavy JPEG/WebP before they become object-URL previews so
+        // the modal renders small files instead of multi-MB originals.
+        const readyFiles = await Promise.all(
+            files.map((file) => compressHeavyImage(file)),
+        );
+
+        const newItems: ImageItem[] = readyFiles.map((f) => ({
             id: generateImageId(),
             url: URL.createObjectURL(f),
             file: f,

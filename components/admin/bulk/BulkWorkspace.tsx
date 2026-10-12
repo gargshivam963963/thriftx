@@ -1083,7 +1083,7 @@ export default function BulkWorkspace({
                               setPreview({ sku: product.sku, index: i })
                             }
                             className={cn(
-                              "block h-16 w-16 overflow-hidden rounded-xl border",
+                              "relative block h-16 w-16 overflow-hidden rounded-xl border",
                               "border-white/60 bg-white/80",
                               i === 0 &&
                                 "border-foreground ring-2 ring-foreground/30"

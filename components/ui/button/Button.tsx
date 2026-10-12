@@ -178,7 +178,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                         )}
                     </>
                 ) : isIconOnly ? (
-                    <span className="inline-flex items-center justify-center">
+                    /* `relative h-full w-full` is required: `next/image` with
+                       `fill` checks its DIRECT parent's position, and without
+                       it this span is `static` (the button's own `relative`
+                       doesn't count), producing dev warnings for any fill
+                       image inside an icon button — e.g. the gallery
+                       thumbnails. Full sizing keeps the span box identical to
+                       the button so the image still fills the same area. */
+                    <span className="relative flex h-full w-full items-center justify-center">
                         {content}
                     </span>
                 ) : (

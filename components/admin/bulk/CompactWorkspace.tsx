@@ -29,15 +29,14 @@ import {
     UploadCloud,
     Loader2,
     PackageOpen,
-    Wand2,
     AlertTriangle,
     Star,
     Trash2,
-    X,
     ChevronLeft,
     ChevronRight,
     ArrowLeft,
     ArrowRight,
+    Wand2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -77,8 +76,6 @@ export interface CompactWorkspaceProps {
     savingSku: string | null;
     uploading: boolean;
     onAddRow: () => void;
-    /** Adds `count` blank products in one update (toolbar bulk add). */
-    onAddRows?: (count: number) => void;
     onFilesSelected: (files: File[]) => void;
     onFolderSelected: (files: File[]) => void;
     onUpdate: (sku: string, updates: Partial<BulkProduct>) => void;
@@ -121,7 +118,6 @@ function deriveStatus(
     if (product.aiNeedsReview && product.aiNeedsReview.length > 0) {
         return "Needs Review";
     }
-    if (product.draftSaved) return "Draft";
     return "Ready";
 }
 
@@ -139,6 +135,7 @@ interface ProductSlotProps {
     onDelete: () => void;
     onAiFill: () => void;
     onUpload: () => void;
+    onUpdate: (updates: Partial<BulkProduct>) => void;
     onReorder: (fromIndex: number, toIndex: number) => void;
     onSetPrimary: (index: number) => void;
     onRemove: (index: number) => void;
@@ -163,6 +160,7 @@ function ProductSlot({
     onDelete,
     onAiFill,
     onUpload,
+    onUpdate,
     onReorder,
     onSetPrimary,
     onRemove,
@@ -213,6 +211,7 @@ function ProductSlot({
                 onDelete={onDelete}
                 onAiFill={onAiFill}
                 onUpload={onUpload}
+                onUpdate={onUpdate}
             />
 
             {imageIds.length > 0 && (
@@ -247,6 +246,32 @@ function ProductSlot({
                         ))}
                     </div>
                 </SortableContext>
+            )}
+
+            {/* Publish button lives OUTSIDE the card, on the page, so a product
+                can be pushed live straight from the grid without opening the
+                editor. Kept large + full-width so it's impossible to miss. */}
+            {product.status !== "Uploaded" && (
+                <div className="rounded-xl border border-border/60 bg-muted/40 p-1.5">
+                    <Button
+                        type="button"
+                        size="md"
+                        onClick={onUpload}
+                        disabled={uploading}
+                        title="Publish this product live"
+                        className="w-full shadow-sm"
+                    >
+                        {uploading ? (
+                            <Loader2
+                                size={16}
+                                className="mr-1.5 animate-spin"
+                            />
+                        ) : (
+                            <UploadCloud size={16} className="mr-1.5" />
+                        )}
+                        {uploading ? "Publishing…" : "Publish"}
+                    </Button>
+                </div>
             )}
         </div>
     );
@@ -358,14 +383,14 @@ function ImagePreviewModal({
         >
             <div className="relative flex min-h-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
                 {src ? (
-                    <div className="relative max-h-[68dvh] w-full">
+                    <div className="group relative max-h-[68dvh] w-full">
                         <Image
                             src={src}
                             alt={`${title.trim() || sku} photo ${index + 1}`}
                             width={1200}
                             height={900}
                             unoptimized
-                            className="mx-auto h-auto max-h-[68dvh] w-auto max-w-full rounded-xl object-contain"
+                            className="mx-auto h-auto max-h-[68dvh] w-auto max-w-full rounded-xl object-contain transition duration-500 ease-out group-hover:scale-105"
                         />
                         {total > 1 && (
                             <>
@@ -450,7 +475,6 @@ interface CompactEditorProps {
     saving: boolean;
     onUpdate: (updates: Partial<BulkProduct>) => void;
     onClose: () => void;
-    onSaveDraft: () => void;
     onPublish: () => void;
     onAiFill: () => void;
     aiLoading: boolean;
@@ -467,14 +491,13 @@ interface CompactEditorProps {
 
 /**
  * Side-panel editor for a single product: image organizer first, then the
- * compact field grid. Save Draft and Publish are independent per product.
+ * compact field grid. Publishing is the only save action.
  */
 function CompactEditor({
     product,
     saving,
     onUpdate,
     onClose,
-    onSaveDraft,
     onPublish,
     onAiFill,
     aiLoading,
@@ -492,28 +515,13 @@ function CompactEditor({
     const [moveFrom, setMoveFrom] = useState("0");
     const [moveTo, setMoveTo] = useState("");
 
-    const priceOptions = useMemo(() => {
-        const options = APPROVED_PRICE_SET.map((tier) => ({
-            value: String(tier),
-            label: `₹${tier}`,
-        }));
-
-        if (product.price > 0 && !isApprovedPrice(product.price)) {
-            options.push({
-                value: String(product.price),
-                label: `₹${product.price} (custom)`,
-            });
-        }
-
-        return options;
-    }, [product.price]);
-
     const tileIds = product.imageUrls.map(
         (_, index) => `${product.sku}::${index}`,
     );
 
     const canPublish =
         product.status === "Ready" || product.status === "Uploaded";
+
     const suggestedTier = isApprovedPrice(product.price);
 
     return (
@@ -549,15 +557,6 @@ function CompactEditor({
                         )}
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={onSaveDraft}
-                            disabled={saving}
-                        >
-                            Save draft
-                        </Button>
                         <Button
                             type="button"
                             size="sm"
@@ -747,24 +746,51 @@ function CompactEditor({
 
                     <label className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-muted-foreground">
-                            Price
+                            Price (₹)
                         </span>
-                        <Select
-                            value={
-                                product.price > 0 ? String(product.price) : ""
-                            }
-                            onChange={(event) =>
-                                onUpdate({ price: Number(event.target.value) })
-                            }
-                            options={priceOptions}
-                            placeholder="Select price"
-                        />
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-semibold text-foreground">
+                                ₹
+                            </span>
+                            <Input
+                                value={
+                                    product.price > 0
+                                        ? String(product.price)
+                                        : ""
+                                }
+                                onChange={(event) =>
+                                    onUpdate({
+                                        price: Number(event.target.value),
+                                    })
+                                }
+                                placeholder="0"
+                                inputMode="decimal"
+                                className="tabular-nums"
+                            />
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                            {APPROVED_PRICE_SET.map((tier) => (
+                                <button
+                                    key={tier}
+                                    type="button"
+                                    onClick={() => onUpdate({ price: tier })}
+                                    className={cn(
+                                        "rounded-full border px-2 py-0.5 text-2xs font-medium tabular-nums transition",
+                                        product.price === tier
+                                            ? "border-foreground bg-foreground text-background"
+                                            : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+                                    )}
+                                >
+                                    ₹{tier}
+                                </button>
+                            ))}
+                        </div>
                         <span className="text-2xs text-muted-foreground">
                             {suggestedTier
                                 ? "Approved tier"
                                 : product.aiGenerated
                                     ? "AI price is not an approved tier"
-                                    : "Tiers: ₹99 · ₹199 · ₹299 · ₹320 · ₹799 · ₹899"}
+                                    : "AI suggestion"}
                         </span>
                     </label>
 
@@ -929,8 +955,8 @@ function CompactEditor({
  * - Grid of ProductSlot cards with per-product image strips, all under one
  *   DndContext so images can be reordered within a product or dragged onto
  *   another product. Native file drops land on individual cards.
- * - CompactEditor opens as a side modal for one product; Save Draft and
- *   Publish are independent per product.
+ * - CompactEditor opens as a side modal for one product. Publishing is the only
+ *   save action; all fields (chest/waist/length/price included) are inline-editable.
  * - Background AI runs non-blockingly: progress shows as an inline banner,
  *   never a modal.
  */
@@ -943,7 +969,6 @@ export default function CompactWorkspace({
     savingSku,
     uploading,
     onAddRow,
-    onAddRows,
     onFilesSelected,
     onFolderSelected,
     onUpdate,
@@ -1103,47 +1128,6 @@ export default function CompactWorkspace({
                     <Plus size={14} className="mr-1.5" />
                     Blank product
                 </Button>
-
-                {onAddRows && (
-                    <div className="flex items-center gap-1">
-                        <input
-                            type="number"
-                            min={1}
-                            max={50}
-                            defaultValue={5}
-                            aria-label="Number of blank products"
-                            className="h-8 w-16 rounded-lg border border-border bg-card px-2 text-xs outline-none focus:border-foreground"
-                            onKeyDown={(event) => {
-                                if (event.key !== "Enter") return;
-                                const value = Number(
-                                    event.currentTarget.value,
-                                );
-                                if (Number.isFinite(value) && value >= 1) {
-                                    onAddRows(value);
-                                }
-                            }}
-                        />
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={(event) => {
-                                const input =
-                                    event.currentTarget
-                                        .previousElementSibling;
-                                const value =
-                                    input instanceof HTMLInputElement
-                                        ? Number(input.value)
-                                        : NaN;
-                                if (Number.isFinite(value) && value >= 1) {
-                                    onAddRows(value);
-                                }
-                            }}
-                        >
-                            Add N
-                        </Button>
-                    </div>
-                )}
 
                 <div className="mx-1 hidden h-5 w-px bg-border sm:block" />
 
@@ -1314,6 +1298,9 @@ export default function CompactWorkspace({
                                 onDelete={() => onDelete(product.sku)}
                                 onAiFill={() => onAiFill(product.sku)}
                                 onUpload={() => onSaveSingle(product.sku, true)}
+                                onUpdate={(updates) =>
+                                    onUpdate(product.sku, updates)
+                                }
                                 onReorder={(fromIndex, toIndex) =>
                                     onReorderImage(
                                         product.sku,
@@ -1349,9 +1336,6 @@ export default function CompactWorkspace({
                                 onUpdate(editingProduct.sku, updates)
                             }
                             onClose={() => setEditingSku(null)}
-                            onSaveDraft={() =>
-                                onSaveSingle(editingProduct.sku, false)
-                            }
                             onPublish={() =>
                                 onSaveSingle(editingProduct.sku, true)
                             }
@@ -1405,7 +1389,7 @@ export default function CompactWorkspace({
                             isPrimary={(imageIndex) =>
                                 previewProduct.primaryImage
                                     ? previewProduct.imageUrls[imageIndex] ===
-                                      previewProduct.primaryImage
+                                    previewProduct.primaryImage
                                     : imageIndex === 0
                             }
                             onNavigate={(nextIndex) =>

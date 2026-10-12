@@ -8,12 +8,6 @@ export async function POST(req: Request) {
       productImage?: string;
     };
 
-    console.log(
-      "[api/ai/try-on] request received",
-      !!userImage,
-      !!productImage,
-    );
-
     if (!userImage || !productImage) {
       return NextResponse.json(
         { error: "userImage and productImage required" },

@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 
 import Image from "next/image";
 import {
@@ -14,6 +15,7 @@ import {
   FileCheck,
   UploadCloud,
   RefreshCw,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -30,7 +32,6 @@ import type { BulkProduct } from "@/app/lib/bulk/types";
 
 export type CardStatus =
   | "Processing"
-  | "Draft"
   | "Needs Review"
   | "Ready"
   | "Uploading"
@@ -47,6 +48,8 @@ interface ProductCardProps {
   onDelete: () => void;
   onAiFill: () => void;
   onUpload: () => void;
+  /** Inline field edits from the card (price / chest / waist). */
+  onUpdate?: (updates: Partial<BulkProduct>) => void;
 }
 
 function statusMeta(status: CardStatus): {
@@ -56,8 +59,6 @@ function statusMeta(status: CardStatus): {
   switch (status) {
     case "Ready":
       return { variant: "success", icon: CheckCircle2 };
-    case "Draft":
-      return { variant: "info", icon: FileCheck };
     case "Needs Review":
       return { variant: "warning", icon: AlertTriangle };
     case "Uploaded":
@@ -79,6 +80,59 @@ function formatPrice(value: number | undefined | null): string {
   return `${RUPEE}${value.toLocaleString("en-IN")}`;
 }
 
+/**
+ * A borderless inline-editable field used directly on the card so admins can
+ * tweak chest / waist / price without opening the editor modal. It commits on
+ * every change (the parent re-validates), and stops pointer/click propagation
+ * so it never interferes with the card's drag / hover behaviour.
+ */
+function InlineNumber({
+  value,
+  onCommit,
+  ariaLabel,
+  prefix,
+  placeholder = "—",
+  inputClassName,
+  wrapperClassName,
+}: {
+  value: string;
+  onCommit: (next: string) => void;
+  ariaLabel: string;
+  prefix?: string;
+  placeholder?: string;
+  inputClassName?: string;
+  wrapperClassName?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-baseline gap-0.5",
+        wrapperClassName,
+      )}
+    >
+      {prefix && (
+        <span className="select-none font-bold text-foreground">{prefix}</span>
+      )}
+      <input
+        type="text"
+        inputMode="decimal"
+        value={value}
+        aria-label={ariaLabel}
+        placeholder={placeholder}
+        onChange={(event) => onCommit(event.target.value)}
+        onClick={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
+        className={cn(
+          "min-w-0 rounded-md border border-transparent bg-transparent px-1 py-0.5 text-right tabular-nums outline-none transition",
+          "hover:border-border focus:border-foreground/40 focus:bg-card",
+          inputClassName,
+        )}
+      />
+    </span>
+  );
+}
+
+
 export default function ProductCard({
   product,
   status,
@@ -89,6 +143,7 @@ export default function ProductCard({
   onDelete,
   onAiFill,
   onUpload,
+  onUpdate,
 }: ProductCardProps) {
   const meta = statusMeta(status);
   const StatusIcon = meta.icon;
@@ -101,11 +156,22 @@ export default function ProductCard({
   if (product.waist?.trim()) measurementBits.push(`Waist ${product.waist}`);
   if (product.length?.trim()) measurementBits.push(`Length ${product.length}`);
 
+  const [hover, setHover] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
   const isProcessing = status === "Processing" || aiLoading;
   const canUpload =
-    (status === "Ready" || status === "Draft") &&
+    status === "Ready" &&
     product.status !== "Uploaded" &&
     !uploading;
+
+  const handleMouseMove = (event: React.MouseEvent) => {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    setTooltipPos({
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    });
+  };
 
   return (
     <div
@@ -115,6 +181,7 @@ export default function ProductCard({
         product.status === "Uploaded" && "ring-1 ring-emerald-500/30",
       )}
       data-testid="bulk-product-card"
+      onMouseMove={handleMouseMove}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
         {cover ? (
@@ -126,7 +193,7 @@ export default function ProductCard({
             loading="lazy"
             decoding="async"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-            className="object-cover transition duration-300 group-hover:scale-[1.03]"
+            className="object-cover transition duration-500 ease-out group-hover:scale-110"
           />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
@@ -218,9 +285,22 @@ export default function ProductCard({
         </div>
 
         <div className="flex items-baseline gap-2">
-          <span className="text-base font-bold text-foreground tabular-nums">
-            {formatPrice(product.price)}
-          </span>
+          {onUpdate ? (
+            <InlineNumber
+              ariaLabel="Price"
+              prefix={RUPEE}
+              value={product.price > 0 ? String(product.price) : ""}
+              onCommit={(next) =>
+                onUpdate({ price: Number(next) || 0 })
+              }
+              placeholder="0"
+              inputClassName="w-16 text-base font-bold text-foreground"
+            />
+          ) : (
+            <span className="text-base font-bold text-foreground tabular-nums">
+              {formatPrice(product.price)}
+            </span>
+          )}
           {product.aiGenerated && product.price > 0 && (
             <span className="text-2xs text-muted-foreground">suggested</span>
           )}
@@ -239,10 +319,38 @@ export default function ProductCard({
           )}
         </div>
 
-        {measurementBits.length > 0 && (
-          <p className="text-xs text-muted-foreground tabular-nums">
-            {measurementBits.join(" \u00b7 ")}
-          </p>
+        {onUpdate ? (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <span className="flex items-baseline gap-1">
+              Chest
+              <InlineNumber
+                ariaLabel="Chest"
+                value={product.chest ?? ""}
+                onCommit={(next) => onUpdate({ chest: next })}
+                placeholder="—"
+                inputClassName="w-10 text-xs text-foreground"
+              />
+            </span>
+            <span className="flex items-baseline gap-1">
+              Waist
+              <InlineNumber
+                ariaLabel="Waist"
+                value={product.waist ?? ""}
+                onCommit={(next) => onUpdate({ waist: next })}
+                placeholder="—"
+                inputClassName="w-10 text-xs text-foreground"
+              />
+            </span>
+            {product.length?.trim() && (
+              <span className="tabular-nums">Length {product.length}</span>
+            )}
+          </div>
+        ) : (
+          measurementBits.length > 0 && (
+            <p className="text-xs text-muted-foreground tabular-nums">
+              {measurementBits.join(" \u00b7 ")}
+            </p>
+          )
         )}
 
         {product.errors.length > 0 && status !== "Uploaded" && (
@@ -258,6 +366,73 @@ export default function ProductCard({
               </li>
             )}
           </ul>
+        )}
+
+        {hover && (
+          <div
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl border border-border bg-black/60 p-3 backdrop-blur-sm transition-all duration-200"
+            style={{ top: tooltipPos.y, left: tooltipPos.x }}
+          >
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-white">
+                  {product.title?.trim() || `Product ${product.sku}`}
+                </p>
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setHover(false);
+                  }}
+                  className="text-white/70 hover:text-white transition"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-white/60 mb-1">Measurements</p>
+                  <div className="space-y-1">
+                    {product.chest && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-white/60">Chest</span>
+                        <span className="text-lg font-bold text-white tabular-nums">
+                          {product.chest}
+                        </span>
+                      </div>
+                    )}
+                    {product.waist && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-white/60">Waist</span>
+                        <span className="text-lg font-bold text-white tabular-nums">
+                          {product.waist}
+                        </span>
+                      </div>
+                    )}
+                    {product.length && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-white/60">Length</span>
+                        <span className="text-lg font-bold text-white tabular-nums">
+                          {product.length}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                <span className="text-xs text-white/50">
+                  {formatPrice(product.price)}
+                </span>
+                <div className="flex gap-1">
+                  {product.size && (
+                    <button className="text-xs text-white/60 hover:text-white transition">
+                      Size {product.size}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         <div className="mt-auto flex items-center gap-2 pt-1">

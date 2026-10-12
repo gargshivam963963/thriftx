@@ -97,24 +97,26 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
     const sidebarContent = (
         <div className="flex h-dvh min-h-0 flex-col bg-card font-sans text-card-foreground">
             {/* Logo */}
-            <Link
-                href="/admin/dashboard"
-                onClick={onClose}
-                aria-label="THRIFTX Admin dashboard"
-                className="flex h-[76px] shrink-0 items-center gap-3.5 border-b border-border px-5 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-            >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-foreground text-sm font-bold leading-normal tracking-tight text-background">
-                    T
-                </span>
-                <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="truncate text-lg font-bold leading-normal tracking-tight text-foreground">
-                        THRIFTX
+            <div className="flex h-[76px] shrink-0 items-center justify-between gap-2 border-b border-border px-5">
+                <Link
+                    href="/admin/dashboard"
+                    onClick={onClose}
+                    aria-label="THRIFTX Admin dashboard"
+                    className="flex min-w-0 items-center gap-3.5 transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-foreground text-sm font-bold leading-normal tracking-tight text-background">
+                        T
                     </span>
-                    <span className="text-caption text-muted-foreground leading-normal">
-                        Admin Panel
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                        <span className="truncate text-lg font-bold leading-normal tracking-tight text-foreground">
+                            THRIFTX
+                        </span>
+                        <span className="text-caption text-muted-foreground leading-normal">
+                            Admin Panel
+                        </span>
                     </span>
-                </span>
-            </Link>
+                </Link>
+            </div>
 
             {/* Navigation */}
             <nav

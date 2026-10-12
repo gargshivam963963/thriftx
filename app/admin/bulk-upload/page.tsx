@@ -13,6 +13,7 @@ import { processSmartFolders } from "@/app/lib/bulk/smart-processor";
 import { sortByFilename } from "@/app/lib/bulk/image-sorter";
 import { validateProducts } from "@/app/lib/bulk/validators";
 import { uploadProducts, uploadSingleProduct } from "@/app/lib/bulk/uploader";
+import { createBlankProduct, generateSku } from "@/lib/bulk/spreadsheetStorage";
 import {
     reorderImages,
     moveImage,
@@ -27,13 +28,6 @@ import {
     AICoverError,
     generateCoverImage,
 } from "@/lib/services/aiCover";
-import {
-    clearDraft,
-    createBlankProduct,
-    generateSku,
-    loadDraft,
-    saveDraft,
-} from "@/lib/bulk/spreadsheetStorage";
 
 const IMAGE_TYPES = new Set([
     "image/jpeg",
@@ -119,7 +113,6 @@ export default function BulkUploadPage() {
     } | null>(null);
 
     const [nextSkuNumber, setNextSkuNumber] = useState(1);
-    const [draftLoaded, setDraftLoaded] = useState(false);
 
     const aiQueueRef = useRef<BulkProduct[]>([]);
     const aiRunnerRef = useRef(false);
@@ -134,53 +127,12 @@ export default function BulkUploadPage() {
     const autoCoverRef = useRef(true);
 
     useEffect(() => {
-        let cancelled = false;
-
-        void (async () => {
-            const draft = await loadDraft();
-
-            if (cancelled) {
-                return;
-            }
-
-            if (draft.products.length > 0) {
-                setProducts(validateProducts(draft.products));
-                setNextSkuNumber(draft.nextSkuNumber);
-
-                showToast({
-                    type: "info",
-                    title: "Draft restored",
-                    message: `${draft.products.length} product(s) restored with saved images.`,
-                    duration: 4000,
-                });
-            }
-
-            setDraftLoaded(true);
-        })();
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+        productsRef.current = products;
+    }, [products]);
 
     useEffect(() => {
-        if (!draftLoaded || uploading) {
-            return;
-        }
-
-        const timer = window.setTimeout(() => {
-            void saveDraft(products, nextSkuNumber);
-        }, 600);
-
-        return () => {
-            window.clearTimeout(timer);
-        };
-    }, [
-        draftLoaded,
-        nextSkuNumber,
-        products,
-        uploading,
-    ]);
+        autoCoverRef.current = autoCover;
+    }, [autoCover]);
 
     const handleAddRow = useCallback(() => {
         setProducts((current) => {
@@ -197,43 +149,6 @@ export default function BulkUploadPage() {
 
         setNextSkuNumber((current) => current + 1);
     }, [nextSkuNumber]);
-
-    /**
-     * Adds `count` blank rows in a single state update so admins can stage
-     * many products at once without clicking "Add Product" repeatedly.
-     * SKUs are allocated from the current counter, so no duplicates occur.
-     */
-    const handleAddRows = useCallback(
-        (count: number) => {
-            const amount = Math.max(
-                1,
-                Math.min(Math.round(count), 50),
-            );
-
-            setProducts((current) => {
-                const rows = Array.from(
-                    { length: amount },
-                    (_, offset) =>
-                        createBlankProduct(
-                            nextSkuNumber + offset,
-                        ),
-                );
-
-                return validateProducts([
-                    ...current,
-                    ...rows,
-                ]).map((item, index) => ({
-                    ...item,
-                    row: index + 1,
-                }));
-            });
-
-            setNextSkuNumber(
-                (current) => current + amount,
-            );
-        },
-        [nextSkuNumber],
-    );
 
     const handleDeleteRow = useCallback(
         (sku: string) => {
@@ -692,23 +607,7 @@ export default function BulkUploadPage() {
                     return;
                 }
             } else {
-                // Drafts only need the fields the API itself requires.
-                const missing: string[] = [];
-                if (!validated.title.trim()) missing.push("title");
-                if (!validated.category.trim()) missing.push("category");
-                if (!validated.price || validated.price <= 0)
-                    missing.push("price");
-                if (validated.imageFiles.length === 0) missing.push("images");
-
-                if (missing.length > 0) {
-                    showToast({
-                        type: "warning",
-                        title: "Cannot save draft yet",
-                        message: `Missing: ${missing.join(", ")}.`,
-                        duration: 5000,
-                    });
-                    return;
-                }
+                // Skipping draft validation — all saves go straight through.
             }
 
             setSavingSku(sku);
@@ -731,7 +630,7 @@ export default function BulkUploadPage() {
 
                     showToast({
                         type: "error",
-                        title: publish ? "Publish failed" : "Draft save failed",
+                        title: publish ? "Publish failed" : "Save failed",
                         message:
                             outcome.errors[outcome.errors.length - 1] ??
                             "Upload failed.",
@@ -767,13 +666,6 @@ export default function BulkUploadPage() {
                             item.sku === sku ? outcome : item,
                         ),
                     );
-
-                    showToast({
-                        type: "success",
-                        title: "Draft saved",
-                        message: `${outcome.title || sku} saved as draft. Publish when the row is ready.`,
-                        duration: 4000,
-                    });
                 }
             } finally {
                 setSavingSku(null);
@@ -1527,8 +1419,6 @@ export default function BulkUploadPage() {
 
                     window.setTimeout(
                         () => {
-                            clearDraft();
-
                             setProducts([]);
 
                             setNextSkuNumber(
@@ -1593,7 +1483,6 @@ export default function BulkUploadPage() {
                         savingSku={savingSku}
                         uploading={uploading}
                         onAddRow={handleAddRow}
-                        onAddRows={handleAddRows}
                         onFilesSelected={handleFilesSelected}
                         onFolderSelected={handleFolderSelected}
                         onUpdate={handleProductUpdate}

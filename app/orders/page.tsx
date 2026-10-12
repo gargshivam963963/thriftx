@@ -11,6 +11,7 @@ import {
     AlertCircle,
     PackageOpen,
     Clock,
+    XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,8 +19,10 @@ import PremiumImage from "@/components/ui/PremiumImage";
 import EmptyState from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
-import { getUserOrders } from "@/lib/client/orders";
+import { getUserOrders, cancelOrder } from "@/lib/client/orders";
 import type { Order } from "@/lib/types/order";
+
+const CANCELLABLE_STATUSES = ["Pending", "Pending (COD)", "Processing"];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -161,6 +164,33 @@ export default function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+    const handleCancelOrder = async (order: Order) => {
+        const confirmed = window.confirm(
+            `Cancel order ${order.orderId || order.$id}? This cannot be undone.`,
+        );
+        if (!confirmed) return;
+
+        setCancellingId(order.$id);
+        try {
+            const updated = await cancelOrder(
+                order.$id,
+                "Cancelled by customer",
+            );
+            setOrders((prev) =>
+                prev.map((o) => (o.$id === order.$id ? updated : o)),
+            );
+            toast.success("Order has been cancelled.");
+        } catch (err) {
+            console.error("Cancel order error:", err);
+            toast.error(
+                err instanceof Error ? err.message : "Failed to cancel order.",
+            );
+        } finally {
+            setCancellingId(null);
+        }
+    };
 
     const fetchOrders = useCallback(async () => {
         if (!user) return;
@@ -354,20 +384,49 @@ export default function OrdersPage() {
                                                 </span>
                                             </div>
 
-                                            <Link
-                                                href={`/orders/${order.$id}`}
-                                            >
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    rightIcon={
-                                                        <ArrowRight size={14} />
-                                                    }
-                                                    className="rounded-xl text-small"
+                                            <div className="flex items-center gap-2">
+                                                <Link
+                                                    href={`/orders/${order.$id}`}
                                                 >
-                                                    Track Order
-                                                </Button>
-                                            </Link>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        rightIcon={
+                                                            <ArrowRight size={14} />
+                                                        }
+                                                        className="rounded-xl text-small"
+                                                    >
+                                                        Track Order
+                                                    </Button>
+                                                </Link>
+
+                                                {CANCELLABLE_STATUSES.includes(
+                                                    order.status,
+                                                ) && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        leftIcon={
+                                                            <XCircle size={14} />
+                                                        }
+                                                        disabled={
+                                                            cancellingId ===
+                                                            order.$id
+                                                        }
+                                                        onClick={() =>
+                                                            handleCancelOrder(
+                                                                order,
+                                                            )
+                                                        }
+                                                        className="rounded-xl text-small border-destructive/40 text-destructive hover:bg-destructive/10"
+                                                    >
+                                                        {cancellingId ===
+                                                        order.$id
+                                                            ? "Cancelling…"
+                                                            : "Cancel Order"}
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.article>

@@ -51,15 +51,24 @@ export const SHIPPING_ESTIMATES = {
 export const SHIPPING_DEFAULTS = {
   currency: "INR",
 
+  // Free standard delivery is granted when EITHER condition is met:
+  //  - order subtotal >= freeShippingAmount, OR
+  //  - the cart has at least freeShippingMinItems items.
   freeShippingAmount: 999,
+  freeShippingMinItems: 2,
 
-  defaultWeight: 0.4, // kg
+  defaultWeight: 0.3, // kg
 
-  defaultLength: 30, // cm
+  // Package dimensions (cm) chosen so the VOLUMETRIC weight matches the
+  // declared weight: 25 * 20 * 3 / 5000 = 0.3 kg. Shiprocket bills on
+  // max(actual, volumetric), so an oversized default box (e.g. the old
+  // 30x25x5 = 0.75 kg) made Shiprocket charge ~2.5x the quoted rate.
+  // 25x20x3 cm is a realistic polybag for a folded T-shirt.
+  defaultLength: 25, // cm
 
-  defaultWidth: 25,
+  defaultWidth: 20,
 
-  defaultHeight: 5,
+  defaultHeight: 3,
 
   insuranceEnabled: true,
 

@@ -56,15 +56,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Server-side: filter out non-customer events before storing
-    const customerEvents = events.filter((event: Record<string, unknown>) => {
-      const shouldStore = shouldStoreEvent(event);
-      if (!shouldStore) {
-        console.log(
-          `[Analytics] Server-side filtered out event: ${event.eventType} on ${event.page}`,
-        );
-      }
-      return shouldStore;
-    });
+    const customerEvents = events.filter((event: Record<string, unknown>) =>
+      shouldStoreEvent(event),
+    );
 
     if (customerEvents.length === 0) {
       return NextResponse.json({

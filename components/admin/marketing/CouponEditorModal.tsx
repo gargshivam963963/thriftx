@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
+import { Switch } from "@/components/ui/Switch";
 import { cn } from "@/lib/utils";
 import type { Coupon } from "@/lib/marketing/types";
 
@@ -394,9 +395,10 @@ export default function CouponEditorModal({
                     ? "Update the rules this coupon applies."
                     : "Four fields are all a customer needs."
             }
+            className="max-w-lg"
             footer={
                 <>
-                    <div className="mr-auto flex items-center gap-2">
+                    <div className="mr-auto flex items-center gap-2.5">
                         <span
                             id="coupon-active-label"
                             className="text-body-sm font-medium text-foreground"
@@ -404,30 +406,13 @@ export default function CouponEditorModal({
                             Active
                         </span>
 
-                        <button
-                            type="button"
-                            role="switch"
-                            aria-checked={form.isActive}
-                            aria-labelledby="coupon-active-label"
-                            onClick={() =>
-                                patch({ isActive: !form.isActive })
+                        <Switch
+                            checked={form.isActive}
+                            onChange={(next) =>
+                                patch({ isActive: next })
                             }
-                            className={cn(
-                                "relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                                form.isActive
-                                    ? "bg-foreground"
-                                    : "bg-muted",
-                            )}
-                        >
-                            <span
-                                className={cn(
-                                    "absolute top-0.5 h-5 w-5 rounded-full bg-background shadow-sm transition-transform",
-                                    form.isActive
-                                        ? "translate-x-5"
-                                        : "translate-x-0.5",
-                                )}
-                            />
-                        </button>
+                            aria-labelledby="coupon-active-label"
+                        />
                     </div>
 
                     <Button
@@ -541,14 +526,13 @@ export default function CouponEditorModal({
                                             })
                                         }
                                         className={cn(
-                                            "inline-flex h-8 min-w-9 items-center justify-center gap-1 rounded-lg text-body-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                            "inline-flex h-8 w-9 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                             selected
                                                 ? "bg-foreground text-background shadow-sm"
                                                 : "text-muted-foreground hover:text-foreground",
                                         )}
                                     >
                                         {option.icon}
-                                        {option.label}
                                     </button>
                                 );
                             })}

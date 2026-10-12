@@ -18,7 +18,6 @@ interface TrackerOptions {
   enabled: boolean;
   flushInterval: number;
   batchSize: number;
-  debug: boolean;
 }
 
 export interface Tracker {
@@ -56,7 +55,7 @@ export interface Tracker {
 }
 
 export function initTracker(options: TrackerOptions): Tracker {
-  const { enabled, debug, batchSize } = options;
+  const { enabled, batchSize } = options;
   let flushTimer: ReturnType<typeof setInterval> | null = null;
   let lastScrollMilestone = 0;
 
@@ -74,10 +73,6 @@ export function initTracker(options: TrackerOptions): Tracker {
       sessionId: getSessionId(),
       timestamp: Date.now(),
     };
-
-    if (debug) {
-      console.log(`[Analytics] ${eventType}:`, eventName, properties);
-    }
 
     return event;
   }
@@ -104,7 +99,6 @@ export function initTracker(options: TrackerOptions): Tracker {
 
       if (res.ok) {
         removeBatch(ids);
-        if (debug) console.log(`[Analytics] Flushed ${ids.length} events`);
       } else {
         incrementRetries(ids);
       }

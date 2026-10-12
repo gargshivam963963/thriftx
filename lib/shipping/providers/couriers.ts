@@ -34,7 +34,7 @@ export async function getAvailableCouriers(
 
   const couriers = response.data?.available_courier_companies ?? [];
 
-  return couriers.map((courier) => ({
+  const mapped = couriers.map((courier) => ({
     courierCompanyId: courier.courier_company_id,
     courierName: courier.courier_name,
     freightCharge: courier.freight_charge,
@@ -42,4 +42,6 @@ export async function getAvailableCouriers(
     estimatedDays: courier.estimated_delivery_days,
     rating: courier.rating,
   }));
+
+  return mapped;
 }

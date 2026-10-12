@@ -92,9 +92,14 @@ export async function getCheckoutPricing(
     (total, item) => total + item.price * item.quantity,
     0,
   );
+  const itemCount = cartItems.reduce(
+    (count, item) => count + item.quantity,
+    0,
+  );
   const products = JSON.stringify(
     cartItems.map((item) => ({
       id: item.id,
+      slug: item.slug,
       title: item.title,
       price: item.price,
       quantity: item.quantity,
@@ -121,6 +126,7 @@ export async function getCheckoutPricing(
     subtotal,
     rates,
     deliveryMethod,
+    itemCount,
   );
 
   if (!shippingMethod) {

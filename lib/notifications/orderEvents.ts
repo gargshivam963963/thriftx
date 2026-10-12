@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createNotification } from "./server";
+import { createNotification, notifyAdmins } from "./server";
 
 export interface OrderRef {
   $id: string;
@@ -56,6 +56,9 @@ const REFUND_COPY: Record<string, string> = {
 };
 
 export async function notifyOrderPlaced(order: OrderRef) {
+  // Customer-facing confirmation only. The store-owner alert is fired directly
+  // by the order API route (richer message with COD/paid info), so we must NOT
+  // also push an admin notification here or the owner would be pinged twice.
   if (!order.userId) return;
   await createNotification({
     userId: order.userId,

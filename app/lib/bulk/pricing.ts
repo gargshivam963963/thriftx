@@ -15,21 +15,12 @@ export const APPROVED_PRICE_SET = [99, 199, 299, 320, 799, 899] as const;
 export type ApprovedPrice = (typeof APPROVED_PRICE_SET)[number];
 
 /**
- * Only genuinely new items with a verified original/current retail value above
- * this threshold may be considered for a higher, owner-approved price. This is
- * NOT an automatic selling price — it only unlocks the higher band, and only
- * when the item is explicitly new and the value is actually verified.
+ * Only genuinely expensive items (verified original/current retail value above
+ * this threshold) unlock the premium band. This is NOT an automatic selling
+ * price — it only unlocks the higher band, and only when the value is actually
+ * verified by the owner.
  */
 export const HIGH_VALUE_RETAIL_THRESHOLD = 10_000;
-
-/**
- * Condition buckets that let an item qualify for the higher price band, and
- * only then when the retail threshold is met. Everything else is capped at 799.
- */
-const NEW_CONDITIONS = new Set([
-  "Brand New with Tags",
-  "Brand New without Tags",
-]);
 
 /**
  * Category → baseline price band. Prices are chosen from the approved set,
@@ -41,7 +32,7 @@ const NEW_CONDITIONS = new Set([
  *   "mid"    → ₹299
  *   "midHigh"→ ₹320
  *   "high"   → ₹799
- *   "premium"→ ₹899  (only unlocked for verified-new, high-value items)
+ *   "premium"→ ₹899  (only unlocked for verified high-value items)
  */
 const CATEGORY_BAND: Record<string, PriceBand> = {
   // Low-value / accessories
@@ -74,7 +65,64 @@ const CATEGORY_BAND: Record<string, PriceBand> = {
   "Dresses": "high",
 };
 
+/**
+ * Brands whose garments reliably resell at or above the mid tiers in a
+ * thrift context. The suggestion is nudged one band up for these — never
+ * more, and never past the ₹799 non-premium ceiling.
+ *
+ * Compared after normalization (lowercase, alphanumeric only), so
+ * "Levi's" → "levis", "H&M" → "hm", "U.S. Polo" → "uspolo".
+ */
+const PREMIUM_BRANDS = new Set([
+  "zara",
+  "levis",
+  "nike",
+  "adidas",
+  "puma",
+  "reebok",
+  "uniqlo",
+  "hm",
+  "tommyhilfiger",
+  "calvinklein",
+  "ralphlauren",
+  "superdry",
+  "lacoste",
+  "jackjones",
+  "only",
+  "veromoda",
+  "marksspencer",
+  "uspolo",
+  "armani",
+  "burberry",
+  "gucci",
+  "prada",
+  "versace",
+  "dior",
+  "louisvuitton",
+]);
+
+function normalizeBrand(brand: string): string {
+  return brand.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+/** Whether the extracted brand counts as a premium resell brand. */
+export function isPremiumBrand(brand: string | undefined | null): boolean {
+  const normalized = normalizeBrand((brand ?? "").trim());
+  if (!normalized) return false;
+  return PREMIUM_BRANDS.has(normalized);
+}
+
 type PriceBand = "low" | "lower" | "mid" | "midHigh" | "high" | "premium";
+
+/** Ascending band order — used to step a band up one tier. */
+const BAND_ORDER: readonly PriceBand[] = [
+  "low",
+  "lower",
+  "mid",
+  "midHigh",
+  "high",
+  "premium",
+];
 
 const BAND_PRICE: Record<PriceBand, ApprovedPrice> = {
   low: 99,
@@ -84,6 +132,13 @@ const BAND_PRICE: Record<PriceBand, ApprovedPrice> = {
   high: 799,
   premium: 899,
 };
+
+/** Step a band up one tier, capped at `high` (premium stays special). */
+function stepUpBand(band: PriceBand): PriceBand {
+  const index = BAND_ORDER.indexOf(band);
+  const ceiling = BAND_ORDER.indexOf("high");
+  return BAND_ORDER[Math.min(index + 1, ceiling)];
+}
 
 /**
  * Condition can nudge the price one step down within the low bands when the
@@ -99,14 +154,19 @@ export interface PriceSuggestionInput {
   /** Condition string from the existing condition enum. */
   condition?: string;
   /**
-   * Verified original/current retail value, only when the owner has actually
-   * supplied it (never assumed from a photo). Enables the premium band when the
-   * item is also genuinely new.
+   * Extracted brand / "cloth company". Premium resell brands nudge the
+   * suggested band one tier up (still capped at the approved set).
+   */
+  brand?: string;
+  /**
+   * Verified original/current retail value. When it exceeds the high-value
+   * threshold (₹10,000), the premium band is unlocked — a very expensive
+   * garment should not be listed at a bargain-tier thrift price.
    */
   retailPrice?: number | null;
   /**
    * Explicit flag the owner can set when they have verified the item is genuinely
-   * new. Defaults to inferring from `condition`.
+   * new. Kept for API compatibility; retail value alone now unlocks premium.
    */
   isNew?: boolean;
 }
@@ -117,20 +177,14 @@ export interface PriceSuggestionInput {
  * Selection is deterministic and rule-based — never random:
  *  - Base band comes from the item's category.
  *  - Worn conditions step the low/mid bands down one tier.
- *  - The premium band (₹899) is reachable only for genuinely new items whose
- *    verified retail value exceeds the threshold.
+ *  - Premium resell brands (Zara, Levi's, Nike, …) step the band up one tier.
+ *  - A verified retail value above ₹10,000 unlocks the premium band (₹899).
  *
- * Always returns a value from APPROVED_PRICE_SET (or the approved high band when
- * justified), so nothing outside the sanctioned set is ever produced.
+ * The result is a *starting* value only — it is always editable by the owner.
  */
 export function suggestThriftPrice(input: PriceSuggestionInput): ApprovedPrice {
   const category = (input.category ?? "").trim();
-  const band: PriceBand = CATEGORY_BAND[category] ?? "mid";
-
-  const isNew =
-    typeof input.isNew === "boolean"
-      ? input.isNew
-      : category !== "" && NEW_CONDITIONS.has((input.condition ?? "").trim());
+  let band: PriceBand = CATEGORY_BAND[category] ?? "mid";
 
   const retail = input.retailPrice;
   const highValue =
@@ -138,18 +192,24 @@ export function suggestThriftPrice(input: PriceSuggestionInput): ApprovedPrice {
     Number.isFinite(retail) &&
     retail > HIGH_VALUE_RETAIL_THRESHOLD;
 
-  // Premium band: genuinely new AND verified high retail value.
-  if (isNew && highValue) {
+  // Premium band: verified retail value above the threshold (very expensive
+  // garment — never price it at a bargain tier).
+  if (highValue) {
     return BAND_PRICE.premium;
   }
 
   // Step worn low/mid items down one tier for honesty.
   const condition = (input.condition ?? "").trim();
   if (DEGRADED_CONDITIONS.has(condition)) {
-    if (band === "mid") return BAND_PRICE.lower;
-    if (band === "midHigh") return BAND_PRICE.mid;
-    if (band === "high") return BAND_PRICE.midHigh;
-    if (band === "lower") return BAND_PRICE.low;
+    if (band === "mid") band = "lower";
+    else if (band === "midHigh") band = "mid";
+    else if (band === "high") band = "midHigh";
+    else if (band === "lower") band = "low";
+  }
+
+  // Premium brands justify one tier up (still within the approved set).
+  if (isPremiumBrand(input.brand)) {
+    band = stepUpBand(band);
   }
 
   return BAND_PRICE[band];

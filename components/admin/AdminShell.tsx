@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import AdminSidebar from "@/components/admin/dashboard/Sidebar";
+import AdminNotificationBell from "@/components/admin/dashboard/AdminNotificationBell";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -94,7 +95,17 @@ export default function AdminShell({
               Admin Panel
             </span>
           </div>
+
+          {/* Live store notifications (new orders, etc.) */}
+          <div className="ml-auto">
+            <AdminNotificationBell />
+          </div>
         </header>
+
+        {/* Desktop top bar — keeps the notification bell visible on large screens */}
+        <div className="sticky top-0 z-30 hidden h-14 items-center justify-end gap-2 border-b border-border bg-card px-6 lg:flex">
+          <AdminNotificationBell />
+        </div>
 
         {/* Page content */}
         <div className="min-w-0 w-full max-w-full flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">

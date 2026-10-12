@@ -5,8 +5,9 @@
  *
  * Rules:
  * - Best single offer only (no stacking)
- * - Welcome offer: 50% off, max ₹299 subtotal, first order per user
+ * - Welcome offer: 30% off (capped), first order per user only
  * - Referral: ₹100 credit, issued 7 days after delivery
+ * - Coupons are DISABLED store-wide — only Welcome + Referral apply
  * - All calculations server-only, validated at checkout and payment
  */
 
@@ -17,8 +18,6 @@ import {
   DocumentQuery,
   isDocumentStoreConfigured,
 } from "@/lib/document-store";
-import { validateCoupon } from "./offers";
-import type { Coupon } from "./types";
 
 export interface PromotionSettings {
   welcomeOffer: {
@@ -43,9 +42,9 @@ export interface PromotionSettings {
 const DEFAULT_SETTINGS: PromotionSettings = {
   welcomeOffer: {
     enabled: true,
-    discountPercent: 50,
-    maxSubtotal: 299,
-    maxDiscount: undefined,
+    discountPercent: 30,
+    maxSubtotal: 1499,
+    maxDiscount: 400,
     minOrderValue: 0,
   },
   referralProgram: {
@@ -202,7 +201,8 @@ async function validateReferralCode(
  *
  * @param userId - Current user ID
  * @param subtotal - Cart subtotal from DB (NOT from client)
- * @param appliedCouponCode - Coupon code user entered (optional)
+ * @param appliedCouponCode - IGNORED. Coupons are disabled store-wide; kept
+ *   in the signature so existing callers (cart quote, checkout) don't break.
  * @param referralCode - Referral code user entered (optional)
  * @returns Promotion details with discount amount and reason
  */
@@ -265,56 +265,9 @@ export async function calculatePromotion(
     }
   }
 
-  // Candidate 3: Coupon Code
-  if (appliedCouponCode) {
-    if (isDocumentStoreConfigured) {
-      const { documents } = await documentStore.listDocuments(
-        "thriftx",
-        "coupons",
-      );
-      const couponDocument = documents.find(
-        (coupon) =>
-          typeof coupon.code === "string" &&
-          coupon.code.toLowerCase() === appliedCouponCode.trim().toLowerCase(),
-      );
-      const coupon: Coupon | undefined = couponDocument
-        ? {
-            id: String(couponDocument.id ?? couponDocument.$id),
-            code: String(couponDocument.code),
-            discountType:
-              couponDocument.discountType === "percent" ? "percent" : "flat",
-            discountValue: Number(couponDocument.discountValue),
-            minOrderValue: Number(couponDocument.minOrderValue ?? 0),
-            maxDiscount:
-              couponDocument.maxDiscount == null
-                ? undefined
-                : Number(couponDocument.maxDiscount),
-            expiresAt:
-              typeof couponDocument.expiresAt === "string"
-                ? couponDocument.expiresAt
-                : undefined,
-            usageLimit:
-              couponDocument.usageLimit == null
-                ? undefined
-                : Number(couponDocument.usageLimit),
-            usedCount: Number(couponDocument.usedCount ?? 0),
-            description:
-              typeof couponDocument.description === "string"
-                ? couponDocument.description
-                : "",
-            isActive: couponDocument.isActive === true,
-          }
-        : undefined;
-      const couponValidation = validateCoupon(coupon, subtotal);
-
-      if (couponValidation.valid && couponValidation.discount > 0) {
-        candidates.push({
-          type: "coupon",
-          discount: Math.min(couponValidation.discount, subtotal),
-        });
-      }
-    }
-  }
+  // Coupons are DISABLED store-wide. Only the Welcome offer and the
+  // Referral reward can ever discount an order (see rules above). Any
+  // `appliedCouponCode` sent by a client is intentionally ignored here.
 
   // Select best offer (no stacking)
   if (candidates.length === 0) {
@@ -341,11 +294,9 @@ export async function calculatePromotion(
 function getPromotionLabel(type: string): string {
   switch (type) {
     case "welcome":
-      return "Welcome Offer (50% off)";
+      return "Welcome Offer (30% off)";
     case "referral":
       return "Referral Reward";
-    case "coupon":
-      return "Coupon Discount";
     default:
       return "Discount Applied";
   }

@@ -34,6 +34,8 @@ interface OrderSummaryProps {
 
 const FREE_SHIPPING_THRESHOLD =
     SHIPPING_DEFAULTS.freeShippingAmount;
+const FREE_SHIPPING_MIN_ITEMS =
+    SHIPPING_DEFAULTS.freeShippingMinItems;
 
 const formatINR = (amount: number) =>
     `₹${amount.toLocaleString("en-IN")}`;
@@ -65,7 +67,8 @@ export default function OrderSummary({
         Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
 
     const qualifiesForFreeShipping =
-        subtotal >= FREE_SHIPPING_THRESHOLD;
+        subtotal >= FREE_SHIPPING_THRESHOLD ||
+        itemCount >= FREE_SHIPPING_MIN_ITEMS;
 
     function handleApplyCoupon() {
         const code = couponInput.trim().toUpperCase();
@@ -113,7 +116,7 @@ export default function OrderSummary({
                 {/* Shipping progress */}
                 {!pricingLoading &&
                     !pricingError &&
-                    remainingForFree > 0 &&
+                    !qualifiesForFreeShipping &&
                     subtotal > 0 && (
                     <div className="mb-5 rounded-xl border border-border bg-muted/60 p-3">
                         <div className="flex items-start gap-2.5">
@@ -128,7 +131,16 @@ export default function OrderSummary({
                                 <strong>
                                     {formatINR(remainingForFree)}
                                 </strong>{" "}
-                                more for free standard shipping. Panipat local
+                                more (or add{" "}
+                                {Math.max(
+                                    1,
+                                    FREE_SHIPPING_MIN_ITEMS - itemCount,
+                                )}{" "}
+                                more{" "}
+                                {FREE_SHIPPING_MIN_ITEMS - itemCount === 1
+                                    ? "item"
+                                    : "items"}
+                                ) for free standard shipping. Panipat local
                                 delivery is free.
                             </p>
                         </div>

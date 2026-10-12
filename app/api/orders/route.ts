@@ -1,4 +1,5 @@
 import { notifyOrderPlaced } from "@/lib/notifications/orderEvents";
+import { notifyAdmins } from "@/lib/notifications/server";
 
 import { NextRequest, NextResponse } from "next/server";
 
@@ -438,6 +439,38 @@ export async function POST(request: NextRequest) {
           status: 503,
         },
       );
+    }
+
+    /*
+     * Alert the store owner (admin) the moment an order lands — regardless of
+     * delivery method. This runs BEFORE the local-delivery early-return below,
+     * so local orders are no longer silently skipped. Never throws.
+     */
+    try {
+      const adminOrder = order as {
+        $id?: string;
+        orderId?: string;
+        firstName?: string;
+        total?: number;
+        paymentMethod?: string;
+      };
+      if (typeof adminOrder.$id === "string") {
+        const customerName =
+          [adminOrder.firstName].filter(Boolean).join(" ").trim() || "A customer";
+        const amount = Number(adminOrder.total || 0).toLocaleString("en-IN");
+        const isCod = adminOrder.paymentMethod === "cod";
+        await notifyAdmins({
+          type: "order_placed",
+          title: `🛒 New order from ${customerName}`,
+          message: `₹${amount} • ${isCod ? "Cash on Delivery" : "Paid online"} • ${
+            adminOrder.orderId || adminOrder.$id.slice(0, 8)
+          }`,
+          href: "/admin/orders",
+          dedupeKey: `admin:order:${adminOrder.$id}:placed`,
+        });
+      }
+    } catch (adminNotifyError) {
+      console.error("Admin order-placed notification failed:", adminNotifyError);
     }
 
     /*

@@ -27,13 +27,13 @@ import {
 } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/Switch";
 import { PRODUCT_FIELDS } from "@/lib/productFields";
 import { deleteImageFromStorage } from "@/lib/services/storage";
 import { compressHeavyImage } from "@/lib/services/imageCompression";
 import { runAiFill } from "@/lib/services/aiFill";
 import { showToast } from "@/components/admin/toast/Toast";
 import { BLUR_PLACEHOLDER } from "@/lib/imageOptimization";
-import { cn } from "@/lib/utils";
 import SortableImage from "@/components/SortableImage";
 import {
     previewBackdropVariants,
@@ -838,26 +838,15 @@ export default function ProductFormModal({
 
                                             {/* Analyze all images toggle */}
                                             <label className="mt-3 flex cursor-pointer items-center gap-2">
-                                                <Button
-                                                    type="button"
-                                                    role="switch"
-                                                    aria-checked={analyzeAllImages}
-                                                    onClick={() => setAnalyzeAllImages((v) => !v)}
+                                                <Switch
+                                                    checked={analyzeAllImages}
+                                                    onChange={(next) =>
+                                                        setAnalyzeAllImages(next)
+                                                    }
                                                     disabled={isGenerating}
-                                                    className={cn(
-                                                        "relative h-5 w-9 rounded-full transition-colors disabled:opacity-50",
-                                                        analyzeAllImages
-                                                            ? "bg-violet-500"
-                                                            : "bg-muted"
-                                                    )}
-                                                >
-                                                    <span
-                                                        className={cn(
-                                                            "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
-                                                            analyzeAllImages ? "translate-x-4" : "translate-x-0.5"
-                                                        )}
-                                                    />
-                                                </Button>
+                                                    tone="violet"
+                                                    aria-label="Analyze all images"
+                                                />
                                                 <span className="text-2xs font-medium text-muted-foreground">
                                                     Analyze all images
                                                 </span>

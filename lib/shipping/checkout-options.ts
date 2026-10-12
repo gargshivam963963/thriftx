@@ -52,6 +52,7 @@ export function getCheckoutShippingOptions(
   pincode: string | undefined,
   orderSubtotal: number,
   rates: ShippingRate[],
+  itemCount = 0,
 ): ShippingMethod[] {
   if (isLocalDelivery(city, pincode)) {
     const local = PANIPAT_LOCAL_DELIVERY;
@@ -66,7 +67,9 @@ export function getCheckoutShippingOptions(
     ];
   }
 
-  const freeShipping = orderSubtotal >= SHIPPING_DEFAULTS.freeShippingAmount;
+  const freeShipping =
+    orderSubtotal >= SHIPPING_DEFAULTS.freeShippingAmount ||
+    itemCount >= SHIPPING_DEFAULTS.freeShippingMinItems;
 
   if (rates.length > 0) {
     const sorted = [...rates].sort((left, right) => left.amount - right.amount);
@@ -119,12 +122,14 @@ export function resolveCheckoutShippingOption(
   orderSubtotal: number,
   rates: ShippingRate[],
   deliveryMethod: string,
+  itemCount = 0,
 ): ShippingMethod | undefined {
   const options = getCheckoutShippingOptions(
     city,
     pincode,
     orderSubtotal,
     rates,
+    itemCount,
   );
   const wanted = deliveryMethod.trim();
   const exact = options.find(

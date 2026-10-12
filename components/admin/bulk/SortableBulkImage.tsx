@@ -135,7 +135,7 @@ export default function SortableBulkImage({
                   ? "48px"
                   : "40px"
           }
-          className="pointer-events-none object-cover"
+          className="pointer-events-none object-cover transition duration-500 ease-out group-hover:scale-110"
         />
         {onPreview && (
           <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all hover:bg-black/25 hover:opacity-100">

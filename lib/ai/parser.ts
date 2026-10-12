@@ -174,11 +174,12 @@ export function mapAIResponseToProduct(aiResponse: AIProductResponse): {
     }
   }
 
-  // Centralized, rule-based price suggestion based on the mapped category and
-  // condition. The AI never picks a price itself — this keeps the approved
-  // thrift-price set as the single source of truth. It is returned as an
-  // editable suggestion only.
+  // Centralized, rule-based price suggestion based on the extracted brand
+  // ("cloth company"), mapped category and condition. The AI never picks a
+  // price itself — this keeps the approved thrift-price set as the single
+  // source of truth. It is returned as an editable suggestion only.
   const suggestedPrice = suggestThriftPrice({
+    brand: typeof updates.brand === "string" ? updates.brand : "",
     category: typeof updates.category === "string" ? updates.category : "",
     condition: typeof updates.condition === "string" ? updates.condition : "",
   });

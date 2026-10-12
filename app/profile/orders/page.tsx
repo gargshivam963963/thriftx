@@ -13,6 +13,7 @@ import {
     RefreshCw,
     PackageOpen,
     Clock,
+    XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,8 +21,10 @@ import PremiumImage from "@/components/ui/PremiumImage";
 import { Button } from "@/components/ui/button";
 import { SegmentedFilterRow } from "@/components/ui/SegmentedControl";
 import { useAuth } from "@/lib/AuthContext";
-import { getUserOrders } from "@/lib/client/orders";
+import { getUserOrders, cancelOrder } from "@/lib/client/orders";
 import type { Order } from "@/lib/types/order";
+
+const CANCELLABLE_STATUSES = ["Pending", "Pending (COD)", "Processing"];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -215,6 +218,33 @@ export default function ProfileOrdersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState("");
+    const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+    const handleCancelOrder = async (order: Order) => {
+        const confirmed = window.confirm(
+            `Cancel order ${order.orderId || order.$id}? This cannot be undone.`,
+        );
+        if (!confirmed) return;
+
+        setCancellingId(order.$id);
+        try {
+            const updated = await cancelOrder(
+                order.$id,
+                "Cancelled by customer",
+            );
+            setOrders((prev) =>
+                prev.map((o) => (o.$id === order.$id ? updated : o)),
+            );
+            toast.success("Order has been cancelled.");
+        } catch (err) {
+            console.error("Cancel order error:", err);
+            toast.error(
+                err instanceof Error ? err.message : "Failed to cancel order.",
+            );
+        } finally {
+            setCancellingId(null);
+        }
+    };
 
     const fetchOrders = useCallback(async () => {
         if (!user) return;
@@ -490,21 +520,50 @@ export default function ProfileOrdersPage() {
                                                 </span>
                                             </div>
 
-                                            <Link
-                                                href={`/orders/${order.$id}`}
-                                            >
-                                                <Button
-                                                    size="xs"
-                                                    variant="outline"
-                                                    rightIcon={
-                                                        <ArrowRight size={12} className="sm:hidden" />
-                                                    }
-                                                    className="rounded-lg text-small sm:rounded-xl"
+                                            <div className="flex items-center gap-2">
+                                                <Link
+                                                    href={`/orders/${order.$id}`}
                                                 >
-                                                    <span className="hidden sm:inline">Track</span>
-                                                    Details
-                                                </Button>
-                                            </Link>
+                                                    <Button
+                                                        size="xs"
+                                                        variant="outline"
+                                                        rightIcon={
+                                                            <ArrowRight size={12} className="sm:hidden" />
+                                                        }
+                                                        className="rounded-lg text-small sm:rounded-xl"
+                                                    >
+                                                        <span className="hidden sm:inline">Track</span>
+                                                        Details
+                                                    </Button>
+                                                </Link>
+
+                                                {CANCELLABLE_STATUSES.includes(
+                                                    order.status,
+                                                ) && (
+                                                    <Button
+                                                        size="xs"
+                                                        variant="outline"
+                                                        leftIcon={
+                                                            <XCircle size={12} />
+                                                        }
+                                                        disabled={
+                                                            cancellingId ===
+                                                            order.$id
+                                                        }
+                                                        onClick={() =>
+                                                            handleCancelOrder(
+                                                                order,
+                                                            )
+                                                        }
+                                                        className="rounded-lg text-small sm:rounded-xl border-destructive/40 text-destructive hover:bg-destructive/10"
+                                                    >
+                                                        {cancellingId ===
+                                                        order.$id
+                                                            ? "Cancelling…"
+                                                            : "Cancel"}
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                     </motion.article>
                                 );

@@ -22,6 +22,15 @@ interface NotificationInput {
   dedupeKey: string;
 }
 
+/*
+ * Admin alerts reuse the same "notifications" collection under a sentinel
+ * userId. Real user ids come from DocumentID.unique() (random hex), so this
+ * constant can never collide with an actual account. Every read / mark-read
+ * helper below therefore works for admins with no extra storage layer.
+ */
+export const ADMIN_NOTIFICATION_USER_ID = "__admin__";
+
+
 function idFromKey(key: string) {
   return createHash("sha256").update(key).digest("hex").slice(0, 32);
 }
@@ -50,6 +59,28 @@ export async function createNotification(input: NotificationInput) {
       console.error("createNotification failed:", error);
     }
   }
+}
+
+/**
+ * Push an alert to the admin (store owner) inbox. Stored under the
+ * `ADMIN_NOTIFICATION_USER_ID` sentinel so it reuses the exact same
+ * list / mark-read helpers as customer notifications. Never throws.
+ */
+export async function notifyAdmins(input: {
+  type: NotificationType;
+  title: string;
+  message: string;
+  href?: string;
+  dedupeKey: string;
+}) {
+  await createNotification({
+    userId: ADMIN_NOTIFICATION_USER_ID,
+    type: input.type,
+    title: input.title,
+    message: input.message,
+    href: input.href,
+    dedupeKey: input.dedupeKey,
+  });
 }
 
 export async function listUserNotifications(userId: string): Promise<{

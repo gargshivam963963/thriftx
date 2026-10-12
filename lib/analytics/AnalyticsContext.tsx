@@ -74,7 +74,6 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
             enabled: process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "false",
             flushInterval: 5000,
             batchSize: 50,
-            debug: process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "true",
         });
         trackerRef.current = tracker;
         setIsReady(true);
@@ -90,9 +89,6 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
         // Skip tracking if this is localhost, admin route, or admin user
         if (!shouldTrack(isAdminUser, pathname)) {
-            if (process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "true") {
-                console.log(`[Analytics] Skipping page view (filtered): ${pathname}`);
-            }
             return;
         }
 

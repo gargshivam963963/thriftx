@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Search,
@@ -119,11 +120,29 @@ function getStatusBadge(status: string) {
 
 interface ParsedProduct {
     id: string;
+    slug?: string;
     title: string;
     price: number;
     size?: string;
+    image?: string;
     images?: string[];
     primaryImage?: string;
+    quantity?: number;
+}
+
+/** Parses the JSON product snapshot stored on an order. Never throws. */
+function parseOrderProducts(raw: string | undefined): ParsedProduct[] {
+    if (!raw) return [];
+    try {
+        const parsed: unknown = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(
+            (item): item is ParsedProduct =>
+                typeof item === "object" && item !== null && "title" in item,
+        );
+    } catch {
+        return [];
+    }
 }
 
 export default function AdminOrdersPage() {
@@ -341,6 +360,9 @@ export default function AdminOrdersPage() {
                                     Customer
                                 </th>
                                 <th className="px-4 py-3.5 text-caption text-muted-foreground">
+                                    Products
+                                </th>
+                                <th className="px-4 py-3.5 text-caption text-muted-foreground">
                                     Contact
                                 </th>
                                 <th className="px-4 py-3.5 text-caption text-muted-foreground">
@@ -361,7 +383,7 @@ export default function AdminOrdersPage() {
                             {loading ? (
                                 Array.from({ length: 6 }).map((_, i) => (
                                     <tr key={i}>
-                                        {Array.from({ length: 7 }).map((_, j) => (
+                                        {Array.from({ length: 8 }).map((_, j) => (
                                             <td key={j} className="px-4 py-4">
                                                 <div className="skeleton-glass h-4 w-full rounded-lg" />
                                             </td>
@@ -370,7 +392,7 @@ export default function AdminOrdersPage() {
                                 ))
                             ) : filteredOrders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-16 text-center">
+                                    <td colSpan={8} className="px-4 py-16 text-center">
                                         <ShoppingCart size={36} className="mx-auto mb-3 text-muted-foreground/60" />
                                         <p className="text-base font-semibold text-foreground">
                                             {search || statusFilter !== "all"
@@ -439,6 +461,74 @@ export default function AdminOrdersPage() {
                                                         )}
                                                     </div>
                                                 </div>
+                                            </td>
+
+                                            {/* Products — thumbnails + direct links */}
+                                            <td className="px-4 py-3.5">
+                                                {(() => {
+                                                    const items = parseOrderProducts(order.products);
+                                                    if (!items.length) {
+                                                        return (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                —
+                                                            </span>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex -space-x-2">
+                                                                {items.slice(0, 3).map((item, idx) => {
+                                                                    const src =
+                                                                        item.image ||
+                                                                        item.primaryImage ||
+                                                                        item.images?.[0] ||
+                                                                        "/images/placeholder.jpg";
+                                                                    const inner = (
+                                                                        <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border-2 border-card bg-muted">
+                                                                            <PremiumImage
+                                                                                src={src}
+                                                                                alt={item.title}
+                                                                                fill
+                                                                                sizes="36px"
+                                                                                className="object-cover"
+                                                                                fallbackSrc="/images/placeholder.jpg"
+                                                                            />
+                                                                        </div>
+                                                                    );
+                                                                    return item.slug ? (
+                                                                        <Link
+                                                                            key={item.id || idx}
+                                                                            href={`/product/${item.slug}`}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            title={item.title}
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                            className="transition-transform hover:z-10 hover:scale-110"
+                                                                        >
+                                                                            {inner}
+                                                                        </Link>
+                                                                    ) : (
+                                                                        <div key={item.id || idx} title={item.title}>
+                                                                            {inner}
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <p className="truncate text-xs font-semibold text-foreground max-w-[140px]">
+                                                                    {items[0].title}
+                                                                </p>
+                                                                <p className="text-2xs text-muted-foreground">
+                                                                    {items.length > 1
+                                                                        ? `+${items.length - 1} more item${items.length > 2 ? "s" : ""}`
+                                                                        : items[0].size
+                                                                            ? `Size: ${items[0].size}`
+                                                                            : "1 item"}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </td>
 
                                             {/* Contact */}
@@ -673,10 +763,10 @@ export default function AdminOrdersPage() {
                                                         className="flex items-center justify-between rounded-lg bg-card p-2.5 border border-border"
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            {(item.primaryImage || item.images?.[0]) && (
+                                                            {(item.image || item.primaryImage || item.images?.[0]) && (
                                                                 <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-border">
                                                                     <PremiumImage
-                                                                        src={item.primaryImage || item.images?.[0] || "/images/placeholder.jpg"}
+                                                                        src={item.image || item.primaryImage || item.images?.[0] || "/images/placeholder.jpg"}
                                                                         alt={item.title}
                                                                         fill
                                                                         sizes="40px"
@@ -686,9 +776,21 @@ export default function AdminOrdersPage() {
                                                                 </div>
                                                             )}
                                                             <div>
-                                                                <p className="text-xs font-semibold text-foreground line-clamp-1">
-                                                                    {item.title}
-                                                                </p>
+                                                                {item.slug ? (
+                                                                    <Link
+                                                                        href={`/product/${item.slug}`}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        className="text-xs font-semibold text-foreground line-clamp-1 hover:text-primary hover:underline"
+                                                                    >
+                                                                        {item.title}
+                                                                    </Link>
+                                                                ) : (
+                                                                    <p className="text-xs font-semibold text-foreground line-clamp-1">
+                                                                        {item.title}
+                                                                    </p>
+                                                                )}
                                                                 {item.size && (
                                                                     <p className="text-2xs text-muted-foreground">
                                                                         Size: {item.size}
@@ -711,7 +813,7 @@ export default function AdminOrdersPage() {
                                     <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3.5">
                                         <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
                                             <Truck size={13} />
-                                            <span>Shipment Status (Shiprocket)</span>
+                                            <span>Courier &amp; Tracking</span>
                                         </div>
                                         <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                                             <div>

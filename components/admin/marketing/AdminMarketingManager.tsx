@@ -16,6 +16,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import CouponEditorModal from "@/components/admin/marketing/CouponEditorModal";
+import { Switch } from "@/components/ui/Switch";
 import { cn } from "@/lib/utils";
 import type { Coupon } from "@/lib/marketing/types";
 
@@ -427,25 +428,11 @@ function Field({
                     {field.label}
                 </span>
 
-                <button
-                    type="button"
-                    role="switch"
-                    aria-checked={Boolean(value)}
-                    onClick={() => onChange(!value)}
-                    className={cn(
-                        "relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                        value ? "bg-foreground" : "bg-muted",
-                    )}
-                >
-                    <span
-                        className={cn(
-                            "absolute top-0.5 h-5 w-5 rounded-full bg-background shadow-sm transition-transform",
-                            value
-                                ? "translate-x-5"
-                                : "translate-x-0.5",
-                        )}
-                    />
-                </button>
+                <Switch
+                    checked={Boolean(value)}
+                    onChange={(next) => onChange(next)}
+                    aria-label={field.label}
+                />
             </div>
         );
     }

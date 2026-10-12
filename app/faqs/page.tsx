@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { ContentPage } from "@/components/content/ContentPage";
 import { contactInfo } from "@/lib/contact";
+import { escapeJsonLd } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = {
     title: "FAQs",
@@ -11,7 +13,14 @@ export const metadata: Metadata = {
     alternates: { canonical: "/faqs" },
 };
 
-const faqs = [
+type Faq = {
+    question: string;
+    answer: ReactNode;
+    /** Plain-text variant used for FAQPage JSON-LD when `answer` holds JSX. */
+    answerText?: string;
+};
+
+const faqs: Faq[] = [
     {
         question: "Are THRIFTX items new?",
         answer:
@@ -70,8 +79,32 @@ const faqs = [
                 . Support hours are Monday–Saturday, 10:00 AM–7:00 PM IST.
             </>
         ),
+        // Plain-text twin of the JSX answer above, used only for the
+        // FAQPage JSON-LD block (structured data cannot contain markup).
+        answerText: `Email ${contactInfo.email} or message us on WhatsApp at ${contactInfo.phone}. Support hours are Monday–Saturday, 10:00 AM–7:00 PM IST.`,
     },
 ];
+
+/**
+ * FAQPage structured data — eligible for Google's rich results, which surface
+ * these Q&As directly on the search page (a major long-tail ranking lever).
+ */
+const faqJsonLd = escapeJsonLd(
+    JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.question,
+            acceptedAnswer: {
+                "@type": "Answer",
+                text:
+                    faq.answerText ??
+                    (typeof faq.answer === "string" ? faq.answer : ""),
+            },
+        })),
+    }),
+);
 
 export default function FaqsPage() {
     return (
@@ -80,6 +113,10 @@ export default function FaqsPage() {
             title="Frequently asked questions"
             description="Quick answers to common questions about unique finds, orders, delivery, and returns."
         >
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: faqJsonLd }}
+            />
             <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
                 {faqs.map((faq) => (
                     <details key={faq.question} className="group px-5 py-4 sm:px-6">

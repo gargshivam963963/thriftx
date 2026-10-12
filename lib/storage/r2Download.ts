@@ -43,7 +43,32 @@ export async function createDownloadUrl(key: string): Promise<string> {
   return url;
 }
 
-export async function createProductImageUrl(value: string): Promise<string> {
+/**
+ * Normalize a stored image reference back to its durable R2 object key.
+ *
+ * Older admin saves persisted the FULL presigned URL
+ * (`https://<account>.r2.cloudflarestorage.com/products/...?X-Amz-...`) into
+ * `ProductImage.url` instead of the bare `products/...` key. Presignatures
+ * expire after 24 h, after which R2 answers every request with 403 — so the
+ * image (and every `/_next/image` derivative of it) breaks permanently.
+ *
+ * Extracting the pathname recovers the raw key so it can be re-signed fresh on
+ * each read. Non-R2 URLs and local paths (`/images/...`) are returned as-is.
+ */
+export function normalizeProductImageKey(value: string): string {
+  if (!/^https?:\/\//i.test(value)) return value;
+
+  try {
+    const pathname = new URL(value).pathname.replace(/^\/+/, "");
+    return pathname.startsWith("products/") ? pathname : value;
+  } catch {
+    return value;
+  }
+}
+
+export async function createProductImageUrl(rawValue: string): Promise<string> {
+  const value = normalizeProductImageKey(rawValue);
+
   if (!value || value.startsWith("/") || /^https?:\/\//i.test(value)) {
     return value;
   }

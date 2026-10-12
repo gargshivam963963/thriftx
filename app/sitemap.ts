@@ -1,10 +1,15 @@
 import { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/seo";
 import { getProductsForSitemap } from "@/lib/services/products";
+import { getCategories, getGenders } from "@/lib/categories";
 import { blogPosts } from "@/lib/content/blog";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await getProductsForSitemap();
+  const [genders, categories] = await Promise.all([
+    getGenders(),
+    getCategories(),
+  ]);
   const staticRoutes = [
     { path: "/about", priority: 0.5 },
     { path: "/contact", priority: 0.5 },
@@ -37,6 +42,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly",
     priority: 0.6,
   }));
+  // Gender and category listings are indexable landing pages
+  // (`/shop/men`, `/shop/men/shirts`, ...) — include them so crawlers
+  // discover every browse path, not just the bare `/shop`.
+  const genderUrls: MetadataRoute.Sitemap = genders.map((gender) => ({
+    url: `${siteConfig.url}/shop/${gender.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+  const categoryUrls: MetadataRoute.Sitemap = categories
+    .filter((category) => category.active)
+    .map((category) => ({
+      url: `${siteConfig.url}/shop/${category.gender.toLowerCase()}/${category.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    }));
 
   return [
     {
@@ -51,6 +73,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.9,
     },
+    ...genderUrls,
+    ...categoryUrls,
     ...publicPageUrls,
     ...blogUrls,
     ...productUrls,

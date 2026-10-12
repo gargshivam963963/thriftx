@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
@@ -66,17 +66,22 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
     title: siteConfig.title,
     description: siteConfig.description,
+    images: [
+      {
+        url: "/icon.jpg",
+        width: 1254,
+        height: 1254,
+        alt: `${siteConfig.name} — ${siteConfig.title}`,
+      },
+    ],
   },
 
   twitter: {
     card: "summary_large_image",
+    site: siteConfig.twitter,
     title: siteConfig.title,
     description: siteConfig.description,
-  },
-
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
+    images: ["/icon.jpg"],
   },
 
   icons: {
@@ -89,6 +94,16 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     statusBarStyle: "black-translucent",
   },
+};
+
+/**
+ * Viewport lives in its own export — Next.js no longer accepts `viewport`
+ * inside the `metadata` export (it logs an "Unsupported metadata viewport"
+ * warning and ignores it there).
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 const organizationJsonLd = {

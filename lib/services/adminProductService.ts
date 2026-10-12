@@ -1,4 +1,5 @@
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+import { normalizeProductImageKey } from "@/lib/storage/r2Download";
 
 /**
  * AdminProductService — server-only product CRUD backed by Prisma.
@@ -229,6 +230,11 @@ export async function updateProduct(
     if (images.length !== imageInput.length) {
       throw new Error("Image references must be strings");
     }
+    // The edit form round-trips whatever GET returned, and GET returns
+    // presigned URLs. Persisting those would freeze a 24 h signature into the
+    // DB (the image then 403s forever), so collapse every R2 URL back to its
+    // raw `products/...` key before validation and storage.
+    images = images.map(normalizeProductImageKey);
   }
   if (images && new Set(images).size !== images.length) {
     throw new Error("Duplicate product image references are not allowed");

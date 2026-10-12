@@ -657,7 +657,7 @@ export default function AdminProductsPage() {
                 </motion.div>
             ) : viewMode === "grid" ? (
                 <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {paginatedProducts.map((product) => (
+                    {paginatedProducts.map((product, index) => (
                         <motion.div
                             key={product.$id}
                             initial={{ opacity: 0, y: 10 }}
@@ -678,6 +678,7 @@ export default function AdminProductsPage() {
                                         src={product.primaryImage}
                                         alt={product.title}
                                         fill
+                                        priority={index === 0}
                                         sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 28vw, (min-width: 640px) 45vw, 92vw"
                                         quality={70}
                                         className="object-cover object-center transition duration-300 group-hover:scale-105"
@@ -812,7 +813,7 @@ export default function AdminProductsPage() {
             ) : (
                 /* List View */
                 <div className="space-y-2">
-                    {paginatedProducts.map((product) => (
+                    {paginatedProducts.map((product, index) => (
                         <motion.div
                             key={product.$id}
                             initial={{ opacity: 0 }}
@@ -832,6 +833,7 @@ export default function AdminProductsPage() {
                                         src={product.primaryImage}
                                         alt={product.title}
                                         fill
+                                        priority={index === 0}
                                         sizes="(min-width: 640px) 96px, 80px"
                                         quality={70}
                                         className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"

@@ -19,7 +19,7 @@ export interface PasswordFieldProps
  * Input with built-in show/hide toggle and optional lock icon.
  */
 const PasswordField = React.forwardRef<HTMLInputElement, PasswordFieldProps>(
-    ({ className, error, showLock = true, ...props }, ref) => {
+    ({ className, error, showLock = false, ...props }, ref) => {
         const [visible, setVisible] = React.useState(false);
 
         return (

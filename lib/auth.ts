@@ -34,11 +34,24 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const resendApiKey = process.env.RESEND_API_KEY;
 const emailFrom = process.env.EMAIL_FROM;
 
+/**
+ * Whether transactional auth emails (verification / password reset) can
+ * actually be delivered. When email delivery is NOT configured (e.g. local
+ * development without Resend), we must NOT require email verification —
+ * otherwise every new account is created but can never sign in. In that case
+ * Better Auth signs the user in immediately after sign-up instead.
+ */
+const emailDeliveryConfigured = Boolean(resendApiKey && emailFrom);
+
 async function sendAuthEmail(to: string, subject: string, url: string) {
   if (!resendApiKey || !emailFrom) {
-    throw new Error(
-      "Email delivery is unavailable. Configure RESEND_API_KEY and EMAIL_FROM.",
+    // Don't crash the auth flow when email delivery isn't configured. Sign-up
+    // and sign-in still succeed; the email simply isn't sent.
+    console.warn(
+      `[auth] Email delivery is not configured. Skipping "${subject}" email to ${to}. ` +
+        "Set RESEND_API_KEY and EMAIL_FROM to enable it.",
     );
+    return;
   }
 
   const response = await fetch("https://api.resend.com/emails", {
@@ -99,15 +112,18 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    // Only enforce verification when we can actually deliver the email.
+    // Without this, dev sign-ups (no Resend configured) create accounts that
+    // can never sign in.
+    requireEmailVerification: emailDeliveryConfigured,
     minPasswordLength: 8,
     sendResetPassword: async ({ user, url }) => {
       await sendAuthEmail(user.email, "Reset your THRIFTX password", url);
     },
   },
   emailVerification: {
-    sendOnSignUp: true,
-    sendOnSignIn: true,
+    sendOnSignUp: emailDeliveryConfigured,
+    sendOnSignIn: emailDeliveryConfigured,
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }) => {
       await sendAuthEmail(user.email, "Verify your THRIFTX email", url);

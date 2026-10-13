@@ -28,6 +28,7 @@ import {
     staggerDelay,
     transitions,
 } from "@/components/animations/Motion";
+import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
 
 interface ShareButtonProps {
     title: string;
@@ -41,6 +42,7 @@ export default function ShareButton({
     const [open, setOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const [nativeSharing, setNativeSharing] = useState(false);
+    const { track } = useAnalytics();
 
     const ref = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
@@ -115,6 +117,7 @@ export default function ShareButton({
 
             setCopied(true);
             toast.success("Product link copied");
+            track("share", "Share Product", { method: "copy_link", title });
 
             copyTimeoutRef.current = setTimeout(() => {
                 setCopied(false);
@@ -142,6 +145,7 @@ export default function ShareButton({
                 url,
             });
 
+            track("share", "Share Product", { method: "native", title });
             setOpen(false);
         } catch (error) {
             if (
@@ -168,6 +172,7 @@ export default function ShareButton({
                 )}&body=${encodeURIComponent(message)}`;
 
         window.open(href, "_blank", "noopener,noreferrer");
+        track("share", "Share Product", { method: kind, title });
         setOpen(false);
     }
 

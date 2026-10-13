@@ -204,7 +204,14 @@ export function isAdminPath(pathname?: string): boolean {
  * @param pathname - Optional explicit pathname (defaults to current page).
  */
 export function shouldTrack(isAdmin?: boolean, pathname?: string): boolean {
-  if (isLocalhost()) return false;
+  // Localhost/dev traffic is excluded so your own testing never pollutes the
+  // dashboard — unless you explicitly opt in with
+  // NEXT_PUBLIC_ANALYTICS_TRACK_LOCALHOST=true (used to verify the pipeline
+  // locally before deploying). Admin *users* are always excluded; to generate
+  // test events on localhost, browse in a normal (non-admin) window.
+  const trackLocalhost =
+    process.env.NEXT_PUBLIC_ANALYTICS_TRACK_LOCALHOST === "true";
+  if (isLocalhost() && !trackLocalhost) return false;
   if (isAdminPath(pathname)) return false;
   if (isAdmin) return false;
   return true;

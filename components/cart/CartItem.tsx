@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import type { CartProduct } from "@/lib/services/cartProducts";
 import ConfirmPopover from "@/components/ui/ConfirmPopover";
 import { Button } from "@/components/ui/button";
+import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
 
 interface CartItemProps {
     item: CartProduct;
@@ -23,6 +24,7 @@ export default function CartItem({ item, onRemove }: CartItemProps) {
     const [removing, setRemoving] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageFailed, setImageFailed] = useState(false);
+    const { trackRemoveFromCart } = useAnalytics();
 
     const retailPrice =
         item.retailPrice && item.retailPrice > item.price
@@ -36,6 +38,14 @@ export default function CartItem({ item, onRemove }: CartItemProps) {
 
         try {
             await onRemove(item.cartId);
+            // Fires only after the cart actually updated — the funnel's
+            // cart→checkout drop-off is meaningless without removals.
+            trackRemoveFromCart(item.id, {
+                title: item.title,
+                price: item.price,
+                brand: item.brand || "",
+                category: item.category || "",
+            });
             setDeleteOpen(false);
         } catch (error) {
             console.error("Cart item removal failed:", error);

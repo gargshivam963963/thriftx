@@ -5,6 +5,7 @@ import {
   DocumentQuery,
   documentStore,
 } from "@/lib/document-store";
+import { adminAuthErrorResponse } from "@/lib/auth-guard";
 import type { TrafficSource } from "@/lib/analytics/types";
 
 interface AnalyticsEventRecord {
@@ -63,6 +64,11 @@ async function fetchAnalyticsSessions() {
 }
 
 export async function GET(request: NextRequest) {
+  // Store analytics are private business data — admin session required.
+  // (Ingestion via POST /api/analytics/batch stays public by design.)
+  const authError = await adminAuthErrorResponse();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const range = searchParams.get("range") || "7d";
@@ -192,7 +198,47 @@ export async function GET(request: NextRequest) {
 
     // ─── Action: Traffic Sources ────────────────────────────
     if (action === "sources") {
-      const sourcesMap = new Map<string, number>();
+      // "Visits" = unique sessions attributed to each source (deduped via the
+      // session's first page_view in range) — counting raw events would let
+      // one busy session inflate a source. UTM parameters are checked before
+      // the referrer because campaign links (Instagram ads, WhatsApp blasts)
+      // can arrive with no referrer at all.
+      const host = request.headers.get("host") || "";
+
+      const resolveSource = (event: AnalyticsEventRecord): string => {
+        const properties = parseProperties(event.properties);
+        const utmSource = String(properties.utm_source || "")
+          .toLowerCase()
+          .trim();
+
+        const match = (value: string): string | null => {
+          if (value.includes("instagram")) return "instagram";
+          if (value.includes("google")) return "google";
+          if (value.includes("facebook")) return "facebook";
+          if (value.includes("whatsapp")) return "whatsapp";
+          if (value.includes("twitter") || value.includes("x.com"))
+            return "twitter";
+          if (value.includes("youtube")) return "youtube";
+          if (value.includes("mail")) return "email";
+          return null;
+        };
+
+        if (utmSource) {
+          // Known networks map onto the chart's fixed palette; anything else
+          // (e.g. utm_source=bitly, newsletter) keeps its raw campaign label.
+          return match(utmSource) ?? utmSource;
+        }
+
+        const referrer = (event.referrer || "").toLowerCase();
+        if (!referrer) return "direct";
+        const fromReferrer = match(referrer);
+        if (fromReferrer) return fromReferrer;
+        return referrer.includes(host) ? "direct" : "referral";
+      };
+
+      // sessionId → source, first page_view in range wins.
+      const sessionSources = new Map<string, string>();
+      const sourcesMap = new Map<string, Set<string>>();
 
       try {
         {
@@ -201,41 +247,37 @@ export async function GET(request: NextRequest) {
           for (const event of eventsResponse.documents) {
             const ts = event.timestamp || 0;
             if (ts < startTimestamp || ts > endTimestamp) continue;
+            if (event.eventType !== "page_view") continue;
 
-            const properties = parseProperties(event.properties);
-            const referrer = event.referrer || "direct";
-            let source = "direct";
+            const sessionId = event.sessionId || `anon-${ts}`;
+            if (sessionSources.has(sessionId)) continue;
 
-            if (referrer.includes("instagram")) source = "instagram";
-            else if (referrer.includes("google")) source = "google";
-            else if (referrer.includes("facebook")) source = "facebook";
-            else if (referrer.includes("whatsapp")) source = "whatsapp";
-            else if (referrer.includes("twitter") || referrer.includes("x.com"))
-              source = "twitter";
-            else if (referrer.includes("youtube")) source = "youtube";
-            else if (
-              referrer &&
-              !referrer.includes(request.headers.get("host") || "")
-            )
-              source = "referral";
+            const source = resolveSource(event);
+            sessionSources.set(sessionId, source);
 
-            sourcesMap.set(source, (sourcesMap.get(source) || 0) + 1);
+            const sessions = sourcesMap.get(source) ?? new Set<string>();
+            sessions.add(sessionId);
+            sourcesMap.set(source, sessions);
           }
         }
       } catch (err) {
         console.warn("Failed to fetch traffic sources:", err);
       }
 
-      const total = Array.from(sourcesMap.values()).reduce((a, b) => a + b, 0);
       const sources = Array.from(sourcesMap.entries())
-        .map(([name, count]) => ({
+        .map(([name, sessions]) => ({
           source: name as TrafficSource,
-          visits: count,
-          percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+          visits: sessions.size,
         }))
         .sort((a, b) => b.visits - a.visits);
 
-      return NextResponse.json({ success: true, data: sources });
+      const total = sources.reduce((sum, entry) => sum + entry.visits, 0);
+      const withPercentage = sources.map((entry) => ({
+        ...entry,
+        percentage: total > 0 ? Math.round((entry.visits / total) * 100) : 0,
+      }));
+
+      return NextResponse.json({ success: true, data: withPercentage });
     }
 
     // ─── Action: Top Pages ──────────────────────────────────

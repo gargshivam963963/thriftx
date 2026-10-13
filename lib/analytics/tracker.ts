@@ -1,5 +1,11 @@
 import type { EventType, AnalyticsEvent } from "./types";
-import { getSessionId, detectDevice, getPagePath, getReferrer } from "./utils";
+import {
+  getSessionId,
+  detectDevice,
+  getPagePath,
+  getReferrer,
+  getUTMParams,
+} from "./utils";
 import {
   addToQueue,
   getBatch,
@@ -64,10 +70,30 @@ export function initTracker(options: TrackerOptions): Tracker {
     eventName: string,
     properties: AnalyticsProperties = {},
   ): AnalyticsEvent {
+    // Persist attribution context with every event so campaign clicks
+    // (Instagram ads, WhatsApp blasts, newsletters) stay measurable even
+    // when the referrer is stripped or the visit is same-origin.
+    const utm = getUTMParams();
+    const device = detectDevice();
+
+    const enrichedProperties: AnalyticsProperties = {
+      ...properties,
+      device_type: device.type,
+      ...(utm.source
+        ? {
+            utm_source: utm.source,
+            utm_medium: utm.medium,
+            utm_campaign: utm.campaign,
+            utm_term: utm.term,
+            utm_content: utm.content,
+          }
+        : {}),
+    };
+
     const event: AnalyticsEvent = {
       eventType,
       eventName,
-      properties,
+      properties: enrichedProperties,
       page: getPagePath(),
       referrer: getReferrer(),
       sessionId: getSessionId(),

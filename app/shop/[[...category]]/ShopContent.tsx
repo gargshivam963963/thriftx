@@ -33,6 +33,7 @@ import FilterAccordion from "@/components/ui/FilterAccordion";
 import FilterChip from "@/components/ui/FilterChip";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import ToolbarSearch from "@/components/ui/ToolbarSearch";
+import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
 import ProductCardGrid from "@/components/shop/ProductCardGrid";
 import ProductCardList from "@/components/shop/ProductCardList";
 import ProductCardSkeleton from "@/components/shop/ProductCardSkeleton";
@@ -500,6 +501,25 @@ export default function ShopContent({
         },
         [searchParams, routerPusher],
     );
+
+    // Report committed shop searches (and their result counts — the tracker
+    // emits `search_no_results` automatically when total is 0). Fires once
+    // per unique query, after the server has returned the filtered total.
+    const { trackSearch } = useAnalytics();
+    const lastTrackedSearchRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        const query = committedSearch.trim();
+        if (!query) {
+            // Clearing the search re-arms tracking, so searching the same
+            // term twice in one session counts as two searches.
+            lastTrackedSearchRef.current = null;
+            return;
+        }
+        if (lastTrackedSearchRef.current === query) return;
+        lastTrackedSearchRef.current = query;
+        trackSearch(query, total);
+    }, [committedSearch, total, trackSearch]);
 
     useEffect(() => {
         // Keep the input in sync when the URL changes underneath us

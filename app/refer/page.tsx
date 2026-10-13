@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/AuthContext";
+import { useAnalytics } from "@/lib/analytics/AnalyticsContext";
 import { useEffect, useState, useCallback } from "react";
 import { Loader2, Copy, Check, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ interface WalletInfo {
 
 export default function ReferPage() {
   const { user, loading } = useAuth();
+  const { track } = useAnalytics();
 
   const [referralCode, setReferralCode] = useState("");
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -69,8 +71,9 @@ export default function ReferPage() {
     fetchReferralData();
   }, [user, loading, fetchReferralData]);
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, kind: "code" | "link") => {
     navigator.clipboard.writeText(text);
+    track("referral_click", "Referral Copy", { method: kind });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -128,7 +131,7 @@ export default function ReferPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => copyToClipboard(referralCode)}
+                  onClick={() => copyToClipboard(referralCode, "code")}
                   className="flex items-center gap-2"
                 >
                   {copied ? (
@@ -158,7 +161,7 @@ export default function ReferPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => copyToClipboard(shareLink)}
+                      onClick={() => copyToClipboard(shareLink, "link")}
                       className="flex items-center gap-2"
                     >
                       <Copy size={16} />

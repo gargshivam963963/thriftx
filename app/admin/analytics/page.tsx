@@ -239,6 +239,9 @@ export default function AdminAnalyticsPage() {
                                     ["Add to Cart", overview?.addToCarts || 0],
                                     ["Purchases", overview?.purchases || 0],
                                     ["Sessions", overview?.totalSessions || 0],
+                                    ["Total Users", overview?.totalUsers || 0],
+                                    ["Online Now", overview?.activeUsers || 0],
+                                    ["New Users", overview?.newUsers || 0],
                                     ["Conversion Rate", `${overview?.conversionRate || 0}%`],
                                 ]
                                     .map((r) => r.join(","))

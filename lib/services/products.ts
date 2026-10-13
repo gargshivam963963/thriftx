@@ -1,5 +1,4 @@
 import { cache } from "react";
-import { unstable_cache } from "next/cache";
 import { productRepository } from "@/lib/repositories";
 
 export interface Product {
@@ -110,59 +109,53 @@ export async function importProducts(
 ) {
   return productRepository.importProducts(initialProducts);
 }
-// Product reads are cached for a short time (60s) and tagged so admin writes
-// can revalidate them immediately via `revalidateTag("products")`. Different
-// filters/ids produce distinct cache entries (args are part of the cache key).
-// NOTE: every unstable_cache entry needs a UNIQUE static key — reusing the
-// same key across entries makes Next treat them as ONE cache slot, so a count
-// read could serve rows from a products read (or vice versa) and the grid
-// would show a stale total with an empty/mismatched list.
-const PRODUCT_CACHE = { tags: ["products"], revalidate: 60 };
-
-export const getProducts = unstable_cache(
+// Product reads are memoized PER-REQUEST with React `cache()` — not with
+// Next's persistent `unstable_cache` (Data Cache).
+//
+// Why: the persistent Data Cache served STALE, poisoned entries in production
+// — `countProducts` and `getProducts` are two separate cache slots, and one
+// returned a cached `0`/`[]` while the other returned fresh data. That produced
+// the recurring live symptom "80 pieces" header + "No items found" grid (and the
+// mirror-image bug on the API: rows fine but total=0). The bad entries did NOT
+// self-heal within the 60s revalidate window. React `cache()` dedupes repeated
+// calls WITHIN one render (so count + rows still share a single request's work
+// where applicable) but always reads live DB data, so the count and the rows can
+// never disagree. With ~80 rows this is cheap. `revalidateTag("products")` in
+// the admin write paths is now a harmless no-op but left in place.
+export const getProducts = cache(
   async (filters: ProductFilters = {}): Promise<Product[]> => {
     return productRepository.getProductsByFilters(filters);
   },
-  ["products-by-filters"],
-  PRODUCT_CACHE,
 );
 
 /**
  * Total number of products matching a filter set — the `y` in "showing x of y".
  *
- * Cached on the same `products` tag as {@link getProducts} so an admin write
- * revalidates the counts together with the rows they describe.
+ * Reads live on every request (see {@link getProducts}) so the count always
+ * agrees with the rows the grid renders.
  */
-export const countProducts = unstable_cache(
+export const countProducts = cache(
   async (filters: ProductFilters = {}): Promise<number> => {
     return productRepository.countProductsByFilters(filters);
   },
-  ["products-count"],
-  PRODUCT_CACHE,
 );
 
-export const getProductById = unstable_cache(
+export const getProductById = cache(
   async (id: string): Promise<Product | null> => {
     return productRepository.getProductById(id);
   },
-  ["product-by-id"],
-  PRODUCT_CACHE,
 );
 
-export const getProductsByIds = unstable_cache(
+export const getProductsByIds = cache(
   async (ids: string[]): Promise<Product[]> => {
     return productRepository.getProductsByIds(ids);
   },
-  ["products-by-ids"],
-  PRODUCT_CACHE,
 );
 
-export const getProductBySlug = unstable_cache(
+export const getProductBySlug = cache(
   async (slug: string): Promise<Product | null> => {
     return productRepository.getProductBySlug(slug);
   },
-  ["product-by-slug"],
-  PRODUCT_CACHE,
 );
 
 export const getSimilarProducts = cache(
@@ -171,12 +164,10 @@ export const getSimilarProducts = cache(
   },
 );
 
-export const getBrands = unstable_cache(
+export const getBrands = cache(
   async (): Promise<string[]> => {
     return productRepository.getBrands();
   },
-  ["brands"],
-  { revalidate: 600 },
 );
 
 export const getProductsForSitemap = cache(async () => {

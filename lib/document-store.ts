@@ -30,6 +30,8 @@ type DocumentPayload = Record<string, unknown>;
 type Query =
   | { kind: "equal"; attribute: string; values: unknown[] }
   | { kind: "order"; attribute: string; direction: "asc" | "desc" }
+  | { kind: "greaterThanOrEqual"; attribute: string; value: number }
+  | { kind: "lessThanOrEqual"; attribute: string; value: number }
   | { kind: "limit"; value: number };
 
 export interface StoredDocument extends DocumentPayload {
@@ -51,6 +53,12 @@ export const DocumentQuery = {
   },
   orderDesc(attribute: string): Query {
     return { kind: "order", attribute, direction: "desc" };
+  },
+  greaterThanOrEqual(attribute: string, value: number): Query {
+    return { kind: "greaterThanOrEqual", attribute, value };
+  },
+  lessThanOrEqual(attribute: string, value: number): Query {
+    return { kind: "lessThanOrEqual", attribute, value };
   },
   limit(value: number): Query {
     return { kind: "limit", value };
@@ -116,38 +124,96 @@ export const documentStore = {
     const db = getPrisma();
     const databaseFilters: Prisma.StoredDocumentWhereInput[] = [];
     const pushedEqualities = new Set<Query>();
+    const orderBy: Prisma.StoredDocumentOrderByWithRelationInput[] = [];
 
     for (const query of queries) {
-      if (
-        query.kind !== "equal" ||
-        query.values.length === 0 ||
-        query.attribute.startsWith("$") ||
-        !query.values.every(
-          (value) =>
-            typeof value === "string" ||
-            typeof value === "number" ||
-            typeof value === "boolean",
-        )
-      ) {
-        continue;
-      }
+      if (query.kind === "equal") {
+        if (
+          query.values.length === 0 ||
+          query.attribute.startsWith("$") ||
+          !query.values.every(
+            (value) =>
+              typeof value === "string" ||
+              typeof value === "number" ||
+              typeof value === "boolean",
+          )
+        ) {
+          continue;
+        }
 
-      databaseFilters.push({
-        OR: query.values.map((value) => ({
-          data: {
-            path: [query.attribute],
-            equals: value as Prisma.InputJsonValue,
-          },
-        })),
-      });
-      pushedEqualities.add(query);
+        databaseFilters.push({
+          OR: query.values.map((value) => ({
+            data: {
+              path: [query.attribute],
+              equals: value as Prisma.InputJsonValue,
+            },
+          })),
+        });
+        pushedEqualities.add(query);
+      } else if (
+        query.kind === "greaterThanOrEqual" ||
+        query.kind === "lessThanOrEqual"
+      ) {
+        // Range filter. `value` is epoch milliseconds.
+        // - Real DateTime columns ($createdAt/$updatedAt) are filtered in the
+        //   database (type-safe + covered by the [collectionKey, createdAt]
+        //   index). Preferred for time-series collections like analytics.
+        // - Other (JSON) attributes fall back to a numeric JSON-path filter.
+        if (query.attribute === "$createdAt") {
+          databaseFilters.push(
+            query.kind === "greaterThanOrEqual"
+              ? { createdAt: { gte: new Date(query.value) } }
+              : { createdAt: { lte: new Date(query.value) } },
+          );
+        } else if (query.attribute === "$updatedAt") {
+          databaseFilters.push(
+            query.kind === "greaterThanOrEqual"
+              ? { updatedAt: { gte: new Date(query.value) } }
+              : { updatedAt: { lte: new Date(query.value) } },
+          );
+        } else if (
+          !query.attribute.startsWith("$") &&
+          typeof query.value === "number"
+        ) {
+          databaseFilters.push({
+            data: {
+              path: [query.attribute],
+              ...(query.kind === "greaterThanOrEqual"
+                ? { gte: query.value }
+                : { lte: query.value }),
+            },
+          } as Prisma.StoredDocumentWhereInput);
+        }
+      } else if (query.kind === "order") {
+        // Order real columns in the database; JSON-attribute ordering still
+        // happens in memory below.
+        if (query.attribute === "$createdAt") {
+          orderBy.push({ createdAt: query.direction });
+        } else if (query.attribute === "$updatedAt") {
+          orderBy.push({ updatedAt: query.direction });
+        } else if (query.attribute === "$id") {
+          orderBy.push({ id: query.direction });
+        }
+      }
     }
+
+    const dbOrdered = orderBy.length > 0;
+    const limitQuery = queries.find((query) => query.kind === "limit");
+    // Only push LIMIT to the database when we also ordered in the database —
+    // otherwise "first N" would be arbitrary. Without a DB order we keep the
+    // original behaviour (sort/slice in memory).
+    const useDbLimit =
+      dbOrdered && limitQuery?.kind === "limit"
+        ? Math.max(0, limitQuery.value)
+        : undefined;
 
     const rows = await db.storedDocument.findMany({
       where: {
         collectionKey,
         ...(databaseFilters.length > 0 ? { AND: databaseFilters } : {}),
       },
+      ...(dbOrdered ? { orderBy } : {}),
+      ...(useDbLimit !== undefined ? { take: useDbLimit } : {}),
     });
     let documents = rows.map(toDocument);
 
@@ -160,6 +226,14 @@ export const documentStore = {
           ),
         );
       } else if (query.kind === "order") {
+        // Skip attributes already ordered in the database.
+        if (
+          query.attribute === "$createdAt" ||
+          query.attribute === "$updatedAt" ||
+          query.attribute === "$id"
+        ) {
+          continue;
+        }
         const direction = query.direction === "asc" ? 1 : -1;
         documents.sort(
           (left, right) =>
@@ -173,8 +247,7 @@ export const documentStore = {
     }
 
     const total = documents.length;
-    const limitQuery = queries.find((query) => query.kind === "limit");
-    if (limitQuery?.kind === "limit") {
+    if (limitQuery?.kind === "limit" && useDbLimit === undefined) {
       documents = documents.slice(0, Math.max(0, limitQuery.value));
     }
 

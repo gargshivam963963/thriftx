@@ -6,6 +6,7 @@ import {
   documentStore,
 } from "@/lib/document-store";
 import { adminAuthErrorResponse } from "@/lib/auth-guard";
+import { prisma } from "@/lib/prisma";
 import type { TrafficSource } from "@/lib/analytics/types";
 
 interface AnalyticsEventRecord {
@@ -39,11 +40,16 @@ function parseProperties(
   return value ?? {};
 }
 
-async function fetchAnalyticsEvents() {
+async function fetchAnalyticsEvents(startTimestamp: number, endTimestamp: number) {
   const response = await documentStore.listDocuments(
     DOCUMENT_DATABASE_ID,
     DOCUMENT_COLLECTIONS.analyticsEvents,
-    [DocumentQuery.limit(5000)],
+    [
+      DocumentQuery.greaterThanOrEqual("$createdAt", startTimestamp),
+      DocumentQuery.lessThanOrEqual("$createdAt", endTimestamp),
+      DocumentQuery.orderDesc("$createdAt"),
+      DocumentQuery.limit(50000),
+    ],
   );
   return {
     ...response,
@@ -51,11 +57,19 @@ async function fetchAnalyticsEvents() {
   };
 }
 
-async function fetchAnalyticsSessions() {
+async function fetchAnalyticsSessions(
+  startTimestamp: number,
+  endTimestamp: number,
+) {
   const response = await documentStore.listDocuments(
     DOCUMENT_DATABASE_ID,
     DOCUMENT_COLLECTIONS.analyticsSessions,
-    [DocumentQuery.limit(5000)],
+    [
+      DocumentQuery.greaterThanOrEqual("$createdAt", startTimestamp),
+      DocumentQuery.lessThanOrEqual("$createdAt", endTimestamp),
+      DocumentQuery.orderDesc("$createdAt"),
+      DocumentQuery.limit(50000),
+    ],
   );
   return {
     ...response,
@@ -112,7 +126,7 @@ export async function GET(request: NextRequest) {
       try {
         // Fetch events for the period
         {
-          const eventsResponse = await fetchAnalyticsEvents();
+          const eventsResponse = await fetchAnalyticsEvents(startTimestamp, endTimestamp);
 
           const events = eventsResponse.documents;
           totalEvents = events.length;
@@ -152,7 +166,7 @@ export async function GET(request: NextRequest) {
 
       try {
         {
-          const sessionsResponse = await fetchAnalyticsSessions();
+          const sessionsResponse = await fetchAnalyticsSessions(startTimestamp, endTimestamp);
 
           const sessions = sessionsResponse.documents.filter(
             (s) =>
@@ -163,6 +177,36 @@ export async function GET(request: NextRequest) {
         }
       } catch (err) {
         console.warn("Failed to fetch sessions:", err);
+      }
+
+      // ─── Audience / logged-in users ─────────────────────
+      // Independent of the event pipeline: total registered accounts, how many
+      // hold a currently-valid session ("online now"), and how many signed up
+      // within the selected range. A session counts as "online" while its
+      // expiresAt is in the future (Better Auth slides expiry on activity).
+      let totalUsers = 0;
+      let activeUsers = 0;
+      let newUsers = 0;
+      try {
+        if (prisma) {
+          const now = new Date();
+          const [userTotal, activeSessionUsers, newUserCount] = await Promise.all([
+            prisma.user.count(),
+            prisma.session.findMany({
+              where: { expiresAt: { gt: now } },
+              select: { userId: true },
+              distinct: ["userId"],
+            }),
+            prisma.user.count({
+              where: { createdAt: { gte: startDate, lte: endDate } },
+            }),
+          ]);
+          totalUsers = userTotal;
+          activeUsers = activeSessionUsers.length;
+          newUsers = newUserCount;
+        }
+      } catch (err) {
+        console.warn("Failed to fetch user metrics:", err);
       }
 
       // Calculate derived metrics
@@ -189,6 +233,9 @@ export async function GET(request: NextRequest) {
           addToCarts,
           purchases,
           clicks,
+          totalUsers,
+          activeUsers,
+          newUsers,
           conversionRate: Math.round(conversionRate * 100) / 100,
           cartToPurchase: Math.round(cartToPurchase * 100) / 100,
           bounceRate: Math.min(100, Math.round(bounceRate * 100) / 100),
@@ -242,7 +289,7 @@ export async function GET(request: NextRequest) {
 
       try {
         {
-          const eventsResponse = await fetchAnalyticsEvents();
+          const eventsResponse = await fetchAnalyticsEvents(startTimestamp, endTimestamp);
 
           for (const event of eventsResponse.documents) {
             const ts = event.timestamp || 0;
@@ -289,7 +336,7 @@ export async function GET(request: NextRequest) {
 
       try {
         {
-          const eventsResponse = await fetchAnalyticsEvents();
+          const eventsResponse = await fetchAnalyticsEvents(startTimestamp, endTimestamp);
 
           for (const event of eventsResponse.documents) {
             const ts = event.timestamp || 0;
@@ -332,7 +379,7 @@ export async function GET(request: NextRequest) {
 
       try {
         {
-          const eventsResponse = await fetchAnalyticsEvents();
+          const eventsResponse = await fetchAnalyticsEvents(startTimestamp, endTimestamp);
 
           for (const event of eventsResponse.documents) {
             const ts = event.timestamp || 0;
@@ -387,7 +434,7 @@ export async function GET(request: NextRequest) {
 
       try {
         {
-          const eventsResponse = await fetchAnalyticsEvents();
+          const eventsResponse = await fetchAnalyticsEvents(startTimestamp, endTimestamp);
 
           for (const event of eventsResponse.documents) {
             const ts = event.timestamp || 0;
@@ -447,7 +494,7 @@ export async function GET(request: NextRequest) {
 
       try {
         {
-          const sessionsResponse = await fetchAnalyticsSessions();
+          const sessionsResponse = await fetchAnalyticsSessions(startTimestamp, endTimestamp);
 
           for (const session of sessionsResponse.documents) {
             const ts = session.sessionStart || 0;
@@ -486,7 +533,7 @@ export async function GET(request: NextRequest) {
 
       try {
         {
-          const sessionsResponse = await fetchAnalyticsSessions();
+          const sessionsResponse = await fetchAnalyticsSessions(startTimestamp, endTimestamp);
 
           for (const session of sessionsResponse.documents) {
             const ts = session.sessionStart || 0;
@@ -546,7 +593,7 @@ export async function GET(request: NextRequest) {
 
       try {
         {
-          const eventsResponse = await fetchAnalyticsEvents();
+          const eventsResponse = await fetchAnalyticsEvents(startTimestamp, endTimestamp);
 
           for (const event of eventsResponse.documents) {
             const ts = event.timestamp || 0;

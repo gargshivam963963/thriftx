@@ -120,7 +120,10 @@ export function initTracker(options: TrackerOptions): Tracker {
       const res = await fetch("/api/analytics/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ events: payload }),
+        // Include the top-level sessionId so the server can maintain the
+        // analytics-sessions heartbeat (Sessions metric). Individual events
+        // also carry their own sessionId as a fallback.
+        body: JSON.stringify({ events: payload, sessionId: getSessionId() }),
       });
 
       if (res.ok) {

@@ -7,6 +7,8 @@ import {
     ShoppingCart,
     TrendingUp,
     Users,
+    UserCheck,
+    UserPlus,
     Search,
     ArrowUp,
     ArrowDown,
@@ -21,6 +23,9 @@ interface OverviewData {
     purchases: number;
     clicks: number;
     totalSessions: number;
+    totalUsers: number;
+    activeUsers: number;
+    newUsers: number;
     conversionRate: number;
     cartToPurchase: number;
     bounceRate: number;
@@ -73,6 +78,30 @@ const cards = [
         icon: Activity,
         color: "text-green-600 dark:text-green-400",
         bg: "bg-green-50 dark:bg-green-950/30",
+        format: (v: number) => v.toLocaleString(),
+    },
+    {
+        key: "totalUsers",
+        label: "Total Users",
+        icon: Users,
+        color: "text-sky-600 dark:text-sky-400",
+        bg: "bg-sky-50 dark:bg-sky-950/30",
+        format: (v: number) => v.toLocaleString(),
+    },
+    {
+        key: "activeUsers",
+        label: "Online Now",
+        icon: UserCheck,
+        color: "text-emerald-600 dark:text-emerald-400",
+        bg: "bg-emerald-50 dark:bg-emerald-950/30",
+        format: (v: number) => v.toLocaleString(),
+    },
+    {
+        key: "newUsers",
+        label: "New Users",
+        icon: UserPlus,
+        color: "text-fuchsia-600 dark:text-fuchsia-400",
+        bg: "bg-fuchsia-50 dark:bg-fuchsia-950/30",
         format: (v: number) => v.toLocaleString(),
     },
     {

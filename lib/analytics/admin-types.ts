@@ -14,6 +14,9 @@ export interface AnalyticsOverview {
   addToCarts: number;
   purchases: number;
   clicks: number;
+  totalUsers: number;
+  activeUsers: number;
+  newUsers: number;
   conversionRate: number;
   cartToPurchase: number;
   bounceRate: number;

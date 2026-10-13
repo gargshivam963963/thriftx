@@ -17,6 +17,7 @@ import {
     Gift,
     Megaphone,
     Clock,
+    Headphones,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
@@ -60,6 +61,11 @@ const NAV_ITEMS = [
                 label: "Analytics",
                 href: "/admin/analytics",
                 icon: BarChart3,
+            },
+            {
+                label: "Support",
+                href: "/admin/support",
+                icon: Headphones,
             },
         ],
     },

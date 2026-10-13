@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { EventType } from "./types";
 import { initTracker, getTracker } from "./tracker";
 import { shouldTrack } from "./utils";
+import { isExcludedEmail } from "./excluded";
 import { useAuth } from "@/lib/AuthContext";
 
 // ─── Context Type ──────────────────────────────────────────────────────────────
@@ -58,7 +59,11 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     const prevPathRef = useRef<string>("");
     const [isReady, setIsReady] = useState(false);
 
-    const isAdminUser = user?.role === "admin";
+    // Exclude the owner's own traffic two ways: by role (admin) AND by email.
+    // Email matters because `useAuth()` returns `user: null` on the very first
+    // render (before the session loads), so role alone misses the initial
+    // pageviews. The server-side batch route enforces this authoritatively too.
+    const isAdminUser = user?.role === "admin" || isExcludedEmail(user?.email);
 
     // App Router dispatches popstate on push/replace too, so this stays in
     // sync with client-side ?query changes as well as back/forward.

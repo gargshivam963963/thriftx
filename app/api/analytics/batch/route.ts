@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { isExcludedEmail } from "@/lib/analytics/excluded";
 import {
   DOCUMENT_COLLECTIONS,
   DOCUMENT_DATABASE_ID,
@@ -45,6 +48,29 @@ function shouldStoreEvent(event: Record<string, unknown>): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    // Server-side self-exclusion: if the requester is signed in as the owner
+    // (or an excluded account), drop the ENTIRE batch. This is authoritative —
+    // it reads the session cookie directly, so it can't be bypassed by the
+    // client-side login race (useAuth returns null on first render) or by
+    // browsing logged-out on a device where the owner is signed in elsewhere.
+    try {
+      const headerStore = await headers();
+      const session = await auth.api.getSession({ headers: headerStore });
+      if (isExcludedEmail(session?.user?.email)) {
+        return NextResponse.json({
+          success: true,
+          stored: 0,
+          total: 0,
+          excluded: true,
+          message: "Owner/admin traffic excluded from analytics",
+        });
+      }
+    } catch (sessionError) {
+      // If session lookup fails, fall through to normal filtering rather than
+      // blocking legitimate customer events.
+      console.warn("Analytics batch: session check skipped:", sessionError);
+    }
+
     const body = await request.json();
     const { events, sessionId } = body;
 

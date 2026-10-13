@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import PageTransition from "@/components/animations/PageTransition";
+import SupportChatWidget from "@/components/support/SupportChatWidget";
 
 /**
  * Storefront chrome (header, footer, mobile tab bar) + the marketing page
@@ -50,6 +51,7 @@ export default function StorefrontChrome({
 
       <Footer />
       <BottomNav />
+      <SupportChatWidget />
     </>
   );
 }

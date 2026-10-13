@@ -9,6 +9,7 @@ import {
     Package,
     ShoppingCart,
     Users,
+    UserRound,
     BarChart3,
     LogOut,
     ArrowLeft,
@@ -56,6 +57,11 @@ const NAV_ITEMS = [
                 label: "Customers",
                 href: "/admin/customers",
                 icon: Users,
+            },
+            {
+                label: "Registered Users",
+                href: "/admin/users",
+                icon: UserRound,
             },
             {
                 label: "Analytics",

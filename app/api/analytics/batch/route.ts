@@ -48,31 +48,55 @@ function shouldStoreEvent(event: Record<string, unknown>): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    // Server-side self-exclusion: if the requester is signed in as the owner
-    // (or an excluded account), drop the ENTIRE batch. This is authoritative —
-    // it reads the session cookie directly, so it can't be bypassed by the
-    // client-side login race (useAuth returns null on first render) or by
-    // browsing logged-out on a device where the owner is signed in elsewhere.
+    // Resolve the signed-in viewer from the session cookie ONCE. This is
+    // authoritative — it can't be spoofed by the client, and it works even
+    // when useAuth() hasn't loaded yet on the client (the "login race").
+    // Identity is stamped onto every stored event so the admin dashboard can
+    // show WHICH user did what (name + email), not just anonymous counts.
+    let viewer: {
+      id: string;
+      email: string;
+      name: string | null;
+      role: string;
+    } | null = null;
     try {
       const headerStore = await headers();
       const session = await auth.api.getSession({ headers: headerStore });
-      if (isExcludedEmail(session?.user?.email)) {
-        return NextResponse.json({
-          success: true,
-          stored: 0,
-          total: 0,
-          excluded: true,
-          message: "Owner/admin traffic excluded from analytics",
-        });
+      if (session?.user) {
+        const u = session.user as typeof session.user & { role?: string };
+        viewer = {
+          id: u.id,
+          email: u.email,
+          name: u.name ?? null,
+          role: u.role || "customer",
+        };
       }
     } catch (sessionError) {
-      // If session lookup fails, fall through to normal filtering rather than
-      // blocking legitimate customer events.
+      // If session lookup fails, fall through to anonymous ingestion rather
+      // than blocking legitimate customer events.
       console.warn("Analytics batch: session check skipped:", sessionError);
+    }
+
+    // Server-side self-exclusion: drop the ENTIRE batch if the requester is
+    // the owner (by email) OR ANY admin-role account. Previously only the
+    // hard-coded owner email was excluded, so signing in with a different
+    // admin email still polluted the dashboard.
+    if (viewer && (isExcludedEmail(viewer.email) || viewer.role === "admin")) {
+      return NextResponse.json({
+        success: true,
+        stored: 0,
+        total: 0,
+        excluded: true,
+        message: "Owner/admin traffic excluded from analytics",
+      });
     }
 
     const body = await request.json();
     const { events, sessionId } = body;
+    // Persistent browser id for anonymous visitor grouping (may be empty
+    // for legacy clients — per-event visitorId is preferred below).
+    const bodyVisitorId =
+      typeof body.visitorId === "string" ? body.visitorId : "";
 
     if (!events || !Array.isArray(events) || events.length === 0) {
       return NextResponse.json(
@@ -96,7 +120,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Store filtered events in Neon.
+    // Store filtered events in Neon, stamped with the viewer's identity.
     const storedEvents = [];
     for (const event of customerEvents) {
       try {
@@ -111,8 +135,18 @@ export async function POST(request: NextRequest) {
             page: event.page || "",
             referrer: event.referrer || "",
             sessionId: event.sessionId || sessionId || "",
+            // Persistent browser identity for anonymous grouping on the
+            // admin dashboard (may be empty for legacy queued events).
+            visitorId:
+              (event.visitorId as string) || bodyVisitorId || "",
             timestamp: event.timestamp || Date.now(),
             createdAt: new Date().toISOString(),
+            // Identity — null for anonymous visitors. Lets the dashboard
+            // attribute events to a real person (name/email) and lets the
+            // owner's own traffic be filtered at read time too.
+            userId: viewer?.id ?? null,
+            userName: viewer?.name ?? null,
+            userEmail: viewer?.email ?? null,
           },
         );
         storedEvents.push(doc.$id);
@@ -149,6 +183,12 @@ export async function POST(request: NextRequest) {
               lastActivity: Date.now(),
               eventCount: Number(session.eventCount || 0) + events.length,
               duration: Date.now() - Number(session.sessionStart || Date.now()),
+              // Keep identity fresh — a visitor may sign in mid-session.
+              userId: viewer?.id ?? session.userId ?? null,
+              userName: viewer?.name ?? session.userName ?? null,
+              userEmail: viewer?.email ?? session.userEmail ?? null,
+              // Backfill persistent visitor id (empty on legacy records).
+              visitorId: session.visitorId || bodyVisitorId || null,
             },
           );
         } else {
@@ -170,6 +210,10 @@ export async function POST(request: NextRequest) {
                 request.headers.get("x-real-ip") ||
                 "",
               createdAt: new Date().toISOString(),
+              userId: viewer?.id ?? null,
+              userName: viewer?.name ?? null,
+              userEmail: viewer?.email ?? null,
+              visitorId: bodyVisitorId || null,
             },
           );
         }

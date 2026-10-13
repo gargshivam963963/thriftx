@@ -23,6 +23,7 @@ import {
 import { revalidatePath } from "next/cache";
 import {
   notifyOrderChanges,
+  notifyShipmentStatus,
   notifyTrackingReady,
   type OrderRef,
 } from "@/lib/notifications/orderEvents";
@@ -109,6 +110,9 @@ export async function updateShipment(
   shipment: UpdateShipmentData,
 ) {
   if (!isDocumentStoreConfigured) return null;
+  const before = await documentStore
+    .getDocument("thriftx", "orders", documentId)
+    .catch(() => null);
   const updated = await documentStore.updateDocument(
     "thriftx",
     "orders",
@@ -120,6 +124,22 @@ export async function updateShipment(
       notifyTrackingReady(
         updated as unknown as OrderRef,
         String(shipment.trackingNumber),
+      ),
+    );
+  }
+  // Shipment lifecycle changes (picked up → in transit → out for delivery →
+  // delivered) must also surface as customer notifications. `updateShipment`
+  // previously only notified on tracking numbers, so these milestones were
+  // silently swallowed.
+  if (
+    typeof shipment.shipmentStatus === "string" &&
+    shipment.shipmentStatus &&
+    (!before || (before as Record<string, unknown>).shipmentStatus !== shipment.shipmentStatus)
+  ) {
+    await safeNotify(() =>
+      notifyShipmentStatus(
+        updated as unknown as OrderRef,
+        shipment.shipmentStatus as string,
       ),
     );
   }

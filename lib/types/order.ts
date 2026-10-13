@@ -38,6 +38,7 @@ export interface Order {
   orderId: string;
   status: string;
 
+  userId?: string;
   email?: string;
 
   subtotal: number;

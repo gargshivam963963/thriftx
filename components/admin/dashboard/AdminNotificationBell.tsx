@@ -137,7 +137,7 @@ export default function AdminNotificationBell() {
             >
                 <Bell size={18} />
                 {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-white">
+                    <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-white ring-2 ring-background">
                         {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                 )}

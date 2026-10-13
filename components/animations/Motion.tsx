@@ -377,6 +377,7 @@ export function staggerDelay(index: number, step = 0.03): Transition {
 /** Shared press feedback for tappable surfaces. */
 export const press = {
     tap: { scale: 0.98 },
+    chipTap: { scale: 0.96 },
     /** Stronger press for small icon buttons (theme toggle, wishlist, close). */
     iconTap: { scale: 0.92 },
 };

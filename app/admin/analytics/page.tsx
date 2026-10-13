@@ -5,9 +5,13 @@ import { motion } from "framer-motion";
 import {
     BarChart3,
     RefreshCw,
-    Calendar,
     Download,
     TrendingUp,
+    Trash2,
+    LayoutDashboard,
+    FileText,
+    ShoppingBag,
+    Users,
 } from "lucide-react";
 
 import OverviewCards from "@/components/admin/analytics/OverviewCards";
@@ -16,6 +20,8 @@ import SearchAnalytics from "@/components/admin/analytics/SearchAnalytics";
 import ProductFunnel from "@/components/admin/analytics/ProductFunnel";
 import DeviceBreakdown from "@/components/admin/analytics/DeviceBreakdown";
 import TimelineChart from "@/components/admin/analytics/TimelineChart";
+import VisitorsTable from "@/components/admin/analytics/VisitorsTable";
+import VisitorDrawer from "@/components/admin/analytics/VisitorDrawer";
 import { Button } from "@/components/ui/button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import PageHeader from "@/components/ui/PageHeader";
@@ -29,6 +35,7 @@ import type {
     ProductFunnelPoint,
     DevicePoint,
     TimelinePoint,
+    VisitorRow,
 } from "@/lib/analytics/admin-types";
 
 const RANGE_OPTIONS = [
@@ -38,8 +45,11 @@ const RANGE_OPTIONS = [
     { value: "90d", label: "90 Days" },
 ];
 
+type SectionTab = "overview" | "pages" | "products" | "visitors";
+
 export default function AdminAnalyticsPage() {
     const [range, setRange] = useState("7d");
+    const [tab, setTab] = useState<SectionTab>("overview");
     const [loading, setLoading] = useState(true);
     const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
     const [sources, setSources] = useState<TrafficSourcePoint[] | null>(null);
@@ -48,49 +58,125 @@ export default function AdminAnalyticsPage() {
     const [funnel, setFunnel] = useState<ProductFunnelPoint[] | null>(null);
     const [devices, setDevices] = useState<DevicePoint[] | null>(null);
     const [timeline, setTimeline] = useState<TimelinePoint[] | null>(null);
+    const [visitors, setVisitors] = useState<VisitorRow[] | null>(null);
+    const [purging, setPurging] = useState(false);
+    const [selectedVisitor, setSelectedVisitor] = useState<VisitorRow | null>(null);
 
+    // Each tab fetches only what it renders — keeps the page fast and the
+    // payload small. Overview always loads so cards stay live.
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const [overviewRes, sourcesRes, pagesRes, searchesRes, funnelRes, devicesRes, timelineRes] =
-                await Promise.all([
-                    fetch(`/api/analytics?action=overview&range=${range}`),
-                    fetch(`/api/analytics?action=sources&range=${range}`),
+            const wants = (t: SectionTab) => tab === t || t === "overview";
+            const jobs: Promise<Response>[] = [
+                fetch(`/api/analytics?action=overview&range=${range}`),
+                fetch(`/api/analytics?action=timeline&range=${range}`),
+                fetch(`/api/analytics?action=sources&range=${range}`),
+                fetch(`/api/analytics?action=devices&range=${range}`),
+            ];
+            if (wants("pages")) {
+                jobs.push(
                     fetch(`/api/analytics?action=pages&range=${range}`),
                     fetch(`/api/analytics?action=searches&range=${range}`),
-                    fetch(`/api/analytics?action=funnel&range=${range}`),
-                    fetch(`/api/analytics?action=devices&range=${range}`),
-                    fetch(`/api/analytics?action=timeline&range=${range}`),
-                ]);
+                );
+            }
+            if (wants("products")) {
+                jobs.push(fetch(`/api/analytics?action=funnel&range=${range}`));
+            }
+            if (wants("visitors")) {
+                jobs.push(fetch(`/api/analytics?action=visitors&range=${range}`));
+            }
+            const responses = await Promise.all(jobs);
+            const jsons = await Promise.all(
+                responses.map((r) => r.json() as Promise<AnalyticsApiResponse<never>>),
+            );
 
-            const [overviewData, sourcesData, pagesData, searchesData, funnelData, devicesData, timelineData] =
-                await Promise.all([
-                    overviewRes.json() as Promise<AnalyticsApiResponse<AnalyticsOverview>>,
-                    sourcesRes.json() as Promise<AnalyticsApiResponse<TrafficSourcePoint[]>>,
-                    pagesRes.json() as Promise<AnalyticsApiResponse<TopPage[]>>,
-                    searchesRes.json() as Promise<AnalyticsApiResponse<SearchQueryPoint[]>>,
-                    funnelRes.json() as Promise<AnalyticsApiResponse<ProductFunnelPoint[]>>,
-                    devicesRes.json() as Promise<AnalyticsApiResponse<DevicePoint[]>>,
-                    timelineRes.json() as Promise<AnalyticsApiResponse<TimelinePoint[]>>,
-                ]);
+            let i = 0;
+            const next = <T,>() => jsons[i++] as AnalyticsApiResponse<T>;
+            const overviewData = next<AnalyticsOverview>();
+            const timelineData = next<TimelinePoint[]>();
+            const sourcesData = next<TrafficSourcePoint[]>();
+            const devicesData = next<DevicePoint[]>();
 
             if (overviewData.success) setOverview(overviewData.data);
-            if (sourcesData.success) setSources(sourcesData.data);
-            if (pagesData.success) setPages(pagesData.data);
-            if (searchesData.success) setSearches(searchesData.data);
-            if (funnelData.success) setFunnel(funnelData.data);
-            if (devicesData.success) setDevices(devicesData.data);
             if (timelineData.success) setTimeline(timelineData.data);
+            if (sourcesData.success) setSources(sourcesData.data);
+            if (devicesData.success) setDevices(devicesData.data);
+            if (wants("pages")) {
+                const pagesData = next<TopPage[]>();
+                const searchesData = next<SearchQueryPoint[]>();
+                if (pagesData.success) setPages(pagesData.data);
+                if (searchesData.success) setSearches(searchesData.data);
+            }
+            if (wants("products")) {
+                const funnelData = next<ProductFunnelPoint[]>();
+                if (funnelData.success) setFunnel(funnelData.data);
+            }
+            if (wants("visitors")) {
+                const visitorsData = next<VisitorRow[]>();
+                if (visitorsData.success) setVisitors(visitorsData.data);
+            }
         } catch (error) {
             console.error("Failed to load analytics:", error);
         } finally {
             setLoading(false);
         }
-    }, [range]);
+    }, [range, tab]);
+
+    const handlePurge = useCallback(async () => {
+        const confirmed = window.confirm(
+            "Delete ALL analytics history (events and sessions)? This clears the legacy test pollution and cannot be undone.",
+        );
+        if (!confirmed) return;
+
+        setPurging(true);
+        try {
+            const res = await fetch("/api/analytics", { method: "DELETE" });
+            if (res.ok) {
+                // Reload so the dashboard reflects the cleared data.
+                await loadData();
+            } else {
+                console.error("Purge failed:", res.status);
+            }
+        } catch (error) {
+            console.error("Purge failed:", error);
+        } finally {
+            setPurging(false);
+        }
+    }, [loadData]);
 
     useEffect(() => {
         loadData();
     }, [loadData]);
+
+    const handleExport = useCallback(() => {
+        const csvData = [
+            ["Metric", "Value"],
+            ["Page Views", overview?.pageViews || 0],
+            ["Product Views", overview?.productViews || 0],
+            ["Searches", overview?.searches || 0],
+            ["Add to Cart", overview?.addToCarts || 0],
+            ["Purchases", overview?.purchases || 0],
+            ["Sessions", overview?.totalSessions || 0],
+            ["Total Users", overview?.totalUsers || 0],
+            ["Online Now", overview?.activeUsers || 0],
+            ["New Users", overview?.newUsers || 0],
+            ["Conversion Rate", `${overview?.conversionRate || 0}%`],
+        ]
+            .map((r) => r.join(","))
+            .join("\n");
+
+        const blob = new Blob([csvData], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `thriftx-analytics-${new Date().toISOString().split("T")[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }, [overview]);
+
+    const rangeLabel =
+        range === "24h" ? "24 hours" : range === "7d" ? "7 days" : range === "30d" ? "30 days" : "90 days";
 
     return (
         <AdminPage width="wide">
@@ -126,6 +212,21 @@ export default function AdminAnalyticsPage() {
                         >
                             Refresh
                         </Button>
+
+                        <Button
+                            variant="outline"
+                            size="md"
+                            onClick={handlePurge}
+                            disabled={loading || purging}
+                            leftIcon={
+                                <Trash2
+                                    size={15}
+                                    className={purging ? "animate-pulse" : ""}
+                                />
+                            }
+                        >
+                            {purging ? "Purging…" : "Purge Data"}
+                        </Button>
                     </>
                 }
             />
@@ -133,24 +234,40 @@ export default function AdminAnalyticsPage() {
             {/* ── Overview Cards ────────────────────────────── */}
             <OverviewCards data={overview} loading={loading} />
 
-            {/* ── Timeline Chart ────────────────────────────── */}
-            <TimelineChart data={timeline} loading={loading} />
+            {/* ── Section tabs ──────────────────────────────── */}
+            <SegmentedControl
+                options={[
+                    { value: "overview", label: "Overview", icon: <LayoutDashboard size={13} /> },
+                    { value: "pages", label: "Page Views", icon: <FileText size={13} /> },
+                    { value: "products", label: "Products", icon: <ShoppingBag size={13} /> },
+                    { value: "visitors", label: "Visitors", icon: <Users size={13} /> },
+                ]}
+                value={tab}
+                onChange={(v) => setTab(v as SectionTab)}
+                ariaLabel="Analytics sections"
+                idPrefix="admin-analytics-section"
+            />
 
-            {/* ── Traffic Sources + Devices ──────────────────── */}
-            <div className="grid gap-5 lg:grid-cols-2">
-                <TrafficSourcesChart data={sources} loading={loading} />
-                <DeviceBreakdown data={devices} loading={loading} />
-            </div>
+            {tab === "overview" && (
+                <>
+                    {/* ── Timeline Chart ────────────────────────────── */}
+                    <TimelineChart data={timeline} loading={loading} />
 
-            {/* ── Search Analytics + Product Funnel ──────────── */}
-            <div className="grid gap-5 lg:grid-cols-2">
-                <SearchAnalytics data={searches} loading={loading} />
-                <ProductFunnel data={funnel} loading={loading} />
-            </div>
+                    {/* ── Traffic Sources + Devices ──────────────────── */}
+                    <div className="grid gap-5 lg:grid-cols-2">
+                        <TrafficSourcesChart data={sources} loading={loading} />
+                        <DeviceBreakdown data={devices} loading={loading} />
+                    </div>
+                </>
+            )}
 
-            {/* ── Top Pages ──────────────────────────────────── */}
-            {
-                pages && pages.length > 0 && (
+            {tab === "pages" && (
+                <>
+                    {/* ── Search + Top Pages ─────────────────────────── */}
+                    <SearchAnalytics data={searches} loading={loading} />
+
+                    {
+                        pages && pages.length > 0 && (
                     <motion.div
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -191,6 +308,27 @@ export default function AdminAnalyticsPage() {
                     </motion.div>
                 )
             }
+                </>
+            )}
+
+            {tab === "products" && (
+                <ProductFunnel data={funnel} loading={loading} />
+            )}
+
+            {tab === "visitors" && (
+                <>
+                    <VisitorsTable
+                        data={visitors}
+                        loading={loading}
+                        onSelect={setSelectedVisitor}
+                    />
+                    <VisitorDrawer
+                        visitor={selectedVisitor}
+                        range={range}
+                        onClose={() => setSelectedVisitor(null)}
+                    />
+                </>
+            )}
 
             {/* ── Empty State ────────────────────────────────── */}
             {
@@ -227,37 +365,14 @@ export default function AdminAnalyticsPage() {
                     <div className="flex items-center justify-between rounded-xl border border-border bg-card/80 px-5 py-3 text-xs text-muted-foreground dark:border-border">
                         <span>
                             Showing data for the last{" "}
-                            {range === "24h" ? "24 hours" : range === "7d" ? "7 days" : range === "30d" ? "30 days" : "90 days"}
+                            {rangeLabel}
                         </span>
                         <Button
-                            onClick={() => {
-                                const csvData = [
-                                    ["Metric", "Value"],
-                                    ["Page Views", overview?.pageViews || 0],
-                                    ["Product Views", overview?.productViews || 0],
-                                    ["Searches", overview?.searches || 0],
-                                    ["Add to Cart", overview?.addToCarts || 0],
-                                    ["Purchases", overview?.purchases || 0],
-                                    ["Sessions", overview?.totalSessions || 0],
-                                    ["Total Users", overview?.totalUsers || 0],
-                                    ["Online Now", overview?.activeUsers || 0],
-                                    ["New Users", overview?.newUsers || 0],
-                                    ["Conversion Rate", `${overview?.conversionRate || 0}%`],
-                                ]
-                                    .map((r) => r.join(","))
-                                    .join("\n");
-
-                                const blob = new Blob([csvData], { type: "text/csv" });
-                                const url = URL.createObjectURL(blob);
-                                const a = document.createElement("a");
-                                a.href = url;
-                                a.download = `thriftx-analytics-${new Date().toISOString().split("T")[0]}.csv`;
-                                a.click();
-                                URL.revokeObjectURL(url);
-                            }}
-                            className="flex items-center gap-1.5 font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleExport}
+                            leftIcon={<Download size={13} />}
                         >
-                            <Download size={13} />
                             Export CSV
                         </Button>
                     </div>

@@ -13,7 +13,9 @@ import {
     ArrowUp,
     ArrowDown,
     Activity,
+    Clock,
 } from "lucide-react";
+import { formatDuration } from "@/lib/analytics/utils";
 
 interface OverviewData {
     pageViews: number;
@@ -29,6 +31,10 @@ interface OverviewData {
     conversionRate: number;
     cartToPurchase: number;
     bounceRate: number;
+    /** Mean session duration across the range, in seconds. */
+    avgSessionDuration: number;
+    /** Sum of all session durations in the range, in seconds. */
+    totalTimeOnSite: number;
 }
 
 const cards = [
@@ -121,6 +127,22 @@ const cards = [
         bg: "bg-teal-50 dark:bg-teal-950/30",
         format: (v: number) => `${v}%`,
         suffix: "%",
+    },
+    {
+        key: "avgSessionDuration",
+        label: "Avg Session",
+        icon: Activity,
+        color: "text-cyan-600 dark:text-cyan-400",
+        bg: "bg-cyan-50 dark:bg-cyan-950/30",
+        format: (v: number) => formatDuration(v),
+    },
+    {
+        key: "totalTimeOnSite",
+        label: "Time on Site",
+        icon: Clock,
+        color: "text-indigo-600 dark:text-indigo-400",
+        bg: "bg-indigo-50 dark:bg-indigo-950/30",
+        format: (v: number) => formatDuration(v),
     },
 ];
 

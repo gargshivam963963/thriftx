@@ -7,6 +7,7 @@ import {
 } from "@/lib/notifications/orderEvents";
 import { updateOrderStatus as serviceUpdateOrderStatus, getOrderById } from "./orderService";
 import { restoreOrderInventory } from "./inventory.server";
+import { getAddressLocationsForUsers } from "@/lib/analytics/addressLocation";
 import { revalidatePath } from "next/cache";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -51,6 +52,28 @@ export interface CustomerData {
   joinedAt: string;
   city: string;
   wishlistCount: number;
+}
+
+/**
+ * A row on the "Registered Users" admin page — every account in the auth
+ * database (unlike CustomerData, which is derived from placed orders only).
+ */
+export interface RegisteredUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  emailVerified: boolean;
+  image: string | null;
+  createdAt: string;
+  /** Most recent auth-session creation, or null if never signed in. */
+  lastActiveAt: string | null;
+  /** True while the user holds a session whose expiry is still in the future. */
+  online: boolean;
+  city: string | null;
+  state: string | null;
+  totalOrders: number;
+  totalSpent: number;
 }
 
 export interface OrderAnalytics {
@@ -412,6 +435,124 @@ export async function getCustomers(): Promise<CustomerData[]> {
     return customers.sort((a, b) => b.totalSpent - a.totalSpent);
   } catch (error) {
     console.error("getCustomers error:", error);
+    return [];
+  }
+}
+
+/**
+ * Every registered account (auth `User` table) joined with:
+ *  - latest auth session → last active / online-now
+ *  - default address → city/state
+ *  - stored orders → order count + lifetime spend
+ *
+ * Unlike getCustomers(), users who never ordered still appear.
+ */
+export async function getRegisteredUsers(): Promise<RegisteredUser[]> {
+  if (!isDatabaseConfigured || !prisma) return [];
+  try {
+    const now = new Date();
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        emailVerified: true,
+        image: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Sessions are best-effort: if this table is missing or errors, still show
+    // the registered users (just without last-active / online status) instead
+    // of blanking the whole page.
+    let sessions: { userId: string; createdAt: Date; expiresAt: Date }[] = [];
+    try {
+      sessions = await prisma.session.findMany({
+        select: { userId: true, createdAt: true, expiresAt: true },
+        orderBy: { createdAt: "desc" },
+      });
+    } catch (error) {
+      console.warn("getRegisteredUsers: session lookup unavailable:", error);
+    }
+
+    // Latest session per user (sessions arrive pre-sorted desc).
+    const latestSession = new Map<string, { createdAt: Date; expiresAt: Date }>();
+    const onlineIds = new Set<string>();
+    for (const session of sessions) {
+      if (!latestSession.has(session.userId)) {
+        latestSession.set(session.userId, session);
+      }
+      if (session.expiresAt > now) {
+        onlineIds.add(session.userId);
+      }
+    }
+
+    // City/state from saved addresses in the document store. The Prisma
+    // `Address` model has no backing table in the live database, so it is NOT
+    // queried here — doing so threw and returned an empty user list.
+    const locations = await getAddressLocationsForUsers(
+      users.map((user) => user.id),
+    );
+
+    // Order stats from the document store (same source as getCustomers).
+    const orderStats = new Map<string, { count: number; spent: number }>();
+    try {
+      const ordersResponse = await documentStore.listDocuments(
+        "thriftx",
+        "orders",
+        [DocumentQuery.limit(5000)],
+      );
+      for (const doc of ordersResponse.documents as unknown as OrderDocument[]) {
+        // Each order lands in EXACTLY one bucket (userId wins) so summing the
+        // id + email buckets below can never double-count an order.
+        const key =
+          (typeof doc.userId === "string" && doc.userId
+            ? doc.userId
+            : typeof doc.email === "string" && doc.email
+              ? doc.email
+              : ""
+          ).toLowerCase() || null;
+        if (!key) continue;
+        const amount = Number(doc.total) || 0;
+        const stats = orderStats.get(key) || { count: 0, spent: 0 };
+        stats.count += 1;
+        stats.spent += amount;
+        orderStats.set(key, stats);
+      }
+    } catch (error) {
+      console.warn("getRegisteredUsers: order stats unavailable:", error);
+    }
+
+    return users.map((user) => {
+      const session = latestSession.get(user.id);
+      const location = locations.get(user.id);
+      // Orders may be keyed by userId OR by email (guest-style docs), so sum
+      // both buckets rather than picking one.
+      const byId = orderStats.get(user.id);
+      const byEmail = orderStats.get(user.email.toLowerCase());
+      const count = (byId?.count || 0) + (byEmail?.count || 0);
+      const spent = (byId?.spent || 0) + (byEmail?.spent || 0);
+
+      return {
+        id: user.id,
+        name: user.name || "",
+        email: user.email,
+        role: user.role || "customer",
+        emailVerified: user.emailVerified,
+        image: user.image,
+        createdAt: user.createdAt.toISOString(),
+        lastActiveAt: session ? session.createdAt.toISOString() : null,
+        online: onlineIds.has(user.id),
+        city: location?.city || null,
+        state: location?.state || null,
+        totalOrders: count,
+        totalSpent: spent,
+      };
+    });
+  } catch (error) {
+    console.error("getRegisteredUsers error:", error);
     return [];
   }
 }

@@ -27,6 +27,28 @@ export function resetSession(): void {
   window.sessionStorage.setItem(SESSION_START_KEY, String(Date.now()));
 }
 
+// ─── Persistent Visitor ID ───────────────────────────────────────────────────
+// Survives tab closes and new sessions (localStorage, not sessionStorage), so
+// one browser = one visitor row on the analytics dashboard even when the
+// person never signs in. Signed-in users are still grouped by userId first —
+// this is only the fallback identity for anonymous traffic.
+
+const VISITOR_KEY = "thriftx_visitor_id";
+
+export function getVisitorId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    let visitorId = window.localStorage.getItem(VISITOR_KEY);
+    if (!visitorId) {
+      visitorId = generateId();
+      window.localStorage.setItem(VISITOR_KEY, visitorId);
+    }
+    return visitorId;
+  } catch {
+    return "";
+  }
+}
+
 // ─── Device Detection ───────────────────────────────────────────────────────────
 
 export function detectDevice(): {

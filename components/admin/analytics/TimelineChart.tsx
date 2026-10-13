@@ -1,9 +1,11 @@
 "use client";
 
 
-import { Button } from '@/components/ui/button';import { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Eye, ShoppingCart, CreditCard, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
+
+import SegmentedControl from "@/components/ui/SegmentedControl";
 
 interface TimelinePoint {
     date: string;
@@ -73,20 +75,23 @@ export default function TimelineChart({
                 </h3>
 
                 {/* Metric selector */}
-                <div className="flex gap-1 rounded-lg bg-muted p-0.5 dark:bg-card">
-                    {METRICS.map((m) => (
-                        <Button
-                            key={m.key}
-                            onClick={() => setSelectedMetric(m.key)}
-                            className={`rounded-md px-2.5 py-1 text-2xs font-semibold transition ${selectedMetric === m.key
-                                    ? "bg-white text-foreground shadow-sm dark:bg-muted dark:text-white"
-                                    : "text-muted-foreground hover:text-muted-foreground dark:text-muted-foreground dark:hover:text-muted-foreground"
-                                }`}
-                        >
-                            {m.label === "Page Views" ? "Views" : m.label === "Product Views" ? "Products" : m.label === "Add to Cart" ? "Cart" : "Buy"}
-                        </Button>
-                    ))}
-                </div>
+                <SegmentedControl
+                    options={METRICS.map((m) => ({
+                        value: m.key,
+                        label:
+                            m.label === "Page Views"
+                                ? "Views"
+                                : m.label === "Product Views"
+                                    ? "Products"
+                                    : m.label === "Add to Cart"
+                                        ? "Cart"
+                                        : "Buy",
+                    }))}
+                    value={selectedMetric}
+                    onChange={(v) => setSelectedMetric(v as MetricKey)}
+                    size="sm"
+                    ariaLabel="Timeline metric"
+                />
             </div>
 
             {/* Chart */}

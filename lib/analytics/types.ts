@@ -17,6 +17,10 @@ export type EventType =
   | "click"
   | "session_start"
   | "session_end"
+  // Lightweight liveness ping fired while the tab is visible so session
+  // duration ("time on site") stays accurate even when the user is just
+  // reading a page without clicking. Never counted as a page view/click.
+  | "heartbeat"
   | "form_submit"
   | "share"
   | "referral_click";
@@ -64,6 +68,13 @@ export interface AnalyticsEvent {
   page: string;
   referrer?: string;
   sessionId: string;
+  /**
+   * Persistent browser id (localStorage) stamped on every event. Lets the
+   * dashboard group anonymous sessions from the same browser into one
+   * visitor row. Empty on legacy clients — readers must fall back to
+   * `sessionId`.
+   */
+  visitorId?: string;
   timestamp: number;
 }
 

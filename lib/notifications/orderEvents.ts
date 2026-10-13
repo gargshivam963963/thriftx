@@ -11,7 +11,15 @@ export interface OrderRef {
   refundStatus?: string;
 }
 
-const label = (order: OrderRef) => `#${order.orderId || order.$id.slice(0, 8)}`;
+/** Short human-friendly label: `#A1B2C3` — never a raw `#order_xxx` id. */
+export function shortOrderLabel(order: OrderRef): string {
+  const raw = (order.orderId || order.$id || "").replace(/^order_/i, "");
+  const clean = raw.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  if (!clean) return "#ORDER";
+  return `#${clean.slice(-6)}`;
+}
+
+const label = shortOrderLabel;
 const href = (order: OrderRef) => `/orders/${order.$id}`;
 
 const STATUS_COPY: Record<
@@ -79,6 +87,29 @@ export async function notifyTrackingReady(order: OrderRef, tracking: string) {
     message: `Tracking for order ${label(order)} is ready: ${tracking}.`,
     href: href(order),
     dedupeKey: `order:${order.$id}:tracking:${tracking}`,
+  });
+}
+
+export async function notifyShipmentStatus(order: OrderRef, status: string) {
+  if (!order.userId) return;
+  const copy: Record<string, { title: string; text: string; type: Parameters<typeof createNotification>[0]["type"] }> = {
+    picked_up: { title: "Picked up by courier", text: "has been picked up by the courier.", type: "order_shipped" },
+    in_transit: { title: "Your order is in transit", text: "is on its way through the courier network.", type: "order_shipped" },
+    out_for_delivery: { title: "Out for delivery", text: "is out for delivery today.", type: "order_shipped" },
+    delivered: { title: "Order delivered", text: "was delivered. You can request a return within 7 days if needed.", type: "order_delivered" },
+    cancelled: { title: "Shipment cancelled", text: "shipment was cancelled. Our team will reach out shortly.", type: "order_cancelled" },
+    rto: { title: "Delivery attempt update", text: "could not be delivered and is returning to us. Our team will contact you.", type: "order_shipped" },
+    returned: { title: "Return received by courier", text: "return was received by the courier.", type: "return_update" },
+  };
+  const entry = copy[status];
+  if (!entry) return;
+  await createNotification({
+    userId: order.userId,
+    type: entry.type,
+    title: entry.title,
+    message: `Order ${label(order)} ${entry.text}`,
+    href: href(order),
+    dedupeKey: `order:${order.$id}:shipment:${status}`,
   });
 }
 

@@ -1,6 +1,7 @@
 import type { EventType, AnalyticsEvent } from "./types";
 import {
   getSessionId,
+  getVisitorId,
   detectDevice,
   getPagePath,
   getReferrer,
@@ -57,6 +58,11 @@ export interface Tracker {
     elementType: string,
     additionalData?: AnalyticsProperties,
   ) => void;
+  /**
+   * Liveness ping. Keeps the server-side session's lastActivity (and thus
+   * "time on site") fresh while the visitor reads a page without clicking.
+   */
+  trackHeartbeat: () => void;
   destroy: () => void;
 }
 
@@ -97,6 +103,7 @@ export function initTracker(options: TrackerOptions): Tracker {
       page: getPagePath(),
       referrer: getReferrer(),
       sessionId: getSessionId(),
+      visitorId: getVisitorId(),
       timestamp: Date.now(),
     };
 
@@ -123,7 +130,11 @@ export function initTracker(options: TrackerOptions): Tracker {
         // Include the top-level sessionId so the server can maintain the
         // analytics-sessions heartbeat (Sessions metric). Individual events
         // also carry their own sessionId as a fallback.
-        body: JSON.stringify({ events: payload, sessionId: getSessionId() }),
+        body: JSON.stringify({
+          events: payload,
+          sessionId: getSessionId(),
+          visitorId: getVisitorId(),
+        }),
       });
 
       if (res.ok) {
@@ -138,10 +149,22 @@ export function initTracker(options: TrackerOptions): Tracker {
 
   flushTimer = setInterval(flush, FLUSH_INTERVAL);
 
+  // Flush queued events the moment the tab is hidden/closed so the last
+  // interactions (and the final heartbeat) aren't lost to the 5s interval.
+  const handlePageHide = () => {
+    flush().catch(() => {});
+  };
+  if (typeof window !== "undefined") {
+    window.addEventListener("pagehide", handlePageHide);
+  }
+
   function destroy(): void {
     if (flushTimer) {
       clearInterval(flushTimer);
       flushTimer = null;
+    }
+    if (typeof window !== "undefined") {
+      window.removeEventListener("pagehide", handlePageHide);
     }
     flush().catch(() => {});
   }
@@ -239,6 +262,13 @@ export function initTracker(options: TrackerOptions): Tracker {
           ...additionalData,
         }),
       );
+    },
+
+    trackHeartbeat() {
+      // Server derives "time on site" from session lastActivity; heartbeats
+      // keep it ticking while the visitor is idle-but-present. They are
+      // excluded from all dashboard metrics server-side.
+      enqueue(buildEvent("heartbeat", "Heartbeat"));
     },
 
     destroy,

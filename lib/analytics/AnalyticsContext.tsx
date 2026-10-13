@@ -125,6 +125,20 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener("scroll", handleScroll);
     }, [isAdminUser, isReady, pathname]);
 
+    // Heartbeat: ping every 30s while the tab is visible so the server can
+    // compute accurate "time on site" even when the visitor is idle on a
+    // page (no clicks/scrolls). Hidden tabs don't ping — idle-in-background
+    // time must not count as engagement.
+    useEffect(() => {
+        if (!isReady) return;
+        const interval = setInterval(() => {
+            if (document.visibilityState !== "visible") return;
+            if (!shouldTrack(isAdminUser, window.location.pathname)) return;
+            trackerRef.current?.trackHeartbeat();
+        }, 30_000);
+        return () => clearInterval(interval);
+    }, [isAdminUser, isReady]);
+
     // Whether tracking is allowed for the current session
     const trackingAllowed = shouldTrack(isAdminUser, pathname);
 

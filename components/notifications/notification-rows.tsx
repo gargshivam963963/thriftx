@@ -13,7 +13,11 @@ import {
     typeAccent,
 } from "./notification-utils";
 
-export function PersonalRow({ item, onNavigate }: { item: UserNotification; onNavigate?: () => void }) {
+export function PersonalRow({ item, onNavigate, onOpen }: { item: UserNotification; onNavigate?: () => void; onOpen?: (id: string) => void }) {
+    const handleClick = () => {
+        if (!item.read) onOpen?.(item.id);
+        onNavigate?.();
+    };
     const body = (
         <span className={cn("flex min-h-16 items-start gap-3 px-4 py-3.5", !item.read && "bg-foreground/[0.035]")}>
             <span className={cn("mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl", typeAccent(item.type))}>
@@ -30,7 +34,10 @@ export function PersonalRow({ item, onNavigate }: { item: UserNotification; onNa
         </span>
     );
     if (item.href) {
-        return <Link href={item.href} onClick={onNavigate} className="block transition-colors hover:bg-muted/70">{body}</Link>;
+        return <Link href={item.href} onClick={handleClick} className="block transition-colors hover:bg-muted/70">{body}</Link>;
+    }
+    if (!item.read) {
+        return <button type="button" onClick={handleClick} className="block w-full text-left">{body}</button>;
     }
     return <div>{body}</div>;
 }

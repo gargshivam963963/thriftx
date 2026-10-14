@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Settings2 } from "lucide-react";
@@ -60,9 +61,11 @@ export default function NotificationBell() {
                     </motion.span>
                 )}
             </motion.button>
-            <AnimatePresence>
-                {open && (
-                    <>
+            {typeof document !== "undefined" &&
+                createPortal(
+                    <AnimatePresence>
+                        {open && (
+                            <>
                         <motion.div
                             key="notif-backdrop"
                             aria-hidden="true"
@@ -71,7 +74,7 @@ export default function NotificationBell() {
                             exit={{ opacity: 0 }}
                             transition={{ duration: motionTokens.duration.fast, ease: "easeOut" }}
                             onClick={() => setOpen(false)}
-                            className="fixed inset-0 z-[130] bg-black/50 backdrop-blur-[2px]"
+                            className="fixed inset-0 z-notifications-backdrop bg-black/55 backdrop-blur-[2px]"
                         />
                         <motion.aside
                             key="notif-drawer"
@@ -82,13 +85,13 @@ export default function NotificationBell() {
                             animate={{ x: 0 }}
                             exit={{ x: "100%" }}
                             transition={{ type: "spring", damping: 32, stiffness: 320 }}
-                            className="fixed inset-y-0 right-0 z-[131] flex w-[min(26rem,100dvw)] flex-col border-l border-border bg-card shadow-2xl"
+                            className="fixed inset-y-0 right-0 z-notifications flex h-dvh max-h-dvh w-[min(26rem,100dvw)] flex-col border-l border-border bg-card pb-[env(safe-area-inset-bottom)] shadow-2xl"
                         >
                             <DrawerHeader unreadTotal={unreadTotal} marking={marking} onMarkAll={markAllRead} onClose={() => setOpen(false)} />
-                            <div className="border-b border-border bg-card px-4 py-3">
+                            <div className="shrink-0 border-b border-border bg-card px-4 py-3">
                                 <FilterTabs value={tab} onChange={setTab} />
                             </div>
-                            <div className="flex-1 overflow-y-auto overscroll-contain bg-card">
+                            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-card [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]">
                                 {loading ? (
                                     <div className="space-y-3 p-4" role="status" aria-label="Loading notifications">
                                         {[1, 2, 3].map((i) => (
@@ -109,23 +112,29 @@ export default function NotificationBell() {
                                     <ul className="divide-y divide-border">
                                         {filteredPersonal.map((item) => (
                                             <li key={item.id}>
-                                                <PersonalRow item={item} onNavigate={() => setOpen(false)} />
+                                                <PersonalRow item={item} onNavigate={() => setOpen(false)} onOpen={(id) => void center.markOneRead(id)} />
                                             </li>
                                         ))}
                                         {visibleAnnouncements.map((item) => {
                                             const unread = unreadIds.includes(item.id);
+                                            const openAnnouncement = () => {
+                                                if (unread) center.markAnnouncementRead(item.id);
+                                                setOpen(false);
+                                            };
                                             return (
                                                 <li key={item.id}>
                                                     {item.linkHref ? (
-                                                        <Link href={item.linkHref} onClick={() => setOpen(false)} className="block transition-colors hover:bg-muted/70">
+                                                        <Link href={item.linkHref} onClick={openAnnouncement} className="block transition-colors hover:bg-muted/70">
                                                             <span className="flex min-h-16 items-start gap-3 px-4 py-3.5">
                                                                 <AnnouncementRow item={item} unread={unread} />
                                                             </span>
                                                         </Link>
                                                     ) : (
-                                                        <span className="flex min-h-16 items-start gap-3 px-4 py-3.5">
-                                                            <AnnouncementRow item={item} unread={unread} />
-                                                        </span>
+                                                        <button type="button" onClick={openAnnouncement} className="block w-full text-left">
+                                                            <span className="flex min-h-16 items-start gap-3 px-4 py-3.5">
+                                                                <AnnouncementRow item={item} unread={unread} />
+                                                            </span>
+                                                        </button>
                                                     )}
                                                 </li>
                                             );
@@ -133,7 +142,8 @@ export default function NotificationBell() {
                                     </ul>
                                 )}
                             </div>
-                            <div className="flex items-center gap-2 border-t border-border bg-card px-4 py-3">
+                            <div className="shrink-0 border-t border-border bg-card px-4 py-3 [padding-bottom:env(safe-area-inset-bottom)]">
+                                <div className="flex items-center gap-2">
                                 <motion.button
                                     type="button"
                                     onClick={() => setShowSettings((v) => !v)}
@@ -154,10 +164,13 @@ export default function NotificationBell() {
                                     View all
                                 </Link>
                             </div>
-                        </motion.aside>
+                        </div>
+                    </motion.aside>
                     </>
+                        )}
+                    </AnimatePresence>,
+                    document.body,
                 )}
-            </AnimatePresence>
         </>
     );
 }

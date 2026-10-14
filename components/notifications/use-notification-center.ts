@@ -37,6 +37,8 @@ export interface NotificationCenterState {
     prefs: NotificationPreferences;
     loadAll: () => Promise<void>;
     markAllRead: () => Promise<void>;
+    markOneRead: (id: string) => Promise<void>;
+    markAnnouncementRead: (id: string) => void;
     setPrefs: (next: NotificationPreferences) => void;
 }
 
@@ -147,6 +149,33 @@ export function useNotificationCenter(): NotificationCenterState {
         initialized.current = true;
     }, [loadAnnouncements, loadPersonal, userId]);
 
+    const markOneRead = useCallback(async (id: string) => {
+        setPersonal((prev) => {
+            const target = prev.find((n) => n.id === id);
+            if (!target || target.read) return prev;
+            return prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+        });
+        if (!userId) return;
+        await fetch("/api/notifications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: [id] }),
+        }).catch(() => undefined);
+    }, [userId]);
+
+    const markAnnouncementRead = useCallback((id: string) => {
+        setReadIds((prev) => {
+            if (prev.includes(id)) return prev;
+            const next = [...prev, id];
+            try {
+                window.localStorage.setItem(READ_ANNOUNCEMENTS_KEY, JSON.stringify(next));
+            } catch (storageError) {
+                console.error("Could not save announcement state:", storageError);
+            }
+            return next;
+        });
+    }, []);
+
     const markAllRead = useCallback(async () => {
         if (marking) return;
         setMarking(true);
@@ -204,6 +233,8 @@ export function useNotificationCenter(): NotificationCenterState {
         prefs,
         loadAll,
         markAllRead,
+        markOneRead,
+        markAnnouncementRead,
         setPrefs,
     };
 }

@@ -6,13 +6,15 @@ import { AnnouncementRow, PersonalRow } from "@/components/notifications/notific
 import { EmptyInbox } from "@/components/notifications/notification-chrome";
 import { ChannelSettings } from "@/components/notifications/notification-settings";
 
-export function InboxList({ loading, hasContent, tab, filteredPersonal, visibleAnnouncements, unreadIds }: {
+export function InboxList({ loading, hasContent, tab, filteredPersonal, visibleAnnouncements, unreadIds, onOpenPersonal, onOpenAnnouncement }: {
     loading: boolean;
     hasContent: boolean;
     tab: string;
     filteredPersonal: Parameters<typeof PersonalRow>[0]["item"][];
     visibleAnnouncements: Parameters<typeof AnnouncementRow>[0]["item"][];
     unreadIds: string[];
+    onOpenPersonal?: (id: string) => void;
+    onOpenAnnouncement?: (id: string) => void;
 }) {
     return (
         <section aria-label="Notifications list" className={cn("mt-4 overflow-hidden rounded-3xl border border-border bg-card shadow-card")}>
@@ -28,21 +30,23 @@ export function InboxList({ loading, hasContent, tab, filteredPersonal, visibleA
                 <ul className="divide-y divide-border">
                     {filteredPersonal.map((item) => (
                         <li key={item.id}>
-                            <PersonalRow item={item} />
+                            <PersonalRow item={item} onOpen={onOpenPersonal} />
                         </li>
                     ))}
                     {visibleAnnouncements.map((item) => (
                         <li key={item.id}>
                             {item.linkHref ? (
-                                <Link href={item.linkHref} className="block transition-colors hover:bg-muted/70">
+                                <Link href={item.linkHref} onClick={() => onOpenAnnouncement?.(item.id)} className="block transition-colors hover:bg-muted/70">
                                     <span className="flex min-h-16 items-start gap-3 px-4 py-3.5">
                                         <AnnouncementRow item={item} unread={unreadIds.includes(item.id)} />
                                     </span>
                                 </Link>
                             ) : (
-                                <span className="flex min-h-16 items-start gap-3 px-4 py-3.5">
-                                    <AnnouncementRow item={item} unread={unreadIds.includes(item.id)} />
-                                </span>
+                                <button type="button" onClick={() => onOpenAnnouncement?.(item.id)} className="block w-full text-left">
+                                    <span className="flex min-h-16 items-start gap-3 px-4 py-3.5">
+                                        <AnnouncementRow item={item} unread={unreadIds.includes(item.id)} />
+                                    </span>
+                                </button>
                             )}
                         </li>
                     ))}

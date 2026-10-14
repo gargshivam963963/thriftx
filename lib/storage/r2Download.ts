@@ -59,7 +59,14 @@ export function normalizeProductImageKey(value: string): string {
   if (!/^https?:\/\//i.test(value)) return value;
 
   try {
-    const pathname = new URL(value).pathname.replace(/^\/+/, "");
+    // URL.pathname keeps percent-encoding intact. R2 object keys can contain
+    // encoded characters (e.g. %2F for /), which would make the
+    // startsWith("products/") check miss the key. Decode the pathname
+    // first so any presigned R2 URL is collapsed back to its durable
+    // "products/..." key and re-signed fresh on every read. Non-R2 URLs
+    // and local paths ("/images/...") are returned as-is.
+    const decodedPathname = decodeURIComponent(new URL(value).pathname);
+    const pathname = decodedPathname.replace(/^\//, "");
     return pathname.startsWith("products/") ? pathname : value;
   } catch {
     return value;

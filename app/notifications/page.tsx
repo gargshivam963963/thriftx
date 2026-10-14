@@ -63,6 +63,8 @@ export default function NotificationsPage() {
                     filteredPersonal={filteredPersonal}
                     visibleAnnouncements={visibleAnnouncements}
                     unreadIds={unreadIds}
+                    onOpenPersonal={(id) => void center.markOneRead(id)}
+                    onOpenAnnouncement={(id) => center.markAnnouncementRead(id)}
                 />
                 <InboxSettings prefs={prefs} onChange={center.setPrefs} />
             </Container>

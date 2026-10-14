@@ -64,11 +64,6 @@ export default function ProductGallery({
 
     const galleryLength = gallery.length;
     const currentImage = gallery[selectedIndex] ?? gallery[0];
-     const galleryLength = gallery.length;
-     const currentImage = gallery[selectedIndex] ?? gallery[0];
-
-     const previous = useCallback(() => {
-    console.log(currentImage, "currentImage")
 
     const previous = useCallback(() => {
         setSelectedIndex((index) =>
@@ -326,7 +321,6 @@ export default function ProductGallery({
             </div>
 
             {/* ── Fullscreen ── */}
-            {/* ── Fullscreen ── */}
             <AnimatePresence>
                 {fullscreen && (
                     <motion.div
@@ -448,9 +442,6 @@ export default function ProductGallery({
                                 >
                                     <Image
                                         src={currentImage}
-                                    transition:
-                                        "transform .28s cubic-bezier(.22,.61,.36,1)",
-                                }}
                                         alt={title}
                                         width={1800}
                                         height={2200}

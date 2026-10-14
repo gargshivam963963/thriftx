@@ -63,6 +63,16 @@ const nextConfig: NextConfig = {
   },
 
   images: {
+    // R2 product images are served through presigned URLs whose
+    // X-Amz-Date / X-Amz-Signature query params change on every presign. That
+    // makes each render a unique `/_next/image?url=...` value, so Vercel's
+    // optimizer cache can never hit — which burned through the image
+    // optimization quota and returned `402 (Payment Required)` for every image.
+    //
+    // R2 already stores every uploaded product image as WebP, so the optimizer
+    // was adding little value at a very high cost. Serve the R2 objects
+    // directly instead.
+    unoptimized: true,
     // Keep optimized derivatives around for a day so repeat views hit cache.
     minimumCacheTTL: 86400,
     // Serve the smallest modern format the browser supports (AVIF > WebP).

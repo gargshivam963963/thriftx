@@ -18,7 +18,7 @@ import {
     ChevronRight,
     X,
 } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/Image";
 import { cn } from "@/lib/utils";
 import { uploadImageToR2 } from "@/lib/services/r2Upload";
 import { Button } from "@/components/ui/button";

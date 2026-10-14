@@ -2,7 +2,7 @@
 
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
-import Image from "next/image";
+import Image from "@/components/ui/Image";
 import { useRef } from "react";
 import { Star, Trash2, GripVertical, ArrowLeft, ArrowRight, Maximize2 } from "lucide-react";
 

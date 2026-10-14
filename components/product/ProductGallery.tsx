@@ -8,7 +8,7 @@ import {
     useRef,
 } from "react";
 
-import Image from "next/image";
+import Image from "@/components/ui/Image";
 
 import { AnimatePresence, motion } from "framer-motion";
 

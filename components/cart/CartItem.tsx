@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import Image from "@/components/ui/Image";
 import { motion } from "framer-motion";
 import { ShoppingBag, Trash2 } from "lucide-react";
 import { toast } from "sonner";

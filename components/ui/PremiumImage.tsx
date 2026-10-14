@@ -1,7 +1,7 @@
 
 "use client";
 
-import Image, { ImageProps } from "next/image";
+import Image, { type ImageProps } from "@/components/ui/Image";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";

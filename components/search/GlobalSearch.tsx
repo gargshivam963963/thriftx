@@ -14,7 +14,7 @@ import {
     Zap,
     Sparkles,
 } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/Image";
 import { cn } from "@/lib/utils";
 import {
     searchProducts,

@@ -64,6 +64,11 @@ export default function ProductGallery({
 
     const galleryLength = gallery.length;
     const currentImage = gallery[selectedIndex] ?? gallery[0];
+     const galleryLength = gallery.length;
+     const currentImage = gallery[selectedIndex] ?? gallery[0];
+
+     const previous = useCallback(() => {
+    console.log(currentImage, "currentImage")
 
     const previous = useCallback(() => {
         setSelectedIndex((index) =>
@@ -443,10 +448,14 @@ export default function ProductGallery({
                                 >
                                     <Image
                                         src={currentImage}
+                                    transition:
+                                        "transform .28s cubic-bezier(.22,.61,.36,1)",
+                                }}
                                         alt={title}
                                         width={1800}
                                         height={2200}
                                         priority
+                                        loading="eager"
                                         placeholder="blur"
                                         blurDataURL={BLUR_PLACEHOLDER}
                                         draggable={false}

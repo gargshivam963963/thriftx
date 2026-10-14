@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { productRepository } from "@/lib/repositories";
 
 export interface Product {
@@ -109,24 +108,12 @@ export async function importProducts(
 ) {
   return productRepository.importProducts(initialProducts);
 }
-// Product reads are memoized PER-REQUEST with React `cache()` — not with
-// Next's persistent `unstable_cache` (Data Cache).
-//
-// Why: the persistent Data Cache served STALE, poisoned entries in production
-// — `countProducts` and `getProducts` are two separate cache slots, and one
-// returned a cached `0`/`[]` while the other returned fresh data. That produced
-// the recurring live symptom "80 pieces" header + "No items found" grid (and the
-// mirror-image bug on the API: rows fine but total=0). The bad entries did NOT
-// self-heal within the 60s revalidate window. React `cache()` dedupes repeated
-// calls WITHIN one render (so count + rows still share a single request's work
-// where applicable) but always reads live DB data, so the count and the rows can
-// never disagree. With ~80 rows this is cheap. `revalidateTag("products")` in
-// the admin write paths is now a harmless no-op but left in place.
-export const getProducts = cache(
-  async (filters: ProductFilters = {}): Promise<Product[]> => {
-    return productRepository.getProductsByFilters(filters);
-  },
-);
+
+export async function getProducts(
+  filters: ProductFilters = {},
+): Promise<Product[]> {
+  return productRepository.getProductsByFilters(filters);
+}
 
 /**
  * Total number of products matching a filter set — the `y` in "showing x of y".
@@ -134,45 +121,40 @@ export const getProducts = cache(
  * Reads live on every request (see {@link getProducts}) so the count always
  * agrees with the rows the grid renders.
  */
-export const countProducts = cache(
-  async (filters: ProductFilters = {}): Promise<number> => {
-    return productRepository.countProductsByFilters(filters);
-  },
-);
+export async function countProducts(
+  filters: ProductFilters = {},
+): Promise<number> {
+  return productRepository.countProductsByFilters(filters);
+}
 
-export const getProductById = cache(
-  async (id: string): Promise<Product | null> => {
-    return productRepository.getProductById(id);
-  },
-);
+export async function getProductById(id: string): Promise<Product | null> {
+  return productRepository.getProductById(id);
+}
 
-export const getProductsByIds = cache(
-  async (ids: string[]): Promise<Product[]> => {
-    return productRepository.getProductsByIds(ids);
-  },
-);
+export async function getProductsByIds(ids: string[]): Promise<Product[]> {
+  return productRepository.getProductsByIds(ids);
+}
 
-export const getProductBySlug = cache(
-  async (slug: string): Promise<Product | null> => {
-    return productRepository.getProductBySlug(slug);
-  },
-);
+export async function getProductBySlug(
+  slug: string,
+): Promise<Product | null> {
+  return productRepository.getProductBySlug(slug);
+}
 
-export const getSimilarProducts = cache(
-  async (product: Product, limit = 6): Promise<Product[]> => {
-    return productRepository.getSimilarProducts(product, limit);
-  },
-);
+export async function getSimilarProducts(
+  product: Product,
+  limit = 6,
+): Promise<Product[]> {
+  return productRepository.getSimilarProducts(product, limit);
+}
 
-export const getBrands = cache(
-  async (): Promise<string[]> => {
-    return productRepository.getBrands();
-  },
-);
+export async function getBrands(): Promise<string[]> {
+  return productRepository.getBrands();
+}
 
-export const getProductsForSitemap = cache(async () => {
+export async function getProductsForSitemap(): Promise<{ slug: string; updatedAt: string }[]> {
   return productRepository.getProductsForSitemap();
-});
+}
 
 const ProductService = {
   getProducts,

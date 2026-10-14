@@ -38,8 +38,6 @@ import {
 } from "@/lib/seo/metadata";
 import { getDeliveryInfo } from "@/lib/delivery";
 
-export const revalidate = 3600;
-
 export async function generateMetadata({
   params,
 }: {

@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import { catalogRepository } from "./repositories";
 
 export type Gender = {
@@ -246,7 +245,7 @@ const FALLBACK_CATEGORIES: Category[] = [
   },
 ];
 
-export const getGenders = unstable_cache(async (): Promise<Gender[]> => {
+export async function getGenders(): Promise<Gender[]> {
   const dbGenders = await catalogRepository.getGenders();
 
   // When the DB isn't configured (or has no gender rows), fall back to the
@@ -256,9 +255,9 @@ export const getGenders = unstable_cache(async (): Promise<Gender[]> => {
   }
 
   return dbGenders;
-}, ["genders"], { revalidate: 600 });
+}
 
-export const getCategories = unstable_cache(async (): Promise<Category[]> => {
+export async function getCategories(): Promise<Category[]> {
   const dbCategories = await catalogRepository.getCategories();
 
   // Merge in any fallback categories (e.g. "Lower" for Men) so the sidebar
@@ -273,4 +272,4 @@ export const getCategories = unstable_cache(async (): Promise<Category[]> => {
   }
 
   return merged.sort((a, b) => a.order - b.order);
-}, ["categories"], { revalidate: 600 });
+}

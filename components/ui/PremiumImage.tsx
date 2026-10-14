@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image, { ImageProps } from "next/image";
@@ -12,6 +13,17 @@ interface PremiumImageProps extends Omit<ImageProps, "onLoad"> {
     rounded?: boolean;
 }
 
+function isMissingImage(src: ImageProps["src"]): boolean {
+    if (typeof src !== "string") return false;
+
+    const normalized = src.trim();
+
+    return (
+        normalized.length === 0 ||
+        normalized === "/images/placeholder.jpg"
+    );
+}
+
 export default function PremiumImage(props: PremiumImageProps) {
     return <PremiumImageInner key={String(props.src)} {...props} />;
 }
@@ -19,44 +31,92 @@ export default function PremiumImage(props: PremiumImageProps) {
 function PremiumImageInner({
     wrapperClassName,
     className,
-    fallbackSrc = "/images/placeholder.jpg",
+    fallbackSrc,
     rounded = false,
     src,
     alt,
     ...props
 }: PremiumImageProps) {
+    const missingInitially = isMissingImage(src);
+
     const [loaded, setLoaded] = useState(false);
-    const [imageSrc, setImageSrc] = useState(src);
+    const [failed, setFailed] = useState(missingInitially);
+    const [imageSrc, setImageSrc] = useState<ImageProps["src"]>(
+        missingInitially ? "" : src
+    );
+
+    const showFallback = failed || !imageSrc;
 
     return (
         <div
             className={cn(
                 "relative h-full w-full overflow-hidden",
                 rounded && "rounded-[inherit]",
-                wrapperClassName,
+                wrapperClassName
             )}
+            role={showFallback ? "img" : undefined}
+            aria-label={showFallback ? `${alt || "Product"} image unavailable` : undefined}
         >
-            {!loaded && <ImageSkeleton className="z-10" />}
+            {!loaded && !showFallback && (
+                <ImageSkeleton className="z-10" />
+            )}
 
-            <Image
-                {...props}
-                src={imageSrc}
-                alt={alt}
-                onLoad={() => setLoaded(true)}
-                onError={() => {
-                    if (imageSrc !== fallbackSrc) {
+            {showFallback ? (
+                <div
+                    aria-hidden="true"
+                    className="absolute inset-0 flex items-center justify-center bg-neutral-100"
+                >
+                    <svg
+                        viewBox="0 0 64 64"
+                        width="42"
+                        height="42"
+                        fill="none"
+                        className="text-neutral-400"
+                    >
+                        <rect
+                            x="10"
+                            y="10"
+                            width="44"
+                            height="44"
+                            rx="5"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                        />
+                        <circle
+                            cx="24"
+                            cy="24"
+                            r="4"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                        />
+                        <path
+                            d="M14 46L27 33L35 40L42 32L50 42"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
+                </div>
+            ) : (
+                <Image
+                    {...props}
+                    src={imageSrc}
+                    alt={alt}
+                    onLoad={() => setLoaded(true)}
+                    onError={() => {
                         setLoaded(false);
-                        setImageSrc(fallbackSrc);
-                    }
-                }}
-                className={cn(
-                    "duration-700 ease-out",
-                    loaded
-                        ? "scale-100 opacity-100"
-                        : "scale-[1.08] opacity-0",
-                    className,
-                )}
-            />
+                        setFailed(true);
+                    }}
+                    className={cn(
+                        "duration-700 ease-out",
+                        loaded
+                            ? "scale-100 opacity-100"
+                            : "scale-[1.08] opacity-0",
+                        className
+                    )}
+                />
+            )}
         </div>
     );
 }

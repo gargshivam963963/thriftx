@@ -225,6 +225,7 @@ export default function ProductGallery({
                                         sizes="88px"
                                         placeholder="blur"
                                         blurDataURL={BLUR_PLACEHOLDER}
+                                        loading="lazy"
                                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
                                 </Button>

@@ -3,22 +3,47 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getR2BucketName, getR2Client } from "./r2";
 
 /**
- * Presigned URLs are costly to compute and are valid for a long time, so we
- * keep a small in-process TTL cache. This avoids re-signing the same image on
- * every render (home, shop, product, similar, recently-viewed), which is a
- * significant server-side cost on image-heavy pages.
+ * Single-flighted presigning.
+ *
+ * Within one server-side render, if multiple components request the same
+ * image key simultaneously, only one actual R2 presign request fires. The
+ * others wait on a shared pending promise. The key is dropped from the map
+ * as soon as the presign finishes (successfully or with an error), so a
+ * *different* render pass (or the next request) presigns fresh — never
+ * reuses a stale signature. This avoids redundant R2 signing calls while
+ * guaranteeing every read gets a brand-new URL.
  */
-const SIGNED_URL_TTL_MS = 15 * 60 * 1000; // 15 min (signature is valid for 24 h)
-const urlCache = new Map<string, { url: string; expiresAt: number }>();
+const activePresigns = new Map<string, Promise<string>>();
 
+function findActivePresign(key: string): Promise<string> | undefined {
+  return activePresigns.get(key);
+}
+
+function registerActivePresign(
+  key: string,
+  promise: Promise<string>,
+): void {
+  activePresigns.set(key, promise);
+}
+
+function unregisterActivePresign(key: string): void {
+  activePresigns.delete(key);
+}
+
+/**
+ * Presign an R2 object key with single-flighting.
+ *
+ * No TTL cache, no in-memory signature reuse. Every read signs fresh so the
+ * 24 h presigned URL never outlives the per-read expiry window.
+ */
 export async function createDownloadUrl(key: string): Promise<string> {
-  const now = Date.now();
-  const cached = urlCache.get(key);
-  if (cached && cached.expiresAt > now) {
-    return cached.url;
-  }
+  // If a presign for this key is already in flight, share the pending promise.
+  const active = findActivePresign(key);
+  if (active) return active;
 
-  const url = await getSignedUrl(
+  // Kick off the actual presign. The wrapper (below) drops the key from the
+  // map as soon as it settles, whether we succeeded or errored.
+  const presign = getSignedUrl(
     getR2Client(),
     new GetObjectCommand({
       Bucket: getR2BucketName(),
@@ -29,18 +54,16 @@ export async function createDownloadUrl(key: string): Promise<string> {
     },
   );
 
-  urlCache.set(key, { url, expiresAt: now + SIGNED_URL_TTL_MS });
-
-  // Keep the cache bounded: drop expired entries if it grows too large.
-  if (urlCache.size > 2000) {
-    for (const [cachedKey, cachedValue] of urlCache) {
-      if (cachedValue.expiresAt <= now) {
-        urlCache.delete(cachedKey);
-      }
+  const running = (async () => {
+    try {
+      return await presign;
+    } finally {
+      unregisterActivePresign(key);
     }
-  }
+  })();
 
-  return url;
+  registerActivePresign(key, running);
+  return running;
 }
 
 /**
